@@ -8,8 +8,6 @@ import profile2 from "../assets/images/profile2.jpg";
 import SideNavbar from "./sideNavbar";
 import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 import React, { useState, useEffect } from 'react';
-
-
     // Define the type for a single review
     interface Review {
       name: string;
@@ -45,10 +43,7 @@ const calculateOVR = (stats: Stat[]) => {
   const totalPercentage = stats.reduce((acc, stat) => acc + stat.percentage, 0);
   return (totalPercentage / stats.length).toFixed(1); // Round to 1 decimal place
 };
-
 const OVR = calculateOVR(stats);
-
-
 const Reviews: React.FC = () => {
   const location = useLocation();
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -75,11 +70,7 @@ const Reviews: React.FC = () => {
       localStorage.setItem("darkMode", "enabled");
     }
   };
-
-   
-
-
-  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
+   const [selectedReview, setSelectedReview] = useState<Review | null>(null);
 
   const handleCardClick = (review: Review) => {
     setSelectedReview(review);
@@ -87,11 +78,7 @@ const Reviews: React.FC = () => {
 
   const closeModal = () => {
     setSelectedReview(null);
-  };
-
-
-
-  
+  }; 
 
   return (
     <>
@@ -257,21 +244,7 @@ const Reviews: React.FC = () => {
       )}
     </div>
     </div>
-    </main></div>
-    </>
-
-
-
-
-
-
-
-           
-
-
-
-    
+    </main></div>    </>
   );
 };
-
 export default Reviews;

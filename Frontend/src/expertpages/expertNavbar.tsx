@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom'; // Import Link
 import profile2 from "../assets/images/profile2.jpg";
 import "react-circular-progressbar/dist/styles.css";
+import { useNavigate } from "react-router-dom";
 
 const ExpertNavbar: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <div className="flex min-h-screen bg-gray-100 dark:bg-gray-900">
       {/* Sidebar */}
@@ -10,7 +12,16 @@ const ExpertNavbar: React.FC = () => {
         <h1 className="font-bold text-center mb-2 text-gray-800 dark:text-white">LOGO</h1>
         
         <div className="text-center bg-slate-100 shadow-md dark:bg-gray-700 p-5 rounded-lg">
-          <img src={profile2} alt="Profile" className="rounded-full mx-auto w-24 h-24" />
+                 
+                <img
+                src={profile2}
+                 alt="Profile"
+                  className="rounded-full mx-auto w-24 h-24 cursor-pointer"
+                onClick={() => navigate("/detailsform")}
+                />
+
+
+          
           <h2 className="text-lg font-semibold mt-4 font-Raleway text-gray-800 dark:text-white">Rohan Roshan</h2>
           <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">Under 15</p>
           <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">Goal Keeper</p>
