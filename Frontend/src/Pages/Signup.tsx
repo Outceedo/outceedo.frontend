@@ -19,6 +19,7 @@ const Signup: React.FC = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   useEffect(() => {
     const myCountryCodesObject = countryCodes.customList(
       "countryCode",
@@ -46,42 +47,48 @@ const Signup: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setFieldErrors({}); 
     // Retrieve role again before sending request
     let selectedRole = localStorage.getItem("selectedRole");
     if (!selectedRole) {
-        setError("Role selection is required.");
+        setFieldErrors((prev) => ({ ...prev, role: "Role selection is required." }));
         return;
     }
-    selectedRole = selectedRole.toLowerCase(); 
-    //  Basic Validation
-    if (!firstName || !lastName || !email || !password || !confirmPassword ||!countryCode || !mobileNumber ) {
-      setError("Please fill in all fields.");
-      return;
-    }
-    //  Check Password Length (Minimum 8 characters)
-    if (password.length < 8) {
-      setError("Password must be at least 8 characters long.");
-      return;
+    selectedRole = selectedRole.toLowerCase();
+
+    // **Validation Object to Track Errors**
+    let errors: Record<string, string> = {};
+
+    if (!firstName) errors.firstName = "First name is required.";
+    if (!lastName) errors.lastName = "Last name is required.";
+    if (!email) errors.email = "Email is required.";
+    if (!password) errors.password = "Password is required.";
+    if (!confirmPassword) errors.confirmPassword = "Confirm Password is required.";
+    if (!countryCode) errors.countryCode = "Country code is required.";
+    if (!mobileNumber) errors.mobileNumber = "Mobile number is required.";
+
+    if (password && password.length < 8) errors.password = "Password must be at least 8 characters long.";
+    if (password !== confirmPassword) errors.confirmPassword = "Passwords do not match.";
+
+    // **If Errors Exist, Set Them & Stop Execution**
+    if (Object.keys(errors).length > 0) {
+        setFieldErrors(errors);
+        return;
     }
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match.");
-      return;
-    }
     setLoading(true);
+
     const requestData = {
-      role: selectedRole, // Retrieved from localStorage
-      email,
-      password, // Store only password, not confirmPassword
-      mobileNumber: `${countryCode} ${mobileNumber}`,//storing full mobile number with country code
-      firstName,
-      lastName,   
-  };
-  console.log("Sending request data:", requestData);
+        role: selectedRole, // Retrieved from localStorage
+        email,
+        password, // Store only password, not confirmPassword
+        mobileNumber: `${countryCode} ${mobileNumber}`, // Storing full mobile number with country code
+        firstName,
+        lastName,
+    };
   try {
     const response = await axios.post(
-        "http://localhost:8000/api/v1/auth/register",
-        requestData,
+        "http://localhost:8000/api/v1/auth/register",requestData,
         { headers: { "Content-Type": "application/json" } } // Ensure correct headers
     );
     if (response.status === 201) {
@@ -116,67 +123,100 @@ const Signup: React.FC = () => {
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-12 sm:mt-16 lg:mt-0">
       <h2 className="text-3xl font-bold text-black mb-6">Sign Up </h2>
       {error && <p className="text-red-500 mb-4">{error}</p>}
-<form onSubmit={handleSignup}>
-  <div className="flex space-x-4 mb-4">
+      <form onSubmit={handleSignup} className="space-y-4">
+  {/* First Name & Last Name */}
+  <div className="flex space-x-4">
     <div className="w-1/2">
-      <label className="block text-gray-700 font-medium mb-2">First Name</label>
+      <label className={`block text-sm font-medium flex items-center ${fieldErrors.firstName ? "text-red-500" : "text-gray-700"}`}>
+        First Name <span className="text-red-500 ml-1">*</span>
+      </label>
       <input
         type="text"
         placeholder="First Name"
         value={firstName}
         onChange={(e) => setFirstName(e.target.value)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"/>
+        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
+        ${fieldErrors.firstName ? "border-red-500 ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
+      />
     </div>
-  <div className="w-1/2">
-    <label className="block text-black-700 font-medium mb-2">Last Name</label>
+
+    <div className="w-1/2">
+      <label className={`block text-sm font-medium flex items-center ${fieldErrors.lastName ? "text-red-500" : "text-gray-700"}`}>
+        Last Name <span className="text-red-500 ml-1">*</span>
+      </label>
+      <input
+        type="text"
+        placeholder="Last Name"
+        value={lastName}
+        onChange={(e) => setLastName(e.target.value)}
+        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
+        ${fieldErrors.lastName ? "border-red-500 ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
+      />
+    </div>
+  </div>
+
+  {/* Email */}
+  <div>
+    <label className={`block text-sm font-medium flex items-center ${fieldErrors.email ? "text-red-500" : "text-gray-700"}`}>
+      Email ID <span className="text-red-500 ml-1">*</span>
+    </label>
     <input
-      type="text"
-      placeholder="Last Name"
-      value={lastName}
-      onChange={(e) => setLastName(e.target.value)}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500"
+      type="email"
+      placeholder="Enter your email"
+      value={email}
+      onChange={(e) => setEmail(e.target.value)}
+      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
+      ${fieldErrors.email ? "border-red-500 ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
     />
   </div>
-</div>
-          <div className="mb-4">
-            <label className="block text-black-700 font-medium mb-2">Email ID</label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500"/>
-          </div>
-          <div className="mb-4">
-            <label className="block text-black-700 font-medium mb-2">New Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500"/>
-          </div>
-              <div className="mb-4">
-            <label className="block text-black-700 font-medium mb-2"> Confirm Password</label>
-            <input
-              type="password"
-              placeholder="Enter your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500"/>
-          </div>
-          <div className="flex space-x-4 mb-4">
-          <div className="w-1/3 relative">
-      <label className="block text-black-700 font-medium mb-2">Country Code</label>
+
+  {/* Password */}
+  <div>
+    <label className={`block text-sm font-medium flex items-center ${fieldErrors.password ? "text-red-500" : "text-gray-700"}`}>
+      New Password <span className="text-red-500 ml-1">*</span>
+    </label>
+    <input
+      type="password"
+      placeholder="Enter your password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
+      ${fieldErrors.password ? "border-red-500 ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
+    />
+  </div>
+
+  {/* Confirm Password */}
+  <div>
+    <label className={`block text-sm font-medium flex items-center ${fieldErrors.confirmPassword ? "text-red-500" : "text-gray-700"}`}>
+      Confirm Password <span className="text-red-500 ml-1">*</span>
+    </label>
+    <input
+      type="password"
+      placeholder="Enter your password again"
+      value={confirmPassword}
+      onChange={(e) => setConfirmPassword(e.target.value)}
+      className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
+      ${fieldErrors.confirmPassword ? "border-red-500 ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
+    />
+  </div>
+
+  {/* Country Code & Mobile Number */}
+  <div className="flex space-x-4">
+    <div className="w-1/3 relative">
+      <label className={`block text-sm font-medium flex items-center ${fieldErrors.countryCode ? "text-red-500" : "text-gray-700"}`}>
+        Country Code <span className="text-red-500 ml-1">*</span>
+      </label>
       <input
         type="text"
         placeholder="Search country code"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
         onFocus={() => setShowDropdown(true)}
-        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500" />
+        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
+        ${fieldErrors.countryCode ? "border-red-500 ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
+      />
       {showDropdown && filteredCountries.length > 0 && (
-        <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+        <ul className="absolute w-full bg-white border rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
           {filteredCountries.map((country, index) => (
             <li
               key={index}
@@ -187,20 +227,24 @@ const Signup: React.FC = () => {
           ))}
         </ul>
       )}
-    </div> 
-     <div className="w-2/3">
-    <label className="block text-black-700 font-medium mb-2">Mobile Number</label>
-    <input
-      type="text"
-      placeholder="Mobile Number"
-      value={mobileNumber}
-      onChange={(e) => setMobileNumber(e.target.value)}
-      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500"
-      maxLength={10}
-      pattern="[0-9]{10}"
-    />
+    </div>
+
+    <div className="w-2/3">
+      <label className={`block text-sm font-medium flex items-center ${fieldErrors.mobileNumber ? "text-red-500" : "text-gray-700"}`}>
+        Mobile Number <span className="text-red-500 ml-1">*</span>
+      </label>
+      <input
+        type="text"
+        placeholder="Mobile Number"
+        value={mobileNumber}
+        onChange={(e) => setMobileNumber(e.target.value)}
+        className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
+        ${fieldErrors.mobileNumber ? "border-red-500 ring-red-500" : "border-gray-300 focus:ring-blue-500"}`}
+        maxLength={10}
+        pattern="[0-9]{10}"
+      />
+    </div>
   </div>
-</div>
 <div className="mb-4 flex justify-between items-center">
   <label className="flex items-center">
     <input type="checkbox" className="mr-2" required />
