@@ -318,11 +318,7 @@ const ExpertData :React.FC = () => {
                   onClick={() => setIsEditing(true)}
                 />
               </div>
-  
-
-
-
-    {/* Container for Skills  */}
+     {/* Container for Skills  */}
     <div className="flex justify-between gap-8 w-full mt-8 ">
       {/* Skills - Expanded Width */}
       <div className="bg-white p-6 shadow-md rounded-lg w-[48%] relative dark:bg-slate-600">
