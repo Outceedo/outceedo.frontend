@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell } from "@fortawesome/free-solid-svg-icons";
 import profile1 from "../assets/images/profile1.jpg";
-import { Link } from 'react-router-dom';
+import { Link,useLocation } from 'react-router-dom';
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import profile2 from "../assets/images/profile2.jpg";
@@ -24,11 +24,6 @@ import React, { useState, useEffect } from 'react';
       { name: "Nicola B", time: "1 year ago", review: "An incredible, heartfelt musician and a delight to work with.", profileImage: profile2 },
   ];
   
-
-
-
-
-
 interface Stat {
   label: string;
   percentage: number;
@@ -55,7 +50,7 @@ const OVR = calculateOVR(stats);
 
 
 const Reviews: React.FC = () => {
- 
+  const location = useLocation();
   const [isDarkMode, setIsDarkMode] = useState(false);
     
   // On initial load, check if dark mode is enabled
@@ -177,9 +172,43 @@ const Reviews: React.FC = () => {
 
             <div className="mt-4">
               <div className="flex items-center border-b pb-2 gap-5">
-                <Link to="/profile" className="text-gray-700  text-lg font-Raleway font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600  ">Details</Link>
-                <Link to="/media" className="text-gray-700  text-lg font-Raleway  font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600 ">Media</Link>
-                <Link to="/reviews" className="text-gray-700  text-lg font-Raleway font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600  ">Reviews</Link>
+                  <div className="mt-4">
+                                       <div className="flex items-center border-b pb-2 gap-5">
+                                       <Link
+                               to="/profile"
+                               className={`text-lg font-semibold font-Raleway ${
+                                 location.pathname === "details"
+                                   ? "text-red-600 border-b-2 border-red-600"
+                                   : "text-gray-700 dark:text-white hover:text-red-600 dark:hover:text-red-600"
+                               }`}
+                             >
+                               Details
+                             </Link>
+                             <Link
+                                 to="/media"
+                                 className={`text-lg font-semibold font-Raleway ${
+                                   location.pathname === "/media"
+                                     ? "text-red-600 border-b-2 border-red-600"
+                                     : "text-gray-700 dark:text-white hover:text-red-600 "
+                                 }`}
+                               >
+                                 Media
+                               </Link>
+                         
+                               <Link
+                                 to="/reviews"
+                                 className={`text-lg font-semibold font-Raleway ${
+                                   location.pathname === "/reviews"
+                                     ? "text-red-600 border-b-2 border-red-600"
+                                     : "text-gray-700 dark:text-white hover:text-red-600 "
+                                 }`}
+                               >
+                                 Reviews
+                               </Link>
+                         
+                             </div>
+                           </div>
+                                         
               </div>
             </div>
 

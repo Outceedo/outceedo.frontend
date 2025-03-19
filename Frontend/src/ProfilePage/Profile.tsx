@@ -3,7 +3,7 @@ import { faBell, faPen } from "@fortawesome/free-solid-svg-icons";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 
 import profile1 from "../assets/images/profile1.jpg";
-import { Link } from 'react-router-dom'; // Correct import for Link
+import { Link , useLocation} from 'react-router-dom'; // Correct import for Link
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar"; // Corrected import
@@ -38,7 +38,8 @@ const Profile: React.FC = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [aboutMe, setAboutMe] = useState(localStorage.getItem("aboutMe") || "I am from London, UK. A passionate, versatile musician bringing light to classics from Ella Fitzgerald to Guns and Roses. Guaranteed to get the crowd dancing.");
   const [isEditing, setIsEditing] = useState(false);
-
+   const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews" >("details");
+   const location = useLocation();
   // On initial load, check if dark mode is enabled
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode");
@@ -177,9 +178,39 @@ const Profile: React.FC = () => {
             {/* Details Section */}
             <div className="mt-4">
               <div className="flex items-center border-b pb-2 gap-5">
-                <Link to="/details" className="text-gray-700 font-Raleway text-lg font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600 ">Details</Link>
-                <Link to="/media" className=" text-gray-700 font-Raleway text-lg font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600 ">Media</Link>
-                <Link to="/reviews" className=" text-gray-700 font-Raleway text-lg font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600 ">Reviews</Link>
+              <Link
+      to="/details"
+      className={`text-lg font-semibold ${
+        activeTab === "details"
+          ? "text-red-600 border-b-2 border-red-600"
+          : "text-gray-700 dark:text-white hover:text-red-600 dark:hover:text-red-600"
+      }`}
+      onClick={() => setActiveTab("details")}
+    >
+      Details
+    </Link>
+    <Link
+        to="/media"
+        className={`text-lg font-semibold  ${
+          location.pathname === "/media"
+            ? "text-red-600 border-b-2 border-red-600"
+            : "text-gray-700 dark:text-white hover:text-red-600 "
+        }`}
+      >
+        Media
+      </Link>
+
+      <Link
+        to="/reviews"
+        className={`text-lg font-semibold  ${
+          location.pathname === "/reviews"
+            ? "text-red-600 border-b-2 border-red-600"
+            : "text-gray-700 dark:text-white hover:text-red-600 "
+        }`}
+      >
+        Reviews
+      </Link>
+
               </div>
             </div>
 

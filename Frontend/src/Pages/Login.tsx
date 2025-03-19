@@ -15,33 +15,36 @@ const Login: React.FC = () => {
     setLoading(true);
   
     try {
-      console.log("Sending login request with:", { email, password });
-  
+     
       const response = await axios.post("http://localhost:8000/api/v1/auth/login", 
         { email, password }, 
         { headers: { "Content-Type": "application/json" } }
       );
-  
-      console.log("API Response:", response.data);
-  
       if (response.status === 200) {
-          
-        const userRole = response.data.user.role?.toLowerCase(); // Ensure lowercase  
-        localStorage.setItem("authToken", response.data.token);
-        localStorage.setItem("userRole", userRole);
-        
-        alert("Login successful!");
-    
+        const user = response.data.user; // Fetch user from response
+        const token = response.data.token;
+
+        if (!user || !user.role) {
+            setError("User role not found. Please contact support.");
+            return;
+        }
+
+        const userRole = user.role.toLowerCase(); // Ensure lowercase role
+
+        // Store authentication token in localStorage
+        localStorage.setItem("authToken", token);
+
+        alert(" Login successful!");
+
+        // Redirect based on the user's role
         if (userRole === "player") {
-            navigate("/Profile");
+            navigate("/profile");
         } else if (userRole === "expert") {
             navigate("/expertdata");
         } else {
             navigate("/home"); // Default fallback
         }
     }
-    
-
     } catch (err: any) {
       console.log(err.response.error);
       console.error("Login Error:", err.response?.data || err.message);
