@@ -6,9 +6,7 @@ import SideNavbar from "./sideNavbar"; // Corrected import
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
-
-
-
+import { faImage, faVideo } from "@fortawesome/free-solid-svg-icons"
 interface MediaItem {
     id: number;
     type: "photo" | "video";
@@ -85,8 +83,6 @@ const [isDarkMode, setIsDarkMode] = useState(false);
       localStorage.setItem("darkMode", "enabled");
     }
   };
-
-
   const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews"|"services" >("details");
   const [media] = useState<MediaItem[]>([]); 
   const[filter,setFilter]= useState<"all"|"photo"|"video">("all");
@@ -142,22 +138,13 @@ const [isDarkMode, setIsDarkMode] = useState(false);
         name: "Michael Smith",
         date: "2024-01-25",
         comment: "Good quality, but the waiting time was a bit long.",
-      },
-      {
-        id: 5,
-        name: "Michael Smith",
-        date: "2024-01-25",
-        comment: "Good quality, but the waiting time was a bit long.",
       },  ]);
 
   // Filtered media based on selection
   const filteredMedia = media.filter((item) =>
     filter === "all" ? true : item.type === filter
   );
-
-  return (
-
-     
+  return ( 
      <div className="flex">
             <SideNavbar /> {/* Sidebar, applying dark mode */}
     
@@ -180,13 +167,8 @@ const [isDarkMode, setIsDarkMode] = useState(false);
                     />
                   </button>
                 </div>
-              </div>
-              
-              
-
-
-
-    <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg p-10 dark:bg-slate-700">
+              </div>            
+   <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg p-10 dark:bg-slate-700">
       <div className="flex justify-between items-center w-full p-4">
   {/* Left - Expert Name */}
   <div>
@@ -320,11 +302,7 @@ const [isDarkMode, setIsDarkMode] = useState(false);
         <li key={index}>{skill}</li>
       ))}
     </ul>
-
-  </div>
-
-       
-
+  </div>    
      {/* Container for Skills & Certifications */}
 
      <div className="flex justify-between gap-8 w-full mt-6">
@@ -339,9 +317,6 @@ const [isDarkMode, setIsDarkMode] = useState(false);
 
   </div>
 </div>
-
-
-
   </div>
   </div>
 )}
@@ -352,23 +327,19 @@ const [isDarkMode, setIsDarkMode] = useState(false);
  <div className="flex gap-4 mb-6 mt-5">
         <button
           onClick={() => setFilter("all")}
-          className={`py-2 px-4 rounded-md ${
-            filter === "all" ? "bg-yellow-200" : "bg-white-700"
-          } transition duration-200`}>
+          className={`py-2 px-4 rounded-md ${filter === "all" ? "bg-yellow-200" : "bg-white-700"} transition duration-200`}>
          All
         </button>
         <button
           onClick={() => setFilter("photo")}
-          className={`py-2 px-4 rounded-md ${
-            filter === "photo" ? "bg-yellow-200" : "bg-white-700"
-          } transition duration-200`}>
+          className={`py-2 px-4 rounded-md flex items-center gap-2 ${ filter === "photo" ? "bg-yellow-200" : "bg-white-700" } transition duration-200`}>
+            <FontAwesomeIcon icon={faImage} className="text-blue-600" />
           Photos
         </button>
         <button
           onClick={() => setFilter("video")}
-          className={`py-2 px-4 rounded-md ${
-            filter === "video" ? "bg-yellow-200" : "bg-white-700"
-          } transition duration-200`}>
+          className={`py-2 px-4 rounded-md flex items-center gap-2 ${filter === "video" ? "bg-yellow-200" : "bg-white-700"} transition duration-200`}>
+          <FontAwesomeIcon icon={faVideo} className="text-blue-600" />
           Videos
         </button>
       </div>
@@ -421,8 +392,6 @@ const [isDarkMode, setIsDarkMode] = useState(false);
                       />
                       <p className="text-xs mt-1">{video.title}</p>
                     </div>
-                      
-
                   ))}
               </div>
             </div>
