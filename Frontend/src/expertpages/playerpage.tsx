@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from "react";
-import profile from "../assets/images/profile.jpg";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 import ExpertNavbar from "./expertNavbar";
 import { useNavigate } from "react-router-dom";
+import player from "../assets/images/player.jpg"
+import player1 from "../assets/images/player1.jpg"
+import player2 from "../assets/images/player2.jpg"
+import profile from "../assets/images/profile.jpg"
+import profile1 from "../assets/images/profile1.jpg"
+import player3 from "../assets/images/player3.jpg"
+import player4 from "../assets/images/player4.jpg"
+import player5 from "../assets/images/player5.jpg"
+
+
+
+
+
 
 interface Player {
   name: string;
@@ -14,14 +27,14 @@ interface Player {
 }
 
 const PlayerPage: Player[] = [
-  { name: "John Doe", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: true },
-  { name: "Jane Smith", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
-  { name: "Mike Johnson", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: true },
-  { name: "Kai Liddell", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
-  { name: "John Doe", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: true },
-  { name: "Jane Smith", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
-  { name: "Mike Johnson", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: true },
-  { name: "Kai Liddell", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
+  { name: "John Doe", rating: 3.5, profilePic: player, reviews: 100, verified: true },
+  { name: "Jane Smith", rating: 3.5, profilePic: player1, reviews: 100, verified: false },
+  { name: "Mike Johnson", rating: 3.5, profilePic:player2 , reviews: 100, verified: true },
+  { name: "Kai Liddell", rating: 3.5, profilePic:profile , reviews: 100, verified: false },
+  { name: "John Doe", rating: 3.5, profilePic: profile1, reviews: 100, verified: true },
+  { name: "Jane Smith", rating: 3.5, profilePic: player3, reviews: 100, verified: false },
+  { name: "Mike Johnson", rating: 3.5, profilePic:player4 , reviews: 100, verified: true },
+  { name: "Kai Liddell", rating: 3.5, profilePic:player5, reviews: 100, verified: false },
 ];
 
 const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
@@ -138,7 +151,7 @@ const Expertspage: React.FC = () => {
             {PlayerPage.map((player: Player, index: number) => (
               <div key={index} className="bg-white shadow-md rounded-lg p-4 w-80 dark:bg-slate-600 dark:text-white">
                 <div className="relative">
-                  <img className="rounded-lg w-full h-40" src={profile} alt={player.name} />
+                  <img className="rounded-lg w-full h-40" src={player.profilePic} alt={player.name} />
                   {player.verified && (
                     <span className="absolute top-2 right-2 bg-green-400 text-white text-xs px-2 py-1 rounded-full">✔</span>
                   )}

@@ -226,7 +226,7 @@ const Profile: React.FC = () => {
                 ></textarea>
                 <button
                   onClick={handleSave}
-                  className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                  className="mt-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-500"
                 >
                   Save
                 </button>
@@ -260,7 +260,7 @@ const Profile: React.FC = () => {
                       }}
                     />
                   ))}
-                  <button onClick={saveCertificates} className="mt-2 bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+                  <button onClick={saveCertificates} className="mt-2 bg-red-600 text-white px-4 py-2 rounded">Save</button>
                 </div>
               ) : (
                 <div>
@@ -288,7 +288,7 @@ const Profile: React.FC = () => {
                       }}
                     />
                   ))}
-                  <button onClick={saveAwards} className="mt-2 bg-blue-500 text-white px-4 py-2 rounded">Save</button>
+                  <button onClick={saveAwards} className="mt-2 bg-red-600 text-white px-4 py-2 rounded">Save</button>
                 </div>
               ) : (
                 <div>

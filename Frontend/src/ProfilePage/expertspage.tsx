@@ -1,9 +1,16 @@
 import React, { useState, useEffect } from "react";
-import profile2 from "../assets/images/profile2.jpg";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 import SideNavbar from "./sideNavbar";
 import { useNavigate } from "react-router-dom";
+import profile2 from "../assets/images/profile2.jpg"
+import profile3 from "../assets/images/profile3.jpg"
+import profile4 from "../assets/images/profile4.jpg"
+import profile5 from "../assets/images/profile5.jpg"
+
+
+
 
 interface Expert {
   name: string;
@@ -14,14 +21,14 @@ interface Expert {
 }
 
 const experts: Expert[] = [
-  { name: "John Doe", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: true },
-  { name: "Jane Smith", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
-  { name: "Mike Johnson", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: true },
-  { name: "Kai Liddell", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
-  { name: "Jane Smith", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
-  { name: "Mike Johnson", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: true },
-  { name: "Kai Liddell", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
-  { name: "Kai Liddell", rating: 3.5, profilePic: "https://via.placeholder.com/150", reviews: 100, verified: false },
+  { name: "John Doe", rating: 3.5, profilePic:profile2, reviews: 100, verified: true },
+  { name: "Jane Smith", rating: 3.5, profilePic: profile3, reviews: 100, verified: false },
+  { name: "Mike Johnson", rating: 3.5, profilePic: profile4, reviews: 100, verified: true },
+  { name: "Kai Liddell", rating: 3.5, profilePic: profile5, reviews: 100, verified: false },
+  { name: "Jane Smith", rating: 3.5, profilePic: profile5, reviews: 100, verified: false },
+  { name: "Mike Johnson", rating: 3.5, profilePic: profile4, reviews: 100, verified: true },
+  { name: "Kai Liddell", rating: 3.5, profilePic: profile3, reviews: 100, verified: false },
+  { name: "Kai Liddell", rating: 3.5, profilePic: profile2, reviews: 100, verified: false },
   
   
   
@@ -38,6 +45,12 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
   const handleNext = () => {
     if (currentPage < totalPages) setCurrentPage(currentPage + 1);
   };
+
+
+
+
+
+  
 
   return (
     <div className="flex justify-center mt-6 space-x-2">
@@ -142,7 +155,7 @@ const Expertspage: React.FC = () => {
             {experts.map((expert, index) => (
               <div key={index} className="bg-white shadow-md rounded-lg p-4 w-80 dark:bg-slate-600 dark:text-white">
                 <div className="relative">
-                  <img className="rounded-lg w-full h-40" src={profile2} alt={expert.name} />
+                  <img className="rounded-lg w-full h-40" src={expert.profilePic} alt={expert.name} />
                   {expert.verified && (
                     <span className="absolute top-2 right-2 bg-green-400 text-white text-xs px-2 py-1 rounded-full">✔</span>
                   )}
