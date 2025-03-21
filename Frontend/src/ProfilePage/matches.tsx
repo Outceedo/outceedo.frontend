@@ -1,9 +1,8 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell } from "@fortawesome/free-solid-svg-icons";
+
 import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar";
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 import React, { useState, useEffect } from 'react';
+import PlayerHeader from "./playerheader";
 
 
 
@@ -102,28 +101,9 @@ const Matches: React.FC = () => {
       <div className="flex">
         <SideNavbar />
         
-        {/* Main Content */}
-        <main className="flex-1 p-6 dark:bg-gray-900 dark:text-white">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-Raleway font-semibold text-gray-800 dark:text-white">Matches</h1>
-            <div className="flex space-x-4">
-              <button className="h-12 w-full border p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 dark:bg-gray-800">
-                <i className="fas fa-gem text-blue-700"></i>
-                <p className="text-gray-800 font-Opensans dark:text-white">Upgrade to Premium</p>
-              </button>
-              <button>
-                <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-              </button>
-              <button onClick={toggleTheme} className="p-4 rounded-full dark:bg-gray-800">
-                <FontAwesomeIcon
-                  icon={isDarkMode ? faMoon : faSun}
-                  className="text-gray-600 dark:text-gray-400 text-xl"
-                />
-              </button>
-            </div>
-          </div>
+      <PlayerHeader />
 
-          <div className="p-6">
+          <div className="p-6 mt-20 w-full dark:bg-slate-900">
       {/* Match Form */}
       <div className="bg-gray-100 p-4 rounded-md shadow-md dark:bg-slate-800  ">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 ">
@@ -177,8 +157,7 @@ const Matches: React.FC = () => {
     </div>
 
          
-        </main>
-      </div>
+    </div>
     </>
   );
 };

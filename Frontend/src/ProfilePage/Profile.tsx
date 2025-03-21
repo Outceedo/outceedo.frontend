@@ -1,14 +1,13 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faPen } from "@fortawesome/free-solid-svg-icons";
+import { faPen } from "@fortawesome/free-solid-svg-icons";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
-
 import profile1 from "../assets/images/profile1.jpg";
 import { Link , useLocation} from 'react-router-dom'; // Correct import for Link
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar"; // Corrected import
 import React, { useState, useEffect } from 'react';
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import PlayerHeader from "./playerheader";
 
 interface Stat {
   label: string;
@@ -103,30 +102,13 @@ const Profile: React.FC = () => {
       <div className="flex">
         <SideNavbar /> {/* Sidebar, applying dark mode */}
 
-        {/* Main Content */}
-        <main className="flex-1 p-6 dark:bg-gray-900">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Profile</h1>
-            <div className="flex space-x-4">
-              <button className="h-12 w-full border p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 dark:bg-gray-800">
-                <i className="fas fa-gem text-blue-700"></i>
-                <p className="text-gray-800 font-Opensans dark:text-white">Upgrade to Premium</p>
-              </button>
-              <button>
-                <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-              </button>
-              <button onClick={toggleTheme} className="p-4 rounded-full dark:bg-gray-800">
-                <FontAwesomeIcon
-                  icon={isDarkMode ? faMoon : faSun}
-                  className="text-gray-600 dark:text-gray-400 text-xl"
-                />
-              </button>
-            </div>
-          </div>
+         
+        <PlayerHeader />
+       
 
           {/* Profile Info */}
-          <div className="bg-white shadow-lg rounded-lg p-10 mt-10 dark:bg-gray-800 dark:text-white">
-            <div className="flex items-center">
+          <div className="bg-white   h-full w-full mt-20 rounded-lg p-6  dark:bg-gray-800 dark:text-white">
+            <div className="flex  items-center">
               <img src={profile1} alt="Player" className="rounded-full w-40 h-40" />
               <div className="ml-4">
                 <h2 className="text-xl font-Raleway font-semibold">Rohan Roshan</h2>
@@ -313,8 +295,9 @@ const Profile: React.FC = () => {
              
             </div>
           </div>
-        </main>
       </div>
+      
+      
     </>
   );
 };

@@ -1,12 +1,13 @@
 
 import moment from "moment";
-import React, { useState, useEffect } from 'react';
-import {faBell , faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import  { useState, useEffect } from 'react';
 import SideNavbar from "./sideNavbar"; // Corrected import
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
 import { faImage, faVideo } from "@fortawesome/free-solid-svg-icons"
+import PlayerHeader from "./playerheader";
+
 interface MediaItem {
     id: number;
     type: "photo" | "video";
@@ -150,24 +151,8 @@ const [isDarkMode, setIsDarkMode] = useState(false);
     
             {/* Main Content */}
             <main className="flex-1 p-6 dark:bg-gray-900">
-              <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">ExpertsProfile</h1>
-                <div className="flex space-x-4">
-                  <button className="h-12 w-full border p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 dark:bg-gray-800">
-                    <i className="fas fa-gem text-blue-700"></i>
-                    <p className="text-gray-800 font-Opensans dark:text-white">Upgrade to Premium</p>
-                  </button>
-                  <button>
-                    <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-                  </button>
-                  <button onClick={toggleTheme} className="p-4 rounded-full dark:bg-gray-800">
-                    <FontAwesomeIcon
-                      icon={isDarkMode ? faMoon : faSun}
-                      className="text-gray-600 dark:text-gray-400 text-xl"
-                    />
-                  </button>
-                </div>
-              </div>            
+             <PlayerHeader />
+
    <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg p-10 dark:bg-slate-700">
       <div className="flex justify-between items-center w-full p-4">
   {/* Left - Expert Name */}

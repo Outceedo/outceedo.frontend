@@ -1,12 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar";
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 import React, { useState, useEffect } from 'react';
 import profile from "../assets/images/profile.jpg";
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
-
+import PlayerHeader from "./playerheader";
 
 
 
@@ -45,35 +43,17 @@ const Dashboard: React.FC = () => {
     <>
       <div className="flex">
         <SideNavbar />
-        
-        {/* Main Content */}
-        <main className="flex-1 p-6 dark:bg-gray-900 dark:text-white">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-Raleway font-semibold text-gray-800 dark:text-white">Dashboard</h1>
-            <div className="flex space-x-4">
-              <button className="h-12 w-full border p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 dark:bg-gray-800">
-                <i className="fas fa-gem text-blue-700"></i>
-                <p className="text-gray-800 font-Opensans dark:text-white">Upgrade to Premium</p>
-              </button>
-              <button>
-                <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-              </button>
-              <button onClick={toggleTheme} className="p-4 rounded-full dark:bg-gray-800">
-                <FontAwesomeIcon
-                  icon={isDarkMode ? faMoon : faSun}
-                  className="text-gray-600 dark:text-gray-400 text-xl"
-                />
-              </button>
-            </div>
-          </div>
+      
+          <PlayerHeader />
+           
 
-          <div className="min-h-screen bg-gray-100 p-6 dark:bg-slate-800">
-      {/* Main Container */}
-      <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className=" h-screen w-full mt-20 bg-white p-10 dark:bg-slate-800">
+           {/* Main Container */}
+          <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
         
        {/* Left Section (Upcoming Match) */}
-<div className="md:col-span-2 bg-yellow-100 p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
-  <div className="flex-1">
+     <div className="md:col-span-2 bg-yellow-100 p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
+      <div className="flex-1">
     <h2 className="text-gray-700 font-bold text-xl dark:text-white">Up Coming Match</h2>
     <h1 className="text-2xl font-semibold mt-2">Arsenal Vs Chelsea</h1>
     <p className="text-gray-600 mt-2 dark:text-white "> 22 February 2025</p>
@@ -81,19 +61,19 @@ const Dashboard: React.FC = () => {
     <button className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md ">
       Know about their team
     </button>
-  </div>
+     </div>
 
-  <img
-    src={profile}
-    alt="player"
-    className="w-52 h-52 rounded-lg ml-6"  // Add left margin for spacing
-  />
-</div>
+      <img
+       src={profile}
+       alt="player"
+        className="w-52 h-52 rounded-lg ml-6"  // Add left margin for spacing
+       />
+      </div>
 
         {/* Right Section (Recommendations) */}
-<div className="bg-pink-100 p-4 rounded-lg shadow dark:bg-slate-600">
-  <h2 className="text-gray-700 font-bold dark:text-white">Recommendations</h2>
-  {[1, 2, 3, 4].map((_, index) => (
+      <div className="bg-pink-100 p-4 rounded-lg shadow dark:bg-slate-600">
+       <h2 className="text-gray-700 font-bold dark:text-white">Recommendations</h2>
+       {[1, 2, 3, 4].map((_, index) => (
     <div key={index} className="flex items-center bg-pink-100 p-2 rounded-lg shadow gap-4 mt-3 dark:bg-slate-500 dark:text-white">
       <img
         src={profile}
@@ -151,9 +131,9 @@ const Dashboard: React.FC = () => {
 
       </div>
     </div>
+</div>
 
-        </main>
-      </div>
+        
     </>
   );
 };

@@ -1,14 +1,12 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell,  } from "@fortawesome/free-solid-svg-icons";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
-
 import profile1 from "../assets/images/profile1.jpg";
 import { Link } from 'react-router-dom'; // Correct import for Link
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import ExpertNavbar from "./expertNavbar"; // Corrected import
 import React, { useState, useEffect } from 'react';
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import ExpertHeader from "./expertheader";
 
 interface Stat {
   label: string;
@@ -72,24 +70,7 @@ const Player: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-6 dark:bg-gray-900">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Profile</h1>
-            <div className="flex space-x-4">
-              <button className="h-12 w-full border p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 dark:bg-gray-800">
-                <i className="fas fa-gem text-blue-700"></i>
-                <p className="text-gray-800 font-Opensans dark:text-white">Upgrade to Premium</p>
-              </button>
-              <button>
-                <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-              </button>
-              <button onClick={toggleTheme} className="p-4 rounded-full dark:bg-gray-800">
-                <FontAwesomeIcon
-                  icon={isDarkMode ? faMoon : faSun}
-                  className="text-gray-600 dark:text-gray-400 text-xl"
-                />
-              </button>
-            </div>
-          </div>
+         <ExpertHeader />
 
           {/* Profile Info */}
           <div className="bg-white shadow-lg rounded-lg p-10 mt-10 dark:bg-gray-800 dark:text-white">

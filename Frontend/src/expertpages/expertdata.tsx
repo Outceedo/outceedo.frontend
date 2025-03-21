@@ -1,13 +1,11 @@
 import { useState, useEffect } from "react";
-
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faPen } from "@fortawesome/free-solid-svg-icons";
-import { faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
+import {  faPen } from "@fortawesome/free-solid-svg-icons";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import ExpertNavbar from "./expertNavbar"; // Corrected import
 import profile2 from "../assets/images/profile2.jpg";
-
+import ExpertHeader from "./expertheader";
 import ExpertMedia from "./expertmedia";
 
 interface MediaItem {
@@ -171,25 +169,7 @@ const ExpertData :React.FC = () => {
         
                 {/* Main Content */}
                 <main className="flex-1 p-6 dark:bg-gray-900">
-                  <div className="flex justify-between items-center">
-                    <h1 className="text-2xl font-semibold text-gray-800 dark:text-white">Experts</h1>
-                    <div className="flex space-x-4">
-                      <button className="h-12 w-full border p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 dark:bg-gray-800">
-                        <i className="fas fa-gem text-blue-700"></i>
-                        <p className="text-gray-800 font-Opensans dark:text-white">Upgrade to Premium</p>
-                      </button>
-                      <button>
-                        <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-                      </button>
-                      <button onClick={toggleTheme} className="p-4 rounded-full dark:bg-gray-800">
-                        <FontAwesomeIcon
-                          icon={isDarkMode ? faMoon : faSun}
-                          className="text-gray-600 dark:text-gray-400 text-xl"
-                        />
-                      </button>
-                    </div>
-                  </div>
-                  
+                 <ExpertHeader />
                   
 
     <div className="max-w-7xl mx-auto mt-5 bg-white p-6 dark:bg-slate-800">

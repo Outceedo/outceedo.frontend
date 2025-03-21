@@ -26,6 +26,7 @@ import PlayerPage from './expertpages/playerpage';
 import Player from './expertpages/player';
 import PlayerMedia from './expertpages/playermedia';
 import PlayerReviews from './expertpages/playerreviews';
+import PlayerHeader from './ProfilePage/playerheader';
 
 
 
@@ -47,6 +48,11 @@ const App: React.FC = () => {
         <Route path="/profile" element={<Profile />} />
         <Route path="/media" element={<Media />} />
         <Route path="/reviews" element={<Reviews />} />
+        <Route path="/reviews" element={<Reviews />} />
+        <Route path="/playerheader" element={<PlayerHeader />} />
+        
+        
+
 
         {/* Pass onClose and onMediaUpdate to MediaUpload */}
         <Route

@@ -1,9 +1,10 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faSun, faMoon, faVideo, faFileAlt, faEye , faEyeSlash } from "@fortawesome/free-solid-svg-icons";
+import {  faVideo, faFileAlt, faEye , faEyeSlash } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar";
 import React, { useState, useEffect } from "react";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
+import PlayerHeader from "./playerheader";
 
 
 interface Booking {
@@ -93,20 +94,13 @@ const MyBooking: React.FC = () => {
   return (
     <div className="flex">
       <SideNavbar />
-      <main className="flex-1 p-6 bg-gray-100 dark:bg-gray-900 dark:text-white">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold">MyBooking</h1>
-          <div className="flex space-x-4">
-            <button>
-              <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-              </button>
-            <button onClick={toggleTheme} className="p-3 rounded-full bg-gray-200 dark:bg-gray-800">
-              <FontAwesomeIcon icon={isDarkMode ? faMoon : faSun} className="text-xl" />
-            </button>
-          </div>
-        </div>
+   
+
+      <div className="flex-1 min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
+       <PlayerHeader />
          
-        <div className="flex items-center space-x-4 mb-4">
+       <main className="mt-16 p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
+       <div className="flex items-center space-x-4 mb-4">
   {/* Search Input with Icon */}
   <div className="relative w-1/3">
     <FontAwesomeIcon
@@ -190,8 +184,10 @@ const MyBooking: React.FC = () => {
             </tbody>
           </table>
         </div>
-      </main>
-    </div>
+      
+        </main>
+        </div>
+        </div>
   );
 };
 

@@ -1,7 +1,4 @@
 import React, { useState, useEffect } from "react";
-
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBell, faSun, faMoon } from "@fortawesome/free-solid-svg-icons";
 import ExpertNavbar from "./expertNavbar";
 import { useNavigate } from "react-router-dom";
 import player from "../assets/images/player.jpg"
@@ -12,7 +9,7 @@ import profile1 from "../assets/images/profile1.jpg"
 import player3 from "../assets/images/player3.jpg"
 import player4 from "../assets/images/player4.jpg"
 import player5 from "../assets/images/player5.jpg"
-
+import ExpertHeader from "./expertheader";
 
 
 
@@ -114,21 +111,7 @@ const Expertspage: React.FC = () => {
 
       {/* Main Content */}
       <main className="flex-1 p-6 dark:bg-gray-900 dark:text-white">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-Raleway font-semibold text-gray-800 dark:text-white">Experts</h1>
-          <div className="flex space-x-4">
-            <button className="h-12 w-full border p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 dark:bg-gray-800">
-              <i className="fas fa-gem text-blue-700"></i>
-              <p className="text-gray-800 font-Opensans dark:text-white">Upgrade to Premium</p>
-            </button>
-            <button>
-              <FontAwesomeIcon icon={faBell} className="text-gray-600 dark:text-gray-400 text-xl" />
-            </button>
-            <button onClick={toggleTheme} className="p-4 rounded-full dark:bg-gray-800">
-              <FontAwesomeIcon icon={isDarkMode ? faMoon : faSun} className="text-gray-600 dark:text-gray-400 text-xl" />
-            </button>
-          </div>
-        </div>
+       <ExpertHeader />
 
         <div className="min-h-screen bg-gray-100 p-6 mt-4 rounded-xl dark:bg-slate-800">
           {/* Filters Section */}
