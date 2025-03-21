@@ -10,10 +10,11 @@ interface UploadItem {
   type: "photo" | "video";
 }
 
-const MediaUpload: React.FC<{ onClose: () => void; onMediaUpdate: () => void }> = ({ onClose, onMediaUpdate }) => {
+const MediaUpload: React.FC<{ onMediaUpdate: () => void; onClose: () => void }> = ({ onMediaUpdate, onClose }) => {
+
   const [uploads, setUploads] = useState<UploadItem[]>([]);
   const [activeTab, setActiveTab] = useState<"photo" | "video">("photo");
-
+  
   useEffect(() => {
     const savedMedia = JSON.parse(localStorage.getItem("savedMedia") || "[]");
     setUploads(savedMedia);
@@ -45,14 +46,22 @@ const MediaUpload: React.FC<{ onClose: () => void; onMediaUpdate: () => void }> 
     localStorage.setItem("savedMedia", JSON.stringify(uploads));
     alert("Media saved successfully!");
     onMediaUpdate();
+    onClose(); // Close the modal properly
+  };
+
+  const handleClose = () => {
     onClose();
   };
 
   return (
-    <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg w-[600px]">
+    <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg w-[600px] relative">
+      <button onClick={handleClose} className="absolute top-2 right-2 text-gray-600 dark:text-gray-300">
+        <FontAwesomeIcon icon={faTimes} size="lg" />
+      </button>
+
       <h2 className="text-xl font-Raleway font-semibold">Upload Media</h2>
 
-      {/* Tabs for Photos & Videos */}
+      {/* Tabs */}
       <div className="flex space-x-4 border-b pb-2 mt-2">
         <span
           onClick={() => setActiveTab("photo")}
@@ -92,7 +101,7 @@ const MediaUpload: React.FC<{ onClose: () => void; onMediaUpdate: () => void }> 
           </div>
         ))}
 
-      {/* Preview Section */}
+      {/* Preview */}
       <div className="mt-4">
         {uploads
           .filter((item) => item.preview && item.type === activeTab)
@@ -107,7 +116,7 @@ const MediaUpload: React.FC<{ onClose: () => void; onMediaUpdate: () => void }> 
           ))}
       </div>
 
-      {/* Add & Save Buttons */}
+      {/* Buttons */}
       <div className="flex justify-between items-center mt-4">
         <button
           onClick={() => handleAdd(activeTab)}

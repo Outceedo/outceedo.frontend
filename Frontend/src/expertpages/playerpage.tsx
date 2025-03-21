@@ -12,9 +12,6 @@ import player5 from "../assets/images/player5.jpg"
 import ExpertHeader from "./expertheader";
 
 
-
-
-
 interface Player {
   name: string;
   rating: number;

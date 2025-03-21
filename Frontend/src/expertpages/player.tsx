@@ -58,11 +58,7 @@ const Player: React.FC = () => {
       localStorage.setItem("darkMode", "enabled");
     }
   };
-
-  
-
-  
-
+ 
   return (
     <>
       <div className="flex">

@@ -1,10 +1,8 @@
 
 import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar";
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PlayerHeader from "./playerheader";
-
-
 
 interface Match {
     id: number;
@@ -12,46 +10,18 @@ interface Match {
     homeTeam: string;
     awayTeam: string;
     type: string;
+    status:string;
     result: string;
   }
 
-
-
-const Matches: React.FC = () => {
-
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-
-  
-  // On initial load, check if dark mode is enabled
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled") {
-      setIsDarkMode(true);
-      document.body.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.body.classList.remove('dark');
-    }
-  }, []);
-  
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (isDarkMode) {
-      document.body.classList.remove('dark');
-      localStorage.setItem("darkMode", "disabled");
-    } else {
-      document.body.classList.add('dark');
-      localStorage.setItem("darkMode", "enabled");
-    }
-  };
+const Matches: React.FC = () => { 
 
   const [matches, setMatches] = useState<Match[]>([
-    { id: 1, date: "Feb 14, 2025", homeTeam: "ByeWind", awayTeam: "ByeWind", type: "State", result: "2 - 0" },
-    { id: 2, date: "Feb 10, 2025", homeTeam: "Natali Craig", awayTeam: "Natali Craig", type: "Inter university", result: "1 - 0" },
-    { id: 3, date: "Jan 20, 2025", homeTeam: "Drew Cano", awayTeam: "Drew Cano", type: "International", result: "1 - 0" },
-    { id: 4, date: "Dec 15, 2024", homeTeam: "Orlando Diggs", awayTeam: "Orlando Diggs", type: "State", result: "2 - 0" },
-    { id: 5, date: "Nov 25, 2024", homeTeam: "Andi Lane", awayTeam: "Andi Lane", type: "State", result: "3 - 0" },
+    { id: 1, date: "Feb 14, 2025", homeTeam: "ByeWind", awayTeam: "ByeWind", type: "State",status:"won", result: "2 - 0" },
+    { id: 2, date: "Feb 10, 2025", homeTeam: "Natali Craig", awayTeam: "Natali Craig", type: "Inter university",status:"won",  result: "1 - 0" },
+    { id: 3, date: "Jan 20, 2025", homeTeam: "Drew Cano", awayTeam: "Drew Cano", type: "International",status:"won",  result: "1 - 0" },
+    { id: 4, date: "Dec 15, 2024", homeTeam: "Orlando Diggs", awayTeam: "Orlando Diggs", type: "State",status:"won",  result: "2 - 0" },
+    { id: 5, date: "Nov 25, 2024", homeTeam: "Andi Lane", awayTeam: "Andi Lane", type: "State", status:"won", result: "3 - 0" },
   ]);
 
   const [formData, setFormData] = useState<Match>({
@@ -60,6 +30,7 @@ const Matches: React.FC = () => {
     homeTeam: "",
     awayTeam: "",
     type: "",
+    status:"",
     result: "",
   });
 
@@ -79,7 +50,7 @@ const Matches: React.FC = () => {
       setMatches([...matches, { ...formData, id: matches.length + 1 }]);
     }
 
-    setFormData({ id: 0, date: "", homeTeam: "", awayTeam: "", type: "", result: "" });
+    setFormData({ id: 0, date: "", homeTeam: "", awayTeam: "", type: "", status:"",result: "" });
   };
 
   const handleEdit = (id: number) => {
@@ -93,8 +64,6 @@ const Matches: React.FC = () => {
   const handleDelete = (id: number) => {
     setMatches(matches.filter((match) => match.id !== id));
   };
-
-
 
   return (
     <>
@@ -111,9 +80,10 @@ const Matches: React.FC = () => {
           <input type="text" name="homeTeam" placeholder="Home Team" value={formData.homeTeam} onChange={handleChange} className="p-2 border rounded-md  dark:bg-slate-600 dark:text-white" required />
           <input type="text" name="awayTeam" placeholder="Away Team" value={formData.awayTeam} onChange={handleChange} className="p-2 border rounded-md  dark:bg-slate-600 dark:text-white" required />
           <input type="text" name="type" placeholder="Type" value={formData.type} onChange={handleChange} className="p-2 border rounded-md  dark:bg-slate-600 dark:text-white" required />
-          <textarea name="result" placeholder="Results" value={formData.result} onChange={handleChange} className="col-span-2 p-2 border rounded-md  dark:bg-slate-600 dark:text-white" required />
+          <input type="text" name="status" placeholder="Status" value={formData.type} onChange={handleChange} className="p-2 border rounded-md  dark:bg-slate-600 dark:text-white" required />
+           <textarea name="result" placeholder="Results" value={formData.result} onChange={handleChange} className="col-span-2 p-2 border rounded-md  dark:bg-slate-600 dark:text-white" required />
           <div className="col-span-2 flex justify-end gap-2">
-            <button type="button" onClick={() => setFormData({ id: 0, date: "", homeTeam: "", awayTeam: "", type: "", result: "" })} className="px-4 py-2 bg-gray-400 text-white rounded-md">Cancel</button>
+            <button type="button" onClick={() => setFormData({ id: 0, date: "", homeTeam: "", awayTeam: "", type: "",status:"", result: "" })} className="px-4 py-2 bg-gray-400 text-white rounded-md">Cancel</button>
             <button type="submit" className="px-4 py-2 bg-red-500 text-white rounded-md">{editingId !== null ? "Update" : "Submit"}</button>
           </div>
         </form>
@@ -128,6 +98,7 @@ const Matches: React.FC = () => {
               <th className="p-2  dark:bg-slate-700 ">Home Team</th>
               <th className="p-2  dark:bg-slate-700 ">Away Team</th>
               <th className="p-2  dark:bg-slate-700 ">Type</th>
+              <th className="p-2  dark:bg-slate-700 ">Status</th>
               <th className="p-2  dark:bg-slate-700 ">Result</th>
               <th className="p-2  dark:bg-slate-700 ">Actions</th>
             </tr>
@@ -139,6 +110,7 @@ const Matches: React.FC = () => {
                 <td className="p-2">{match.homeTeam}</td>
                 <td className="p-2">{match.awayTeam}</td>
                 <td className="p-2">{match.type}</td>
+                <td className="p-2">{match.status}</td>
                 <td className="p-2">{match.result}</td>
                 <td className="p-2 flex gap-2">
                 <button onClick={() => handleEdit(match.id)} className="text-blue-500 hover:text-blue-700">

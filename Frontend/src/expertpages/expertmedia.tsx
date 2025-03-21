@@ -1,7 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faTrash, faImage, faVideo, faUpload } from "@fortawesome/free-solid-svg-icons";
 import React, { useState, useEffect } from "react";
-import MediaUpload from "../ProfilePage/MediaUpload";
+import MediaUpload from "../Playerpages/MediaUpload";
 
 interface UploadItem {
   id: number;
