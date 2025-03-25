@@ -1,13 +1,13 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile1 from "../assets/images/profile1.jpg";
-import { Link } from 'react-router-dom'; // Correct import for Link
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import ExpertNavbar from "./expertNavbar"; // Corrected import
-import React, { useState, useEffect } from 'react';
 import ExpertHeader from "./expertheader";
-
+import PlayerMedia from "./playermedia";
+import PlayerReview from "./playerreviews";
+import { useState } from "react";
 interface Stat {
   label: string;
   percentage: number;
@@ -33,44 +33,19 @@ const calculateOVR = (stats: Stat[]) => {
 const OVR = calculateOVR(stats);
 
 const Player: React.FC = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
+  const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">("details");
 
-  // On initial load, check if dark mode is enabled
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled") {
-      setIsDarkMode(true);
-      document.body.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.body.classList.remove('dark');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (isDarkMode) {
-      document.body.classList.remove('dark');
-      localStorage.setItem("darkMode", "disabled");
-    } else {
-      document.body.classList.add('dark');
-      localStorage.setItem("darkMode", "enabled");
-    }
-  };
- 
   return (
-    <>
       <div className="flex">
         <ExpertNavbar /> {/* Sidebar, applying dark mode */}
 
         {/* Main Content */}
-        <main className="flex-1 p-6 dark:bg-gray-900">
+        <main className="ml-[250px] flex-1 p-6 min-h-screen bg-white dark:bg-gray-900">
          <ExpertHeader />
 
           {/* Profile Info */}
-          <div className="bg-white shadow-lg rounded-lg p-10 mt-10 dark:bg-gray-800 dark:text-white">
-            <div className="flex items-center">
+          <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg p-10 dark:bg-slate-700">
+          <div className="flex justify-between items-center w-full p-4">
               <img src={profile1} alt="Player" className="rounded-full w-40 h-40" />
               <div className="ml-4">
                 <h2 className="text-xl font-Raleway font-semibold">Rohan Roshan</h2>
@@ -118,16 +93,26 @@ const Player: React.FC = () => {
                 ))}
               </div>
             </div>
-
-            {/* Details Section */}
-            <div className="mt-4">
-              <div className="flex items-center border-b pb-2 gap-5">
-                <Link to="/player" className="text-gray-700 font-Raleway text-lg font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600 ">Details</Link>
-                <Link to="/playermedia" className=" text-gray-700 font-Raleway text-lg font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600 ">Media</Link>
-                <Link to="/playerreviews" className=" text-gray-700 font-Raleway text-lg font-semibold hover:text-red-600 dark:text-white dark:hover:text-red-600 ">Reviews</Link>
-              </div>
-            </div>
-
+                  {/* Tab Navigation */}
+      <div className="flex items-center border-b pb-2 gap-5">
+        {(["details", "media", "reviews"] as const).map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className={`text-lg font-semibold capitalize focus:outline-none ${
+              activeTab === tab
+                ? "text-red-600 border-b-2 border-red-600"
+                : "text-gray-700 dark:text-white hover:text-red-600 dark:hover:text-red-600"
+            }`}
+          >
+            {tab}
+          </button>
+        ))}
+      </div>
+{/* Tab Content */}
+<div >
+{activeTab === "details" && (
+  <div className="mt-4 space-y-6">
                {/* About Me Section */}
           <div className="mt-4 relative border p-4 rounded-lg dark:bg-gray-700 dark:text-white">
             <h3 className="text-lg font-semibold">About Me</h3>
@@ -150,8 +135,6 @@ const Player: React.FC = () => {
             </div>
           </div>
           
-          </div>
-
             {/* Social Links */}
             <div className="mt-4 relative border p-4 rounded-lg dark:bg-gray-700">
               <h3 className="text-lg font-Raleway font-semibold">Socials</h3>
@@ -161,13 +144,25 @@ const Player: React.FC = () => {
                 <FontAwesomeIcon icon={faFacebook} className="text-blue-800 text-3xl cursor-pointer" />
                 <FontAwesomeIcon icon={faTwitter} className="text-blue-600 text-3xl cursor-pointer" />
               </div>
-             
+         </div> 
+         </div>   
+)}
+{activeTab === "media" && (
+  <div >
+    <PlayerMedia />
   </div>
+)}
+
+{activeTab === "reviews" && (
+  <div>
+    <PlayerReview />
+  </div>
+)}
+</div>
+</div>
   </main>
   </div>
-  </>
-          
-        
+       
   );
 };
 

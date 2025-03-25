@@ -1,6 +1,6 @@
 
 import moment from "moment";
-import  { useState, useEffect } from 'react';
+import  { useState } from 'react';
 import SideNavbar from "./sideNavbar"; // Corrected import
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
@@ -60,30 +60,6 @@ const expertData = {
 
 const Experts= () => {
 
-const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // On initial load, check if dark mode is enabled
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled") {
-      setIsDarkMode(true);
-      document.body.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.body.classList.remove('dark');
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (isDarkMode) {
-      document.body.classList.remove('dark');
-      localStorage.setItem("darkMode", "disabled");
-    } else {
-      document.body.classList.add('dark');
-      localStorage.setItem("darkMode", "enabled");
-    }
-  };
   const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews"|"services" >("details");
   const [media] = useState<MediaItem[]>([]); 
   const[filter,setFilter]= useState<"all"|"photo"|"video">("all");
@@ -253,6 +229,7 @@ const [isDarkMode, setIsDarkMode] = useState(false);
           >
           Reviews
           </button>
+          
           <button
             onClick={() => setActiveTab("services")}
             className={`pb-2 ${activeTab === "services" ? "border-b-2 border-red-500 font-semibold text-red-500" : "text-gray-500  dark:text-white"}`}

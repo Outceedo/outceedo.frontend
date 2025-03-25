@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import profile from "../assets/images/profile.jpg";
 import "react-circular-progressbar/dist/styles.css";
 import { useNavigate } from "react-router-dom";
@@ -41,12 +41,11 @@ const SideNavbar: React.FC = () => {
                   key={item.name}
                   className={`p-3 rounded-lg flex items-center space-x-2 cursor-pointer transition-all
                     ${isActive ? "bg-gray-200 shadow-md dark:bg-gray-700" : "hover:bg-gray-200 dark:hover:bg-gray-700"}
-                  `}
-                >
-                  <Link to={item.path} className="flex items-center space-x-2 w-full">
-                    <i className={`${item.icon} text-lg text-gray-800 dark:text-gray-300`}></i>
-                    <span className="text-gray-800 dark:text-white">{item.name}</span>
-                  </Link>
+                  `}     >
+                 <div onClick={() => navigate(item.path)} className="flex items-center space-x-2 w-full cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 p-2 rounded-md transition"  >
+      <i className={`${item.icon} text-lg text-gray-800 dark:text-gray-300`}></i>
+      <span className="text-gray-800 dark:text-white">{item.name}</span>
+    </div>
                 </li>
               );
             })}

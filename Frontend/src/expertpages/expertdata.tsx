@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {  faPen } from "@fortawesome/free-solid-svg-icons";
@@ -63,33 +63,7 @@ const ExpertData :React.FC = () => {
   const [selectedService, setSelectedService] = useState<Service | null>(null);
    const [aboutMe, setAboutMe] = useState(localStorage.getItem("aboutMe") || "I am from London, UK. A passionate, versatile musician bringing light to classics from Ella Fitzgerald to Guns and Roses. Guaranteed to get the crowd dancing.");
     const [isEditing, setIsEditing] = useState(false);
-
-
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-    // On initial load, check if dark mode is enabled
-    useEffect(() => {
-      const savedMode = localStorage.getItem("darkMode");
-      if (savedMode === "enabled") {
-        setIsDarkMode(true);
-        document.body.classList.add('dark');
-      } else {
-        setIsDarkMode(false);
-        document.body.classList.remove('dark');
-      }
-    }, []);
-  
-    const toggleTheme = () => {
-      setIsDarkMode(!isDarkMode);
-      if (isDarkMode) {
-        document.body.classList.remove('dark');
-        localStorage.setItem("darkMode", "disabled");
-      } else {
-        document.body.classList.add('dark');
-        localStorage.setItem("darkMode", "enabled");
-      }
-    };
-
+ 
   // Sample Services Data
   const services: Service[] = [
     {
@@ -156,26 +130,20 @@ const ExpertData :React.FC = () => {
   const handleSave = () => {
     localStorage.setItem("aboutMe", aboutMe);
     setIsEditing(false);
-  };
-
-  
+  };  
 
   return (
 
-       
-
      <div className="flex">
                 <ExpertNavbar /> {/* Sidebar, applying dark mode */}
-        
-                {/* Main Content */}
-                <main className="flex-1 p-6 dark:bg-gray-900">
-                 <ExpertHeader />
-                  
+                 {/* Main Content */}
+                 <main className="ml-[250px] flex-1 p-6 min-h-screen bg-white dark:bg-gray-900">
+                             <ExpertHeader />
 
-    <div className="max-w-7xl mx-auto mt-5 bg-white p-6 dark:bg-slate-800">
-      <div className="flex justify-between items-center w-full dark:text-white  p-4">
+                             <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg p-10 dark:bg-slate-700">
+                             <div className="flex justify-between items-center w-full p-4">
   {/* Left - Expert Name */}
-  <div>
+  <div >
     <div className="flex justify-center gap-20">
   <h1 className="text-2xl font-bold">{expertData.name}</h1>
           {/* Social Media Icons */}
@@ -389,9 +357,7 @@ const ExpertData :React.FC = () => {
       </div>
       </div>
       </main>
-      </div>
-      
-
+       </div>  
   );
 };
 export default ExpertData ;

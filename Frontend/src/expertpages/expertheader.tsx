@@ -4,7 +4,6 @@ import {faBell ,faSun, faMoon } from '@fortawesome/free-solid-svg-icons';
 import React, { useState, useEffect } from 'react';
 import { useLocation } from "react-router-dom"; // Import for dynamic title
 
-
 const pageTitles: { [key: string]: string } = {
     "/dashboard": "Dashboard",
     "/expertdata": "Profile",
@@ -16,10 +15,6 @@ const pageTitles: { [key: string]: string } = {
 
   };
   
-
-
-
-
 const ExpertHeader: React.FC = () => {
 
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -53,9 +48,7 @@ const ExpertHeader: React.FC = () => {
 
   return (
     <>
-       <div className=" dark:bg-gray-900 ">
-     
-      
+       <div className=" dark:bg-gray-900 ">        
         <main className="flex-1 p-6 dark:bg-gray-900 dark:text-white">
         <div className="fixed top-0 left-64 right-0 bg-white dark:bg-gray-900 shadow-md px-6 py-4 z-50 flex justify-between items-center">
             <h1 className="text-2xl font-Raleway font-semibold text-gray-800 dark:text-white"> {currentTitle}</h1>
@@ -74,10 +67,7 @@ const ExpertHeader: React.FC = () => {
                 />
               </button>
             </div>
-          </div>
-         
-     
-        
+          </div>          
         </main>
       </div>
     </>

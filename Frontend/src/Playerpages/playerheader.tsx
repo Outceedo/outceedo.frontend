@@ -14,12 +14,7 @@ const pageTitles: { [key: string]: string } = {
     "/sponsors": "Sponsors",
   };
   
-
-
-
-
 const PlayerHeader: React.FC = () => {
-
   const [isDarkMode, setIsDarkMode] = useState(false);
   
   const location = useLocation(); // Get current route
@@ -72,11 +67,8 @@ const PlayerHeader: React.FC = () => {
                 />
               </button>
             </div>
-          </div>
-         
-     
-        
-        </main>
+          </div> 
+       </main>
       </div>
     </>
   );

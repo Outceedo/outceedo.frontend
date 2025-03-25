@@ -7,9 +7,6 @@ import profile4 from "../assets/images/profile4.jpg"
 import profile5 from "../assets/images/profile5.jpg"
 import PlayerHeader from "./playerheader";
 
-
-
-
 interface Expert {
   name: string;
   rating: number;
@@ -45,10 +42,6 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
   };
 
 
-
-
-
-  
 
   return (
     <div className="flex justify-center mt-6 space-x-2">
@@ -86,30 +79,7 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
 const Expertspage: React.FC = () => {
   const [filters, setFilters] = useState({ profession: "", city: "", country: "", gender: "", language: "" });
   const navigate = useNavigate();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled") {
-      setIsDarkMode(true);
-      document.body.classList.add("dark");
-    } else {
-      setIsDarkMode(false);
-      document.body.classList.remove("dark");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (isDarkMode) {
-      document.body.classList.remove("dark");
-      localStorage.setItem("darkMode", "disabled");
-    } else {
-      document.body.classList.add("dark");
-      localStorage.setItem("darkMode", "enabled");
-    }
-  };
-
+ 
   return (
     <div className="flex">
       <SideNavbar />

@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import User from './user';
 
 const Navbar: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false); // Toggle the menu visibility
   const [navbarBg, setNavbarBg] = useState<string>('transparent'); // Track background color on scroll
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const navigate = useNavigate();
    const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen); // Toggle menu visibility
   };
@@ -56,9 +57,12 @@ const Navbar: React.FC = () => {
 
       {/* Right side - Login and Sign Up */}
       <div className="space-x-6 ml-auto  hidden md:flex">
-        <Link to="/login" className="font-Raleway font-semibold text-2xl  border-2 px-6 py-3 rounded-xl hover:text-[#FE221E] hover:bg-white transition cursor-pointer">
-          Login
-        </Link>
+      <div
+      onClick={() => navigate("/login")}
+      className="font-Raleway font-semibold text-2xl border-2 px-6 py-3 rounded-xl hover:text-[#FE221E] hover:bg-white transition cursor-pointer"
+    >
+      Login
+    </div>
         <button
         onClick={() => setIsModalOpen(true)}
         className="font-Raleway font-semibold text-xl sm:text-2xl bg-[#FE221E] hover:bg-red-500 transition cursor-pointer text-white px-6 py-3 rounded-xl"
@@ -119,12 +123,18 @@ const Navbar: React.FC = () => {
             Contact Us
           </a>
           <div className="flex space-x-4">
-            <Link to="/login" className="font-Raleway font-semibold text-xl border-2 px-4 py-1 rounded-xl hover:text-[#FE221E] hover:bg-white transition cursor-pointer">
-              Login
-            </Link>
-            <Link to="/signup" className="font-Raleway font-semibold text-xl bg-[#FE221E] hover:bg-red-500 transition cursor-pointer text-white px-4 py-1 rounded-xl">
-              Sign Up
-            </Link>
+          <div
+        onClick={() => navigate("/login")}
+        className="font-Raleway font-semibold text-xl border-2 px-4 py-1 rounded-xl hover:text-[#FE221E] hover:bg-white transition cursor-pointer"
+      >
+        Login
+      </div>
+      <div
+        onClick={() => navigate("/signup")}
+        className="font-Raleway font-semibold text-xl bg-[#FE221E] hover:bg-red-500 transition cursor-pointer text-white px-4 py-1 rounded-xl"
+      >
+        Sign Up
+      </div>
           </div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState} from "react";
 import ExpertNavbar from "./expertNavbar";
 import { useNavigate } from "react-router-dom";
 import player from "../assets/images/player.jpg"
@@ -10,8 +10,6 @@ import player3 from "../assets/images/player3.jpg"
 import player4 from "../assets/images/player4.jpg"
 import player5 from "../assets/images/player5.jpg"
 import ExpertHeader from "./expertheader";
-
-
 interface Player {
   name: string;
   rating: number;
@@ -78,41 +76,19 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
 const Expertspage: React.FC = () => {
   const [filters, setFilters] = useState({ profession: "", city: "", country: "", gender: "", language: "" });
   const navigate = useNavigate();
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled") {
-      setIsDarkMode(true);
-      document.body.classList.add("dark");
-    } else {
-      setIsDarkMode(false);
-      document.body.classList.remove("dark");
-    }
-  }, []);
-
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (isDarkMode) {
-      document.body.classList.remove("dark");
-      localStorage.setItem("darkMode", "disabled");
-    } else {
-      document.body.classList.add("dark");
-      localStorage.setItem("darkMode", "enabled");
-    }
-  };
-
+ 
   return (
     <div className="flex">
-      <ExpertNavbar />
+  {/* Fixed Sidebar */}
+    <ExpertNavbar />
+ 
+  {/* Main Content */}
+  <main className="ml-[250px] flex-1 p-6 bg-gray-100 min-h-screen dark:bg-gray-900">
+    <ExpertHeader />
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 dark:bg-gray-900 dark:text-white">
-       <ExpertHeader />
-
-        <div className="min-h-screen bg-gray-100 p-6 mt-4 rounded-xl dark:bg-slate-800">
-          {/* Filters Section */}
-          <div className="flex flex-wrap gap-4 justify-start mb-6">
+    <div className="min-h-screen bg-gray-100 p-6 mt-4 rounded-xl dark:bg-slate-800">
+      {/* Filters Section */}
+      <div className="flex flex-wrap gap-4 justify-start mb-6">
             {["Profession", "City", "Country", "Gender", "Language"].map((filter) => (
               <select
                 key={filter}
@@ -160,7 +136,7 @@ const Expertspage: React.FC = () => {
           {/* Pagination */}
           <Pagination totalPages={2} />
         </div>
-      </main>
+</main>
     </div>
   );
 };

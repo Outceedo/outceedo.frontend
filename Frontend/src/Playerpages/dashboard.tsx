@@ -1,52 +1,16 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar";
-import React, { useState, useEffect } from 'react';
 import profile from "../assets/images/profile.jpg";
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import PlayerHeader from "./playerheader";
-
-
-
-
-
 const Dashboard: React.FC = () => {
-
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  
-
-  
-  // On initial load, check if dark mode is enabled
-  useEffect(() => {
-    const savedMode = localStorage.getItem("darkMode");
-    if (savedMode === "enabled") {
-      setIsDarkMode(true);
-      document.body.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.body.classList.remove('dark');
-    }
-  }, []);
-  
-  const toggleTheme = () => {
-    setIsDarkMode(!isDarkMode);
-    if (isDarkMode) {
-      document.body.classList.remove('dark');
-      localStorage.setItem("darkMode", "disabled");
-    } else {
-      document.body.classList.add('dark');
-      localStorage.setItem("darkMode", "enabled");
-    }
-  };
 
   return (
     <>
       <div className="flex">
-        <SideNavbar />
-      
-          <PlayerHeader />
-           
-
+        <SideNavbar />  
+          <PlayerHeader />      
           <div className=" h-screen w-full mt-20 bg-white p-10 dark:bg-slate-800">
            {/* Main Container */}
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -90,8 +54,6 @@ const Dashboard: React.FC = () => {
     </div>
   ))}
 </div>
-
-
         {/* Recent Matches Section */}
         <div className="md:col-span-2 bg-white p-6 rounded-lg shadow mt-6 dark:bg-slate-600">
           <h2 className="text-gray-700 font-bold dark:text-white">Recent Matches</h2>
@@ -132,8 +94,7 @@ const Dashboard: React.FC = () => {
       </div>
     </div>
 </div>
-
-        
+       
     </>
   );
 };

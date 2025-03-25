@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom'; // Import Link
 import profile2 from "../assets/images/profile2.jpg";
 import "react-circular-progressbar/dist/styles.css";
 import { useNavigate } from "react-router-dom";
@@ -19,9 +18,7 @@ const ExpertNavbar: React.FC = () => {
                   className="rounded-full mx-auto w-24 h-24 cursor-pointer"
                 onClick={() => navigate("/detailsform")}
                 />
-
-
-          
+        
           <h2 className="text-lg font-semibold mt-4 font-Raleway text-gray-800 dark:text-white">Rohan Roshan</h2>
           <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">Under 15</p>
           <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">Goal Keeper</p>
@@ -38,21 +35,18 @@ const ExpertNavbar: React.FC = () => {
               { name: "Sponsors", icon: "fas fa-handshake", path: "" },
               
             ].map((item) => (
-              <li key={item.name} className="p-3 hover:bg-gray-200 hover:shadow-md dark:hover:bg-gray-700 cursor-pointer rounded-lg flex items-center space-x-2">
-                <Link to={item.path} className="flex items-center space-x-2">
-                  <i className={`${item.icon} text-lg text-gray-800 dark:text-gray-300`}></i>
-                  <span className="text-gray-800 dark:text-white">{item.name}</span>
-                </Link>
-              </li>
-            ))}
+              <li
+              key={item.name}
+              className="p-3 hover:bg-gray-200 hover:shadow-md dark:hover:bg-gray-700 cursor-pointer rounded-lg flex items-center space-x-2"
+              onClick={() => navigate(item.path)}
+            >
+              <i className={`${item.icon} text-lg text-gray-800 dark:text-gray-300`}></i>
+              <span className="text-gray-800 dark:text-white">{item.name}</span>
+            </li>
+          ))}
           </ul>
         </nav>
       </aside>
-
-      {/* Main content */}
-      <div className="flex-1 ml-64">
-        {/* Main content will be rendered here based on route */}
-      </div>
     </div>
   );
 };

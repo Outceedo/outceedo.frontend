@@ -2,13 +2,15 @@ import React,{useState} from "react";
 import { useNavigate } from "react-router-dom";
 import football from "../assets/images/football.jpg";
 import axios from "axios";
+import User from "./user";
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
+  const [isModalOpen, setIsModalOpen] = useState(false);
+ 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -128,10 +130,26 @@ const Login: React.FC = () => {
         </div>
         <p className="mt-4 text-gray-600">
           Not a member yet?{" "}
-          <button onClick={() => navigate("/user")} className="text-[#FA6357] hover:underline cursor-pointer">
+          <button onClick={() => setIsModalOpen(true)} className="text-[#FA6357] hover:underline cursor-pointer">
             Sign Up
-          </button>
-        </p>
+          </button>        
+            </p>
+                        {/* Modal */}
+                        {isModalOpen && (
+     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+      <div className="relative" >
+            {/* Close Button */}
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="absolute top-2 right-6 text-gray-600 hover:text-gray-800 text-2xl"
+            >
+              &times;
+            </button>
+
+            <User /> {/* Render the Signup component inside the modal */}
+          </div>
+        </div>
+      )} 
       </div>
     </div>
   );
