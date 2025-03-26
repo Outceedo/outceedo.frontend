@@ -54,17 +54,15 @@ export default function Navbar() {
             <nav className="hidden md:flex items-center space-x-12">
               {["Home", "About", "Features", "Pricing", "Contact Us"].map(
                 (item) => (
-                  <button
+                  <a
                     key={item}
-                    onClick={() =>
-                      handleNavigate(`/${item.toLowerCase().replace(" ", "")}`)
-                    }
+                    href={`#${item.toLowerCase().replace(" ", "")}`}
                     className={`font-medium ${
                       scrolled ? "text-gray-800" : "text-white"
                     }`}
                   >
                     {item}
-                  </button>
+                  </a>
                 )
               )}
             </nav>
