@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
+import User from "./user"; // Assuming this is the modal component
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isModalOpen, setModalOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,6 +26,15 @@ export default function Navbar() {
   const handleNavigate = (path: string) => {
     navigate(path);
     setMobileMenuOpen(false);
+  };
+
+  const handleSignUpClick = () => {
+    setModalOpen(true);
+  };
+
+  const handleModalClose = () => {
+    setModalOpen(false);
+    navigate("/signup");
   };
 
   useEffect(() => {
@@ -80,7 +91,7 @@ export default function Navbar() {
               </button>
               <button
                 className="ml-24 md:ml-0 px-4 py-2 rounded-md font-medium bg-red-500 hover:bg-red-600 text-white"
-                onClick={() => handleNavigate("/signup")}
+                onClick={handleSignUpClick}
               >
                 Sign Up
               </button>
@@ -136,12 +147,20 @@ export default function Navbar() {
                 </button>
                 <button
                   className="w-full px-4 py-2 rounded-md font-medium bg-red-500 hover:bg-red-600 text-white"
-                  onClick={() => handleNavigate("/signup")}
+                  onClick={handleSignUpClick}
                 >
                   Sign Up
                 </button>
               </div>
             </nav>
+          </div>
+        </div>
+      )}
+
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-md shadow-md max-w-4xl w-full">
+            <User isOpen={isModalOpen} onClose={handleModalClose} />
           </div>
         </div>
       )}
