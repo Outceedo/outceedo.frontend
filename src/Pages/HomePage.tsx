@@ -32,7 +32,7 @@ const HomePage: React.FC = () => {
     <div>
       <Navbar />
       <div className="absolute inset-0 bg-black opacity-65"></div>
-      <div className="relative h-screen w-full mb-16">
+      <div className="relative h-screen w-full mb-42" id="home">
         {/* Dark overlay */}
         {/* <div className="absolute inset-0 bg-black/40 z-10"></div> */}
 
@@ -86,7 +86,7 @@ const HomePage: React.FC = () => {
                   onClick={() => navigate("/")}
                   className="cursor-pointer hover:text-white"
                 >
-                  About Landio
+                  About
                 </li>
                 <li
                   onClick={() => navigate("/features")}
