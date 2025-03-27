@@ -1,75 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import football from "../assets/images/football.jpg";
-import axios from "axios";
+import { loginUser } from "../store/auth-slice";
 import User from "./user";
+
 const Login: React.FC = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { isLoading, error, user } = useSelector((state: any) => state.auth); // Assuming 'auth' is the key in your root reducer
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
-
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/api/v1/auth/login",
-        { email, password },
-        { headers: { "Content-Type": "application/json" } }
-      );
-      if (response.status === 200) {
-        const user = response.data.user; // Fetch user from response
-        const token = response.data.token;
-
-        if (!user || !user.role) {
-          setError("User role not found. Please contact support.");
-          return;
-        }
-
-        const userRole = user.role.toLowerCase(); // Ensure lowercase role
-
-        // Store authentication token in localStorage
-        localStorage.setItem("authToken", token);
-
-        alert(" Login successful!");
-
-        // Redirect based on the user's role
-        if (userRole === "player") {
-          navigate("/profile");
-        } else if (userRole === "expert") {
-          navigate("/expertdata");
-        } else {
-          navigate("/home"); // Default fallback
-        }
-      }
-    } catch (err: any) {
-      console.log(err.response.error);
-      console.error("Login Error:", err.response?.data || err.message);
-
-      //  Check if OTP verification is required
-      if (
-        err.response?.data?.error ===
-        "An OTP has been sent to mail, please verify!"
-      ) {
-        localStorage.setItem("verificationEmail", email);
-        alert("OTP sent to your email. Please verify.");
-        navigate("/emailverification", { state: { email } }); // Redirect to OTP verification page
+  useEffect(() => {
+    if (user) {
+      const userRole = user.role.toLowerCase();
+      // Redirect based on the user's role
+      if (userRole === "player") {
+        navigate("/profile");
+      } else if (userRole === "expert") {
+        navigate("/expertdata");
       } else {
-        setError(
-          err.response?.data?.message || "Something went wrong. Try again."
-        );
+        navigate("/home"); // Default fallback
       }
-    } finally {
-      setLoading(false);
     }
+  }, [user, navigate]);
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    dispatch(loginUser({ email, password }));
   };
+
   return (
-    <div className="relative w-full min-h-screen flex  flex-col lg:flex-row items-center justify-center px-6 lg:px-20">
+    <div className="relative w-full min-h-screen flex flex-col lg:flex-row items-center justify-center px-6 lg:px-20">
       {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center "
@@ -77,7 +42,6 @@ const Login: React.FC = () => {
       ></div>
 
       {/* Overlay for better text visibility */}
-
       <div className="absolute inset-0 bg-black opacity-40"></div>
 
       {/* Left Side - Welcome Text */}
@@ -131,10 +95,10 @@ const Login: React.FC = () => {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="w-full bg-[#FE221E] text-white py-2 rounded-lg hover:bg-[#C91C1A] transition duration-300"
           >
-            {loading ? "Logging in..." : "Login"}
+            {isLoading ? "Logging in..." : "Login"}
           </button>
         </form>
 
@@ -157,8 +121,7 @@ const Login: React.FC = () => {
         </p>
         {/* Modal */}
         {isModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
-            <div className="absolute inset-0 bg-black opacity-65"></div>
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="relative">
               {/* Close Button */}
               <button
