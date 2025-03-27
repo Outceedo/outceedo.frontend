@@ -2,13 +2,20 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import football from "../assets/images/football.jpg";
 import * as countryCodes from "country-codes-list";
-import axios from "axios";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { registerUser } from "../store/auth-slice";
+import { RootState } from "../store/store";
 
 type Role = "expert" | "player" | "team" | "sponser" | "fan";
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
-  const [, setRole] = useState<Role | null>(null);
+  const dispatch = useAppDispatch();
+  const { isLoading, error, user } = useAppSelector(
+    (state: RootState) => state.auth
+  );
+
+  const [role, setRole] = useState<Role | null>(null);
   const [countryList, setCountryList] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -19,8 +26,6 @@ const Signup: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [countryCode, setCountryCode] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
@@ -48,16 +53,13 @@ const Signup: React.FC = () => {
     setRole(storedRole);
   }, []);
 
-  // Handle Signup Submission
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setFieldErrors({});
-    // Retrieve role again before sending request
-    let selectedRole = localStorage.getItem("selectedRole") as Role | null;
+    const selectedRole = localStorage.getItem("selectedRole") as Role | null;
     if (
       !selectedRole ||
-      !["coach", "player", "mentor", "student"].includes(selectedRole)
+      !["expert", "player", "team", "sponser", "fan"].includes(selectedRole)
     ) {
       setFieldErrors((prev) => ({
         ...prev,
@@ -66,7 +68,6 @@ const Signup: React.FC = () => {
       return;
     }
 
-    // **Validation Object to Track Errors**
     let errors: Record<string, string> = {};
 
     if (!firstName) errors.firstName = "First name is required.";
@@ -83,54 +84,43 @@ const Signup: React.FC = () => {
     if (password !== confirmPassword)
       errors.confirmPassword = "Passwords do not match.";
 
-    // **If Errors Exist, Set Them & Stop Execution**
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
 
-    setLoading(true);
-
     const requestData = {
-      role: selectedRole, // Retrieved from localStorage
+      role: selectedRole,
       email,
-      password, // Store only password, not confirmPassword
-      mobileNumber: `${countryCode} ${mobileNumber}`, // Storing full mobile number with country code
+      password,
+      mobileNumber: `${countryCode} ${mobileNumber}`,
       firstName,
       lastName,
     };
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/api/v1/auth/register",
-        requestData,
-        { headers: { "Content-Type": "application/json" } } // Ensure correct headers
-      );
-      if (response.status === 201) {
-        localStorage.setItem("verificationEmail", email);
-        alert("Signup successful! Redirecting to login.");
-        navigate("/emailverification");
-      }
-    } catch (err: any) {
-      console.log(err.response.error);
-      console.error("Signup Error:", err.response?.data || err.message);
-      setError(err.response?.data?.error || "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
+
+    dispatch(registerUser(requestData));
   };
+
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem("verificationEmail", email);
+      alert("Signup successful! Redirecting to email verification.");
+      navigate("/emailverification");
+    }
+  }, [user, navigate, email]);
 
   return (
     <div className="relative w-full min-h-screen flex flex-col lg:flex-row items-center justify-center px-6 lg:px-20">
       {/* Background Image */}
       <div
-        className="absolute inset-0 bg-cover bg-center "
+        className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${football})` }}
       ></div>
       {/* Overlay for better text visibility */}
       <div className="absolute inset-0 bg-black opacity-40"></div>
       {/* Left Side - Welcome Text */}
-      <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 mb-8 sm:mb-12">
-        <h2 className="text-2xl sm:text-3xl  lg:text-5xl font-Raleway mb-4">
+      <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 mb-8 sm:mb-12 hidden md:block">
+        <h2 className="text-2xl sm:text-3xl lg:text-5xl font-Raleway mb-4">
           Welcome To Sports App
         </h2>
         <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md lg:max-w-none mx-auto lg:mx-0 font-Opensans">
@@ -141,14 +131,18 @@ const Signup: React.FC = () => {
       </div>
       {/* Right Side - Login Form */}
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-12 sm:mt-16 lg:mt-0">
-        <h2 className="text-3xl font-bold text-black mb-6">Sign Up </h2>
-        {error && <p className="text-red-500 mb-4">{error}</p>}
+        <h2 className="text-3xl font-bold text-black mb-6">Sign Up</h2>
+        {error && (
+          <p className="text-red-500 mb-4">
+            {typeof error === "string" ? error : "An error occurred"}
+          </p>
+        )}
         <form onSubmit={handleSignup} className="space-y-4">
           {/* First Name & Last Name */}
           <div className="flex space-x-4">
             <div className="w-1/2">
               <label
-                className={`block text-sm font-medium flex items-center ${
+                className={`block text-sm font-medium ${
                   fieldErrors.firstName ? "text-red-500" : "text-gray-700"
                 }`}
               >
@@ -159,18 +153,20 @@ const Signup: React.FC = () => {
                 placeholder="First Name"
                 value={firstName}
                 onChange={(e) => setFirstName(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
-        ${
-          fieldErrors.firstName
-            ? "border-red-500 ring-red-500"
-            : "border-gray-300 focus:ring-blue-500"
-        }`}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                  fieldErrors.firstName
+                    ? "border-red-500 ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
               />
+              {fieldErrors.firstName && (
+                <p className="text-red-500 text-sm">{fieldErrors.firstName}</p>
+              )}
             </div>
 
             <div className="w-1/2">
               <label
-                className={`block text-sm font-medium flex items-center ${
+                className={`block text-sm font-medium ${
                   fieldErrors.lastName ? "text-red-500" : "text-gray-700"
                 }`}
               >
@@ -181,20 +177,22 @@ const Signup: React.FC = () => {
                 placeholder="Last Name"
                 value={lastName}
                 onChange={(e) => setLastName(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
-        ${
-          fieldErrors.lastName
-            ? "border-red-500 ring-red-500"
-            : "border-gray-300 focus:ring-blue-500"
-        }`}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                  fieldErrors.lastName
+                    ? "border-red-500 ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
               />
+              {fieldErrors.lastName && (
+                <p className="text-red-500 text-sm">{fieldErrors.lastName}</p>
+              )}
             </div>
           </div>
 
           {/* Email */}
           <div>
             <label
-              className={`block text-sm font-medium flex items-center ${
+              className={`block text-sm font-medium ${
                 fieldErrors.email ? "text-red-500" : "text-gray-700"
               }`}
             >
@@ -205,19 +203,21 @@ const Signup: React.FC = () => {
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
-      ${
-        fieldErrors.email
-          ? "border-red-500 ring-red-500"
-          : "border-gray-300 focus:ring-blue-500"
-      }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                fieldErrors.email
+                  ? "border-red-500 ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
             />
+            {fieldErrors.email && (
+              <p className="text-red-500 text-sm">{fieldErrors.email}</p>
+            )}
           </div>
 
           {/* Password */}
           <div>
             <label
-              className={`block text-sm font-medium flex items-center ${
+              className={`block text-sm font-medium ${
                 fieldErrors.password ? "text-red-500" : "text-gray-700"
               }`}
             >
@@ -228,19 +228,21 @@ const Signup: React.FC = () => {
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
-      ${
-        fieldErrors.password
-          ? "border-red-500 ring-red-500"
-          : "border-gray-300 focus:ring-blue-500"
-      }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                fieldErrors.password
+                  ? "border-red-500 ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
             />
+            {fieldErrors.password && (
+              <p className="text-red-500 text-sm">{fieldErrors.password}</p>
+            )}
           </div>
 
           {/* Confirm Password */}
           <div>
             <label
-              className={`block text-sm font-medium flex items-center ${
+              className={`block text-sm font-medium ${
                 fieldErrors.confirmPassword ? "text-red-500" : "text-gray-700"
               }`}
             >
@@ -251,20 +253,24 @@ const Signup: React.FC = () => {
               placeholder="Enter your password again"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
-      ${
-        fieldErrors.confirmPassword
-          ? "border-red-500 ring-red-500"
-          : "border-gray-300 focus:ring-blue-500"
-      }`}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                fieldErrors.confirmPassword
+                  ? "border-red-500 ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
             />
+            {fieldErrors.confirmPassword && (
+              <p className="text-red-500 text-sm">
+                {fieldErrors.confirmPassword}
+              </p>
+            )}
           </div>
 
           {/* Country Code & Mobile Number */}
           <div className="flex space-x-4">
             <div className="w-1/3 relative">
               <label
-                className={`block text-sm font-medium flex items-center ${
+                className={`block text-sm font-medium ${
                   fieldErrors.countryCode ? "text-red-500" : "text-gray-700"
                 }`}
               >
@@ -276,12 +282,11 @@ const Signup: React.FC = () => {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 onFocus={() => setShowDropdown(true)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
-        ${
-          fieldErrors.countryCode
-            ? "border-red-500 ring-red-500"
-            : "border-gray-300 focus:ring-blue-500"
-        }`}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                  fieldErrors.countryCode
+                    ? "border-red-500 ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
               />
               {showDropdown && filteredCountries.length > 0 && (
                 <ul className="absolute w-full bg-white border rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
@@ -296,11 +301,16 @@ const Signup: React.FC = () => {
                   ))}
                 </ul>
               )}
+              {fieldErrors.countryCode && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.countryCode}
+                </p>
+              )}
             </div>
 
             <div className="w-2/3">
               <label
-                className={`block text-sm font-medium flex items-center ${
+                className={`block text-sm font-medium ${
                   fieldErrors.mobileNumber ? "text-red-500" : "text-gray-700"
                 }`}
               >
@@ -311,15 +321,19 @@ const Signup: React.FC = () => {
                 placeholder="Mobile Number"
                 value={mobileNumber}
                 onChange={(e) => setMobileNumber(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 
-        ${
-          fieldErrors.mobileNumber
-            ? "border-red-500 ring-red-500"
-            : "border-gray-300 focus:ring-blue-500"
-        }`}
+                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                  fieldErrors.mobileNumber
+                    ? "border-red-500 ring-red-500"
+                    : "border-gray-300 focus:ring-blue-500"
+                }`}
                 maxLength={10}
                 pattern="[0-9]{10}"
               />
+              {fieldErrors.mobileNumber && (
+                <p className="text-red-500 text-sm">
+                  {fieldErrors.mobileNumber}
+                </p>
+              )}
             </div>
           </div>
           <div className="mb-4 flex justify-between items-center">
@@ -341,9 +355,9 @@ const Signup: React.FC = () => {
             type="submit"
             className="w-full bg-[#FE221E] text-white py-2 rounded-lg hover:bg-[#C91C1A] transition duration-300"
           >
-            {loading ? "Signing Up..." : "Sign Up"}
+            {isLoading ? "Signing Up..." : "Sign Up"}
           </button>
-          <p className=" text-gray-600">
+          <p className="text-gray-600">
             Already Registered?{" "}
             <button
               onClick={() => navigate("/login")}

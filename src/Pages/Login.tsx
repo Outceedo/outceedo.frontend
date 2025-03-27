@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useDispatch, useSelector } from "react-redux";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
 import football from "../assets/images/football.jpg";
 import { loginUser } from "../store/auth-slice";
 import User from "./user";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const dispatch = useDispatch();
-  const { isLoading, error, user } = useSelector((state: any) => state.auth); // Assuming 'auth' is the key in your root reducer
+  const dispatch = useAppDispatch();
+  const { isLoading, error, user } = useAppSelector((state) => state.auth); // Assuming 'auth' is the key in your root reducer
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -1,13 +1,17 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { forgotPassword } from "../store/auth-slice";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const { isLoading, forgotPasswordError, emailSent } = useAppSelector(
+    (state) => state.auth
+  );
+
   const [email, setEmail] = useState<string>("");
-  const [emailSent, setEmailSent] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
 
   //  Email Validation
   const validateEmail = (email: string): boolean => {
@@ -26,24 +30,7 @@ const ForgotPassword = () => {
     }
 
     setError("");
-    setLoading(true); // Show loading state
-
-    try {
-      const response = await axios.post(
-        "http://localhost:8000/api/v1/auth/forgot-password",
-        {
-          email,
-        }
-      );
-
-      if (response.status === 200) {
-        setEmailSent(true);
-      }
-    } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to send reset email.");
-    } finally {
-      setLoading(false);
-    }
+    dispatch(forgotPassword({ email }));
   };
 
   // Handle Email Input
@@ -91,12 +78,17 @@ const ForgotPassword = () => {
                   <p>{error}</p>
                 </div>
               )}
+              {forgotPasswordError && (
+                <div className="text-red-600 text-sm mb-4">
+                  <p>{forgotPasswordError}</p>
+                </div>
+              )}
               <button
                 type="submit"
-                disabled={loading}
+                disabled={isLoading}
                 className="w-full bg-[#FE221E] text-white py-2 rounded-lg hover:bg-red-400 transition font-Raleway"
               >
-                {loading ? "Sending..." : "Send"}
+                {isLoading ? "Sending..." : "Send"}
               </button>
             </form>
           </>
