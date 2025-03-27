@@ -1,54 +1,72 @@
+import { useState } from "react";
+import { CheckCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
+const plans = [
+  {
+    name: "Basic",
+    description:
+      "Lorem ipsum dolor sit amet pretium consectetur adipiscing elit.",
+    popular: false,
+  },
+  {
+    name: "Premium",
+    description:
+      "Lorem ipsum dolor sit amet pretium consectetur adipiscing elit.",
+    popular: true,
+  },
+  {
+    name: "Pro",
+    description:
+      "Lorem ipsum dolor sit amet pretium consectetur adipiscing elit.",
+    popular: false,
+  },
+];
 
+export default function PricingPlans() {
+  const [selectedPlan, setSelectedPlan] = useState(null);
 
-const Pricing:React.FC = () =>{
-    return(
-        <>
-           {/* Pricing Section */}
-    <div id="pricing" className="py-20 bg-slate-100">
-    <div className="flex flex-col sm:flex-row justify-center gap-6 p-8">
-
-    {/* Basic Plan */}
-    <div className="w-full sm:w-80 lg:w-96 xl:w-96 border rounded-lg p-6 bg-white shadow-md transition-all duration-300 hover:shadow-lg">
-      <h3 className="text-xl font-semibold text-gray-800 font-Raleway">Basic</h3>
-      <p className="text-gray-600 mt-2 font-Opensans">Lorem ipsum dolor sit amet premium consectetur adipiscing elit.</p>
-      <button className="w-full  bg-[#F9DC5C] font-Raleway text-black py-2 mt-4 rounded-lg font-semibold hover:bg-yellow-500 transition">
-        Get Started
-      </button>
-      <ul className="mt-4 space-y-2 text-gray-600 font-Opensans">
-        <li>✔ Lorem ipsum dolor</li>
-        <li>✔ Lorem ipsum dolor</li>
-        <li>✔ Lorem ipsum dolor</li>
-        <li>✔ Lorem ipsum dolor</li>
-        
-      </ul>
+  return (
+    <div
+      className="flex flex-col items-center py-10 px-4 md:px-10 mt-10"
+      id="pricing"
+    >
+      <div className="flex flex-col md:flex-row items-center space-y-8 md:space-y-0 md:space-x-8 justify-start mb-24 w-4/5 md:w-2/3 ">
+        {plans.map((plan, index) => (
+          <div
+            key={index}
+            className={`relative border-2 border-black p-6 rounded-lg transition-all w-full md:w-80 text-left ${
+              plan.popular ? "border-red-500" : ""
+            }`}
+            onClick={() => setSelectedPlan(plan.name)}
+          >
+            {plan.popular && (
+              <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-2 text-center rounded-lg mb-8">
+                Popular
+              </div>
+            )}
+            <h3 className="text-2xl font-bold mb-2 mt-6 px-3">{plan.name}</h3>
+            <p className="text-gray-600 mb-8 px-3">{plan.description}</p>
+            <Button className="bg-[#F9DC5C] px-4 py-2 rounded-md font-bold w-full cursor-pointer mb-6">
+              Get Started
+            </Button>
+            <div className="bg-gray-300 h-0.5" />
+            <ul className="mt-4 text-gray-600 space-y-4">
+              <li className="flex gap-6">
+                <CheckCircle /> Lorem ipsum dolor
+              </li>
+              <div className="bg-gray-300 h-0.5" />
+              <li className="flex gap-6">
+                <CheckCircle /> Lorem ipsum dolor
+              </li>
+              <div className="bg-gray-300 h-0.5" />
+              <li className="flex gap-6">
+                <CheckCircle /> Lorem ipsum dolor
+              </li>
+            </ul>
+          </div>
+        ))}
+      </div>
     </div>
-
-    {/* Premium Plan */}
-    <div className="w-full sm:w-80 lg:w-96 xl:w-96 border-2 bg-white border-[#FE221E] rounded-lg p-6 shadow-md relative transition-all duration-300 hover:shadow-lg">
-      <span className="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-[#FE221E] text-white text-sm px-3 py-1 rounded-full">
-        Popular
-      </span>
-      <h3 className="text-xl font-semibold text-gray-800 font-Raleway">Premium</h3>
-      <p className="text-gray-600 mt-2 font-Opensans">Lorem ipsum dolor sit amet premium consectetur adipiscing elit.</p>
-      <button className="w-full bg-[#F9DC5C] font-Opensans text-black py-2 mt-4 rounded-lg font-semibold hover:bg-yellow-500 transition">
-        Get Started
-      </button>
-      <ul className="mt-4 space-y-2 text-gray-600 font-Opensans">
-        <li>✔ Lorem ipsum dolor</li>
-        <li>✔ Lorem ipsum dolor</li>
-        <li>✔ Lorem ipsum dolor</li>
-        <li>✔ Lorem ipsum dolor</li>
-        <li>✔ Lorem ipsum dolor</li>
-      </ul>
-    </div>
-
-  </div>
-</div>
-
-
-        </>
-    )
+  );
 }
-
-export default Pricing

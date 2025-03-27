@@ -126,15 +126,14 @@ export default function Navbar() {
             <nav className="flex flex-col items-center justify-center space-y-6 p-4">
               {["Home", "About", "Features", "Pricing", "Contact Us"].map(
                 (item) => (
-                  <button
+                  <a
                     key={item}
-                    onClick={() =>
-                      handleNavigate(`/${item.toLowerCase().replace(" ", "")}`)
-                    }
+                    href={`#${item.toLowerCase().replace(" ", "")}`}
                     className="text-xl font-medium text-gray-800"
+                    onClick={() => setMobileMenuOpen(false)}
                   >
                     {item}
-                  </button>
+                  </a>
                 )
               )}
 
@@ -158,9 +157,17 @@ export default function Navbar() {
       )}
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-md shadow-md max-w-4xl w-full">
-            <User isOpen={isModalOpen} onClose={handleModalClose} />
+        <div className="fixed inset-0 flex items-center justify-center bg-opacity-70 z-50">
+          <div className="absolute inset-0 bg-black opacity-65"></div>
+          <div className="relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setModalOpen(false)}
+              className="absolute top-2 right-6 text-gray-600 hover:text-gray-800 text-3xl"
+            >
+              &times;
+            </button>
+            <User /> {/* Render the Signup component inside the modal */}
           </div>
         </div>
       )}

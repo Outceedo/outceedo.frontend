@@ -1,9 +1,9 @@
-import { useState, ChangeEvent, FormEvent } from "react"; 
-import { useNavigate } from "react-router-dom"; 
+import { useState, ChangeEvent, FormEvent } from "react";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const ForgotPassword = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
   const [email, setEmail] = useState<string>("");
   const [emailSent, setEmailSent] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
@@ -11,7 +11,8 @@ const ForgotPassword = () => {
 
   //  Email Validation
   const validateEmail = (email: string): boolean => {
-    const emailPattern: RegExp = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    const emailPattern: RegExp =
+      /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailPattern.test(email);
   };
 
@@ -28,9 +29,12 @@ const ForgotPassword = () => {
     setLoading(true); // Show loading state
 
     try {
-      const response = await axios.post("http://localhost:8000/api/v1/auth/forgot-password", {
-        email,
-      });
+      const response = await axios.post(
+        "http://localhost:8000/api/v1/auth/forgot-password",
+        {
+          email,
+        }
+      );
 
       if (response.status === 200) {
         setEmailSent(true);
@@ -56,7 +60,8 @@ const ForgotPassword = () => {
               Check Your Email
             </h2>
             <p className="text-green-600 mb-4 font-Opensans">
-              A password reset link has been sent to your email. Please check your inbox.
+              A password reset link has been sent to your email. Please check
+              your inbox.
             </p>
           </div>
         ) : (
@@ -98,8 +103,9 @@ const ForgotPassword = () => {
         )}
 
         <button
-          onClick={() => navigate("/login")} 
-          className="w-full mt-4 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition font-Raleway">
+          onClick={() => navigate("/login")}
+          className="w-full mt-4 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition font-Raleway"
+        >
           Back to Login
         </button>
       </div>
