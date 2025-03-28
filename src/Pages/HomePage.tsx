@@ -23,11 +23,6 @@ const HomePage: React.FC = () => {
     setModalOpen(true);
   };
 
-  const handleModalClose = () => {
-    setModalOpen(false);
-    navigate("/signup");
-  };
-
   return (
     <div>
       {isModalOpen && (
