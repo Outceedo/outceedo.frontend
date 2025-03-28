@@ -1,14 +1,22 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAppSelector } from "../store/hooks";
+
+interface User {
+  role?: string;
+}
 
 interface CheckAuthProps {
+  isAuthenticated: boolean;
+  user: User | null;
   children: React.ReactNode;
 }
 
-const CheckAuth: React.FC<CheckAuthProps> = ({ children }) => {
+const CheckAuth: React.FC<CheckAuthProps> = ({
+  isAuthenticated,
+  user,
+  children,
+}) => {
   const location = useLocation();
-  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
 
   if (!isAuthenticated) {
     if (location.pathname !== "/login" && location.pathname !== "/signup") {
