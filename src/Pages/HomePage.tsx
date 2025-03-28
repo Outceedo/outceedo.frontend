@@ -30,8 +30,15 @@ const HomePage: React.FC = () => {
 
   return (
     <div>
+      {isModalOpen && (
+        <>
+          <div className="absolute inset-0 bg-black opacity-65"></div>
+          <div className="absolute inset-0 bg-black opacity-65"></div>
+        </>
+      )}
       <Navbar />
       <div className="absolute inset-0 bg-black opacity-65"></div>
+
       <div className="relative h-screen w-full mb-42" id="home">
         {/* Dark overlay */}
         {/* <div className="absolute inset-0 bg-black/40 z-10"></div> */}
@@ -152,9 +159,15 @@ const HomePage: React.FC = () => {
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-md shadow-md max-w-4xl w-full">
-            <User isOpen={isModalOpen} onClose={handleModalClose} />
+        <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+          <div className="relative">
+            <button
+              onClick={() => setModalOpen(false)}
+              className="absolute top-2 right-6 text-gray-600 hover:text-gray-800 text-2xl"
+            >
+              &times;
+            </button>
+            <User />
           </div>
         </div>
       )}

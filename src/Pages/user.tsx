@@ -29,11 +29,10 @@ const User: React.FC = () => {
   };
 
   return (
-    <div className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full h-full">
+    <Card className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full h-full">
       <h2 className="text-3xl font-semibold font-Raleway text-black mb-6 text-center">
         Sign Up to Sports App
       </h2>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
         {options.map((option, index) => (
           <div
@@ -54,7 +53,7 @@ const User: React.FC = () => {
           </div>
         ))}
       </div>
-    </div>
+    </Card>
   );
 };
 
