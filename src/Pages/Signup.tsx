@@ -27,6 +27,17 @@ const Signup: React.FC = () => {
   const [countryCode, setCountryCode] = useState("");
   const [mobileNumber, setMobileNumber] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [registrationAttempted, setRegistrationAttempted] = useState(false);
+
+  // Add debug logging for Redux state changes
+  useEffect(() => {
+    console.log("Auth state changed:", {
+      user,
+      isLoading,
+      error,
+      registrationAttempted,
+    });
+  }, [user, isLoading, error, registrationAttempted]);
 
   useEffect(() => {
     const myCountryCodesObject = countryCodes.customList(
@@ -41,10 +52,10 @@ const Signup: React.FC = () => {
   );
 
   const handleSelect = (country: string) => {
-    const code = country.split(" ")[0]; // Extracts the country code (e.g., "+1")
-    setCountryCode(code); // Stores the selected country code
-    setSearchTerm(country); // Updates input field display
-    setShowDropdown(false); // Hides dropdown
+    const code = country.split(" ")[0];
+    setCountryCode(code);
+    setSearchTerm(country);
+    setShowDropdown(false);
   };
 
   useEffect(() => {
@@ -98,16 +109,39 @@ const Signup: React.FC = () => {
       lastName,
     };
 
-    dispatch(registerUser(requestData));
+    console.log("Submitting registration with data:", requestData);
+
+    // Set registration attempted flag to true
+    setRegistrationAttempted(true);
+
+    try {
+      // Dispatch the register action and wait for it to complete
+      const resultAction = await dispatch(registerUser(requestData));
+
+      if (registerUser.fulfilled.match(resultAction)) {
+        // Handle the success case directly
+        console.log("Registration successful:", resultAction.payload);
+        localStorage.setItem("verificationEmail", email);
+        alert("Signup successful! Redirecting to email verification.");
+        navigate("/emailverification");
+      } else if (registerUser.rejected.match(resultAction)) {
+        console.error("Registration failed:", resultAction.error);
+      }
+    } catch (err) {
+      console.error("Error during registration:", err);
+    }
   };
 
+  // This is our backup effect in case the direct approach above doesn't catch the success
   useEffect(() => {
-    if (user) {
+    if (registrationAttempted && !isLoading && user && !error) {
+      console.log(
+        "Registration successful via effect, redirecting to email verification"
+      );
       localStorage.setItem("verificationEmail", email);
-      alert("Signup successful! Redirecting to email verification.");
       navigate("/emailverification");
     }
-  }, [user, navigate, email]);
+  }, [registrationAttempted, isLoading, user, error, navigate, email]);
 
   return (
     <div className="relative w-full min-h-screen flex flex-col lg:flex-row items-center justify-center px-6 lg:px-20">
@@ -138,7 +172,9 @@ const Signup: React.FC = () => {
           </p>
         )}
         <form onSubmit={handleSignup} className="space-y-4">
-          {/* First Name & Last Name */}
+          {/* Form content remains the same */}
+          {/* ... */}
+
           <div className="flex space-x-4">
             <div className="w-1/2">
               <label
@@ -189,7 +225,6 @@ const Signup: React.FC = () => {
             </div>
           </div>
 
-          {/* Email */}
           <div>
             <label
               className={`block text-sm font-medium ${
@@ -214,7 +249,6 @@ const Signup: React.FC = () => {
             )}
           </div>
 
-          {/* Password */}
           <div>
             <label
               className={`block text-sm font-medium ${
@@ -239,7 +273,6 @@ const Signup: React.FC = () => {
             )}
           </div>
 
-          {/* Confirm Password */}
           <div>
             <label
               className={`block text-sm font-medium ${
@@ -266,7 +299,6 @@ const Signup: React.FC = () => {
             )}
           </div>
 
-          {/* Country Code & Mobile Number */}
           <div className="flex space-x-4">
             <div className="w-1/3 relative">
               <label
@@ -354,6 +386,7 @@ const Signup: React.FC = () => {
           <button
             type="submit"
             className="w-full bg-[#FE221E] text-white py-2 rounded-lg hover:bg-[#C91C1A] transition duration-300"
+            disabled={isLoading}
           >
             {isLoading ? "Signing Up..." : "Sign Up"}
           </button>
@@ -362,6 +395,7 @@ const Signup: React.FC = () => {
             <button
               onClick={() => navigate("/login")}
               className="text-[#FA6357] hover:underline cursor-pointer"
+              type="button"
             >
               Login
             </button>

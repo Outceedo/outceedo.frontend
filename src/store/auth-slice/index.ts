@@ -6,6 +6,7 @@ interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   user: any | null;
+  registrationSuccess: boolean;
   error: string | null;
   resetPasswordLoading: boolean;
   resetPasswordError: string | null;
@@ -18,6 +19,7 @@ const initialState: AuthState = {
   isAuthenticated: false,
   isLoading: false,
   user: null,
+  registrationSuccess: false,
   error: null,
   resetPasswordLoading: false,
   resetPasswordError: null,
@@ -77,7 +79,7 @@ export const verifyEmail = createAsyncThunk<any, any, ThunkApiConfig>(
   "auth/verifyEmail",
   async (formData, { rejectWithValue }) => {
     try {
-      const response = await authService.post("/verify-email", formData);
+      const response = await authService.patch("/verify-email", formData);
       return response.data;
     } catch (err) {
       const error = err as AxiosError;
@@ -208,6 +210,9 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null; // Clear error state
     },
+    clearRegistrationState: (state) => {
+      state.registrationSuccess = false;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -220,11 +225,14 @@ const authSlice = createSlice({
         state.isLoading = false;
         state.user = action.payload.user || null;
         state.isAuthenticated = !!action.payload.user;
+        state.registrationSuccess = true;
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.isLoading = false;
         state.error = action.payload as string;
+        state.registrationSuccess = false;
       })
+
       // Login User
       .addCase(loginUser.pending, (state) => {
         state.isLoading = true;
@@ -353,7 +361,8 @@ const authSlice = createSlice({
 });
 
 // Actions
-export const { setUser, clearError } = authSlice.actions;
+export const { setUser, clearError, clearRegistrationState } =
+  authSlice.actions;
 
 // Reducer
 export default authSlice.reducer;
