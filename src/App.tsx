@@ -32,7 +32,10 @@ const App: React.FC = () => {
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         <Route path="/detailsform" element={<Detailsform />} />
         <Route path="/signup" element={<SignUp />} />
-        <Route path="/resetpassword" element={<ResetPassword />} />
+        <Route
+          path="/df37a6d56f5230c1a07f97fa0cb6f8bf1e6530214a0f5ad288dc7c20580ff08cc6948710"
+          element={<ResetPassword />}
+        />
         {/* Player pages */}
         <Route path="/profile" element={<Profile />} />
         <Route path="/dashboard" element={<Dashboard />} />

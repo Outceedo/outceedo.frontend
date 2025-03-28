@@ -48,9 +48,9 @@ const User: React.FC = () => {
               {option.name}
             </h3>
 
-            <button className="mt-3 px-4 py-2 bg-[#FE221E] text-white rounded-lg text-sm font-Raleway hover:bg-red-500 hidden md:block">
+            {/* <button className="mt-3 px-4 py-2 bg-[#FE221E] text-white rounded-lg text-sm font-Raleway hover:bg-red-500 hidden md:block">
               Sign Up as a {option.name}
-            </button>
+            </button> */}
           </div>
         ))}
       </div>
