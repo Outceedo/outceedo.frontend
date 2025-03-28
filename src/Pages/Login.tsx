@@ -65,7 +65,12 @@ const Login: React.FC = () => {
         {/* Right Side - Login Form */}
         <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-md mx-auto lg:w-96 mt-12 sm:mt-16 lg:mt-0">
           <h2 className="text-3xl font-bold text-black mb-6">Login</h2>
-          {/* {error && <p className="text-red-500 mb-4">{error}</p>} */}
+
+          {error !== "Token validation failed" && (
+            <p className="text-red-500 mb-4">
+              {typeof error === "string" ? error : "An error occurred"}
+            </p>
+          )}
           <form onSubmit={handleLogin}>
             <div className="mb-4">
               <label className="block text-black-700 font-medium mb-2">

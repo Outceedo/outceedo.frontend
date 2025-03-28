@@ -166,7 +166,7 @@ const Signup: React.FC = () => {
       {/* Right Side - Login Form */}
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-12 sm:mt-16 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Sign Up</h2>
-        {error && (
+        {error !== "Token validation failed" && (
           <p className="text-red-500 mb-4">
             {typeof error === "string" ? error : "An error occurred"}
           </p>
