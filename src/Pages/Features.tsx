@@ -12,7 +12,7 @@ const Features: React.FC = () => {
             <h1 className="text-4xl font-bold mb-4 font-Raleway">
               What We Offer
             </h1>
-            <p className="text-lg mb-8 font-Opensans">
+            <p className="text-lg mb-16 font-Opensans">
               We are a passionate team dedicated to providing the best service
               and products for our users.<br></br> Our mission is to
               revolutionize the industry with cutting-edge solutions and a
@@ -23,7 +23,7 @@ const Features: React.FC = () => {
           {/* Cards Section */}
           <div className="flex flex-col sm:flex-row justify-center space-y-8 sm:space-x-8 sm:space-y-0 w-10/11 mx-auto">
             {/* Card 1 */}
-            <Card className="flex flex-col items-center p-6 bg-gray-100 rounded-lg shadow-lg text-center sm:w-auto">
+            <div className="flex flex-col items-center p-6 text-center sm:w-auto">
               <FontAwesomeIcon
                 icon={faFutbol}
                 style={{ fontSize: "100px", color: "#0a0a0a" }}
@@ -33,10 +33,10 @@ const Features: React.FC = () => {
                 This is some text about the football service we offer. Great
                 feature for users!
               </p>
-            </Card>
+            </div>
 
             {/* Card 2 */}
-            <Card className="flex flex-col items-center p-6 bg-gray-100 rounded-lg shadow-lg text-center w-full sm:w-auto">
+            <div className="flex flex-col items-center p-6 text-center w-full sm:w-auto">
               <FontAwesomeIcon
                 icon={faFutbol}
                 style={{ fontSize: "100px", color: "#0a0a0a" }}
@@ -46,10 +46,10 @@ const Features: React.FC = () => {
                 This is another exciting feature related to football.
                 Revolutionizing the game!
               </p>
-            </Card>
+            </div>
 
             {/* Card 3 */}
-            <Card className="flex flex-col items-center p-6 bg-gray-100 rounded-lg shadow-lg text-center w-full sm:w-auto">
+            <div className="flex flex-col items-center p-6 text-center w-full sm:w-auto">
               <FontAwesomeIcon
                 icon={faFutbol}
                 style={{ fontSize: "100px", color: "#0a0a0a" }}
@@ -59,7 +59,7 @@ const Features: React.FC = () => {
                 More insights into the football-related features we bring to the
                 table.
               </p>
-            </Card>
+            </div>
           </div>
         </div>
       </div>
