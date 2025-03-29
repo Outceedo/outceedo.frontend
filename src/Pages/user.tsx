@@ -7,6 +7,7 @@ import {
   faUsers,
   faDollarSign,
   faTrophy,
+  faHandshake,
 } from "@fortawesome/free-solid-svg-icons";
 import { Card } from "@/components/ui/card";
 
@@ -17,7 +18,7 @@ const User: React.FC = () => {
     { name: "Players", icon: faFutbol, role: "player" },
     { name: "Experts", icon: faChalkboardTeacher, role: "expert" },
     { name: "Teams", icon: faUsers, role: "team" },
-    { name: "Sponsors", icon: faDollarSign, role: "sponsor" },
+    { name: "Sponsors", icon: faHandshake, role: "sponsor" },
     { name: "Fans/Followers", icon: faTrophy, role: "fan" },
   ];
 
@@ -37,7 +38,7 @@ const User: React.FC = () => {
         {options.map((option, index) => (
           <div
             key={index}
-            className="flex flex-col justify-center items-center p-4 md:p-4 bg-gray-100 rounded-lg shadow-md group transform transition-all duration-300 hover:scale-95 hover:shadow-xl"
+            className="flex flex-col justify-center items-center p-4 md:p-4 bg-[#FFF8DA] rounded-lg shadow-md group transform transition-all duration-300 hover:scale-95 hover:shadow-xl mb-6 "
             onClick={() => handleUserSelection(option.role)}
           >
             <div className="text-4xl">
@@ -47,9 +48,9 @@ const User: React.FC = () => {
               {option.name}
             </h3>
 
-            {/* <button className="mt-3 px-4 py-2 bg-[#FE221E] text-white rounded-lg text-sm font-Raleway hover:bg-red-500 hidden md:block">
-              Sign Up as a {option.name}
-            </button> */}
+            <button className="mt-3 px-4 py-2 bg-[#FE221E] text-white rounded-lg text-sm font-Raleway hover:bg-red-500 hidden md:block">
+              {option.name}
+            </button>
           </div>
         ))}
       </div>
