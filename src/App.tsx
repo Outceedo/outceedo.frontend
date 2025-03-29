@@ -33,7 +33,6 @@ const App: React.FC = () => {
   return (
     <BrowserRouter>
       <Routes>
-        
         <Route path="/" element={<HomePage />} />
         <Route path="/emailverification" element={<EmailVerification />} />
         <Route path="/login" element={<Login />} />
@@ -92,7 +91,15 @@ const App: React.FC = () => {
         />
 
         <Route
-          path="/experts"
+          path="/viewexperts"
+          element={
+            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <Expertspage />
+            </CheckAuth>
+          }
+        />
+        <Route
+          path="/exdetails"
           element={
             <CheckAuth isAuthenticated={isAuthenticated} user={user}>
               <Experts />
@@ -102,7 +109,7 @@ const App: React.FC = () => {
 
         {/* Expert pages */}
         <Route
-          path="/exprtmedia"
+          path="/expertmedia"
           element={
             <CheckAuth isAuthenticated={isAuthenticated} user={user}>
               <ExpertMedia />
@@ -155,7 +162,6 @@ const App: React.FC = () => {
           }
         />
 
-        
         <Route
           path="/unauthorized"
           element={

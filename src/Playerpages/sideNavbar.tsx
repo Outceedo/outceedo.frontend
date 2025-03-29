@@ -31,7 +31,7 @@ const SideNavbar: React.FC = () => {
               { name: "Profile", icon: "fas fa-user", path: "/profile" },
               { name: "My Bookings", icon: "fas fa-calendar-check", path: "/mybooking" },
               { name: "Matches", icon: "fas fa-futbol", path: "/matches" },
-              { name: "Experts", icon: "fas fa-user-tie", path: "/expertspage" },
+              { name: "Experts", icon: "fas fa-user-tie", path: "/viewexperts" },
               { name: "Sponsors", icon: "fas fa-handshake", path: "/sponsors" },
             ].map((item) => {
               const isActive = location.pathname === item.path; //  Compare route
