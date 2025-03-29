@@ -10,6 +10,7 @@ import player3 from "../assets/images/player3.jpg"
 import player4 from "../assets/images/player4.jpg"
 import player5 from "../assets/images/player5.jpg"
 import ExpertHeader from "./expertheader";
+import { SidebarProvider } from "@/components/ui/sidebar"
 
 interface Player {
   name: string;
@@ -74,17 +75,25 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
   );
 };
 
-const Expertspage: React.FC = () => {
+const Expertspage: React.FC = ({ children }: { children?: React.ReactNode }) => {
   const [filters, setFilters] = useState({ profession: "", city: "", country: "", gender: "", language: "" });
   const navigate = useNavigate();
  
   return (
-    <div className="flex">
-      <ExpertNavbar />
+       
+    <>
+    <SidebarProvider>
+      <div className="flex w-full  dark:bg-gray-900">
+        <ExpertNavbar />
+        <div className="flex w-full">
+          {/* Player Header */}
+          <ExpertHeader />
 
-      {/* Main Content */}
-      <main className="flex-1 p-6 dark:bg-gray-900 dark:text-white">
-       <ExpertHeader />
+          {/* Page Content */}
+          <div className="w-full px-6 pt-4 pb-10 mt-20 ml-20 bg-white dark:bg-slate-800">
+            {/* Render children if any */}
+            {children}
+    
 
         <div className="min-h-screen bg-gray-100 p-6 mt-4 rounded-xl dark:bg-slate-800">
           {/* Filters Section */}
@@ -136,8 +145,12 @@ const Expertspage: React.FC = () => {
           {/* Pagination */}
           <Pagination totalPages={2} />
         </div>
-      </main>
-    </div>
+      </div>
+      </div>
+      </div>
+      
+      </SidebarProvider>
+  </>
   );
 };
 

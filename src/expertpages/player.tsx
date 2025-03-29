@@ -6,7 +6,7 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import ExpertNavbar from "./expertNavbar"; // Corrected import
 import ExpertHeader from "./expertheader";
-
+import { SidebarProvider } from "@/components/ui/sidebar"
 interface Stat {
   label: string;
   percentage: number;
@@ -31,16 +31,22 @@ const calculateOVR = (stats: Stat[]) => {
 
 const OVR = calculateOVR(stats);
 
-const Player: React.FC = () => {
+const Player: React.FC = ({ children }: { children?: React.ReactNode }) => {
   const navigate= useNavigate();
   return (
     <>
-      <div className="flex">
-        <ExpertNavbar /> {/* Sidebar, applying dark mode */}
+      <SidebarProvider>
+      <div className="flex w-full  dark:bg-gray-900">
+        <ExpertNavbar />
+        <div className="flex w-full">
+          {/* Player Header */}
+          <ExpertHeader />
 
-        {/* Main Content */}
-        <main className="flex-1 p-6 dark:bg-gray-900">
-         <ExpertHeader />
+          {/* Page Content */}
+          <div className="w-full px-6 pt-4 pb-10 mt-20 ml-20 bg-white dark:bg-slate-800">
+            {/* Render children if any */}
+            {children}
+    
 
           {/* Profile Info */}
           <div className="bg-white shadow-lg rounded-lg p-10 mt-10 dark:bg-gray-800 dark:text-white">
@@ -151,8 +157,11 @@ const Player: React.FC = () => {
               </div>
              
   </div>
-  </main>
   </div>
+  </div>
+  </div>
+  </SidebarProvider>
+  
   </>
           
         

@@ -19,6 +19,8 @@ import ExpertNavbar from './expertpages/expertNavbar';
 import PlayerPage from './expertpages/playerpage';
 import Player from './expertpages/player';
 
+
+
 const App: React.FC = () => {
   return (
     <BrowserRouter> {/* Ensure that your app is wrapped inside BrowserRouter */}

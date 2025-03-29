@@ -1,12 +1,17 @@
 
 import moment from "moment";
 import  { useState } from 'react';
-import SideNavbar from "./sideNavbar"; // Corrected import
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
 import { faImage, faVideo } from "@fortawesome/free-solid-svg-icons"
+
+
+import { SidebarProvider } from "@/components/ui/sidebar"
+import SideNavbar from "./sideNavbar"
 import PlayerHeader from "./playerheader";
+
 interface MediaItem {
     id: number;
     type: "photo" | "video";
@@ -57,7 +62,7 @@ const expertData = {
   certifications: ["UEFA Pro License", "FIFA Coaching Diploma", "Sports Science Certification"]
 };
 
-const Experts= () => {
+const Experts= ({ children }: { children?: React.ReactNode }) => {
   const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews"|"services" >("details");
   const [media] = useState<MediaItem[]>([]); 
   const[filter,setFilter]= useState<"all"|"photo"|"video">("all");
@@ -120,12 +125,19 @@ const Experts= () => {
     filter === "all" ? true : item.type === filter
   );
   return ( 
-     <div className="flex">
-            <SideNavbar /> {/* Sidebar, applying dark mode */}
-    
-            {/* Main Content */}
-            <main className="flex-1 p-6 dark:bg-gray-900">
-             <PlayerHeader />
+    <div>
+    <SidebarProvider>
+      <div className="flex w-full  dark:bg-gray-900 ">
+        <SideNavbar />
+        <div className="flex w-full">
+          {/* Player Header */}
+          <PlayerHeader />
+
+          {/* Page Content */}
+          <div className="w-full px-6 pt-4 pb-10 mt-20 ml-20 bg-white dark:bg-slate-800">
+            {/* Render children if any */}
+            {children}
+            
 
    <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg p-10 dark:bg-slate-700">
       <div className="flex justify-between items-center w-full p-4">
@@ -425,7 +437,12 @@ const Experts= () => {
         </div>
       )}
       </div>
-      </main>
+      </div>
+
+      </div>
+      </div>
+      </SidebarProvider>
+      
 </div>
   );
 };

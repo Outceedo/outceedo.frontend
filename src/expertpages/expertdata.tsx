@@ -7,7 +7,7 @@ import ExpertNavbar from "./expertNavbar"; // Corrected import
 import profile2 from "../assets/images/profile2.jpg";
 import ExpertHeader from "./expertheader";
 import ExpertMedia from "./expertmedia";
-
+import { SidebarProvider } from "@/components/ui/sidebar"
 interface MediaItem {
     id: number;
     type: "photo" | "video";
@@ -56,7 +56,7 @@ const expertData = {
   skills: ["Leadership", "Tactical Analysis", "Team Management", "Fitness Training"],
  };
 
-const ExpertData :React.FC = () => {
+const ExpertData :React.FC = ({ children }: { children?: React.ReactNode }) => {
   const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews"|"services" >("details");
   const [] = useState<MediaItem[]>([]); 
   const[]= useState<"all"|"photo"|"video">("all");
@@ -128,12 +128,21 @@ const ExpertData :React.FC = () => {
     setIsEditing(false);
   };
   return (      
-     <div className="flex">
-                <ExpertNavbar /> {/* Sidebar, applying dark mode */}
-        
-                {/* Main Content */}
-                <main className="flex-1 p-6 dark:bg-gray-900">
-                 <ExpertHeader />              
+    <>
+    <SidebarProvider>
+      <div className="flex w-full dark:bg-gray-900">
+        <ExpertNavbar />
+        <div className="flex w-full">
+          {/* Player Header */}
+          <ExpertHeader />
+
+          {/* Page Content */}
+          <div className="w-full px-6 pt-4 pb-10 mt-20 ml-20 bg-white dark:bg-slate-800">
+            {/* Render children if any */}
+            {children}
+    
+
+
     <div className="max-w-7xl mx-auto mt-5 bg-white p-6 dark:bg-slate-800">
       <div className="flex justify-between items-center w-full dark:text-white  p-4">
   {/* Left - Expert Name */}
@@ -346,8 +355,12 @@ const ExpertData :React.FC = () => {
       )}
       </div>
       </div>
-      </main>
-      </div>    
+      </div>
+      </div>
+      </div>
+      </SidebarProvider>
+      
+      </>    
   );
 };
 export default ExpertData ;

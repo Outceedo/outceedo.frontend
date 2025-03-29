@@ -3,7 +3,7 @@ import "react-circular-progressbar/dist/styles.css";
 import SideNavbar from "./sideNavbar";
 import React, { useState } from 'react';
 import PlayerHeader from "./playerheader";
-
+import { SidebarProvider } from "@/components/ui/sidebar"
 interface Match {
     id: number;
     date: string;
@@ -14,7 +14,7 @@ interface Match {
     result: string;
   }
 
-const Matches: React.FC = () => { 
+const Matches: React.FC = ({ children }: { children?: React.ReactNode }) => { 
 
   const [matches, setMatches] = useState<Match[]>([
     { id: 1, date: "Feb 14, 2025", homeTeam: "ByeWind", awayTeam: "ByeWind", type: "State",status:"won", result: "2 - 0" },
@@ -66,13 +66,21 @@ const Matches: React.FC = () => {
   };
 
   return (
+      
     <>
-      <div className="flex">
+    <SidebarProvider>
+      <div className="flex w-full  dark:bg-gray-900">
         <SideNavbar />
-        
-      <PlayerHeader />
+        <div className="flex w-full">
+          {/* Player Header */}
+          <PlayerHeader />
 
-          <div className="p-6 mt-20 w-full dark:bg-slate-900">
+          {/* Page Content */}
+          <div className="w-full px-6 pt-4 pb-10 mt-20 ml-20 bg-white dark:bg-slate-800">
+            {/* Render children if any */}
+            {children}
+        
+
       {/* Match Form */}
       <div className="bg-gray-100 p-4 rounded-md shadow-md dark:bg-slate-800  ">
         <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4 ">
@@ -127,9 +135,12 @@ const Matches: React.FC = () => {
         </table>
       </div>
     </div>
+    </div>
+    </div>
+    </SidebarProvider>
 
          
-    </div>
+    
     </>
   );
 };

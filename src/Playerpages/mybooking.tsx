@@ -6,6 +6,7 @@ import React, { useState } from "react";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import PlayerHeader from "./playerheader";
 
+import { SidebarProvider } from "@/components/ui/sidebar"
 
 interface Booking {
   id: number;
@@ -27,7 +28,7 @@ const initialBookings: Booking[] = [
   { id: 32, expertName: "Michael", date: "2 Aug 2025", service: "Online 1 on 1 Advise", amount: "$150", action: "Re-Scheduled", bookingStatus: "Not Paid" },
 ];
 
-const MyBooking: React.FC = () => {
+const MyBooking: React.FC = ({ children }: { children?: React.ReactNode }) => {
   const [bookings] = useState<Booking[]>(initialBookings);
   const [bookingStatus, setBookingStatus] = useState(""); // Default empty (shows all)
   const [isVisible, setIsVisible] = useState(true);
@@ -67,11 +68,19 @@ const MyBooking: React.FC = () => {
     
   
   return (
-    <div className="flex">
-      <SideNavbar />
-         <div className="flex-1 min-h-screen bg-gray-100 dark:bg-gray-900 p-6">
-       <PlayerHeader />   
-       <main className="mt-16 p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
+    <>
+      <SidebarProvider>
+        <div className="flex w-full  dark:bg-gray-900">
+          <SideNavbar />
+          <div className="flex w-full">
+            {/* Player Header */}
+            <PlayerHeader />
+
+            {/* Page Content */}
+            <div className="w-full px-6 pt-4 pb-10 mt-20 ml-20 bg-white dark:bg-slate-800">
+              {/* Render children if any */}
+              {children}
+          
        <div className="flex items-center space-x-4 mb-4">
   {/* Search Input with Icon */}
   <div className="relative w-1/3">
@@ -157,9 +166,11 @@ const MyBooking: React.FC = () => {
           </table>
         </div>
       
-        </main>
         </div>
         </div>
+        </div>
+        </SidebarProvider>
+      </>
   );
 };
 

@@ -7,6 +7,7 @@ import PlayerHeader from "./playerheader";
 import Media from "./media";
 import ProfileDetails from "./profiledetails";
 import Reviews from "./reviews";
+import { SidebarProvider } from "@/components/ui/sidebar"
 interface Stat {
   label: string;
   percentage: number;
@@ -31,18 +32,30 @@ const calculateOVR = (stats: Stat[]) => {
 
 const OVR = calculateOVR(stats);
 
-const Profile: React.FC = () => {
+const Profile: React.FC = ({ children }: { children?: React.ReactNode }) => {
 
    const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews" >("details");
 
   return (
+         
+    
     <>
-      <div className="flex">
-        <SideNavbar /> {/* Sidebar, applying dark mode */}  
-        <PlayerHeader />     
+    <SidebarProvider>
+      <div className="flex w-full dark:bg-gray-900">
+        <SideNavbar />
+        <div className="flex w-full">
+          {/* Player Header */}
+          <PlayerHeader />
+
+          {/* Page Content */}
+          <div className="w-full px-6 pt-4 pb-10 mt-20 ml-20 bg-white dark:bg-slate-800">
+            {/* Render children if any */}
+            {children}
+        
+
 
           {/* Profile Info */}
-          <div className="bg-white   h-full w-full mt-20 rounded-lg p-6  dark:bg-gray-800 dark:text-white">
+          <div>
             <div className="flex  items-center">
               <img src={profile1} alt="Player" className="rounded-full w-40 h-40" />
               <div className="ml-4">
@@ -133,7 +146,10 @@ const Profile: React.FC = () => {
       </div>
     </div>
       </div>
-</div>     
+</div> 
+</div>
+</div>
+</SidebarProvider>    
       
     </>
   );
