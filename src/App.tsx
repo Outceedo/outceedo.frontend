@@ -21,6 +21,8 @@ import Player from "./expertpages/player";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken } from "./store/auth-slice";
 import CheckAuth from "./common/Checkauth";
+import Dashboardmain from "./Playerpages/dashboardmain";
+import PlayerLayout from "./components/player/layout";
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -62,15 +64,23 @@ const App: React.FC = () => {
             </CheckAuth>
           }
         />
-
         <Route
-          path="/dashboard"
+          path="/player"
           element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Dashboard />
-            </CheckAuth>
+            // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+            <PlayerLayout />
+            // </CheckAuth>
           }
-        />
+        >
+          <Route
+            path="/player/dashboard"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <Dashboardmain />
+              // </CheckAuth>
+            }
+          />
+        </Route>
 
         <Route
           path="/matches"
