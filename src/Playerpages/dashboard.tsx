@@ -13,14 +13,11 @@ const Dashboard: React.FC = () => {
     <>
       <div className="flex">
         <SideNavbar />
-      
           <PlayerHeader />
-           
-
           <div className=" h-screen w-full mt-20 bg-white p-10 dark:bg-slate-800">
            {/* Main Container */}
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        
+    
        {/* Left Section (Upcoming Match) */}
      <div className="md:col-span-2 bg-yellow-100 p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
       <div className="flex-1">
