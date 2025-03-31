@@ -53,7 +53,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         LOGO
       </h1>
 
-      <div className="text-center bg-slate-100 shadow-md dark:bg-gray-700 p-5 rounded-md ml-3 mb-4">
+      <div className="text-center p-5 rounded-md ml-3 mb-4">
         <img
           src={profile}
           alt="Profile"

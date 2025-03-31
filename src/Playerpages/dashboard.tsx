@@ -53,7 +53,7 @@ const Dashboard: React.FC = () => {
           {/* Main Container */}
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left Section (Upcoming Match) */}
-            <div className="md:col-span-2 bg-yellow-100 p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
+            <div className="md:col-span-2 bg-[#FFF8DA] p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
               <div className="flex-1 text-center ">
                 <h2 className="text-gray-700 font-bold text-xl dark:text-white">
                   Up Coming Match
@@ -82,14 +82,14 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Right Section (Recommendations) */}
-            <div className="bg-pink-100 p-4 rounded-lg shadow dark:bg-slate-600">
+            <div className="bg-[#FFE8E7] p-4 rounded-lg shadow dark:bg-slate-600">
               <h2 className="text-gray-700 font-bold dark:text-white">
                 Recommendations
               </h2>
               {[1, 2, 3, 4].map((_, index) => (
                 <div
                   key={index}
-                  className="flex items-center bg-pink-100 p-2 rounded-lg shadow gap-4 mt-3 dark:bg-slate-500 dark:text-white"
+                  className="flex items-center p-2 gap-4 mt-3 dark:bg-slate-500 dark:text-white"
                 >
                   <img
                     src={profile}
@@ -163,7 +163,7 @@ const Dashboard: React.FC = () => {
             </div>
 
             {/* Notifications Section */}
-            <div className="bg-yellow-100 p-4 rounded-lg shadow mt-6 dark:bg-slate-600">
+            <div className="bg-[#FFF8DA] p-4 rounded-lg shadow mt-6 dark:bg-slate-600">
               <h2 className="text-gray-700 font-bold dark:text-white">
                 Notifications
               </h2>
