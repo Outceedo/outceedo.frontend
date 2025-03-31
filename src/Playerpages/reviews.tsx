@@ -43,7 +43,7 @@ const Reviews: React.FC = () => {
   };
 
   return (
-    <div className="p-4 w-full">
+    <div className="p-4 -mt-10 w-full">
       {/* Reviews Grid */}
       <div className="grid md:grid-cols-3 gap-6 mt-6">
         {reviews.map((review, index) => (

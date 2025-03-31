@@ -1,9 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "react-circular-progressbar/dist/styles.css";
-import SideNavbar from "./sideNavbar";
 import profile from "../assets/images/profile.jpg";
 import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
-import PlayerHeader from "./playerheader";
 
 const Dashboard: React.FC = () => {
   // On initial load, check if dark mode is enabled
@@ -11,26 +9,34 @@ const Dashboard: React.FC = () => {
   return (
     <>
       <div className="flex">
-        <SideNavbar />
+        {/* <SideNavbar />
       
-          <PlayerHeader />
-           
+          <PlayerHeader /> */}
 
-          <div className=" h-screen w-full mt-20 bg-white p-10 dark:bg-slate-800">
-           {/* Main Container */}
+        <div className=" h-screen w-full mt-20 bg-white p-10 dark:bg-slate-800">
+          {/* Main Container */}
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
-        
-       {/* Left Section (Upcoming Match) */}
-     <div className="md:col-span-2 bg-yellow-100 p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
-      <div className="flex-1">
-    <h2 className="text-gray-700 font-bold text-xl dark:text-white">Up Coming Match</h2>
-    <h1 className="text-2xl font-semibold mt-2">Arsenal Vs Chelsea</h1>
-    <p className="text-gray-600 mt-2 dark:text-white "> 22 February 2025</p>
-    <p className="text-gray-600 dark:text-white" > Wembley, England</p>
-    <button className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md ">
-      Know about their team
-    </button>
-     </div>
+            {/* Left Section (Upcoming Match) */}
+            <div className="md:col-span-2 bg-yellow-100 p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
+              <div className="flex-1">
+                <h2 className="text-gray-700 font-bold text-xl dark:text-white">
+                  Up Coming Match
+                </h2>
+                <h1 className="text-2xl font-semibold mt-2">
+                  Arsenal Vs Chelsea
+                </h1>
+                <p className="text-gray-600 mt-2 dark:text-white ">
+                  {" "}
+                  22 February 2025
+                </p>
+                <p className="text-gray-600 dark:text-white">
+                  {" "}
+                  Wembley, England
+                </p>
+                <button className="mt-4 px-4 py-2 bg-red-500 text-white rounded-md ">
+                  Know about their team
+                </button>
+              </div>
 
               <img
                 src={profile}

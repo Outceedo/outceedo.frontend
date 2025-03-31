@@ -27,7 +27,7 @@ const SideNavbar: React.FC = () => {
         <nav className="mt-6 font-Raleway font-semibold">
           <ul>
             {[
-              { name: "Dashboard", icon: "fas fa-tachometer-alt", path: "/dashboard" },
+              { name: "Dashboard", icon: "fas fa-tachometer-alt", path: "/player/dashboard" },
               { name: "Profile", icon: "fas fa-user", path: "/profile" },
               { name: "My Bookings", icon: "fas fa-calendar-check", path: "/mybooking" },
               { name: "Matches", icon: "fas fa-futbol", path: "/matches" },
