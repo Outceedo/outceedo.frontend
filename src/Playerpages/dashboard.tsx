@@ -1,26 +1,60 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "react-circular-progressbar/dist/styles.css";
-import SideNavbar from "./sideNavbar";
 import profile from "../assets/images/profile.jpg";
 import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
-import PlayerHeader from "./playerheader";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const Dashboard: React.FC = () => {
-  // On initial load, check if dark mode is enabled
+  const recentMatches = [
+    { date: "18 Feb", game: "Team A vs Team B", score: "2 - 0", result: "Won" },
+    { date: "15 Feb", game: "Team C vs Team A", score: "1 - 3", result: "Won" },
+    {
+      date: "10 Feb",
+      game: "Team A vs Team D",
+      score: "0 - 1",
+      result: "Lost",
+    },
+    {
+      date: "05 Feb",
+      game: "Team E vs Team A",
+      score: "1 - 1",
+      result: "Draw",
+    },
+    { date: "01 Feb", game: "Team A vs Team F", score: "4 - 2", result: "Won" },
+  ];
+
+  // Function to get result class
+  const getResultClass = (result: string) => {
+    switch (result.toLowerCase()) {
+      case "won":
+        return "text-green-500";
+      case "lost":
+        return "text-red-500";
+      case "draw":
+        return "text-yellow-500";
+      default:
+        return "";
+    }
+  };
 
   return (
     <>
       <div className="flex">
-        {/* <SideNavbar />
-      
-          <PlayerHeader /> */}
-
-        <div className=" h-screen w-full mt-20 bg-white p-10 dark:bg-slate-800">
+        <div className="h-screen w-full bg-white p-10 dark:bg-slate-800">
           {/* Main Container */}
           <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left Section (Upcoming Match) */}
             <div className="md:col-span-2 bg-yellow-100 p-6 rounded-lg shadow dark:bg-slate-600 flex items-center justify-between">
-              <div className="flex-1">
+              <div className="flex-1 text-center ">
                 <h2 className="text-gray-700 font-bold text-xl dark:text-white">
                   Up Coming Match
                 </h2>
@@ -43,7 +77,7 @@ const Dashboard: React.FC = () => {
               <img
                 src={profile}
                 alt="player"
-                className="w-52 h-52 rounded-lg ml-6" // Add left margin for spacing
+                className="w-52 h-52 rounded-lg ml-6 hidden sm:block" // Add left margin for spacing
               />
             </div>
 
@@ -78,31 +112,54 @@ const Dashboard: React.FC = () => {
               ))}
             </div>
 
-            {/* Recent Matches Section */}
-            <div className="md:col-span-2 bg-white p-6 rounded-lg shadow mt-6 dark:bg-slate-600">
-              <h2 className="text-gray-700 font-bold dark:text-white">
-                Recent Matches
-              </h2>
-              <table className="w-full mt-4">
-                <thead>
-                  <tr className="text-left text-gray-500 border-b dark:text-white">
-                    <th className="py-2  dark:text-white">Date</th>
-                    <th>Game</th>
-                    <th>Score</th>
-                    <th>Result</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i} className="border-b">
-                      <td className="py-2">18 Feb</td>
-                      <td>Team A vs Team B</td>
-                      <td>2 - 0</td>
-                      <td className="text-green-500">Won</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            {/* Recent Matches Section - With Shadcn UI Table */}
+            <div className="md:col-span-2 mt-6">
+              <Card className="dark:bg-slate-600 border-0 shadow">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-gray-700 font-bold dark:text-white">
+                    Recent Matches
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="w-full overflow-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow className="border-b dark:border-gray-600">
+                          <TableHead className="text-gray-500 dark:text-white py-2">
+                            Date
+                          </TableHead>
+                          <TableHead className="text-gray-500 dark:text-white">
+                            Game
+                          </TableHead>
+                          <TableHead className="text-gray-500 dark:text-white">
+                            Score
+                          </TableHead>
+                          <TableHead className="text-gray-500 dark:text-white">
+                            Result
+                          </TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {recentMatches.map((match, i) => (
+                          <TableRow
+                            key={i}
+                            className="border-b dark:border-gray-600"
+                          >
+                            <TableCell className="py-2 font-medium">
+                              {match.date}
+                            </TableCell>
+                            <TableCell>{match.game}</TableCell>
+                            <TableCell>{match.score}</TableCell>
+                            <TableCell className={getResultClass(match.result)}>
+                              {match.result}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Notifications Section */}

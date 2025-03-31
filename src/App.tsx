@@ -21,7 +21,6 @@ import Player from "./expertpages/player";
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken } from "./store/auth-slice";
 import CheckAuth from "./common/Checkauth";
-import Dashboardmain from "./Playerpages/dashboardmain";
 import PlayerLayout from "./components/player/layout";
 
 const App: React.FC = () => {
@@ -76,46 +75,43 @@ const App: React.FC = () => {
             path="/player/dashboard"
             element={
               // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Dashboardmain />
+              <Dashboard />
               // </CheckAuth>
             }
           />
-        </Route>
-
-        <Route
-          path="/matches"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+          <Route
+            path="/player/matches"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
               <Matches />
-            </CheckAuth>
-          }
-        />
-
-        <Route
-          path="/mybooking"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <MyBooking />
-            </CheckAuth>
-          }
-        />
-
-        <Route
-          path="/viewexperts"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Expertspage />
-            </CheckAuth>
-          }
-        />
-        <Route
-          path="/exdetails"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Experts />
-            </CheckAuth>
-          }
-        />
+              // </CheckAuth>
+            }
+          />
+          <Route
+            path="/player/mybooking"
+            element={
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <MyBooking />
+              </CheckAuth>
+            }
+          />
+          <Route
+            path="/player/viewexperts"
+            element={
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <Expertspage />
+              </CheckAuth>
+            }
+          />
+          <Route
+            path="/player/exdetails"
+            element={
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <Experts />
+              </CheckAuth>
+            }
+          />
+        </Route>
 
         {/* Expert pages */}
         <Route
