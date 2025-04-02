@@ -36,11 +36,11 @@ const Player: React.FC = () => {
   return (
     <>
       <div className="flex">
-        <ExpertNavbar /> {/* Sidebar, applying dark mode */}
+        
 
         {/* Main Content */}
         <main className="flex-1 p-6 dark:bg-gray-900">
-         <ExpertHeader />
+        
 
           {/* Profile Info */}
           <div className="bg-white shadow-lg rounded-lg p-10 mt-10 dark:bg-gray-800 dark:text-white">

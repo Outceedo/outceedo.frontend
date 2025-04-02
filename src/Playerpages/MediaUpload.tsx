@@ -1,135 +1,102 @@
 import React, { useState, useEffect } from "react";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 
-interface UploadItem {
+interface MediaProps {
+  playerId?: string;
+  isExpertView?: boolean;
+}
+
+interface MediaItem {
   id: number;
   title: string;
-  file: File | null;
-  preview: string | null;
+  preview: string;
   type: "photo" | "video";
 }
 
-const MediaUpload: React.FC<{ onMediaUpdate: () => void; onClose: () => void }> = ({ onMediaUpdate, onClose }) => {
-
-  const [uploads, setUploads] = useState<UploadItem[]>([]);
+const Media: React.FC<MediaProps> = ({ playerId, isExpertView = false }) => {
+  const [media, setMedia] = useState<MediaItem[]>([]);
   const [activeTab, setActiveTab] = useState<"photo" | "video">("photo");
-  
+
+  // In a real application, this would fetch from an API using playerId
   useEffect(() => {
+    // For demo, we'll use localStorage, but in a real app this would be an API call
     const savedMedia = JSON.parse(localStorage.getItem("savedMedia") || "[]");
-    setUploads(savedMedia);
-  }, []);
+    setMedia(savedMedia);
+  }, [playerId]);
 
-  const handleAdd = (type: "photo" | "video") => {
-    setUploads([...uploads, { id: Date.now(), title: "", file: null, preview: null, type }]);
-  };
-
-  const handleRemove = (id: number) => {
-    const updatedUploads = uploads.filter((item) => item.id !== id);
-    setUploads(updatedUploads);
-    localStorage.setItem("savedMedia", JSON.stringify(updatedUploads));
-    onMediaUpdate();
-  };
-
-  const handleTitleChange = (id: number, value: string) => {
-    setUploads(uploads.map((item) => (item.id === id ? { ...item, title: value } : item)));
-  };
-
-  const handleFileChange = (id: number, file: File | null) => {
-    if (!file) return;
-
-    const previewUrl = URL.createObjectURL(file);
-    setUploads(uploads.map((item) => (item.id === id ? { ...item, file, preview: previewUrl } : item)));
-  };
-
-  const handleSave = () => {
-    localStorage.setItem("savedMedia", JSON.stringify(uploads));
-    alert("Media saved successfully!");
-    onMediaUpdate();
-    onClose(); // Close the modal properly
-  };
-
-  const handleClose = () => {
-    onClose();
-  };
+  // Filter media by type based on the active tab
+  const filteredMedia = media.filter((item) => item.type === activeTab);
 
   return (
-    <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg w-[600px] relative">
-      <button onClick={handleClose} className="absolute top-2 right-2 text-gray-600 dark:text-gray-300">
-        <FontAwesomeIcon icon={faTimes} size="lg" />
-      </button>
-
-      <h2 className="text-xl font-Raleway font-semibold">Upload Media</h2>
-
+    <div className="p-4">
       {/* Tabs */}
-      <div className="flex space-x-4 border-b pb-2 mt-2">
+      <div className="flex space-x-4 border-b pb-2 mb-4">
         <span
           onClick={() => setActiveTab("photo")}
-          className={`cursor-pointer ${activeTab === "photo" ? "text-red-500 font-semibold border-b-2 border-red-500" : "text-gray-500 dark:text-gray-300"}`}
+          className={`cursor-pointer px-4 py-2 ${
+            activeTab === "photo"
+              ? "text-red-500 font-semibold border-b-2 border-red-500"
+              : "text-gray-500 dark:text-gray-300"
+          }`}
         >
           Photos
         </span>
         <span
           onClick={() => setActiveTab("video")}
-          className={`cursor-pointer ${activeTab === "video" ? "text-red-500 font-semibold border-b-2 border-red-500" : "text-gray-500 dark:text-gray-300"}`}
+          className={`cursor-pointer px-4 py-2 ${
+            activeTab === "video"
+              ? "text-red-500 font-semibold border-b-2 border-red-500"
+              : "text-gray-500 dark:text-gray-300"
+          }`}
         >
           Videos
         </span>
       </div>
 
-      {/* Upload Fields */}
-      {uploads
-        .filter((item) => item.type === activeTab)
-        .map((upload) => (
-          <div key={upload.id} className="flex items-center space-x-3 mt-2">
-            <input
-              type="text"
-              placeholder="Title"
-              value={upload.title}
-              onChange={(e) => handleTitleChange(upload.id, e.target.value)}
-              className="border p-2 w-full rounded-md dark:bg-gray-600 dark:text-white"
-            />
-            <input
-              type="file"
-              accept={activeTab === "photo" ? "image/*" : "video/*"}
-              onChange={(e) => handleFileChange(upload.id, e.target.files?.[0] || null)}
-              className="border p-2 file:bg-white file:rounded-lg file:border-gray-300 file:dark:bg-slate-400 file:dark:text-white rounded-md dark:bg-gray-600 dark:text-white"
-            />
-            <button onClick={() => handleRemove(upload.id)} className="text-red-500">
-              <FontAwesomeIcon icon={faTimes} size="lg" />
-            </button>
-          </div>
-        ))}
-
-      {/* Preview */}
-      <div className="mt-4">
-        {uploads
-          .filter((item) => item.preview && item.type === activeTab)
-          .map((item) => (
-            <div key={item.id} className="mt-2">
+      {/* Media Gallery */}
+      {filteredMedia.length === 0 ? (
+        <div className="text-center py-10 text-gray-500 dark:text-gray-400">
+          No {activeTab}s available
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {filteredMedia.map((item) => (
+            <div
+              key={item.id}
+              className="border rounded-lg overflow-hidden dark:bg-gray-700"
+            >
               {item.type === "photo" ? (
-                <img src={item.preview!} alt={item.title} className="w-full h-40 object-cover rounded-md cursor-pointer" />
+                <img
+                  src={item.preview}
+                  alt={item.title}
+                  className="w-full h-48 object-cover"
+                />
               ) : (
-                <video src={item.preview!} controls className="w-full h-40 rounded-md cursor-pointer" />
+                <video
+                  src={item.preview}
+                  controls
+                  className="w-full h-48 object-cover"
+                />
               )}
+              <div className="p-3">
+                <h4 className="font-medium dark:text-white">
+                  {item.title || "Untitled"}
+                </h4>
+              </div>
             </div>
           ))}
-      </div>
+        </div>
+      )}
 
-      {/* Buttons */}
-      <div className="flex justify-between items-center mt-4">
-        <button
-          onClick={() => handleAdd(activeTab)}
-          className="mt-2 flex items-center bg-yellow-200 hover:bg-yellow-300 text-black px-3 py-2 rounded-md dark:bg-yellow-200 dark:text-black"
-        >
-          <FontAwesomeIcon icon={faPlus} className="mr-1" /> Add {activeTab}
-        </button>
-        <button onClick={handleSave} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 shadow-md rounded-md dark:bg-red-600">
-          Save
-        </button>
-      </div>
+      {/* Add fallback content when no media is available */}
+      {media.length === 0 && (
+        <div className="mt-6 text-center p-8 border border-dashed rounded-lg dark:border-gray-600">
+          <p className="text-gray-500 dark:text-gray-400">
+            No media has been uploaded for this player yet.
+          </p>
+        </div>
+      )}
     </div>
   );
 };
 
-export default MediaUpload;
+export default Media;

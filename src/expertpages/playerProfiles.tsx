@@ -13,8 +13,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 interface Expert {
   name: string;
@@ -102,7 +102,7 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
   };
 
   return (
-    <div className="flex justify-center space-x-2">
+    <div className="flex justify-center mt-6 space-x-2">
       <Button
         variant="outline"
         size="icon"
@@ -138,7 +138,7 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
   );
 };
 
-const Expertspage: React.FC = () => {
+const PlayersProfile: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     profession: "",
@@ -156,8 +156,9 @@ const Expertspage: React.FC = () => {
     });
   };
 
-  // Filter experts based on search query
+  // Filter experts based on search query and filters
   const filteredExperts = experts.filter((expert) => {
+    // If there's a search query, check if it matches the expert's name
     if (
       searchQuery &&
       !expert.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -173,14 +174,14 @@ const Expertspage: React.FC = () => {
     <div className="flex">
       {/* Main Content */}
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
-        <div className="min-h-screen px-6 rounded-xl dark:bg-slate-800">
+        <div className="min-h-screen p-6 mt-4 rounded-xl dark:bg-slate-800">
           {/* Search Box */}
           <div className="mb-6 relative">
             <div className="relative">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search experts by name, skills, or any keyword..."
+                placeholder="Search players by name, skills, or any keyword..."
                 className="pl-9 w-full bg-white dark:bg-slate-700"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -255,7 +256,7 @@ const Expertspage: React.FC = () => {
                 <CardFooter className="p-4 pt-0">
                   <Button
                     className="w-full bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => navigate("/player/exdetails")}
+                    onClick={() => navigate("/expert/playerinfo")}
                   >
                     View Profile
                   </Button>
@@ -272,4 +273,4 @@ const Expertspage: React.FC = () => {
   );
 };
 
-export default Expertspage;
+export default PlayersProfile;

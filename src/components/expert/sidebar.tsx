@@ -10,34 +10,34 @@ interface MenuItem {
   path: string;
 }
 
-const adminSidebarMenuItems: MenuItem[] = [
+const expertSidebarMenuItems: MenuItem[] = [
   {
     id: 1,
     name: "Dashboard",
     icon: "fas fa-table-columns",
-    path: "/player/dashboard",
+    path: "/expert/dashboard",
   },
   {
     id: 2,
-    name: "Experts",
+    name: "Players",
     icon: "fas fa-user-tie",
-    path: "/player/viewexperts",
+    path: "/expert/viewplayers",
   },
-  { id: 3, name: "Matches", icon: "fas fa-futbol", path: "/player/matches" },
+  { id: 3, name: "Matches", icon: "fas fa-futbol", path: "/expert/matches" },
   {
     id: 4,
     name: "My Bookings",
     icon: "fas fa-calendar-check",
-    path: "/player/mybooking",
+    path: "/expert/mybooking",
   },
 
   {
     id: 5,
     name: "Sponsors",
     icon: "fas fa-handshake",
-    path: "/player/sponsors",
+    path: "/expert/sponsors",
   },
-  { id: 6, name: "Profile", icon: "fas fa-user", path: "/player/profile" },
+  { id: 6, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
 ];
 
 interface MenuItemsProps {
@@ -67,10 +67,10 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           Under 15
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          Goal Keeper
+          Expert
         </p>
       </div>
-      {adminSidebarMenuItems.map((menuItem) => (
+      {expertSidebarMenuItems.map((menuItem) => (
         <div
           key={menuItem.id}
           onClick={() => {
@@ -87,12 +87,12 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   );
 }
 
-interface PlayerSideBarProps {
+interface ExpertSideBarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-function PlayerSideBar({ open, setOpen }: PlayerSideBarProps) {
+function ExpertSideBar({ open, setOpen }: ExpertSideBarProps) {
   const navigate = useNavigate();
 
   return (
@@ -111,4 +111,4 @@ function PlayerSideBar({ open, setOpen }: PlayerSideBarProps) {
   );
 }
 
-export default PlayerSideBar;
+export default ExpertSideBar;

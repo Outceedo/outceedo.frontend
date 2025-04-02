@@ -22,6 +22,8 @@ import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken } from "./store/auth-slice";
 import CheckAuth from "./common/Checkauth";
 import PlayerLayout from "./components/player/layout";
+import ExpertLayout from "./components/expert/layout";
+import PlayersProfile from "./expertpages/playerProfiles";
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -55,14 +57,7 @@ const App: React.FC = () => {
         />
 
         {/* Player pages */}
-        <Route
-          path="/profile"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Profile />
-            </CheckAuth>
-          }
-        />
+
         <Route
           path="/player"
           element={
@@ -90,83 +85,72 @@ const App: React.FC = () => {
           <Route
             path="/player/mybooking"
             element={
-              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-                <MyBooking />
-              </CheckAuth>
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <MyBooking />
+              // {/* </CheckAuth> */}
             }
           />
           <Route
             path="/player/viewexperts"
             element={
-              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-                <Expertspage />
-              </CheckAuth>
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <Expertspage />
+              // {/* </CheckAuth> */}
             }
           />
           <Route
             path="/player/exdetails"
             element={
-              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-                <Experts />
-              </CheckAuth>
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <Experts />
+              // </CheckAuth>
+            }
+          />
+          <Route
+            path="/player/profile"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <Profile />
+              // {/* </CheckAuth> */}
             }
           />
         </Route>
 
-        {/* Expert pages */}
-        <Route
-          path="/expertmedia"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertMedia />
-            </CheckAuth>
-          }
-        />
-
-        <Route
-          path="/expertData"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+        {/* Expert Outlet */}
+        <Route path="/expert" element={<ExpertLayout />}>
+          <Route
+            path="/expert/viewplayers"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <PlayersProfile />
+              // </CheckAuth>
+            }
+          />
+          <Route
+            path="/expert/profile"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
               <ExpertData />
-            </CheckAuth>
-          }
-        />
-
-        <Route
-          path="/expertspage"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Expertspage />
-            </CheckAuth>
-          }
-        />
-
-        <Route
-          path="/expertNavbar"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertNavbar />
-            </CheckAuth>
-          }
-        />
-
-        <Route
-          path="/playerpage"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <PlayerPage />
-            </CheckAuth>
-          }
-        />
-
-        <Route
-          path="/player"
-          element={
-            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Player />
-            </CheckAuth>
-          }
-        />
+              // </CheckAuth>
+            }
+          />
+          <Route
+            path="/expertmedia"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <ExpertMedia />
+              // </CheckAuth>
+            }
+          />
+          <Route
+            path="/expert/playerinfo"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <Profile />
+              // </CheckAuth>
+            }
+          />
+        </Route>
 
         <Route
           path="/unauthorized"
