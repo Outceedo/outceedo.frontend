@@ -1,185 +1,156 @@
 import React, { useState } from "react";
+import profile1 from "../assets/images/profile1.jpg";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import profile1 from "../assets/images/profile1.jpg";
 
-// Import components
-import Media from "../Playerpages/MediaUpload";
-import ProfileDetails from "../Playerpages/profiledetails";
-import Reviews from "../Playerpages/reviews";
+import Media from "./media";
+import ProfileDetails from "./profiledetails";
+import Reviews from "./reviews";
+import { Card } from "@/components/ui/card";
 
-// Types definition for better scalability
 interface Stat {
   label: string;
   percentage: number;
   color: string;
 }
 
-interface PlayerData {
-  id: string;
-  name: string;
-  age: number;
-  height: string;
-  weight: string;
-  location: string;
-  profileImage: string;
-  stats: Stat[];
-}
+// Static stats data for the player profile
+const stats: Stat[] = [
+  { label: "Pace", percentage: 60, color: "#E63946" },
+  { label: "Shooting", percentage: 55, color: "#D62828" },
+  { label: "Passing", percentage: 80, color: "#4CAF50" },
+  { label: "Dribbling", percentage: 65, color: "#68A357" },
+  { label: "Defending", percentage: 90, color: "#2D6A4F" },
+  { label: "Physical", percentage: 60, color: "#F4A261" },
+];
 
-// Tab type for better type safety
-type TabType = "details" | "media" | "reviews";
+const calculateOVR = (stats: Stat[]) => {
+  const total = stats.reduce((sum, stat) => sum + stat.percentage, 0);
+  return (total / stats.length).toFixed(1);
+};
 
-// Mock data - this would come from an API in the future
-const playerData: PlayerData = {
+const OVR = calculateOVR(stats);
+
+// Mock player data that would come from an API
+const playerData = {
   id: "player123",
   name: "Rohan Roshan",
   age: 14,
   height: "166cm",
   weight: "45kg",
   location: "London, England",
+  club: "Local FC",
+  languages: ["English", "Spanish"],
   profileImage: profile1,
-  stats: [
-    { label: "Pace", percentage: 60, color: "#E63946" },
-    { label: "Shooting", percentage: 55, color: "#D62828" },
-    { label: "Passing", percentage: 80, color: "#4CAF50" },
-    { label: "Dribbling", percentage: 65, color: "#68A357" },
-    { label: "Defending", percentage: 90, color: "#2D6A4F" },
-    { label: "Physical", percentage: 60, color: "#F4A261" },
-  ],
-};
-
-// Function to calculate the average OVR value - moved outside component for reusability
-const calculateOVR = (stats: Stat[]): string => {
-  const totalPercentage = stats.reduce((acc, stat) => acc + stat.percentage, 0);
-  return (totalPercentage / stats.length).toFixed(1);
+  stats: stats,
 };
 
 const Profile: React.FC = () => {
-  // State management
-  const [activeTab, setActiveTab] = useState<TabType>("details");
-  const [player] = useState<PlayerData>(playerData); // In real app, this would be fetched from an API
-
-  // Calculate OVR
-  const ovrValue = calculateOVR(player.stats);
-
-  // Tab configuration for easy extension
-  const tabs: { id: TabType; label: string }[] = [
-    { id: "details", label: "Details" },
-    { id: "media", label: "Media" },
-    { id: "reviews", label: "Reviews" },
-  ];
+  const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
+    "details"
+  );
 
   return (
-    <div className="flex">
-      <div className="bg-white h-full w-full rounded-lg p-6 dark:bg-gray-800 dark:text-white shadow-md">
-        {/* Profile Header */}
-        <div className="flex items-center">
-          <img
-            src={player.profileImage}
-            alt={`${player.name}'s profile`}
-            className="rounded-full w-40 h-40 object-cover border-4 border-gray-200 dark:border-gray-700 shadow-lg"
-          />
-          <div className="ml-6">
-            <h2 className="text-2xl font-Raleway font-semibold">
-              {player.name}
-            </h2>
-            <p className="text-gray-500 font-Opensans dark:text-gray-400">
-              Age {player.age} | {player.height} | {player.weight} |{" "}
-              {player.location}
-            </p>
-          </div>
-        </div>
+    <div className="flex w-full min-h-screen dark:bg-gray-900">
+      <div className="flex-1 p-4">
+        <div className="ml-8">
+          <div className="flex flex-col lg:flex-row gap-6 items-start mt-4">
+            <img
+              src={playerData.profileImage}
+              alt={`${playerData.name}'s profile`}
+              className="rounded-lg w-60 h-60 object-cover shadow-md"
+            />
 
-        {/* OVR Stats Overview */}
-        <div className="bg-yellow-100 p-5 rounded-lg shadow-lg w-full mx-auto my-8 dark:bg-gray-700 transition-all duration-300 hover:shadow-xl">
-          <div className="flex justify-between items-center flex-wrap gap-4">
-            {/* OVR Display */}
-            <div className="text-center mb-4 sm:mb-0">
-              <div className="flex flex-col items-center">
-                <span className="block text-4xl font-bold text-gray-800 dark:text-white">
-                  {ovrValue}%
-                </span>
-                <span className="text-xl font-Raleway text-gray-700 dark:text-gray-300">
-                  OVR
-                </span>
-              </div>
-            </div>
-
-            {/* Stats Progress Bars */}
-            <div className="flex flex-wrap justify-center gap-5 flex-1">
-              {player.stats.map((stat, index) => (
-                <div key={index} className="flex flex-col items-center">
-                  <div
-                    className="w-20 h-20 sm:w-24 sm:h-24 relative"
-                    style={{ transform: "rotate(-90deg)" }}
-                  >
-                    <CircularProgressbar
-                      value={stat.percentage}
-                      styles={buildStyles({
-                        textSize: "26px",
-                        pathColor: stat.color,
-                        textColor: "#333",
-                        trailColor: "rgba(200,200,200,0.3)",
-                        strokeLinecap: "round",
-                      })}
-                      circleRatio={0.5}
-                    />
-                    <div
-                      className="absolute inset-0 flex items-center justify-center text-xl font-semibold text-stone-800 dark:text-white"
-                      style={{ transform: "rotate(90deg)" }}
-                    >
-                      {stat.percentage}%
-                    </div>
-                  </div>
-                  <p className="text-sm font-bold text-gray-700 font-Raleway dark:text-white mt-2">
-                    {stat.label}
-                  </p>
+            <div className="flex flex-col mt-5 w-full gap-4">
+              <div>
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
+                  {playerData.name}
+                </h2>
+                <div className="flex flex-wrap gap-8 text-gray-600 font-Opensans mt-2 dark:text-gray-300">
+                  <span>Age: {playerData.age}</span>
+                  <span>{playerData.height}</span>
+                  <span>{playerData.weight}</span>
+                  <span>{playerData.location}</span>
+                  <span>{playerData.club}</span>
+                  <span>{playerData.languages.join(", ")}</span>
                 </div>
+              </div>
+
+              {/* OVR Section */}
+              <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit">
+                <div className="flex flex-wrap gap-6 items-center">
+                  <div>
+                    <h2 className="text-xl text-gray-800 dark:text-white">
+                      <span className="block font-bold font-opensans text-3xl">
+                        {OVR}
+                      </span>
+                      <span className="text-xl font-opensans">OVR</span>
+                    </h2>
+                  </div>
+
+                  {stats.map((stat, index) => (
+                    <div key={index} className="flex flex-col items-center">
+                      <div
+                        className="w-20 h-20 relative"
+                        style={{ transform: "rotate(-90deg)" }}
+                      >
+                        <CircularProgressbar
+                          value={stat.percentage}
+                          styles={buildStyles({
+                            textSize: "26px",
+                            pathColor: stat.color,
+                            trailColor: "#ddd",
+                            strokeLinecap: "round",
+                          })}
+                          circleRatio={0.5}
+                        />
+                        <div
+                          className="absolute inset-0 flex items-center justify-center text-sm ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
+                          style={{ transform: "rotate(90deg)" }}
+                        >
+                          {stat.percentage}%
+                        </div>
+                      </div>
+                      <p className="text-sm -mt-8 font-opensans text-gray-700 dark:text-white">
+                        {stat.label}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* Tabs Section */}
+          <div className="mt-8">
+            <div className="flex gap-4 border-b pb-2">
+              {(["details", "media", "reviews"] as const).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+                    activeTab === tab
+                      ? "text-red-600 border-red-600"
+                      : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
+                  }`}
+                >
+                  {tab}
+                </button>
               ))}
             </div>
-          </div>
-        </div>
 
-        {/* Tab Navigation */}
-        <div className="p-4">
-          <div className="flex items-center border-b pb-2 gap-5 overflow-x-auto scrollbar-hide">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`text-lg font-semibold capitalize px-3 py-2 focus:outline-none transition-all duration-300 ${
-                  activeTab === tab.id
-                    ? "text-red-600 border-b-2 border-red-600"
-                    : "text-gray-700 dark:text-white hover:text-red-600 dark:hover:text-red-600"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Tab Content */}
-          <div className="mt-6">
-            {activeTab === "details" && (
-              <ProfileDetails
-                playerData={player}
-                isExpertView={true} // Passing a prop to indicate this is expert view (read-only)
-              />
-            )}
-
-            {activeTab === "media" && (
-              <Media
-                playerId={player.id}
-                isExpertView={true} // Passing a prop to indicate this is expert view (read-only)
-              />
-            )}
-
-            {activeTab === "reviews" && (
-              <Reviews
-                playerId={player.id}
-                isExpertView={true} // Passing a prop to indicate this is expert view (read-only)
-              />
-            )}
+            <div className="mt-4">
+              {/* Pass isExpertView prop to all components to disable editing */}
+              {activeTab === "details" && (
+                <ProfileDetails playerData={playerData} isExpertView={true} />
+              )}
+              {activeTab === "media" && (
+                <Media playerId={playerData.id} isExpertView={true} />
+              )}
+              {activeTab === "reviews" && (
+                <Reviews playerId={playerData.id} isExpertView={true} />
+              )}
+            </div>
           </div>
         </div>
       </div>

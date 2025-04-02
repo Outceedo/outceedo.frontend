@@ -8,13 +8,13 @@ import football from "../assets/images/football.jpg";
 const EmailVerification: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const { isLoading, error, user } = useAppSelector(
+    const { isLoading, error } = useAppSelector(
     (state: RootState) => state.auth
   );
 
   const [otp, setOtp] = useState<string>("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [verificationAttempted, setVerificationAttempted] = useState(false);
+  const [, setVerificationAttempted] = useState(false);
   const [email, setEmail] = useState<string>("");
   const [apiError, setApiError] = useState<string>("");
 
@@ -75,11 +75,8 @@ const EmailVerification: React.FC = () => {
           typeof resultAction.payload === "object"
         ) {
           // Handle error object format
-          setApiError(
-            resultAction.payload.error ||
-              "Verification failed. Please try again."
-          );
-        } else {
+          setApiError((resultAction as any)?.payload?.error || "Verification failed. Please try again.");
+                 } else {
           setApiError("Verification failed. Please try again.");
         }
       }
@@ -130,8 +127,7 @@ const EmailVerification: React.FC = () => {
             <label
               className={`block text-sm font-medium ${
                 fieldErrors.otp ? "text-red-500" : "text-gray-700"
-              }`}
-            >
+              }`}            >
               OTP <span className="text-red-500 ml-1">*</span>
             </label>
             <input
@@ -157,15 +153,12 @@ const EmailVerification: React.FC = () => {
               <p className="text-red-500 text-sm">{fieldErrors.otp}</p>
             )}
           </div>
-
           <button
             type="submit"
             className="w-full bg-[#FE221E] text-white py-2 rounded-lg hover:bg-[#C91C1A] transition duration-300"
-            disabled={isLoading}
-          >
+            disabled={isLoading}          >
             {isLoading ? "Verifying..." : "Verify"}
           </button>
-
           <div className="text-center mt-4">
             <p className="text-gray-600">
               Didn't receive the code?{" "}
@@ -174,8 +167,7 @@ const EmailVerification: React.FC = () => {
                 className="text-[#FA6357] hover:underline cursor-pointer"
                 onClick={() => {
                   navigate("/signup");
-                }}
-              >
+                }} >
                 Go back to signup
               </button>
             </p>

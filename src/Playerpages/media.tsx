@@ -44,7 +44,7 @@ const Media: React.FC = () => {
   };
 
   return (
-    <div className="p-4 w-full">
+    <div className="p-4 -mt-10 w-full">
       {/* Top Tabs & Upload */}
       <div className="flex space-x-4 p-4">
         {[
