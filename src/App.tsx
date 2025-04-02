@@ -15,15 +15,14 @@ import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
 import ExpertMedia from "./expertpages/expertmedia";
 import ExpertData from "./expertpages/expertdata";
-import ExpertNavbar from "./expertpages/expertNavbar";
-import PlayerPage from "./expertpages/playerpage";
-import Player from "./expertpages/player";
+
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken } from "./store/auth-slice";
 import CheckAuth from "./common/Checkauth";
 import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
 import PlayersProfile from "./expertpages/playerProfiles";
+import ExpertviewProfile from "./expertpages/playerinfo";
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -146,7 +145,7 @@ const App: React.FC = () => {
             path="/expert/playerinfo"
             element={
               // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Profile />
+              <ExpertviewProfile />
               // </CheckAuth>
             }
           />

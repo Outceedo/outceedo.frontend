@@ -3,10 +3,10 @@ import profile1 from "../assets/images/profile1.jpg";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 
-import Media from "./media";
-import ProfileDetails from "./profiledetails";
-import Reviews from "./reviews";
+import Reviews from "./playerreviews";
 import { Card } from "@/components/ui/card";
+import PlayerMedia from "./playermedia";
+import ProfileDetails from "./profiledetails";
 
 interface Stat {
   label: string;
@@ -31,7 +31,7 @@ const calculateOVR = (stats: Stat[]) => {
 
 const OVR = calculateOVR(stats);
 
-// Mock player data that would come from an API
+// Enhanced player data with social media links
 const playerData = {
   id: "player123",
   name: "Rohan Roshan",
@@ -43,9 +43,22 @@ const playerData = {
   languages: ["English", "Spanish"],
   profileImage: profile1,
   stats: stats,
+  aboutMe:
+    "I am from London, UK. A passionate, versatile musician bringing light to classics from Ella Fitzgerald to Guns and Roses. Guaranteed to get the crowd dancing.",
+  certificates: [
+    "Fundamentals of Music Theory",
+    "Getting Started With Music Theory",
+  ],
+  awards: ["Junior Music Championship 2023", "Best Performer Award 2024"],
+  socials: {
+    linkedin: "https://linkedin.com/in/rohan-roshan",
+    instagram: "https://instagram.com/rohan.music",
+    facebook: "https://facebook.com/rohanroshan",
+    twitter: "https://twitter.com/rohan_music",
+  },
 };
 
-const Profile: React.FC = () => {
+const ExpertviewProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
     "details"
   );
@@ -145,7 +158,7 @@ const Profile: React.FC = () => {
                 <ProfileDetails playerData={playerData} isExpertView={true} />
               )}
               {activeTab === "media" && (
-                <Media playerId={playerData.id} isExpertView={true} />
+                <PlayerMedia playerId={playerData.id} isExpertView={true} />
               )}
               {activeTab === "reviews" && (
                 <Reviews playerId={playerData.id} isExpertView={true} />
@@ -158,4 +171,4 @@ const Profile: React.FC = () => {
   );
 };
 
-export default Profile;
+export default ExpertviewProfile;
