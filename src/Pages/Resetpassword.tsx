@@ -75,10 +75,11 @@ const ResetPassword: React.FC = () => {
         // Success handling is now in the useEffect that watches resetPasswordSuccess
       } else if (resetPassword.rejected.match(resultAction)) {
         setError(
-          resultAction.payload?.error ||
-            resultAction.error?.message ||
-            "Failed to reset password."
+          (resultAction as any).payload?.error ||
+          (resultAction as any).error?.message ||
+          "Failed to reset password."
         );
+        
       }
     } catch (err: any) {
       console.error("Reset Password Error:", err);
