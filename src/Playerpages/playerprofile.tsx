@@ -17,6 +17,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import PlayerMedia from "./media";
 
 interface Stat {
   label: string;
@@ -462,7 +463,7 @@ const Profile: React.FC = () => {
                 <ProfileDetails playerData={playerData} isExpertView={false} />
               )}
               {activeTab === "media" && (
-                <Media playerId={playerData.id} isExpertView={false} />
+                <PlayerMedia playerId={playerData.id} isExpertView={false} />
               )}
               {activeTab === "reviews" && (
                 <Reviews playerId={playerData.id} isExpertView={false} />

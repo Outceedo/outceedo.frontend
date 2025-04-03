@@ -1,6 +1,5 @@
+import React, { useState } from "react";
 import moment from "moment";
-import { useState } from "react";
-import SideNavbar from "./sideNavbar"; // Corrected import
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -8,22 +7,27 @@ import {
   faFacebook,
   faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
+import { faImage, faVideo, faCamera } from "@fortawesome/free-solid-svg-icons";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+
 import profile2 from "../assets/images/profile2.jpg";
-import { faImage, faVideo } from "@fortawesome/free-solid-svg-icons";
-import PlayerHeader from "./playerheader";
+
 interface MediaItem {
   id: number;
   type: "photo" | "video";
   url: string;
-  src: string; // Fix: Added missing 'src' property
-  title: string; // Fix: Added missing 'title' property
+  src: string;
+  title: string;
 }
+
 interface Review {
   id: number;
   name: string;
-  date: string; // Store original date as string
+  date: string;
   comment: string;
 }
+
 interface Service {
   id: number;
   name: string;
@@ -31,84 +35,152 @@ interface Service {
   price: string;
 }
 
-const expertData = {
-  name: "Expert Name",
-  profession: "Coach & Ex-Soccer Player Defender",
-  location: "London, UK",
-  responseTime: "40 mins",
-  travelLimit: "30 kms",
-  certificationLevel: "3rd highest",
-  reviews: 120,
-  followers: 110,
-  assessments: "100+",
-  profileImage: "/profile-image.jpg", // Replace with actual image
-  backgroundImage: "/background-image.jpg", // Replace with actual image
-  socialLinks: [
-    { icon: <FontAwesomeIcon icon={faLinkedin} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faInstagram} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faFacebook} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faTwitter} />, link: "#" },
-  ],
-
-  media: [
-    { id: 1, type: "photo", src: "/photo1.jpg", title: "Suit Suits me" },
-    { id: 2, type: "photo", src: "/photo2.jpg", title: "Electric guitar" },
-    { id: 3, type: "video", src: "/video1.mp4", title: "Training Session" },
-  ],
-  about:
-    "Experienced soccer coach with a strong background in player development and strategy.",
-  skills: [
-    "Leadership",
-    "Tactical Analysis",
-    "Team Management",
-    "Fitness Training",
-  ],
-  certifications: [
-    "UEFA Pro License",
-    "FIFA Coaching Diploma",
-    "Sports Science Certification",
-  ],
-};
-
-const Experts = () => {
+const Experts: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "details" | "media" | "reviews" | "services"
   >("details");
-  const [media] = useState<MediaItem[]>([]);
-  const [filter, setFilter] = useState<"all" | "photo" | "video">("all");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
 
-  // Sample Services Data
-  const services: Service[] = [
+  // Profile data
+  const profileData = {
+    name: localStorage.getItem("expertName") || "Expert Name",
+    profession:
+      localStorage.getItem("expertProfession") ||
+      "Coach & Ex-Soccer Player Defender",
+    location: localStorage.getItem("expertLocation") || "London, UK",
+    responseTime: localStorage.getItem("expertResponseTime") || "40 mins",
+    travelLimit: localStorage.getItem("expertTravelLimit") || "30 kms",
+    certificationLevel:
+      localStorage.getItem("expertCertificationLevel") || "3rd highest",
+    language: localStorage.getItem("expertLanguage") || "English, Spanish",
+    profileImage: profile2,
+    reviews: 120,
+    followers: 110,
+    assessments: "100+",
+  };
+
+  // Social links
+  const socialLinks = [
+    {
+      icon: <FontAwesomeIcon icon={faLinkedin} />,
+      link: localStorage.getItem("expertLinkedIn") || "#",
+      platform: "LinkedIn",
+    },
+    {
+      icon: <FontAwesomeIcon icon={faInstagram} />,
+      link: localStorage.getItem("expertInstagram") || "#",
+      platform: "Instagram",
+    },
+    {
+      icon: <FontAwesomeIcon icon={faFacebook} />,
+      link: localStorage.getItem("expertFacebook") || "#",
+      platform: "Facebook",
+    },
+    {
+      icon: <FontAwesomeIcon icon={faTwitter} />,
+      link: localStorage.getItem("expertTwitter") || "#",
+      platform: "Twitter",
+    },
+  ];
+
+  // Format URL to ensure it has http/https
+  const formatUrl = (url: string): string => {
+    if (url === "#") return "#";
+    return url.startsWith("http") ? url : `https://${url}`;
+  };
+
+  // About Me data
+  const aboutMe =
+    localStorage.getItem("aboutMe") ||
+    "I am from London, UK. A passionate, versatile expert bringing years of experience to help players improve their skills and reach their potential.";
+
+  // Skills data
+  const skills = JSON.parse(
+    localStorage.getItem("expertSkills") ||
+      JSON.stringify([
+        "Leadership",
+        "Tactical Analysis",
+        "Team Management",
+        "Fitness Training",
+      ])
+  );
+
+  // Sample media data
+  const [mediaItems] = useState<MediaItem[]>([
     {
       id: 1,
-      name: "Online Video Assessment",
-      description: ["Video Assessment.", "Report."].join(" "),
-      price: "$50/h",
+      type: "photo",
+      url: "/photo1.jpg",
+      src: "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=500",
+      title: "Training Session",
     },
     {
       id: 2,
-      name: "On-Field Assessment",
-      description: ["Live Assessment.", "Report"].join(" "),
-      price: "$30/h",
+      type: "photo",
+      url: "/photo2.jpg",
+      src: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=500",
+      title: "Team Building",
     },
     {
       id: 3,
-      name: "1-1 Training",
-      description: ["1 on 1 advise.", "doubts"].join(" "),
-      price: "$80/h",
+      type: "video",
+      url: "/video1.mp4",
+      src: "https://www.w3schools.com/html/mov_bbb.mp4",
+      title: "Coaching Tips",
     },
-  ];
+  ]);
+
+  // Filter state for media
+  const [mediaFilter, setMediaFilter] = useState<"All" | "Photos" | "Videos">(
+    "All"
+  );
+
+  // Filtered media based on selection
+  const filteredMedia =
+    mediaFilter === "All"
+      ? mediaItems
+      : mediaItems.filter((item) =>
+          mediaFilter === "Photos"
+            ? item.type === "photo"
+            : item.type === "video"
+        );
+
+  // Sample Services Data
+  const services = JSON.parse(
+    localStorage.getItem("expertServices") ||
+      JSON.stringify([
+        {
+          id: 1,
+          name: "Online Video Assessment",
+          description: "Video Assessment. Report.",
+          price: "$50/h",
+        },
+        {
+          id: 2,
+          name: "On-Field Assessment",
+          description: "Live Assessment. Report",
+          price: "$30/h",
+        },
+        {
+          id: 3,
+          name: "1-1 Training",
+          description: "1 on 1 advise. doubts",
+          price: "$80/h",
+        },
+      ])
+  );
+
+  // Book service function
   const handleBookService = (service: Service) => {
     setSelectedService(service);
-    alert(`You have booked: ${service.name}`);
   };
 
-  const [reviews] = useState<Review[]>([
+  // Sample reviews data
+  const reviews: Review[] = [
     {
       id: 1,
       name: "John Doe",
-      date: "2024-02-15", // Example date
+      date: "2024-02-15",
       comment: "Great service! Highly recommend.",
     },
     {
@@ -125,399 +197,491 @@ const Experts = () => {
     },
     {
       id: 4,
-      name: "Michael Smith",
-      date: "2024-01-25",
-      comment: "Good quality, but the waiting time was a bit long.",
+      name: "Emily Davis",
+      date: "2024-01-20",
+      comment: "Exceptional coaching skills and very attentive to detail.",
     },
-  ]);
+    {
+      id: 5,
+      name: "Robert Wilson",
+      date: "2024-01-15",
+      comment:
+        "My son has improved tremendously under the guidance. Great expert!",
+    },
+  ];
 
-  // Filtered media based on selection
-  const filteredMedia = media.filter((item) =>
-    filter === "all" ? true : item.type === filter
-  );
   return (
-    <div className="flex">
-      {/* Main Content */}
-      <main className="flex-1 p-6 dark:bg-gray-900">
-        <div className="max-w-7xl mx-auto bg-white shadow-md rounded-lg p-10 dark:bg-slate-700">
-          <div className="flex justify-between items-center w-full p-4">
-            {/* Left - Expert Name */}
-            <div>
-              <div className="flex justify-center gap-20">
-                <h1 className="text-2xl font-bold dark:text-white">
-                  {expertData.name}
-                </h1>
-                {/* Social Media Icons */}
-                <div className="flex justify-center space-x-4 mt-3">
-                  {expertData.socialLinks.map((social, index) => (
-                    <a
-                      key={index}
-                      href={social.link}
-                      className={`text-xl transition-colors duration-300 ${
-                        index === 0
-                          ? "text-blue-700 hover:text-blue-900" // Facebook
-                          : index === 1
-                          ? "text-blue-600 hover:text-blue-800" // LinkedIn
-                          : index === 2
-                          ? "text-pink-500 hover:text-pink-700" // Instagram
-                          : index === 3
-                          ? "text-blue-500 hover:text-blue-900" // Twitter
-                          : "text-gray-500 hover:text-gray-700" // Default
-                      }`}
-                    >
-                      {social.icon}
-                    </a>
-                  ))}
-                </div>
-              </div>
-              {/* Expert Info */}
-              <div className="flex justify-start gap-20 text-center mt-6">
-                <div>
-                  <p className="text-gray-500 dark:text-white">Profession</p>
-                  <p className="font-semibold dark:text-white">
-                    {expertData.profession}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500 dark:text-white ">Location</p>
-                  <p className="font-semibold dark:text-white">
-                    {expertData.location}
-                  </p>
-                </div>
-              </div>
-
-              {/* Additional Information */}
-              <div className="flex justify-start gap-20 mt-6 text-center">
-                <div>
-                  <p className="text-gray-500 dark:text-white">Response Time</p>
-                  <p className="font-semibold dark:text-white">
-                    {expertData.responseTime}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500 dark:text-white">Travel Limit</p>
-                  <p className="font-semibold dark:text-white">
-                    {expertData.travelLimit}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-gray-500 dark:text-white">
-                    Certification Level
-                  </p>
-                  <p className="font-semibold dark:text-white">
-                    {expertData.certificationLevel}
-                  </p>
-                </div>
-              </div>
-            </div>
-            {/* Right - Profile Picture in a Rectangle */}
-            <div className="w-60 h-40 bg-gray-200 rounded-lg overflow-hidden shadow-md">
-              <img src={profile2} alt="Expert" className="w-full h-full " />
-            </div>
-          </div>
-
-          {/* Stats */}
-          <div className="flex justify-around mt-6 text-center">
-            <div>
-              <p className="text-yellow-500 text-xl">⭐⭐⭐⭐⭐ </p>
-              <p className="text-yellow-500 text-xl">
-                {" "}
-                {expertData.reviews} reviews
-              </p>
-            </div>
-            <div>
-              <p className="text-red-500 text-xl font-semibold">
-                {expertData.followers}
-              </p>
-              <p className="text-red-500 text-xl font-semibold"> Followers</p>
-            </div>
-            <div>
-              <p className="text-red-500 text-xl font-semibold">
-                {expertData.assessments}
-              </p>
-              <p className="text-red-500 text-xl font-semibold">
-                Assessments Evaluated
-              </p>
-            </div>
-          </div>
-
-          {/* Media Tabs */}
-          <div className="mt-6">
-            <div className="flex space-x-6 border-b pb-2">
-              <button
-                onClick={() => setActiveTab("details")}
-                className={`pb-2 ${
-                  activeTab === "details"
-                    ? "border-b-2 border-red-500 font-semibold  text-red-500"
-                    : "text-gray-500  dark:text-white"
-                }`}
-              >
-                Details
-              </button>
-              <button
-                onClick={() => setActiveTab("media")}
-                className={`pb-2 ${
-                  activeTab === "media"
-                    ? "border-b-2 border-red-500 font-semibold text-red-500"
-                    : "text-gray-500  dark:text-white"
-                }`}
-              >
-                Media
-              </button>
-              <button
-                onClick={() => setActiveTab("reviews")}
-                className={`pb-2 ${
-                  activeTab === "reviews"
-                    ? "border-b-2 border-red-500 font-semibold text-red-500"
-                    : "text-gray-500  dark:text-white"
-                }`}
-              >
-                Reviews
-              </button>
-              <button
-                onClick={() => setActiveTab("services")}
-                className={`pb-2 ${
-                  activeTab === "services"
-                    ? "border-b-2 border-red-500 font-semibold text-red-500"
-                    : "text-gray-500  dark:text-white"
-                }`}
-              >
-                Services
-              </button>
+    <div className="flex w-full min-h-screen dark:bg-gray-900">
+      <div className="flex-1 p-4">
+        <div className="ml-8">
+          <div className="flex flex-col lg:flex-row gap-6 items-start mt-4 relative">
+            {/* Profile Image */}
+            <div className="relative">
+              <img
+                src={profileData.profileImage}
+                alt={`${profileData.name}'s profile`}
+                className="rounded-lg w-60 h-60 object-cover shadow-md"
+              />
             </div>
 
-            {/* details Content */}
-            {activeTab === "details" && (
-              <div className="mt-6 w-full max-w-5xl mx-auto">
-                {/* About the Person - Full Width */}
-                <div className="bg-white p-6 shadow-md rounded-lg w-full dark:bg-slate-800 relative">
-                  <h2 className="text-xl font-semibold mb-2 dark:text-white">
-                    About the Person
+            {/* Profile Info */}
+            <div className="flex flex-col mt-5 w-full gap-4">
+              <Card className="p-6 shadow-sm dark:bg-gray-700">
+                <div>
+                  <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {profileData.name}
                   </h2>
-                  <p className="text-gray-600 dark:text-white">
-                    {expertData.about}
-                  </p>
-                </div>
-
-                {/* Container for Skills & Certifications */}
-
-                <div className="flex justify-between gap-8 w-full mt-6">
-                  {/* Skills - Expanded Width */}
-                  <div className="bg-white p-6 shadow-md rounded-lg w-[48%] dark:bg-slate-800 relative">
-                    <h2 className="text-lg font-semibold mb-2 dark:text-white">
-                      Skills
-                    </h2>
-                    <ul className="list-disc pl-4 text-gray-600 dark:text-white">
-                      {expertData.skills.map((skill, index) => (
-                        <li key={index}>{skill}</li>
-                      ))}
-                    </ul>
+                  <div className="flex flex-wrap gap-8 text-gray-600 mt-2 dark:text-gray-300">
+                    <span>{profileData.profession}</span>
+                    <span>{profileData.location}</span>
                   </div>
-                  {/* Container for Skills & Certifications */}
-
-                  <div className="flex justify-between gap-8 w-full mt-6">
-                    {/* Skills - Expanded Width */}
-                    <div className="bg-white p-6 shadow-md rounded-lg w-[48%] dark:bg-slate-800 relative">
-                      <h2 className="text-lg font-semibold mb-2 dark:text-white">
-                        Skills
-                      </h2>
-                      <ul className="list-disc pl-4 text-gray-600 dark:text-white">
-                        {expertData.skills.map((skill, index) => (
-                          <li key={index}>{skill}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-            {/* Upload Button */}
-            {activeTab === "media" && (
-              <>
-                {/* Filter Buttons */}
-                <div className="flex gap-4 mb-6 mt-5">
-                  <button
-                    onClick={() => setFilter("all")}
-                    className={`py-2 px-4 rounded-md ${
-                      filter === "all" ? "bg-yellow-200" : "bg-white-700"
-                    } transition duration-200`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setFilter("photo")}
-                    className={`py-2 px-4 rounded-md flex items-center gap-2 ${
-                      filter === "photo" ? "bg-yellow-200" : "bg-white-700"
-                    } transition duration-200`}
-                  >
-                    <FontAwesomeIcon icon={faImage} className="text-blue-600" />
-                    Photos
-                  </button>
-                  <button
-                    onClick={() => setFilter("video")}
-                    className={`py-2 px-4 rounded-md flex items-center gap-2 ${
-                      filter === "video" ? "bg-yellow-200" : "bg-white-700"
-                    } transition duration-200`}
-                  >
-                    <FontAwesomeIcon icon={faVideo} className="text-blue-600" />
-                    Videos
-                  </button>
-                </div>
-                {/* Display Uploaded Media Based on Filter */}
-                <div className="flex flex-col items-center gap-6 w-full max-w-3xl ">
-                  {filteredMedia.length === 0 ? (
-                    <p className="text-gray-400 dark:text-white">
-                      No{" "}
-                      {filter === "all"
-                        ? "media"
-                        : filter === "photo"
-                        ? "photos"
-                        : "videos"}{" "}
-                      available.
-                    </p>
-                  ) : (
-                    <>
-                      {/* All Photos Section (Conditionally Rendered) */}
-                      {(filter === "all" || filter === "photo") &&
-                        media.some((item) => item.type === "photo") && (
-                          <div className="w-full text-left">
-                            <h2 className="bg-red-500 text-white py-2 px-4 rounded-md mb-3">
-                              All Photos
-                            </h2>
-                            <div className="grid grid-cols-3 gap-4">
-                              {media
-                                .filter((item) => item.type === "photo")
-                                .map((photo: MediaItem) => (
-                                  <div key={photo.id} className="text-center">
-                                    <img
-                                      src={photo.src}
-                                      alt={photo.title}
-                                      className="w-24 h-24 object-cover rounded-md"
-                                    />
-                                    <p className="text-xs mt-1">
-                                      {photo.title}
-                                    </p>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        )}
-
-                      {/* All Videos Section (Conditionally Rendered) */}
-                      {(filter === "all" || filter === "video") &&
-                        media.some((item) => item.type === "video") && (
-                          <div className="w-full text-left">
-                            <h2 className="bg-red-500 text-white py-2 px-4 rounded-md mb-3 dark:text-white">
-                              All Videos
-                            </h2>
-                            <div className="grid grid-cols-3 gap-4">
-                              {media
-                                .filter((item) => item.type === "video")
-                                .map((video: MediaItem) => (
-                                  <div key={video.id} className="text-center">
-                                    <video
-                                      src={video.src}
-                                      controls
-                                      className="w-32 h-24 rounded-md"
-                                    />
-                                    <p className="text-xs mt-1">
-                                      {video.title}
-                                    </p>
-                                  </div>
-                                ))}
-                            </div>
-                          </div>
-                        )}
-                    </>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-          {/* Reviews Section (Only show when "Reviews" tab is active) */}
-          {activeTab === "reviews" && (
-            <div className="flex justify-between gap-8 w-full mt-6 ">
-              {/* If there are no reviews */}
-              {reviews.length === 0 ? (
-                <p className="text-gray-400 ">No reviews yet.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
-                  {reviews.map((review) => (
-                    <div
-                      key={review.id}
-                      className="bg-white p-4 rounded-lg shadow-md dark:bg-slate-800"
-                    >
-                      <div className="flex justify-between items-center mb-2">
-                        <h3 className="text-lg font-semibold text-black dark:text-white">
-                          {review.name}
-                        </h3>
-                        <span className="text-sm text-black dark:text-white">
-                          {moment(review.date).fromNow()}
-                        </span>
-                      </div>
-                      <p className="text-black dark:text-white">
-                        {review.comment}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        Response Time
+                      </p>
+                      <p className="font-medium dark:text-white">
+                        {profileData.responseTime}
                       </p>
                     </div>
-                  ))}
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        Travel Limit
+                      </p>
+                      <p className="font-medium dark:text-white">
+                        {profileData.travelLimit}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        Certification
+                      </p>
+                      <p className="font-medium dark:text-white">
+                        {profileData.certificationLevel}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm">
+                        Languages
+                      </p>
+                      <p className="font-medium dark:text-white">
+                        {profileData.language}
+                      </p>
+                    </div>
+                  </div>
                 </div>
+              </Card>
+
+              {/* Stats Card */}
+              <Card className="p-4 shadow-sm dark:bg-gray-700">
+                <div className="flex justify-around text-center">
+                  <div>
+                    <p className="text-yellow-500 text-lg">⭐⭐⭐⭐⭐</p>
+                    <p className="font-medium dark:text-white">
+                      {profileData.reviews} reviews
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-red-600 text-lg font-semibold">
+                      {profileData.followers}
+                    </p>
+                    <p className="font-medium dark:text-white">Followers</p>
+                  </div>
+                  <div>
+                    <p className="text-red-600 text-lg font-semibold">
+                      {profileData.assessments}
+                    </p>
+                    <p className="font-medium dark:text-white">Assessments</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* Tabs Section */}
+          <div className="mt-8">
+            <div className="flex gap-4 border-b pb-2">
+              {(["details", "media", "reviews", "services"] as const).map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+                      activeTab === tab
+                        ? "text-red-600 border-red-600"
+                        : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                )
               )}
             </div>
-          )}
-          {/* Services Section (Only show when "Services" tab is active) */}
-          {activeTab === "services" && (
-            <div className="flex justify-between gap-8 w-full mt-6">
-              {/* If there are no services available */}
-              {services.length === 0 ? (
-                <p className="text-gray-400">No services available.</p>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 ">
-                  {services.map((service) => (
-                    <div
-                      key={service.id}
-                      className="bg-white p-4 rounded-lg mb-4 w-full shadow-md flex relative dark:bg-slate-800"
-                    >
-                      <p className="text-red-400 font-semibold absolute top-2 right-2 mt-2 dark:text-white">
-                        {service.price}
-                      </p>
-                      <div className="">
-                        <h3 className="text-lg font-semibold dark:text-white">
-                          {service.name}
-                        </h3>
-                        <p className="text-black dark:text-white">
-                          {service.description}
+
+            <div className="mt-4">
+              {/* Details Content */}
+              {activeTab === "details" && (
+                <div className="p-4 w-full space-y-6">
+                  {/* About Me Section */}
+                  <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                      About Me
+                    </h3>
+                    <p className="text-gray-700 dark:text-gray-300">
+                      {aboutMe}
+                    </p>
+                  </Card>
+
+                  {/* Skills & Socials in 2 columns */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Skills Section */}
+                    <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                        Skills
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {skills.map((skill: string, index: number) => (
+                          <span
+                            key={index}
+                            className="px-3 py-1 bg-gray-100 dark:bg-gray-600 rounded-full text-sm text-gray-700 dark:text-gray-200"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                      </div>
+                    </Card>
+
+                    {/* Social Media Links */}
+                    <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                        Social Media
+                      </h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {socialLinks.map((social, index) =>
+                          social.link && social.link !== "#" ? (
+                            <a
+                              key={index}
+                              href={formatUrl(social.link)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
+                            >
+                              <div
+                                className={`w-12 h-12 flex items-center justify-center rounded-full mb-3 group-hover:bg-opacity-80 ${
+                                  index === 0
+                                    ? "bg-blue-50 dark:bg-blue-900/20" // LinkedIn
+                                    : index === 1
+                                    ? "bg-pink-50 dark:bg-pink-900/20" // Instagram
+                                    : index === 2
+                                    ? "bg-blue-50 dark:bg-blue-900/20" // Facebook
+                                    : "bg-blue-50 dark:bg-blue-900/20" // Twitter
+                                }`}
+                              >
+                                <span
+                                  className={`text-2xl ${
+                                    index === 0
+                                      ? "text-blue-600" // LinkedIn
+                                      : index === 1
+                                      ? "text-pink-600" // Instagram
+                                      : index === 2
+                                      ? "text-blue-800" // Facebook
+                                      : "text-blue-500" // Twitter
+                                  }`}
+                                >
+                                  {social.icon}
+                                </span>
+                              </div>
+                              <span className="text-gray-800 dark:text-gray-100 font-medium text-sm">
+                                {index === 0
+                                  ? "LinkedIn"
+                                  : index === 1
+                                  ? "Instagram"
+                                  : index === 2
+                                  ? "Facebook"
+                                  : "Twitter"}
+                              </span>
+                            </a>
+                          ) : null
+                        )}
+                      </div>
+                    </Card>
+                  </div>
+                </div>
+              )}
+
+              {/* Media Content */}
+              {activeTab === "media" && (
+                <div className="p-4 w-full space-y-6">
+                  <Card className="p-6 shadow-sm dark:bg-gray-700">
+                    {/* Tabs and Upload Button */}
+                    <div className="flex flex-wrap justify-between items-center mb-6">
+                      <div className="flex space-x-4">
+                        {[
+                          { name: "All", icon: null },
+                          { name: "Photos", icon: faImage },
+                          { name: "Videos", icon: faVideo },
+                        ].map((tab) => (
+                          <Button
+                            key={tab.name}
+                            variant={
+                              mediaFilter === tab.name ? "default" : "outline"
+                            }
+                            className={`${
+                              mediaFilter === tab.name
+                                ? "bg-red-600 hover:bg-red-700 text-white"
+                                : ""
+                            }`}
+                            onClick={() =>
+                              setMediaFilter(
+                                tab.name as "All" | "Photos" | "Videos"
+                              )
+                            }
+                          >
+                            {tab.icon && (
+                              <FontAwesomeIcon
+                                icon={tab.icon}
+                                className="mr-2"
+                              />
+                            )}
+                            {tab.name}
+                          </Button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Media Content */}
+                    {filteredMedia.length === 0 ? (
+                      <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <FontAwesomeIcon
+                          icon={mediaFilter === "Videos" ? faVideo : faImage}
+                          className="text-4xl text-gray-400 mb-3"
+                        />
+                        <p className="text-gray-500 dark:text-gray-400">
+                          No{" "}
+                          {mediaFilter === "All"
+                            ? "media"
+                            : mediaFilter.toLowerCase()}{" "}
+                          available
                         </p>
                       </div>
-                      <button
-                        onClick={() => handleBookService(service)}
-                        className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition mx-auto justify-center items-center duration-200 mt-20"
-                      >
-                        Book Now
-                      </button>
+                    ) : (
+                      <>
+                        {mediaFilter === "All" ? (
+                          <>
+                            {/* Photos Section */}
+                            {mediaItems.some(
+                              (item) => item.type === "photo"
+                            ) && (
+                              <>
+                                <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3">
+                                  Photos
+                                </h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6">
+                                  {mediaItems
+                                    .filter((item) => item.type === "photo")
+                                    .map((item) => (
+                                      <div
+                                        key={item.id}
+                                        className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-md"
+                                      >
+                                        <div className="h-40 overflow-hidden">
+                                          <img
+                                            src={item.src}
+                                            alt={item.title}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                        <div className="p-3">
+                                          <p className="font-medium text-gray-700 dark:text-white truncate">
+                                            {item.title}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
+                              </>
+                            )}
+
+                            {/* Videos Section */}
+                            {mediaItems.some(
+                              (item) => item.type === "video"
+                            ) && (
+                              <>
+                                <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3 mt-6">
+                                  Videos
+                                </h2>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                                  {mediaItems
+                                    .filter((item) => item.type === "video")
+                                    .map((item) => (
+                                      <div
+                                        key={item.id}
+                                        className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-md"
+                                      >
+                                        <div className="h-40 overflow-hidden">
+                                          <video
+                                            src={item.src}
+                                            controls
+                                            className="w-full h-full object-cover"
+                                          />
+                                        </div>
+                                        <div className="p-3">
+                                          <p className="font-medium text-gray-700 dark:text-white truncate">
+                                            {item.title}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    ))}
+                                </div>
+                              </>
+                            )}
+                          </>
+                        ) : (
+                          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                            {filteredMedia.map((item) => (
+                              <div
+                                key={item.id}
+                                className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-md"
+                              >
+                                <div className="h-40 overflow-hidden">
+                                  {item.type === "photo" ? (
+                                    <img
+                                      src={item.src}
+                                      alt={item.title}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  ) : (
+                                    <video
+                                      src={item.src}
+                                      controls
+                                      className="w-full h-full object-cover"
+                                    />
+                                  )}
+                                </div>
+                                <div className="p-3">
+                                  <p className="font-medium text-gray-700 dark:text-white truncate">
+                                    {item.title}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </Card>
+                </div>
+              )}
+
+              {/* Reviews Content */}
+              {activeTab === "reviews" && (
+                <div className="p-4 w-full space-y-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    Reviews from Players
+                  </h2>
+
+                  {reviews.length === 0 ? (
+                    <Card className="p-8 text-center">
+                      <p className="text-gray-500 dark:text-gray-400">
+                        No reviews available yet
+                      </p>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {reviews.map((review) => (
+                        <Card
+                          key={review.id}
+                          className="p-4 shadow-sm dark:bg-gray-700"
+                        >
+                          <div className="flex justify-between items-center mb-2">
+                            <h3 className="font-semibold text-gray-900 dark:text-white">
+                              {review.name}
+                            </h3>
+                            <span className="text-sm text-gray-500 dark:text-gray-400">
+                              {moment(review.date).fromNow()}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 dark:text-gray-300">
+                            {review.comment}
+                          </p>
+                        </Card>
+                      ))}
                     </div>
-                  ))}
+                  )}
+                </div>
+              )}
+
+              {/* Services Content */}
+              {activeTab === "services" && (
+                <div className="p-4 w-full space-y-6">
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+                    Services Offered
+                  </h2>
+
+                  {/* Services Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {services.map((service: Service) => (
+                      <Card
+                        key={service.id}
+                        className="shadow-md dark:bg-gray-700 overflow-hidden"
+                      >
+                        <div className="p-6">
+                          <div className="flex justify-between items-start">
+                            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                              {service.name}
+                            </h3>
+                            <span className="text-lg text-red-600 font-semibold">
+                              {service.price}
+                            </span>
+                          </div>
+
+                          <p className="text-gray-700 dark:text-gray-300 mb-6">
+                            {service.description}
+                          </p>
+                        </div>
+
+                        <div className="px-6 pb-6">
+                          <Button
+                            className="w-full bg-red-600 hover:bg-red-700"
+                            onClick={() => handleBookService(service)}
+                          >
+                            Book Now
+                          </Button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>
-          )}
-          {/* Booking Confirmation */}
+          </div>
+
+          {/* Booking Confirmation Modal */}
           {selectedService && (
-            <div className="fixed top-20 bg-gray-800 p-6 rounded-lg shadow-lg text-white">
-              <h3 className="text-lg font-semibold mb-2">
-                Booking Confirmed: {selectedService.name}
-              </h3>
-              <p className="text-gray-300">{selectedService.description}</p>
-              <button
-                onClick={() => setSelectedService(null)}
-                className="mt-4 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-md"
-              >
-                Close
-              </button>
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+              <Card className="p-6 w-96">
+                <h3 className="text-lg font-semibold mb-2">
+                  Booking Confirmed: {selectedService.name}
+                </h3>
+                <p className="text-gray-700 dark:text-gray-300 mb-4">
+                  {selectedService.description}
+                </p>
+                <p className="text-red-600 font-semibold mb-4">
+                  {selectedService.price}
+                </p>
+                <Button
+                  className="w-full"
+                  onClick={() => setSelectedService(null)}
+                >
+                  Close
+                </Button>
+              </Card>
             </div>
           )}
         </div>
-      </main>
+      </div>
     </div>
   );
 };
+
 export default Experts;

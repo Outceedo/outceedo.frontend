@@ -14,7 +14,6 @@ import MyBooking from "./Playerpages/mybooking";
 import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
 import ExpertMedia from "./expertpages/expertmedia";
-import ExpertData from "./expertpages/expertdata";
 
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken } from "./store/auth-slice";
@@ -23,6 +22,8 @@ import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
 import PlayersProfile from "./expertpages/playerProfiles";
 import ExpertviewProfile from "./expertpages/playerinfo";
+import ExpertProfileDetails from "./expertpages/Expertdetails";
+import ExpertProfile from "./expertpages/expertdata";
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -129,7 +130,7 @@ const App: React.FC = () => {
             path="/expert/profile"
             element={
               // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertData />
+              <ExpertProfile />
               // </CheckAuth>
             }
           />
