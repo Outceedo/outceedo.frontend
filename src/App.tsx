@@ -24,6 +24,9 @@ import PlayersProfile from "./expertpages/playerProfiles";
 import ExpertviewProfile from "./expertpages/playerinfo";
 import ExpertProfileDetails from "./expertpages/Expertdetails";
 import ExpertProfile from "./expertpages/expertdata";
+import ExpertDashboard from "./expertpages/Dashboard";
+import BookingExpertside from "./expertpages/Bookings";
+import ExpertMatches from "./expertpages/ExpertMatches";
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -118,6 +121,30 @@ const App: React.FC = () => {
 
         {/* Expert Outlet */}
         <Route path="/expert" element={<ExpertLayout />}>
+          <Route
+            path="/expert/dashboard"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <ExpertDashboard />
+              // </CheckAuth>
+            }
+          />
+          <Route
+            path="/expert/matches"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <ExpertMatches />
+              // </CheckAuth>
+            }
+          />
+          <Route
+            path="/expert/mybooking"
+            element={
+              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <BookingExpertside />
+              // </CheckAuth>
+            }
+          />
           <Route
             path="/expert/viewplayers"
             element={
