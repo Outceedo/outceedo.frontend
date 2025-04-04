@@ -13,7 +13,6 @@ import Matches from "./Playerpages/matches";
 import MyBooking from "./Playerpages/mybooking";
 import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
-import ExpertMedia from "./expertpages/expertmedia";
 
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken } from "./store/auth-slice";
@@ -22,11 +21,12 @@ import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
 import PlayersProfile from "./expertpages/playerProfiles";
 import ExpertviewProfile from "./expertpages/playerinfo";
-import ExpertProfileDetails from "./expertpages/Expertdetails";
+
 import ExpertProfile from "./expertpages/expertdata";
 import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
+import BookingCalendar from "./Playerpages/BookService";
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -161,14 +161,7 @@ const App: React.FC = () => {
               // </CheckAuth>
             }
           />
-          <Route
-            path="/expertmedia"
-            element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertMedia />
-              // </CheckAuth>
-            }
-          />
+
           <Route
             path="/expert/playerinfo"
             element={
@@ -200,6 +193,7 @@ const App: React.FC = () => {
             </div>
           }
         />
+        <Route path="/book" element={<BookingCalendar />} />
       </Routes>
     </BrowserRouter>
   );

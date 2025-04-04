@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -12,6 +12,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
 import profile2 from "../assets/images/profile2.jpg";
+import BookingCalendar from "./BookService";
+import { useNavigate } from "react-router-dom";
 
 interface MediaItem {
   id: number;
@@ -35,15 +37,33 @@ interface Service {
   price: string;
 }
 
+interface Expert {
+  name: string;
+  rating: number;
+  profilePic: string;
+  reviews: number;
+  verified: boolean;
+}
+
 const Experts: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
     "details" | "media" | "reviews" | "services"
   >("details");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [expertData, setExpertData] = useState<Expert | null>(null);
+  const nav = useNavigate();
 
-  // Profile data
+  // Load expert data from localStorage on component mount
+  useEffect(() => {
+    const storedExpertData = localStorage.getItem("selectedExpert");
+    if (storedExpertData) {
+      setExpertData(JSON.parse(storedExpertData));
+    }
+  }, []);
+
+  // Default profile data combined with stored data from localStorage
   const profileData = {
-    name: localStorage.getItem("expertName") || "Expert Name",
+    name: expertData?.name || "Expert Name",
     profession:
       localStorage.getItem("expertProfession") ||
       "Coach & Ex-Soccer Player Defender",
@@ -53,10 +73,14 @@ const Experts: React.FC = () => {
     certificationLevel:
       localStorage.getItem("expertCertificationLevel") || "3rd highest",
     language: localStorage.getItem("expertLanguage") || "English, Spanish",
-    profileImage: profile2,
-    reviews: 120,
+    // Use profilePic from expertData if available, otherwise fallback to default
+    profileImage: expertData?.profilePic || profile2,
+    // Use reviews count from expertData if available, otherwise fallback to default
+    reviews: expertData?.reviews || 120,
     followers: 110,
     assessments: "100+",
+    verified: expertData?.verified || false,
+    rating: expertData?.rating || 3.5,
   };
 
   // Social links
@@ -172,7 +196,19 @@ const Experts: React.FC = () => {
 
   // Book service function
   const handleBookService = (service: Service) => {
+    // Store the selected service details in localStorage
+    localStorage.setItem("selectedService", JSON.stringify(service));
+
+    // Also store the expert information along with the service for reference
+    if (expertData) {
+      localStorage.setItem("serviceExpert", JSON.stringify(expertData));
+    }
+
+    // Set the service in state (if needed for UI purposes)
     setSelectedService(service);
+
+    // Navigate to the booking page
+    nav("/book");
   };
 
   // Sample reviews data
@@ -222,6 +258,12 @@ const Experts: React.FC = () => {
                 alt={`${profileData.name}'s profile`}
                 className="rounded-lg w-60 h-60 object-cover shadow-md"
               />
+              {/* Show verified badge if expert is verified */}
+              {profileData.verified && (
+                <div className="absolute top-2 right-2 bg-green-400 text-white px-2 py-1 rounded-md text-xs font-medium shadow">
+                  Verified ✓
+                </div>
+              )}
             </div>
 
             {/* Profile Info */}
@@ -276,9 +318,11 @@ const Experts: React.FC = () => {
               <Card className="p-4 shadow-sm dark:bg-gray-700">
                 <div className="flex justify-around text-center">
                   <div>
-                    <p className="text-yellow-500 text-lg">⭐⭐⭐⭐⭐</p>
+                    <p className="text-yellow-500 text-lg">
+                      {"⭐".repeat(Math.round(profileData.rating))}
+                    </p>
                     <p className="font-medium dark:text-white">
-                      {profileData.reviews} reviews
+                      {profileData.rating}/5 ({profileData.reviews} reviews)
                     </p>
                   </div>
                   <div>
@@ -358,7 +402,7 @@ const Experts: React.FC = () => {
                       </h3>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                         {socialLinks.map((social, index) =>
-                          social.link && social.link !== "#" ? (
+                          social.link ? (
                             <a
                               key={index}
                               href={formatUrl(social.link)}
@@ -655,29 +699,6 @@ const Experts: React.FC = () => {
               )}
             </div>
           </div>
-
-          {/* Booking Confirmation Modal */}
-          {selectedService && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-              <Card className="p-6 w-96">
-                <h3 className="text-lg font-semibold mb-2">
-                  Booking Confirmed: {selectedService.name}
-                </h3>
-                <p className="text-gray-700 dark:text-gray-300 mb-4">
-                  {selectedService.description}
-                </p>
-                <p className="text-red-600 font-semibold mb-4">
-                  {selectedService.price}
-                </p>
-                <Button
-                  className="w-full"
-                  onClick={() => setSelectedService(null)}
-                >
-                  Close
-                </Button>
-              </Card>
-            </div>
-          )}
         </div>
       </div>
     </div>

@@ -216,7 +216,7 @@ const ExpertServices: React.FC = () => {
                 key={service.id}
                 className="shadow-md dark:bg-gray-700 overflow-hidden"
               >
-                <div className="p-6">
+                <div className="px-4">
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                       {service.name}

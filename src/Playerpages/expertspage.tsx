@@ -169,6 +169,14 @@ const Expertspage: React.FC = () => {
     return true;
   });
 
+  // Handler for View Profile button
+  const handleViewProfile = (expert: Expert) => {
+    // Store expert details in localStorage
+    localStorage.setItem("selectedExpert", JSON.stringify(expert));
+    // Navigate to expert details page
+    navigate("/player/exdetails");
+  };
+
   return (
     <div className="flex">
       {/* Main Content */}
@@ -255,7 +263,7 @@ const Expertspage: React.FC = () => {
                 <CardFooter className="p-4 pt-0">
                   <Button
                     className="w-full bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => navigate("/player/exdetails")}
+                    onClick={() => handleViewProfile(expert)}
                   >
                     View Profile
                   </Button>
@@ -265,7 +273,9 @@ const Expertspage: React.FC = () => {
           </div>
 
           {/* Pagination */}
-          <Pagination totalPages={2} />
+          <div className="mt-8 mb-8">
+            <Pagination totalPages={2} />
+          </div>
         </div>
       </main>
     </div>
