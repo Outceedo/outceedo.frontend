@@ -7,7 +7,7 @@ import {
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 import {
   Table,
@@ -48,67 +48,24 @@ const initialBookings: Booking[] = [
     action: "Accepted",
     bookingStatus: "Paid",
   },
-  {
-    id: 123,
-    expertName: "Karen",
-    date: "20 Dec 2024",
-    service: "Online Live Assessment",
-    amount: "$50",
-    action: "Rejected",
-    bookingStatus: "Paid",
-  },
-  {
-    id: 432,
-    expertName: "Samuel Moore",
-    date: "12 Dec 2024",
-    service: "Online 1 on 1 Advise",
-    amount: "$25",
-    action: "Re-Scheduled",
-    bookingStatus: "Paid",
-  },
-  {
-    id: 342,
-    expertName: "Andy",
-    date: "25 Nov 2024",
-    service: "Online Video Assessment",
-    amount: "$10",
-    action: "Accepted",
-    bookingStatus: "Not Paid",
-  },
-  {
-    id: 100,
-    expertName: "Miguel Mendes",
-    date: "10 Oct 2024",
-    service: "Online 1 on 1 Advise",
-    amount: "$75",
-    action: "Rejected",
-    bookingStatus: "Pending",
-  },
-  {
-    id: 70,
-    expertName: "Jonatan Katalaskajo",
-    date: "15 Sep 2024",
-    service: "Online Video Assessment",
-    amount: "$15",
-    action: "Accepted",
-    bookingStatus: "Pending",
-  },
-  {
-    id: 32,
-    expertName: "Michael",
-    date: "2 Aug 2025",
-    service: "Online 1 on 1 Advise",
-    amount: "$150",
-    action: "Re-Scheduled",
-    bookingStatus: "Not Paid",
-  },
 ];
 
 const MyBooking: React.FC = () => {
-  const [bookings] = useState<Booking[]>(initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingStatus, setBookingStatus] = useState("all");
   const [isVisible, setIsVisible] = useState(true);
   const [search, setSearch] = useState("");
+
+  // Load bookings from localStorage on component mount
+  useEffect(() => {
+    // Get bookings from localStorage
+    const localStorageBookings = JSON.parse(
+      localStorage.getItem("myBookings") || "[]"
+    );
+
+    // Combine static bookings with localStorage bookings
+    setBookings([...initialBookings, ...localStorageBookings]);
+  }, []);
 
   // Updated with the standard Shadcn Badge variants: default, secondary, outline, destructive
   // For additional colors, use className instead of variant

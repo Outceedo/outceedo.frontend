@@ -64,57 +64,57 @@ const App: React.FC = () => {
         <Route
           path="/player"
           element={
-            // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-            <PlayerLayout />
-            // </CheckAuth>
+            <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+              <PlayerLayout />
+            </CheckAuth>
           }
         >
           <Route
             path="/player/dashboard"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Dashboard />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <Dashboard />
+              </CheckAuth>
             }
           />
           <Route
             path="/player/matches"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Matches />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <Matches />
+              </CheckAuth>
             }
           />
           <Route
             path="/player/mybooking"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <MyBooking />
-              // {/* </CheckAuth> */}
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <MyBooking />
+              </CheckAuth>
             }
           />
           <Route
             path="/player/viewexperts"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Expertspage />
-              // {/* </CheckAuth> */}
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <Expertspage />
+              </CheckAuth>
             }
           />
           <Route
             path="/player/exdetails"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Experts />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <Experts />
+              </CheckAuth>
             }
           />
           <Route
             path="/player/profile"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <Profile />
-              // {/* </CheckAuth> */}
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <Profile />
+              </CheckAuth>
             }
           />
         </Route>
@@ -124,50 +124,50 @@ const App: React.FC = () => {
           <Route
             path="/expert/dashboard"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertDashboard />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <ExpertDashboard />
+              </CheckAuth>
             }
           />
           <Route
             path="/expert/matches"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertMatches />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <ExpertMatches />
+              </CheckAuth>
             }
           />
           <Route
             path="/expert/mybooking"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <BookingExpertside />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <BookingExpertside />
+              </CheckAuth>
             }
           />
           <Route
             path="/expert/viewplayers"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <PlayersProfile />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <PlayersProfile />
+              </CheckAuth>
             }
           />
           <Route
             path="/expert/profile"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertProfile />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <ExpertProfile />
+              </CheckAuth>
             }
           />
 
           <Route
             path="/expert/playerinfo"
             element={
-              // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
-              <ExpertviewProfile />
-              // </CheckAuth>
+              <CheckAuth isAuthenticated={isAuthenticated} user={user}>
+                <ExpertviewProfile />
+              </CheckAuth>
             }
           />
         </Route>
