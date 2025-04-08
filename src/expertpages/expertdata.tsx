@@ -2,13 +2,14 @@ import React, { useState, useRef, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPen, faCamera } from "@fortawesome/free-solid-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
-import ExpertDetails from "./expertdetails";
-import ExpertReviews from "./expertreviews";
-import ExpertServices from "./expertservices";
+
 import ExpertMedia from "./expertmedia";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import ExpertDetails from "./Expertdetails";
+import ExpertReviews from "./Expertreviews";
+import ExpertServices from "./Expertservices";
 
 const ExpertProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
