@@ -174,7 +174,7 @@ const PlayersProfile: React.FC = () => {
     <div className="flex">
       {/* Main Content */}
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
-        <div className="min-h-screen p-6 mt-4 rounded-xl dark:bg-slate-800">
+        <div className="min-h-screen p-6 mt-4 rounded-xl ">
           {/* Search Box */}
           <div className="mb-6 relative">
             <div className="relative">
@@ -219,18 +219,18 @@ const PlayersProfile: React.FC = () => {
           </div>
 
           {/* Experts Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3  lg:grid-cols-4 gap-3">
             {filteredExperts.map((expert, index) => (
-              <Card key={index} className="overflow-hidden ">
+              <Card key={index} className="overflow-hidden dark:bg-gray-800 ">
                 <div className="relative">
                   <img
-                    className="w-full h-40 object-cover"
+                    className="w-full h-50 p-2 rounded-lg"
                     src={expert.profilePic}
                     alt={expert.name}
                   />
                   {expert.verified && (
-                    <Badge className="absolute top-2 right-2 bg-green-400 hover:bg-green-500">
-                      Verified ✔
+                    <Badge className="absolute top-2 right-2 rounded-full bg-green-400 hover:bg-green-500">
+                       ✔
                     </Badge>
                   )}
                 </div>

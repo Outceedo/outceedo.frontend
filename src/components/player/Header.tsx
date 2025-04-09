@@ -41,7 +41,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 bg-background dark:bg-black">
+    <header className="flex items-center justify-between px-4 py-3 bg-background dark:bg-slate-950">
       <Button
         onClick={() => setOpen(true)}
         className="lg:hidden sm:block bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600"

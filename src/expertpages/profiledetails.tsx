@@ -39,6 +39,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     socials = {},
   } = playerData;
 
+  function formatUrl(url: string): string {
+    if (!url) return "#"; // fallback to avoid errors
+    return url.startsWith("http://") || url.startsWith("https://")
+      ? url
+      : `https://${url}`;
+  }
+  
+
   return (
     <div className="p-4 w-full space-y-6">
       {/* About Me Section */}
@@ -92,89 +100,57 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         </Card>
       </div>
 
-      {/* Social Links - Improved Design */}
-      <Card className="p-6 shadow-sm dark:bg-gray-700 dark:text-white">
-        <h3 className="text-lg font-semibold mb-4">Social Media</h3>
-        <div className="flex flex-wrap gap-5">
-          {socials.linkedin ? (
-            <a
-              href={socials.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-gray-600 hover:bg-blue-100 dark:hover:bg-gray-500 transition-colors"
-            >
-              <FontAwesomeIcon
-                icon={faLinkedin}
-                className="text-blue-600 text-xl"
-              />
-              <span className="font-medium text-gray-800 dark:text-white">
-                LinkedIn
-              </span>
-            </a>
-          ) : null}
+      <Card className="mt-4 relative border p-4 w-fit rounded-lg dark:bg-gray-700 dark:text-white">
+  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+    Social Media
+  </h3>
 
-          {socials.instagram ? (
-            <a
-              href={socials.instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link flex items-center gap-2 px-4 py-2 rounded-lg bg-pink-50 dark:bg-gray-600 hover:bg-pink-100 dark:hover:bg-gray-500 transition-colors"
-            >
-              <FontAwesomeIcon
-                icon={faInstagram}
-                className="text-pink-600 text-xl"
-              />
-              <span className="font-medium text-gray-800 dark:text-white">
-                Instagram
-              </span>
-            </a>
-          ) : null}
+  <div className="flex gap-5">
+    {/* LinkedIn */}
+    <a
+      href={formatUrl(socials.linkedin || "")}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-600 text-2xl hover:text-blue-800 transition"
+    >
+      <FontAwesomeIcon icon={faLinkedin} />
+    </a>
 
-          {socials.facebook ? (
-            <a
-              href={socials.facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-gray-600 hover:bg-blue-100 dark:hover:bg-gray-500 transition-colors"
-            >
-              <FontAwesomeIcon
-                icon={faFacebook}
-                className="text-blue-800 text-xl"
-              />
-              <span className="font-medium text-gray-800 dark:text-white">
-                Facebook
-              </span>
-            </a>
-          ) : null}
+    {/* Instagram */}
+    <a
+      href={formatUrl(socials.instagram || "")}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-pink-600 text-2xl hover:text-pink-800 transition"
+    >
+      <FontAwesomeIcon icon={faInstagram} />
+    </a>
 
-          {socials.twitter ? (
-            <a
-              href={socials.twitter}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="social-link flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-50 dark:bg-gray-600 hover:bg-blue-100 dark:hover:bg-gray-500 transition-colors"
-            >
-              <FontAwesomeIcon
-                icon={faTwitter}
-                className="text-blue-500 text-xl"
-              />
-              <span className="font-medium text-gray-800 dark:text-white">
-                Twitter
-              </span>
-            </a>
-          ) : null}
+    {/* Facebook */}
+    <a
+      href={formatUrl(socials.facebook || "")}
+      
 
-          {/* If no social links are provided */}
-          {!socials.linkedin &&
-            !socials.instagram &&
-            !socials.facebook &&
-            !socials.twitter && (
-              <p className="text-gray-500 dark:text-gray-400 italic">
-                No social media links available
-              </p>
-            )}
-        </div>
-      </Card>
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-800 text-2xl hover:text-blue-900 transition"
+    >
+      <FontAwesomeIcon icon={faFacebook} />
+    </a>
+
+    {/* Twitter */}
+    <a
+      href={formatUrl(socials.twitter || "")}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-500 text-2xl hover:text-blue-700 transition"
+    >
+      <FontAwesomeIcon icon={faTwitter} />
+    </a>
+  </div>
+</Card>
+
+     
     </div>
   );
 };
