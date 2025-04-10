@@ -7,7 +7,7 @@ function ExpertLayout() {
   const [openSidebar, setOpenSidebar] = useState(false);
 
   return (
-    <div className="flex min-h-screen w-full">
+    <div className="flex min-h-screen w-full dark:bg-gray-900">
       <ExpertSideBar open={openSidebar} setOpen={setOpenSidebar} />
       <div className="flex flex-1 flex-col">
         <ExpertHeader setOpen={setOpenSidebar} />

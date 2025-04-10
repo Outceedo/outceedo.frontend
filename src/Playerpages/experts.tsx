@@ -180,9 +180,9 @@ mediaFilter === "all"
       key={index}
       href={social.link}
       className={`text-3xl transition-colors duration-300 ${
-        index === 0 ? "text-blue-700 hover:text-blue-900" : // Facebook
-        index === 1 ? "text-blue-600 hover:text-blue-800" : // LinkedIn
-        index === 2 ? "text-pink-500 hover:text-pink-700" : // Instagram
+        index === 0 ? "text-blue-700 hover:text-blue-900" : // LinkedIn
+        index === 1 ? "text-pink-500 hover:text-pink-700" : // Instagram
+        index === 2 ? "text-blue-600 hover:text-blue-800" :  // Facebook 
         index === 3 ? "text-blue-500 hover:text-blue-900" : // Twitter
         "text-gray-500 hover:text-gray-700" // Default
       }`}    >

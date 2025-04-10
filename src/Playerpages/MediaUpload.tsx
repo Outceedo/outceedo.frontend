@@ -89,6 +89,7 @@ const MediaUpload: React.FC<{ onMediaUpdate: () => void; onClose: () => void }> 
               onChange={(e) => handleTitleChange(upload.id, e.target.value)}
               className="border p-2 w-full rounded-md dark:bg-gray-600 dark:text-white"
             />
+            
             <input
               type="file"
               accept={activeTab === "photo" ? "image/*" : "video/*"}

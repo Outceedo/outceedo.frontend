@@ -163,7 +163,7 @@ const ExpertMedia: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <Button
-              className="absolute top-2 right-4 text-gray-600 dark:text-gray-300 text-xl"
+              className="absolute top-2 right-4 text-red-600 bg-transparent hover:bg-transparent dark:text-gray-300 text-xl"
               onClick={() => setPreviewItem(null)}
             >
               &times;
@@ -230,19 +230,19 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview, }) => 
       {/* Three-dot delete menu */}
       <div className="absolute top-2 right-2 z-10" ref={menuRef}>
         <Button
-          className="text-gray-100 dark:text-white text-lg"
+          className="text-black bg-transparent dark:text-white text-lg"
           onClick={() => setMenuOpen((prev) => !prev)}
         >
           ⋮
         </Button>
         {menuOpen && (
-          <div className="absolute right-0 mt-1 bg-white dark:bg-gray-800 shadow-md rounded-md">
+          <div className="absolute right-0 mt-1 bg-white shadow-md rounded-md">
             <Button
               onClick={() => {
                 onDelete(item.id); // Corrected here
                 setMenuOpen(false);
               }}
-              className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-gray-700 w-full text-left"
+              className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100  w-full text-left"
             >
               <FontAwesomeIcon icon={faTrash} className="mr-2" />
               Delete

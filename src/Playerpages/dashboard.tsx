@@ -58,11 +58,11 @@ const Dashboard: React.FC = () => {
   <div className="space-y-2">
     <p className="font-semibold text-sm ">Up Coming Match</p>
     <h2 className="text-2xl font-bold mt-9">Arsenal Vs Chelsa</h2>
-    <div className="flex items-center gap-2 text-gray-600 text-sm mt-4">
-      <i className="fa-regular fa-calendar"></i>
+    <div className="flex items-center gap-2  dark:text-white text-gray-600 text-sm mt-4">
+      <i className="fa-regular fa-calendar "></i>
       <span>22 February 2025</span>
     </div>
-    <div className="flex items-center gap-2 text-gray-600 text-sm ">
+    <div className="flex items-center gap-2  dark:text-white text-gray-600 text-sm ">
       <i className="fa-solid fa-location-dot"></i>
       <span>in Wembley, England</span>
     </div>

@@ -1,6 +1,6 @@
 // Updated PlayerSideBar with isActive logic and header label sync
 
-import { Fragment, useState } from "react";
+import { Fragment } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Sheet, SheetContent } from "../ui/sheet";
 import "@fortawesome/fontawesome-free/css/all.min.css";
@@ -31,7 +31,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const location = useLocation();
 
   return (
-    <nav className="flex-col flex gap-2 p-4 fixed">
+    <nav className="flex-col flex gap-2 p-4 fixed ">
       <h1 className="font-bold text-center mb-2 text-gray-800 dark:text-white">LOGO</h1>
 
       <div className="text-center p-5 rounded-md ml-3 mb-4">
@@ -56,8 +56,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
               navigate(menuItem.path);
               if (setOpen) setOpen(false);
             }}
-            className={`flex items-center gap-2 rounded-md px-3 py-2 text-md cursor-pointer
-              ${isActive ? "bg-muted text-foreground font-semibold" : "text-muted-foreground hover:bg-muted hover:text-foreground"}
+            className={`flex items-center gap-2 rounded-md px-3 py-2 text-md cursor-pointer 
+              ${isActive ? "bg-muted text-foreground font-semibold dark:bg-gray-700" : "text-muted-foreground hover:dark:bg-gray-700  hover:text-foreground "}
             `}
           >
             <i className={`${menuItem.icon}`}></i>
@@ -84,7 +84,7 @@ function PlayerSideBar({ open, setOpen }: PlayerSideBarProps) {
           </div>
         </SheetContent>
       </Sheet>
-      <aside className="hidden w-64 flex-col border-r bg-background p-6 lg:flex">
+      <aside className="hidden w-64 flex-col border-r bg-background p-6 lg:flex dark:bg-slate-950">
         <MenuItems />
       </aside>
     </Fragment>
