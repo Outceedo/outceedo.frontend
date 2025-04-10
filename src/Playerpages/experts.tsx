@@ -6,6 +6,14 @@ import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { faCamera, faVideo } from "@fortawesome/free-solid-svg-icons"
 import { useNavigate } from "react-router-dom";
 interface MediaItem {
@@ -65,8 +73,7 @@ const Experts= () => {
   const tabs: TabType[] = ["details", "media", "reviews", "services"];
   const [readMore, setReadMore] = useState(false);
   const shouldClamp = expertData.about?.split(" ").length > 25;
-  const [expanded, setExpanded] = useState<{ [key: string]: boolean }>({});
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+    const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
 const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
  const navigate= useNavigate();
@@ -134,7 +141,7 @@ mediaFilter === "all"
       id: 1,
       name: "John Doe",
       date: "2024-02-15", // Example date
-      comment: "Great service! Highly recommend.",
+      comment: "Great service! Highly recommend.teaches very well.He is a good coach.would definatly recommand.",
     },
     {
       id: 2,
@@ -165,8 +172,9 @@ mediaFilter === "all"
      <div className="flex  gap-10">
     <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
   <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
+  </div>
           {/* Social Media Icons */}
-          <div className="flex justify-center  ml-50 space-x-5 mt-3">
+          <div className="ml-18 justify-center  space-x-5 mt-8">
   {expertData.socialLinks.map((social, index) => (
     <a
       key={index}
@@ -182,7 +190,7 @@ mediaFilter === "all"
     </a>
   ))}
 </div>
-</div>
+
       {/* Expert Info */}
       <div className="flex justify-start gap-40 text-center mt-8">
         <div >
@@ -221,7 +229,7 @@ mediaFilter === "all"
       {/* Stats */}
       <div className="border-t border-b py-6 mt-6 text-center">
   <div className="flex justify-around">
-    <div className="flex items-center space-x-4">
+    <div>
       <p className="text-yellow-500 text-3xl">⭐⭐⭐⭐⭐</p>
       <p className="text-gray-500 dark:text-white">{expertData.reviews} reviews</p>
     </div>   
@@ -500,8 +508,7 @@ mediaFilter === "all"
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {reviews.map((review) => {
-          const isExpanded = expanded[review.id];
-          const shouldClamp = review.comment.length > 150;
+          const shouldClamp = review.comment.length > 50;
 
           return (
             <Card key={review.id} className="dark:bg-slate-800">
@@ -513,24 +520,41 @@ mediaFilter === "all"
                   {moment(review.date).fromNow()}
                 </span>
               </CardHeader>
+
               <CardContent>
                 <p
                   className={`text-black dark:text-white transition-all ${
-                    !isExpanded && shouldClamp ? "line-clamp-2" : ""
-                  }`}    >
+                    shouldClamp ? "line-clamp-2" : ""
+                  }`}
+                >
                   {review.comment}
                 </p>
+
                 {shouldClamp && (
-                  <button
-                    onClick={() =>
-                      setExpanded((prev) => ({
-                        ...prev,
-                        [review.id]: !prev[review.id],
-                      }))
-                    }
-                    className="text-sm text-blue-600 hover:underline mt-2" >
-                    {isExpanded ? "Show less" : "Read more"}
-                  </button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button
+                        variant="link"
+                        className="p-0 text-sm text-blue-600 hover:underline mt-2"
+                      >
+                        Read more
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-lg dark:bg-gray-800">
+                      <DialogHeader>
+                        <DialogTitle className="text-black dark:text-white">
+                          {review.name}
+                        </DialogTitle>
+                        <DialogDescription>
+                          {moment(review.date).format("MMMM D, YYYY")}
+                        </DialogDescription>
+                      </DialogHeader>
+
+                      <p className="text-gray-800 dark:text-gray-200 whitespace-pre-line">
+                        {review.comment}
+                      </p>
+                    </DialogContent>
+                  </Dialog>
                 )}
               </CardContent>
             </Card>
@@ -540,6 +564,7 @@ mediaFilter === "all"
     )}
   </div>
 )}
+
       {/* Services Section (Only show when "Services" tab is active) */}
       {activeTab === "services" && (
   <div className="w-full mt-6">
@@ -548,28 +573,31 @@ mediaFilter === "all"
     ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {services.map((service) => (
-          <Card
-            key={service.id}
-            className="relative shadow-md dark:bg-slate-800 flex flex-col justify-between" >
-            <CardHeader className="pb-2">
-              <h3 className="text-lg font-bold dark:text-white">
-                {service.name}
-              </h3>
-              <p className="text-lg font-bold text-red-500 absolute top-4 right-4 dark:text-white">
-                {service.price}
-              </p>
-            </CardHeader>
-            <CardContent className="flex flex-col justify-between h-full">
-              <p className="text-black dark:text-white mb-4">
-                {service.description}
-              </p>
-              <Button
-                onClick={() => navigate("/book") }
-               className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition w-fit duration-200 mt-5" >
-                Book Now
-              </Button>
-            </CardContent>
-          </Card>
+           <Card
+                          key={service.id}
+                          className="shadow-md dark:bg-gray-700 overflow-hidden"
+                        >
+                          <div className="px-4">
+                            <div className="flex justify-between items-start">
+                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
+                                {service.name}
+                              </h3>
+                              <span className="text-lg text-red-600 font-semibold">
+                                {service.price}
+                              </span>
+                            </div>
+          
+                            <p className="text-gray-700 dark:text-gray-300 mb-6">
+                              {service.description}
+                            </p>
+                          </div>
+                            <Button
+                              onClick={() => navigate("/book") }
+                            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition w-fit duration-200 ml-5" >
+                              Book Now
+                            </Button>
+                        
+                        </Card>
         ))}
       </div>
     )}

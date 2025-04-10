@@ -15,7 +15,7 @@ const Reviews: React.FC = () => {
     {
       name: "Laura W",
       time: "1 year ago",
-      review: "An incredible, heartfelt musician and a delight to work with.",
+      review: "An incredible, heartfelt musician and a delight to work with. Hard working cadidate and grasp things so quickly.",
       profileImage: profile2,
     },
     {
@@ -68,7 +68,7 @@ const Reviews: React.FC = () => {
 
       {/* Review Modal */}
       {selectedReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center px-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
             <button
               onClick={closeModal}
@@ -85,7 +85,7 @@ const Reviews: React.FC = () => {
               <h2 className="text-xl font-bold text-gray-800 dark:text-white">{selectedReview.name}</h2>
               <p className="text-gray-500 text-sm">{selectedReview.time}</p>
             </div>
-            <div className="mt-4 text-gray-700 dark:text-gray-300 space-y-4">
+            <div className="mt-4 text-gray-700 dark:text-gray-300  space-y-4">
               <p>
                 Lorem ipsum dolor sit amet, consectetur adipisicing elit. Illum sequi voluptatum facilis suscipit
                 exercitationem, natus vero eligendi sunt similique ipsa omnis qui eum incidunt molestias quod recusandae
@@ -93,13 +93,7 @@ const Reviews: React.FC = () => {
               </p>
               <p>{selectedReview.review}</p>
             </div>
-            <button
-              className="mt-6 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 w-full"
-              onClick={closeModal}
-            >
-              Close
-            </button>
-          </div>
+            </div>
         </div>
       )}
     </div>
