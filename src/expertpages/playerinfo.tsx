@@ -151,8 +151,12 @@ const ExpertviewProfile: React.FC = () => {
                 </button>
               ))}
             </div>
+            
 
-            <div className="mt-4">
+            
+            
+
+            <div className="mt-4 ">
               {/* Pass isExpertView prop to all components to disable editing */}
               {activeTab === "details" && (
                 <ProfileDetails playerData={playerData} isExpertView={true} />

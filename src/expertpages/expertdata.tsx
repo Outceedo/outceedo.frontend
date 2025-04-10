@@ -1,322 +1,157 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState } from "react";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPen, faCamera } from "@fortawesome/free-solid-svg-icons";
+import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
 import ExpertDetails from "./expertdetails";
 import ExpertReviews from "./expertreviews";
 import ExpertServices from "./expertservices";
 import ExpertMedia from "./expertmedia";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
-const ExpertProfile: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "services"
-  >("details");
+import { useNavigate } from "react-router-dom";
+interface MediaItem {
+    id: number;
+    type: "photo" | "video";
+    url: string;
+    src: string; // Fix: Added missing 'src' property
+    title: string; // Fix: Added missing 'title' property
+  }
+  interface Review {
+    id: number;
+    name: string;
+    date: string; // Store original date as string
+    comment: string;
+  }
+  interface Service {
+    id: number;
+    name: string;
+    description: string;
+    price: string;
+  }
+  
+const expertData = {
+  name: "Expert Name",
+  profession: "Coach & Ex-Soccer Player Defender",
+  location: "London, UK",
+  responseTime: "40 mins",
+  travelLimit: "30 kms",
+  certificationLevel: "3rd highest",
+  reviews: 120,
+  followers: 110,
+  assessments: "100+",
+  profileImage: "/profile-image.jpg", // Replace with actual image
+  backgroundImage: "/background-image.jpg", // Replace with actual image
+  socialLinks: [
+    { icon: <FontAwesomeIcon icon={faLinkedin} />, link: "#" },
+    { icon: <FontAwesomeIcon icon={faInstagram} />, link: "#" },
+    { icon: <FontAwesomeIcon icon={faFacebook} />, link: "#" },
+    { icon: <FontAwesomeIcon icon={faTwitter} />, link: "#" }
 
-  // File input reference for profile image
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  ],
+  media: [
+    { id: 1, type: "photo", src: "/photo1.jpg", title: "Suit Suits me" },
+    { id: 2, type: "photo", src: "/photo2.jpg", title: "Electric guitar" },
+    { id: 3, type: "video", src: "/video1.mp4", title: "Training Session" },
+  ],
+  about: "Experienced soccer coach with a strong background in player development and strategy.",
+  skills: ["Leadership", "Tactical Analysis", "Team Management", "Fitness Training"],
+  certifications: ["UEFA Pro License", "FIFA Coaching Diploma", "Sports Science Certification"]
+};
 
-  // Profile data state
-  const [profileData, setProfileData] = useState({
-    name: localStorage.getItem("expertName") || "Expert Name",
-    profession:
-      localStorage.getItem("expertProfession") ||
-      "Coach & Ex-Soccer Player Defender",
-    location: localStorage.getItem("expertLocation") || "London, UK",
-    responseTime: localStorage.getItem("expertResponseTime") || "40 mins",
-    travelLimit: localStorage.getItem("expertTravelLimit") || "30 kms",
-    certificationLevel:
-      localStorage.getItem("expertCertificationLevel") || "3rd highest",
-    language: localStorage.getItem("expertLanguage") || "English, Spanish",
-    profileImage: profile2,
-  });
 
-  // Editing state
-  const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [tempProfileData, setTempProfileData] = useState({ ...profileData });
 
-  // Load saved data from localStorage if available
-  useEffect(() => {
-    const savedName = localStorage.getItem("expertName");
-    if (savedName) {
-      const updatedData = {
-        ...profileData,
-        name: savedName,
-        profession:
-          localStorage.getItem("expertProfession") || profileData.profession,
-        location:
-          localStorage.getItem("expertLocation") || profileData.location,
-        responseTime:
-          localStorage.getItem("expertResponseTime") ||
-          profileData.responseTime,
-        travelLimit:
-          localStorage.getItem("expertTravelLimit") || profileData.travelLimit,
-        certificationLevel:
-          localStorage.getItem("expertCertificationLevel") ||
-          profileData.certificationLevel,
-        language:
-          localStorage.getItem("expertLanguage") || profileData.language,
-      };
-      setProfileData(updatedData);
-      setTempProfileData(updatedData);
-    }
-  }, []);
+type TabType = "details" | "media" | "reviews" | "services";
+const ExpertProfile= () => {
+  const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews"|"services" >("details");
+  const tabs: TabType[] = ["details", "media", "reviews", "services"];
 
-  // Profile photo change handler
-  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        const updatedProfile = {
-          ...profileData,
-          profileImage: event.target.result as string,
-        };
+ const navigate= useNavigate();
 
-        setProfileData(updatedProfile);
-        setTempProfileData(updatedProfile);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
 
-  // Handle profile edits
-  const handleProfileChange = (field: string, value: any) => {
-    setTempProfileData({
-      ...tempProfileData,
-      [field]: value,
-    });
-  };
+  return ( 
+     <div className="flex -mt-5">
+            {/* Main Content */}
+            <main className="flex-1 p-6 dark:bg-gray-900 ml-15">
+        <div className="flex justify-between items-center w-full p-4 mx-auto bg-dark:bg-slate-700 ">
+  {/* Left - Expert Name */}
+      <div>
+     <div className="flex  gap-10">
+    <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
+  <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
+  </div>
+          {/* Social Media Icons */}
+          <div className="ml-18 justify-center  space-x-5 mt-8">
+  {expertData.socialLinks.map((social, index) => (
+    <a
+      key={index}
+      href={social.link}
+      className={`text-xl transition-colors duration-300 ${
+        index === 0 ? "text-blue-700 hover:text-blue-900" : // Facebook
+        index === 1 ? "text-blue-600 hover:text-blue-800" : // LinkedIn
+        index === 2 ? "text-pink-500 hover:text-pink-700" : // Instagram
+        index === 3 ? "text-blue-500 hover:text-blue-900" : // Twitter
+        "text-gray-500 hover:text-gray-700" // Default
+      }`}    >
+      {social.icon}
+    </a>
+  ))}
+</div>
 
-  // Save profile changes
-  const saveProfileChanges = () => {
-    setProfileData(tempProfileData);
-    setIsEditingProfile(false);
-
-    // Save to localStorage
-    localStorage.setItem("expertName", tempProfileData.name);
-    localStorage.setItem("expertProfession", tempProfileData.profession);
-    localStorage.setItem("expertLocation", tempProfileData.location);
-    localStorage.setItem("expertResponseTime", tempProfileData.responseTime);
-    localStorage.setItem("expertTravelLimit", tempProfileData.travelLimit);
-    localStorage.setItem(
-      "expertCertificationLevel",
-      tempProfileData.certificationLevel
-    );
-    localStorage.setItem("expertLanguage", tempProfileData.language);
-  };
-
-  // Cancel edits
-  const cancelProfileEdit = () => {
-    setTempProfileData(profileData);
-    setIsEditingProfile(false);
-  };
-
-  return (
-    <div className="flex w-full min-h-screen dark:bg-gray-900">
-      <div className="flex-1 p-4">
-        <div className="ml-8">
-          <div className="flex flex-col lg:flex-row gap-6 items-start mt-4 relative">
-            {/* Profile Image with Edit Capability */}
-            <div className="relative group">
-              <img
-                src={profileData.profileImage}
-                alt={`${profileData.name}'s profile`}
-                className="rounded-lg w-60 h-60 object-cover shadow-md"
-              />
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-lg cursor-pointer"
-              >
-                <div className="text-white text-center">
-                  <FontAwesomeIcon icon={faCamera} size="2x" className="mb-2" />
-                  <p className="text-sm font-medium">Change Photo</p>
-                </div>
-              </div>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleProfilePhotoChange}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
-
-            {/* Profile Info */}
-            <div className="flex flex-col mt-5 w-full gap-4">
-              {!isEditingProfile ? (
-                <>
-                  <Card className="p-6 shadow-sm dark:bg-gray-700">
-                    <div className="relative">
-                      <div>
-                        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white">
-                          {profileData.name}
-                        </h2>
-                        <div className="flex flex-wrap gap-8 text-gray-600 mt-2 dark:text-gray-300">
-                          <span>{profileData.profession}</span>
-                          <span>{profileData.location}</span>
-                        </div>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                              Response Time
-                            </p>
-                            <p className="font-medium dark:text-white">
-                              {profileData.responseTime}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                              Travel Limit
-                            </p>
-                            <p className="font-medium dark:text-white">
-                              {profileData.travelLimit}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                              Certification
-                            </p>
-                            <p className="font-medium dark:text-white">
-                              {profileData.certificationLevel}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-gray-500 dark:text-gray-400 text-sm">
-                              Languages
-                            </p>
-                            <p className="font-medium dark:text-white">
-                              {profileData.language}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="absolute top-0 right-0 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                        onClick={() => setIsEditingProfile(true)}
-                      >
-                        <FontAwesomeIcon icon={faPen} />
-                      </Button>
-                    </div>
-                  </Card>
-                </>
-              ) : (
-                <Card className="p-6 shadow-sm dark:bg-gray-800 space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Name
-                    </label>
-                    <Input
-                      value={tempProfileData.name}
-                      onChange={(e) =>
-                        handleProfileChange("name", e.target.value)
-                      }
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Profession
-                      </label>
-                      <Input
-                        value={tempProfileData.profession}
-                        onChange={(e) =>
-                          handleProfileChange("profession", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Location
-                      </label>
-                      <Input
-                        value={tempProfileData.location}
-                        onChange={(e) =>
-                          handleProfileChange("location", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Response Time
-                      </label>
-                      <Input
-                        value={tempProfileData.responseTime}
-                        onChange={(e) =>
-                          handleProfileChange("responseTime", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Travel Limit
-                      </label>
-                      <Input
-                        value={tempProfileData.travelLimit}
-                        onChange={(e) =>
-                          handleProfileChange("travelLimit", e.target.value)
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Certification Level
-                      </label>
-                      <Input
-                        value={tempProfileData.certificationLevel}
-                        onChange={(e) =>
-                          handleProfileChange(
-                            "certificationLevel",
-                            e.target.value
-                          )
-                        }
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Languages
-                      </label>
-                      <Input
-                        value={tempProfileData.language}
-                        onChange={(e) =>
-                          handleProfileChange("language", e.target.value)
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end space-x-2 pt-2">
-                    <Button variant="outline" onClick={cancelProfileEdit}>
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="default"
-                      className="bg-red-600 hover:bg-red-700"
-                      onClick={saveProfileChanges}
-                    >
-                      Save
-                    </Button>
-                  </div>
-                </Card>
-              )}
-            </div>
-          </div>
-
-          {/* Tabs Section */}
-          <div className="mt-8">
+      {/* Expert Info */}
+      <div className="flex justify-start gap-40 text-center mt-8">
+        <div >
+      <p className="text-gray-500 dark:text-white">Profession</p>
+        <p className="font-semibold dark:text-white">{expertData.profession}</p>
+        </div>
+        <div>
+        <p className="text-gray-500 dark:text-white ">Location</p>
+        <p className="font-semibold dark:text-white">{expertData.location}</p>
+        </div>
+      </div>
+      {/* Additional Information */}
+      <div className="flex justify-start gap-40 mt-6 text-center">
+        <div>
+          <p className="text-gray-500 dark:text-white">Response Time</p>
+          <p className="font-semibold dark:text-white">{expertData.responseTime}</p>
+        </div>
+        <div>
+          <p className="text-gray-500 dark:text-white">Travel Limit</p>
+          <p className="font-semibold dark:text-white">{expertData.travelLimit}</p>
+        </div>
+        <div>
+          <p className="text-gray-500 dark:text-white">Certification Level</p>
+          <p className="font-semibold dark:text-white">{expertData.certificationLevel}</p>
+        </div>
+      </div>
+      </div>
+  {/* Right - Profile Picture in a Rectangle */}
+  <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md">
+    <img
+      src={profile2}
+      alt="Expert"
+      className="w-full h-full "/>
+  </div>  
+  </div>
+      {/* Stats */}
+      <div className="border-t border-b py-6 mt-6 text-center">
+  <div className="flex justify-around">
+    <div>
+      <p className="text-yellow-500 text-3xl">⭐⭐⭐⭐⭐</p>
+      <p className="text-gray-500 dark:text-white">{expertData.reviews} reviews</p>
+    </div>   
+    <div>
+      <p className="text-red-500 text-3xl font-bold">{expertData.followers}</p>
+      <p className="text-gray-500 dark:text-white">Followers</p>
+    </div>
+    <div>
+      <p className="text-red-500 text-3xl font-bold">{expertData.assessments}</p>
+      <p className="text-gray-500 dark:text-white">Assessments Evaluated</p>
+    </div>
+  </div>
+</div>
+      {/* Tabs Section */}
+      <div className="mt-8">
             <div className="flex gap-4 border-b pb-2">
               {(["details", "media", "reviews", "services"] as const).map(
                 (tab) => (
@@ -341,11 +176,14 @@ const ExpertProfile: React.FC = () => {
               {activeTab === "reviews" && <ExpertReviews />}
               {activeTab === "services" && <ExpertServices />}
             </div>
-          </div>
         </div>
-      </div>
-    </div>
+        </main>
+        </div>
+      
+
   );
 };
-
 export default ExpertProfile;
+
+
+//ExpertProfile

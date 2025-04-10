@@ -1,0 +1,279 @@
+import React, { useState, useRef, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faPen, faCamera } from "@fortawesome/free-solid-svg-icons";
+import profile2 from "../assets/images/profile2.jpg";
+import ExpertDetails from "./expertdetails";
+import ExpertReviews from "./expertreviews";
+import ExpertServices from "./expertservices";
+import ExpertMedia from "./expertmedia";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+
+import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
+
+  
+const expertData = {
+  name: "Expert Name",
+  profession: "Coach & Ex-Soccer Player Defender",
+  location: "London, UK",
+  responseTime: "40 mins",
+  travelLimit: "30 kms",
+  certificationLevel: "3rd highest",
+  reviews: 120,
+  followers: 110,
+  assessments: "100+",
+  profileImage: "/profile-image.jpg", // Replace with actual image
+  backgroundImage: "/background-image.jpg", // Replace with actual image
+  socialLinks: [
+    { icon: <FontAwesomeIcon icon={faLinkedin} />, link: "#" },
+    { icon: <FontAwesomeIcon icon={faInstagram} />, link: "#" },
+    { icon: <FontAwesomeIcon icon={faFacebook} />, link: "#" },
+    { icon: <FontAwesomeIcon icon={faTwitter} />, link: "#" }
+
+  ],
+  media: [
+    { id: 1, type: "photo", src: "/photo1.jpg", title: "Suit Suits me" },
+    { id: 2, type: "photo", src: "/photo2.jpg", title: "Electric guitar" },
+    { id: 3, type: "video", src: "/video1.mp4", title: "Training Session" },
+  ],
+  about: "Experienced soccer coach with a strong background in player development and strategy.",
+  skills: ["Leadership", "Tactical Analysis", "Team Management", "Fitness Training"],
+  certifications: ["UEFA Pro License", "FIFA Coaching Diploma", "Sports Science Certification"]
+};
+
+
+
+
+const ExpertProfile: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<
+    "details" | "media" | "reviews" | "services"
+  >("details");
+
+  // File input reference for profile image
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Profile data state
+  const [profileData, setProfileData] = useState({
+    name: localStorage.getItem("expertName") || "Expert Name",
+    profession:
+      localStorage.getItem("expertProfession") ||
+      "Coach & Ex-Soccer Player Defender",
+    location: localStorage.getItem("expertLocation") || "London, UK",
+    responseTime: localStorage.getItem("expertResponseTime") || "40 mins",
+    travelLimit: localStorage.getItem("expertTravelLimit") || "30 kms",
+    certificationLevel:
+      localStorage.getItem("expertCertificationLevel") || "3rd highest",
+    language: localStorage.getItem("expertLanguage") || "English, Spanish",
+    profileImage: profile2,
+  });
+
+  // Editing state
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+  const [tempProfileData, setTempProfileData] = useState({ ...profileData });
+
+  // Load saved data from localStorage if available
+  useEffect(() => {
+    const savedName = localStorage.getItem("expertName");
+    if (savedName) {
+      const updatedData = {
+        ...profileData,
+        name: savedName,
+        profession:
+          localStorage.getItem("expertProfession") || profileData.profession,
+        location:
+          localStorage.getItem("expertLocation") || profileData.location,
+        responseTime:
+          localStorage.getItem("expertResponseTime") ||
+          profileData.responseTime,
+        travelLimit:
+          localStorage.getItem("expertTravelLimit") || profileData.travelLimit,
+        certificationLevel:
+          localStorage.getItem("expertCertificationLevel") ||
+          profileData.certificationLevel,
+        language:
+          localStorage.getItem("expertLanguage") || profileData.language,
+      };
+      setProfileData(updatedData);
+      setTempProfileData(updatedData);
+    }
+  }, []);
+
+  // Profile photo change handler
+  const handleProfilePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        const updatedProfile = {
+          ...profileData,
+          profileImage: event.target.result as string,
+        };
+
+        setProfileData(updatedProfile);
+        setTempProfileData(updatedProfile);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Handle profile edits
+  const handleProfileChange = (field: string, value: any) => {
+    setTempProfileData({
+      ...tempProfileData,
+      [field]: value,
+    });
+  };
+
+  // Save profile changes
+  const saveProfileChanges = () => {
+    setProfileData(tempProfileData);
+    setIsEditingProfile(false);
+
+    // Save to localStorage
+    localStorage.setItem("expertName", tempProfileData.name);
+    localStorage.setItem("expertProfession", tempProfileData.profession);
+    localStorage.setItem("expertLocation", tempProfileData.location);
+    localStorage.setItem("expertResponseTime", tempProfileData.responseTime);
+    localStorage.setItem("expertTravelLimit", tempProfileData.travelLimit);
+    localStorage.setItem(
+      "expertCertificationLevel",
+      tempProfileData.certificationLevel
+    );
+    localStorage.setItem("expertLanguage", tempProfileData.language);
+  };
+
+  // Cancel edits
+  const cancelProfileEdit = () => {
+    setTempProfileData(profileData);
+    setIsEditingProfile(false);
+  };
+  const navigate= useNavigate();
+  return (
+    <div className="flex w-full min-h-screen dark:bg-gray-900">
+      <div className="flex-1 p-4">
+        <div className="ml-8">
+          <div className="flex flex-col lg:flex-row gap-6 items-start mt-4 relative">
+            {/* Profile Image with Edit Capability */}
+            <div className="relative group">
+              <img
+                src={profileData.profileImage}
+                alt={`${profileData.name}'s profile`}
+                className="rounded-lg w-60 h-60 object-cover shadow-md"
+              />
+              <div
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-lg cursor-pointer"
+              >
+                <div className="text-white text-center">
+                  <FontAwesomeIcon icon={faCamera} size="2x" className="mb-2" />
+                  <p className="text-sm font-medium">Change Photo</p>
+                </div>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleProfilePhotoChange}
+                accept="image/*"
+                className="hidden"
+              />
+            </div>
+
+              {/* Main Content */}
+              <main className="flex-1 p-6 dark:bg-gray-900 ml-15">
+        <div className="flex justify-between items-center w-full p-4 mx-auto bg-dark:bg-slate-700 ">
+  {/* Left - Expert Name */}
+      <div>
+     <div className="flex  gap-10">
+    <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
+  <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
+  </div>
+          {/* Social Media Icons */}
+          <div className="ml-18 justify-center  space-x-5 mt-8">
+  {expertData.socialLinks.map((social, index) => (
+    <a
+      key={index}
+      href={social.link}
+      className={`text-xl transition-colors duration-300 ${
+        index === 0 ? "text-blue-700 hover:text-blue-900" : // Facebook
+        index === 1 ? "text-blue-600 hover:text-blue-800" : // LinkedIn
+        index === 2 ? "text-pink-500 hover:text-pink-700" : // Instagram
+        index === 3 ? "text-blue-500 hover:text-blue-900" : // Twitter
+        "text-gray-500 hover:text-gray-700" // Default
+      }`}    >
+      {social.icon}
+    </a>
+  ))}
+</div>
+
+      {/* Expert Info */}
+      <div className="flex justify-start gap-40 text-center mt-8">
+        <div >
+      <p className="text-gray-500 dark:text-white">Profession</p>
+        <p className="font-semibold dark:text-white">{expertData.profession}</p>
+        </div>
+        <div>
+        <p className="text-gray-500 dark:text-white ">Location</p>
+        <p className="font-semibold dark:text-white">{expertData.location}</p>
+        </div>
+      </div>
+      {/* Additional Information */}
+      <div className="flex justify-start gap-40 mt-6 text-center">
+        <div>
+          <p className="text-gray-500 dark:text-white">Response Time</p>
+          <p className="font-semibold dark:text-white">{expertData.responseTime}</p>
+        </div>
+        <div>
+          <p className="text-gray-500 dark:text-white">Travel Limit</p>
+          <p className="font-semibold dark:text-white">{expertData.travelLimit}</p>
+        </div>
+        <div>
+          <p className="text-gray-500 dark:text-white">Certification Level</p>
+          <p className="font-semibold dark:text-white">{expertData.certificationLevel}</p>
+        </div>
+      </div>
+      </div>
+
+
+          {/* Tabs Section */}
+          <div className="mt-8">
+            <div className="flex gap-4 border-b pb-2">
+              {(["details", "media", "reviews", "services"] as const).map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+                      activeTab === tab
+                        ? "text-red-600 border-red-600"
+                        : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                )
+              )}
+            </div>
+
+            <div className="mt-4">
+              {activeTab === "details" && <ExpertDetails />}
+              {activeTab === "media" && <ExpertMedia />}
+              {activeTab === "reviews" && <ExpertReviews />}
+              {activeTab === "services" && <ExpertServices />}
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+      </div>
+      </div>
+      
+      
+      
+    
+  );
+};
+
+export default ExpertProfile;
