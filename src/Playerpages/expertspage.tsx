@@ -8,11 +8,9 @@ import profile5 from "../assets/images/profile5.jpg";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import {
@@ -157,25 +155,25 @@ const Expertspage: React.FC = () => {
   };
 
   // Filter experts based on search query
-  const filteredExperts = experts.filter((expert) => {
-    if (
-      searchQuery &&
-      !expert.name.toLowerCase().includes(searchQuery.toLowerCase())
-    ) {
-      return false;
-    }
+  // const filteredExperts = experts.filter((expert) => {
+  //   if (
+  //     searchQuery &&
+  //     !expert.name.toLowerCase().includes(searchQuery.toLowerCase())
+  //   ) {
+  //     return false;
+  //   }
 
-    // Apply other filters (simplified for example)
-    return true;
-  });
+  //   // Apply other filters (simplified for example)
+  //   return true;
+  // });
 
   // Handler for View Profile button
-  const handleViewProfile = (expert: Expert) => {
-    // Store expert details in localStorage
-    localStorage.setItem("selectedExpert", JSON.stringify(expert));
-    // Navigate to expert details page
-    navigate("/player/exdetails");
-  };
+  // const handleViewProfile = (expert: Expert) => {
+  //   // Store expert details in localStorage
+  //   localStorage.setItem("selectedExpert", JSON.stringify(expert));
+  //   // Navigate to expert details page
+  //   navigate("/player/exdetails");
+  // };
 
   return (
     <div className="flex">
@@ -183,12 +181,12 @@ const Expertspage: React.FC = () => {
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
         <div className="min-h-screen px-6 rounded-xl dark:bg-slate-800">
           {/* Search Box */}
-          <div className="mb-6 relative">
-            <div className="relative">
+          <div className="flex item-end justify-end mr-5">
+          <div className="relative w-fit mb-2 bg-white dark:bg-slate-600 dark:text-white rounded-lg ">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="text"
-                placeholder="Search experts by name, skills, or any keyword..."
+                placeholder="Search experts by name"
                 className="pl-9 w-full bg-white dark:bg-slate-700"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -209,8 +207,7 @@ const Expertspage: React.FC = () => {
                 key={filter.name}
                 onValueChange={(value) =>
                   handleFilterChange(value, filter.name)
-                }
-              >
+                }>
                 <SelectTrigger className="w-[180px] bg-white dark:bg-slate-600">
                   <SelectValue placeholder={filter.name} />
                 </SelectTrigger>
@@ -226,56 +223,58 @@ const Expertspage: React.FC = () => {
           </div>
 
           {/* Experts Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {filteredExperts.map((expert, index) => (
-              <Card key={index} className="overflow-hidden ">
-                <div className="relative">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {experts.map((expert, index) => (
+              <Card
+                key={index}
+                className="w-80 shadow-md dark:bg-slate-600 dark:text-white"  >
+                <CardHeader className="relative ">
                   <img
-                    className="w-full h-40 object-cover"
+                    className="rounded-lg w-full h-50 object-cover -mb-7"
                     src={expert.profilePic}
-                    alt={expert.name}
-                  />
+                    alt={expert.name}  />
                   {expert.verified && (
-                    <Badge className="absolute top-2 right-2 bg-green-400 hover:bg-green-500">
-                      Verified ✔
-                    </Badge>
+                    <span className="absolute top-2 right-2 bg-green-400 text-white text-xs px-2 py-1 rounded-full">
+                      ✔
+                    </span>
                   )}
-                </div>
-                <CardHeader className="p-4 pb-0">
-                  <h3 className="text-lg font-semibold">{expert.name}</h3>
-                  <p className="text-gray-500 text-sm dark:text-gray-400">
+                </CardHeader>
+                <CardContent className="text-center p-3">
+                  <h3 className="text-lg font-semibold text-left">
+                    {expert.name}
+                  </h3>
+                  <p className="text-gray-500 text-sm text-left dark:text-white">
                     Lorem ipsum dolor sit amet consectetur.
                   </p>
-                </CardHeader>
-                <CardContent className="px-2">
-                  <div className="flex justify-between items-center">
+                  <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center">
                       <span className="text-yellow-500 text-lg">⭐</span>
-                      <span className="ml-1 text-gray-700 dark:text-gray-300">
+                      <span className="ml-1 text-gray-700 dark:text-white">
                         {expert.rating}/5
                       </span>
                     </div>
-                    <p className="text-red-600 text-xl font-bold">
-                      {expert.reviews}+
-                    </p>
+                    <div className="text-right">
+                      <p className="text-red-600 text-xl font-bold flex justify-center item-center">
+                        {expert.reviews}+
+                      </p>
+                      <p className="text-gray-700 text-sm dark:text-white">
+                        Assessments Evaluated
+                      </p>
+                    </div>
                   </div>
-                </CardContent>
-                <CardFooter className="p-4 pt-0">
                   <Button
-                    className="w-full bg-red-600 hover:bg-red-700 text-white"
-                    onClick={() => handleViewProfile(expert)}
-                  >
+                    className="mt-4 bg-red-600 hover:bg-red-700 w-full text-lg"
+                    onClick={() => navigate("/player/exdetails")}  >
                     View Profile
                   </Button>
-                </CardFooter>
+                </CardContent>
               </Card>
             ))}
           </div>
-
           {/* Pagination */}
-          <div className="mt-8 mb-8">
+          <div className="mt-8 mb-8 flex justify-end item-end">
             <Pagination totalPages={2} />
-          </div>
+          </div>      
         </div>
       </main>
     </div>

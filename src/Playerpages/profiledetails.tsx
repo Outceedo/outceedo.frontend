@@ -355,6 +355,17 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     />
                   </div>
 
+
+                  <input
+  type="file"
+  accept="image/*"
+  className="hidden"
+  ref={(el) => {
+    certificateFileRefs.current[index] = el;
+  }}
+  onChange={(e) => handleCertificateImageUpload(index, e)}
+/>
+
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Description (Optional)
@@ -378,13 +389,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       Image (Optional)
                     </Label>
                     <div className="flex flex-col space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={(el) => (certificateFileRefs.current[index] = el)}
-                        onChange={(e) => handleCertificateImageUpload(index, e)}
-                      />
+                    <input
+                     type="file"
+                      accept="image/*"
+                      className="hidden"
+                       ref={(el) => {
+                        certificateFileRefs.current[index] = el;
+                      }}
+                     onChange={(e) => handleCertificateImageUpload(index, e)}
+                     />
+
 
                       {cert.imageUrl ? (
                         <div className="relative">
@@ -559,13 +573,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       Image (Optional)
                     </Label>
                     <div className="flex flex-col space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={(el) => (awardFileRefs.current[index] = el)}
+                    <input
+                      type="file"
+                       accept="image/*"
+                      className="hidden"
+                        ref={(el) => {
+                       awardFileRefs.current[index] = el;
+                      }}
                         onChange={(e) => handleAwardImageUpload(index, e)}
-                      />
+                       />
+
 
                       {award.imageUrl ? (
                         <div className="relative">
@@ -678,8 +695,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       </div>
 
       {/* Social Links - Enhanced Design */}
-      <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+      <Card className="mt-4 relative border p-4 w-fit rounded-lg dark:bg-gray-700 dark:text-white">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Social Media
         </h3>
 
@@ -769,40 +786,28 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           </div>
         ) : (
           <>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            <div className="flex gap-5">
               {/* LinkedIn */}
               {socials.linkedin ? (
                 <a
                   href={formatUrl(socials.linkedin)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                >
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 mb-3 group-hover:bg-blue-100 dark:bg-blue-900/20 dark:group-hover:bg-blue-900/30">
+                  className="text-blue-800 text-2xl" >
                     <FontAwesomeIcon
                       icon={faLinkedin}
                       className="text-blue-600 text-2xl"
                     />
-                  </div>
-                  <span className="text-gray-800 dark:text-gray-100 font-medium text-sm">
-                    LinkedIn
-                  </span>
-                </a>
+                          </a>
               ) : (
                 !isExpertView && (
                   <button
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-50 mb-3 dark:bg-gray-700">
                       <FontAwesomeIcon
                         icon={faLinkedin}
-                        className="text-gray-400 text-2xl"
-                      />
-                    </div>
-                    <span className="text-gray-400 font-medium text-sm">
-                      Add LinkedIn
-                    </span>
+                        className="text-gray-400 text-2xl"  />
                   </button>
                 )
               )}
@@ -813,33 +818,20 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   href={formatUrl(socials.instagram)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                >
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-pink-50 mb-3 group-hover:bg-pink-100 dark:bg-pink-900/20 dark:group-hover:bg-pink-900/30">
-                    <FontAwesomeIcon
+                  className="text-pink-600 text-2xl" >
+                <FontAwesomeIcon
                       icon={faInstagram}
-                      className="text-pink-600 text-2xl"
-                    />
-                  </div>
-                  <span className="text-gray-800 dark:text-gray-100 font-medium text-sm">
-                    Instagram
-                  </span>
-                </a>
+                      className="text-pink-600 text-2xl"   />
+                              </a>
               ) : (
                 !isExpertView && (
                   <button
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-50 mb-3 dark:bg-gray-700">
                       <FontAwesomeIcon
                         icon={faInstagram}
-                        className="text-gray-400 text-2xl"
-                      />
-                    </div>
-                    <span className="text-gray-400 font-medium text-sm">
-                      Add Instagram
-                    </span>
+                        className="text-gray-400 text-2xl"/>
                   </button>
                 )
               )}
@@ -850,75 +842,39 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   href={formatUrl(socials.facebook)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                >
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 mb-3 group-hover:bg-blue-100 dark:bg-blue-900/20 dark:group-hover:bg-blue-900/30">
-                    <FontAwesomeIcon
-                      icon={faFacebook}
-                      className="text-blue-800 text-2xl"
-                    />
-                  </div>
-                  <span className="text-gray-800 dark:text-gray-100 font-medium text-sm">
-                    Facebook
-                  </span>
-                </a>
+                className="text-blue-800 text-2xl" >
+                   <FontAwesomeIcon icon={faFacebook} className="text-blue-800 text-2xl" />
+              </a>
               ) : (
                 !isExpertView && (
                   <button
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-50 mb-3 dark:bg-gray-700">
-                      <FontAwesomeIcon
-                        icon={faFacebook}
-                        className="text-gray-400 text-2xl"
-                      />
-                    </div>
-                    <span className="text-gray-400 font-medium text-sm">
-                      Add Facebook
-                    </span>
-                  </button>
+                       <FontAwesomeIcon icon={faFacebook} className="text-gray-400 text-2xl" />
+            </button>
                 )
               )}
-
               {/* Twitter */}
               {socials.twitter ? (
                 <a
                   href={formatUrl(socials.twitter)}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                >
-                  <div className="w-12 h-12 flex items-center justify-center rounded-full bg-blue-50 mb-3 group-hover:bg-blue-100 dark:bg-blue-900/20 dark:group-hover:bg-blue-900/30">
-                    <FontAwesomeIcon
-                      icon={faTwitter}
-                      className="text-blue-500 text-2xl"
-                    />
-                  </div>
-                  <span className="text-gray-800 dark:text-gray-100 font-medium text-sm">
-                    Twitter
-                  </span>
-                </a>
+                   className="text-blue-500 text-2xl hover:text-blue-600 transition">
+                    <FontAwesomeIcon icon={faTwitter} />
+                    </a>
               ) : (
                 !isExpertView && (
                   <button
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                    <div className="w-12 h-12 flex items-center justify-center rounded-full bg-gray-50 mb-3 dark:bg-gray-700">
-                      <FontAwesomeIcon
-                        icon={faTwitter}
-                        className="text-gray-400 text-2xl"
-                      />
-                    </div>
-                    <span className="text-gray-400 font-medium text-sm">
-                      Add Twitter
-                    </span>
+                    <FontAwesomeIcon icon={faTwitter}/>
                   </button>
                 )
               )}
             </div>
-
             {/* Only show edit button if not expert view and there's at least one social */}
             {!isExpertView &&
               (socials.linkedin ||

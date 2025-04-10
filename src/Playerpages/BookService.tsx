@@ -28,16 +28,6 @@ interface Expert {
   verified: boolean;
 }
 
-interface Booking {
-  id: number;
-  expertName: string;
-  date: string;
-  service: string;
-  amount: string;
-  action: "Accepted" | "Rejected" | "Re-Scheduled";
-  bookingStatus: "Paid" | "Not Paid" | "Pending";
-}
-
 const AppointmentScheduler: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<number>(10);
   const [selectedTime, setSelectedTime] = useState<string>("12:30pm");
@@ -91,32 +81,7 @@ const AppointmentScheduler: React.FC = () => {
   };
 
   const handleNext = () => {
-    // Format the date for display
-    const formattedDate = `${selectedDate} ${currentMonth.split(" ")[0]} 2025`;
-
-    // Create a new booking object
-    const newBooking: Booking = {
-      id: Math.floor(Math.random() * 1000) + 1, // Generate a random ID
-      expertName: expert?.name || "Expert",
-      date: formattedDate,
-      service: service?.name || "Service",
-      amount: service?.price || "$0",
-      action: "Accepted", // Default action
-      bookingStatus: "Pending", // Default status
-    };
-
-    // Get existing bookings or create an empty array
-    const existingBookings = JSON.parse(
-      localStorage.getItem("myBookings") || "[]"
-    );
-
-    // Add the new booking to the array
-    existingBookings.push(newBooking);
-
-    // Store the updated bookings array in localStorage
-    localStorage.setItem("myBookings", JSON.stringify(existingBookings));
-
-    // Store appointment details for reference
+    // Store appointment details for the next step
     localStorage.setItem(
       "appointmentDate",
       `${currentMonth} ${selectedDate}, 2025`
@@ -124,7 +89,7 @@ const AppointmentScheduler: React.FC = () => {
     localStorage.setItem("appointmentTime", selectedTime);
 
     // Navigate to confirmation or payment page
-    navigate("/player/mybooking");
+    navigate("/confirm-appointment");
   };
 
   // Format the selected date
@@ -307,7 +272,7 @@ const AppointmentScheduler: React.FC = () => {
           className="bg-red-500 hover:bg-red-600 text-white px-8"
           onClick={handleNext}
         >
-          Book now
+          Next
         </Button>
       </div>
     </div>

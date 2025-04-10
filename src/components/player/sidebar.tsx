@@ -48,8 +48,9 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const navigate = useNavigate();
 
   return (
-    <nav className="flex-col flex gap-2 p-4 fixed">
-      <h1 className="font-bold text-center mb-2 text-gray-800 dark:text-white">
+    <nav className="flex-col flex gap-2 p-4 fixed   ">
+      
+      <h1 className="font-bold text-center mb-2 text-gray-800 dark:text-white ">
         LOGO
       </h1>
 
