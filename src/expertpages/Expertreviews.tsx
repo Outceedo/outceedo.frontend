@@ -1,79 +1,99 @@
-import React from "react";
-import moment from "moment";
-import { Card } from "@/components/ui/card";
+import "react-circular-progressbar/dist/styles.css";
+import profile2 from "../assets/images/profile2.jpg";
+import React, { useState } from "react";
 
+// Define the type for a single review
 interface Review {
-  id: number;
   name: string;
-  date: string;
-  comment: string;
+  time: string;
+  review: string;
+  profileImage: string;
 }
 
 const ExpertReviews: React.FC = () => {
-  // Sample reviews data
   const reviews: Review[] = [
     {
-      id: 1,
-      name: "John Doe",
-      date: "2024-02-15",
-      comment: "Great service! Highly recommend.",
+      name: "Laura W",
+      time: "1 year ago",
+      review: "An incredible, heartfelt musician and a delight to work with. Hard working cadidate and grasp things so quickly.",
+      profileImage: profile2,
     },
     {
-      id: 2,
-      name: "Alice Johnson",
-      date: "2024-02-10",
-      comment: "The experience was amazing. Will come again!",
+      name: "Kenny B",
+      time: "1 year ago",
+      review: "An incredible, heartfelt musician and a delight to work with.",
+      profileImage: profile2,
     },
     {
-      id: 3,
-      name: "Michael Smith",
-      date: "2024-01-25",
-      comment: "Good quality, but the waiting time was a bit long.",
-    },
-    {
-      id: 4,
-      name: "Emily Davis",
-      date: "2024-01-20",
-      comment: "Exceptional coaching skills and very attentive to detail.",
-    },
-    {
-      id: 5,
-      name: "Robert Wilson",
-      date: "2024-01-15",
-      comment:
-        "My son has improved tremendously under the guidance. Great expert!",
+      name: "Nicola B",
+      time: "1 year ago",
+      review: "An incredible, heartfelt musician and a delight to work with.",
+      profileImage: profile2,
     },
   ];
 
-  return (
-    <div className="p-4 w-full space-y-6">
-      <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
-        Reviews from Players
-      </h2>
+  const [selectedReview, setSelectedReview] = useState<Review | null>(null);
 
-      {reviews.length === 0 ? (
-        <Card className="p-8 text-center">
-          <p className="text-gray-500 dark:text-gray-400">
-            No reviews available yet
-          </p>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {reviews.map((review) => (
-            <Card key={review.id} className="p-4 shadow-sm dark:bg-gray-700">
-              <div className="flex justify-between items-center mb-2">
-                <h3 className="font-semibold text-gray-900 dark:text-white">
-                  {review.name}
-                </h3>
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  {moment(review.date).fromNow()}
-                </span>
+  const handleCardClick = (review: Review) => {
+    setSelectedReview(review);
+  };
+
+  const closeModal = () => {
+    setSelectedReview(null);
+  };
+
+  return (
+    <div className="p-4 -mt-10 w-full">
+      {/* Reviews Grid */}
+      <div className="grid md:grid-cols-3 gap-6 mt-6">
+        {reviews.map((review, index) => (
+          <div
+            key={index}
+            className="border dark:bg-gray-800 dark:border-gray-600 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition"
+            onClick={() => handleCardClick(review)}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
+                <img src={review.profileImage} alt={review.name} className="rounded-full w-full h-full object-cover" />
               </div>
-              <p className="text-gray-700 dark:text-gray-300">
-                {review.comment}
+              <div>
+                <p className="font-semibold text-gray-800 dark:text-white">{review.name}</p>
+                <p className="text-gray-500 text-sm dark:text-gray-400">{review.time}</p>
+              </div>
+            </div>
+            <p className="mt-3 text-gray-700 dark:text-gray-300">{review.review}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Review Modal */}
+      {selectedReview && (
+        <div className="fixed inset-0 bg-opacity-50 z-50 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
+            <button
+              onClick={closeModal}
+              className="absolute top-2 right-3 text-gray-600 dark:text-gray-300 text-xl"
+            >
+              &times;
+            </button>
+            <div className="flex flex-col items-center">
+              <img
+                src={selectedReview.profileImage}
+                alt={selectedReview.name}
+                className="rounded-full w-24 h-24 mb-4 object-cover"
+              />
+              <h2 className="text-xl font-bold text-gray-800 dark:text-white">{selectedReview.name}</h2>
+              <p className="text-gray-500 text-sm">{selectedReview.time}</p>
+            </div>
+            <div className="mt-4 text-gray-700 dark:text-gray-300  space-y-4">
+              <p>
+                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Illum sequi voluptatum facilis suscipit
+                exercitationem, natus vero eligendi sunt similique ipsa omnis qui eum incidunt molestias quod recusandae
+                animi, accusantium porro.
               </p>
-            </Card>
-          ))}
+              <p>{selectedReview.review}</p>
+            </div>
+            </div>
         </div>
       )}
     </div>
@@ -81,3 +101,4 @@ const ExpertReviews: React.FC = () => {
 };
 
 export default ExpertReviews;
+//ExpertReviews

@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { useNavigate } from "react-router-dom";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
+import { Sheet, SheetContent, } from "../ui/sheet";
 import "@fortawesome/fontawesome-free/css/all.min.css"; // Import Font Awesome CSS
 import profile from "../../assets/images/profile.jpg";
 interface MenuItem {
@@ -11,32 +11,11 @@ interface MenuItem {
 }
 
 const expertSidebarMenuItems: MenuItem[] = [
-  {
-    id: 1,
-    name: "Dashboard",
-    icon: "fas fa-table-columns",
-    path: "/expert/dashboard",
-  },
-  {
-    id: 2,
-    name: "Players",
-    icon: "fas fa-user-tie",
-    path: "/expert/viewplayers",
-  },
+  { id: 1, name: "Dashboard",icon: "fas fa-table-columns", path: "/expert/dashboard", },
+  { id: 2, name: "Players",  icon: "fas fa-user-tie",path: "/expert/viewplayers", },
   { id: 3, name: "Matches", icon: "fas fa-futbol", path: "/expert/matches" },
-  {
-    id: 4,
-    name: "My Bookings",
-    icon: "fas fa-calendar-check",
-    path: "/expert/mybooking",
-  },
-
-  {
-    id: 5,
-    name: "Sponsors",
-    icon: "fas fa-handshake",
-    path: "/expert/sponsors",
-  },
+  {id: 4, name: "My Bookings",icon: "fas fa-calendar-check",path: "/expert/mybooking", },
+  { id: 5,  name: "Sponsors",icon: "fas fa-handshake",path: "/expert/sponsors", },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
 ];
 
@@ -70,21 +49,27 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           Expert
         </p>
       </div>
-      {expertSidebarMenuItems.map((menuItem) => (
-        <div
-          key={menuItem.id}
-          onClick={() => {
-            navigate(menuItem.path);
-            if (setOpen) setOpen(false);
-          }}
-          className="flex cursor-pointer text-md items-center gap-2 rounded-md px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <i className={menuItem.icon}></i>
-          <span>{menuItem.name}</span>
-        </div>
-      ))}
-    </nav>
-  );
+      {expertSidebarMenuItems.map((menuItem) => {
+       const isActive = location.pathname === menuItem.path;
+
+       return (
+         <div
+           key={menuItem.id}
+           onClick={() => {
+             navigate(menuItem.path);
+             if (setOpen) setOpen(false);
+           }}
+           className={`flex items-center gap-2 rounded-md px-3 py-2 text-md cursor-pointer
+             ${isActive ? "bg-muted text-foreground font-semibold" : "text-muted-foreground hover:bg-muted hover:text-foreground"}
+           `}
+         >
+           <i className={`${menuItem.icon}`}></i>
+           <span>{menuItem.name}</span>
+         </div>
+       );
+     })}
+   </nav>
+ );
 }
 
 interface ExpertSideBarProps {
@@ -93,8 +78,6 @@ interface ExpertSideBarProps {
 }
 
 function ExpertSideBar({ open, setOpen }: ExpertSideBarProps) {
-  const navigate = useNavigate();
-
   return (
     <Fragment>
       <Sheet open={open} onOpenChange={setOpen}>

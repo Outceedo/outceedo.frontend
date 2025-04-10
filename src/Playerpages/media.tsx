@@ -226,11 +226,11 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview, }) => 
   }, []);
 
   return (
-    <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700">
+    <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 ">
       {/* Three-dot delete menu */}
       <div className="absolute top-2 right-2 z-10" ref={menuRef}>
         <Button
-          className="text-gray-500 dark:text-white text-lg"
+          className="text-gray-100 dark:text-white text-lg"
           onClick={() => setMenuOpen((prev) => !prev)}
         >
           ⋮
@@ -277,3 +277,4 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview, }) => 
 };
 
 
+//ExpertMedia

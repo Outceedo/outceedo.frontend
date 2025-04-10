@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
+import { Check } from "lucide-react";
 import {
   faPen,
   faSave,
@@ -19,10 +21,12 @@ interface Service {
   price: string;
 }
 
+
+
 const ExpertServices: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-
+  const [isActive, setIsActive] = useState(false);
   // Services state
   const [services, setServices] = useState<Service[]>(
     JSON.parse(
@@ -46,6 +50,9 @@ const ExpertServices: React.FC = () => {
             description: "1 on 1 advise. doubts",
             price: "$80/h",
           },
+         
+
+
         ])
     )
   );
@@ -108,8 +115,10 @@ const ExpertServices: React.FC = () => {
     setSelectedService(service);
   };
 
+ 
+
   return (
-    <div className="p-4 w-full space-y-6">
+    <div className="p-4 w-full space-y-6 ">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
           Services Offered
@@ -229,9 +238,35 @@ const ExpertServices: React.FC = () => {
                   <p className="text-gray-700 dark:text-gray-300 mb-6">
                     {service.description}
                   </p>
-                </div>
-
+                 
                 
+                  <div className="flex gap-10">
+      {/* Activate Button */}
+      <Button
+        onClick={() => setIsActive(true)}
+        className={`flex items-center gap-4 px-4 py-2 w-40 rounded font-semibold transition cursor-pointer
+          ${isActive ? "bg-red-400 text-white  hover:bg-red-500" : "bg-red-600 hover:bg-red-700 text-white"}
+        `}
+      >
+        {isActive && <Check className="w-4 h-4" />}
+        Activate
+      </Button>
+
+      {/* Deactivate Button */}
+      <Button
+        onClick={() => setIsActive(false)}
+        className={`flex items-center gap-2 px-4 py-2 w-40 rounded font-semibold transition cursor-pointer
+          ${!isActive ? "bg-white text-black border-2 border-red-500 hover:bg-white" : "bg-white  border-2 border-red-500 text-black  hover:bg-white"}
+        `}
+      >
+        {!isActive && <Check className="w-4 h-4" />}
+        Deactivate
+      </Button>
+    </div>
+
+
+
+                </div>
               </Card>
             ))}
       </div>

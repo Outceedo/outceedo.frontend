@@ -179,7 +179,7 @@ mediaFilter === "all"
     <a
       key={index}
       href={social.link}
-      className={`text-xl transition-colors duration-300 ${
+      className={`text-3xl transition-colors duration-300 ${
         index === 0 ? "text-blue-700 hover:text-blue-900" : // Facebook
         index === 1 ? "text-blue-600 hover:text-blue-800" : // LinkedIn
         index === 2 ? "text-pink-500 hover:text-pink-700" : // Instagram
