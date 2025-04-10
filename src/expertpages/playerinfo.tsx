@@ -59,15 +59,19 @@ const playerData = {
 };
 
 const ExpertviewProfile: React.FC = () => {
+  
+
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
     "details"
   );
+  
 
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
       <div className="flex-1 p-4">
         <div className="ml-8">
           <div className="flex flex-col lg:flex-row gap-6 items-start mt-4">
+         
             <img
               src={playerData.profileImage}
               alt={`${playerData.name}'s profile`}

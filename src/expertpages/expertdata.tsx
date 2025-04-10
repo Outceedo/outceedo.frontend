@@ -77,7 +77,7 @@ const ExpertProfile= () => {
   {/* Left - Expert Name */}
       <div>
      <div className="flex  gap-10">
-    <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
+ 
   <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
   </div>
           {/* Social Media Icons */}
@@ -186,4 +186,4 @@ const ExpertProfile= () => {
 export default ExpertProfile;
 
 
-//ExpertProfile
+

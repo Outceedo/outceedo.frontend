@@ -171,7 +171,7 @@ const PlayersProfile: React.FC = () => {
   });
 
   return (
-    <div className="flex">
+    <div className="flex bg">
       {/* Main Content */}
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
         <div className="min-h-screen p-6 mt-4 rounded-xl ">
@@ -248,14 +248,19 @@ const PlayersProfile: React.FC = () => {
                         {expert.rating}/5
                       </span>
                     </div>
-                    <p className="text-red-600 text-xl font-bold">
-                      {expert.reviews}+
-                    </p>
+                    <div className="text-right">
+                      <p className="text-red-600 text-xl font-bold flex justify-center item-center">
+                        {expert.reviews}+
+                      </p>
+                      <p className="text-gray-700 text-sm dark:text-white ">
+                        Assessments Evaluated
+                      </p>
+                    </div>
                   </div>
                 </CardContent>
                 <CardFooter className="p-4 pt-0">
                   <Button
-                    className="w-full bg-red-600 hover:bg-red-700 text-white"
+                    className="w-full bg-red-600 hover:bg-red-700 text-white cursor-pointer"
                     onClick={() => navigate("/expert/playerinfo")}
                   >
                     View Profile
