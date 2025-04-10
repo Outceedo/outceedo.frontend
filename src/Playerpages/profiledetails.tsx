@@ -355,6 +355,17 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     />
                   </div>
 
+
+                  <input
+  type="file"
+  accept="image/*"
+  className="hidden"
+  ref={(el) => {
+    certificateFileRefs.current[index] = el;
+  }}
+  onChange={(e) => handleCertificateImageUpload(index, e)}
+/>
+
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Description (Optional)
@@ -378,13 +389,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       Image (Optional)
                     </Label>
                     <div className="flex flex-col space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={(el) => (certificateFileRefs.current[index] = el)}
-                        onChange={(e) => handleCertificateImageUpload(index, e)}
-                      />
+                    <input
+                     type="file"
+                      accept="image/*"
+                      className="hidden"
+                       ref={(el) => {
+                        certificateFileRefs.current[index] = el;
+                      }}
+                     onChange={(e) => handleCertificateImageUpload(index, e)}
+                     />
+
 
                       {cert.imageUrl ? (
                         <div className="relative">
@@ -559,13 +573,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       Image (Optional)
                     </Label>
                     <div className="flex flex-col space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={(el) => (awardFileRefs.current[index] = el)}
+                    <input
+                      type="file"
+                       accept="image/*"
+                      className="hidden"
+                        ref={(el) => {
+                       awardFileRefs.current[index] = el;
+                      }}
                         onChange={(e) => handleAwardImageUpload(index, e)}
-                      />
+                       />
+
 
                       {award.imageUrl ? (
                         <div className="relative">

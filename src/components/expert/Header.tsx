@@ -3,6 +3,7 @@ import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBell,
+  
   faMoon,
   faSun,
 } from "@fortawesome/free-solid-svg-icons";

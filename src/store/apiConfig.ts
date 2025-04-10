@@ -5,8 +5,8 @@ import axios, {
   InternalAxiosRequestConfig,
 } from "axios";
 
-const AUTH_SERVICE_URL = "http://localhost:8000/api/v1/auth";
-const USER_SERVICE_URL = "http://localhost:8002/api/v1/user";
+const AUTH_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/auth`;
+const USER_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/user`;
 
 // Create an instance of axios for the auth service
 const authService = axios.create({

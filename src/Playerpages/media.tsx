@@ -210,7 +210,7 @@ interface MediaCardProps {
   className?: string;
 }
 
-const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview,className="", }) => {
+const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview, }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 

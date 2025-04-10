@@ -85,16 +85,8 @@ const ExpertDetails: React.FC = () => {
     setIsEditingSkills(false);
   };
 
- 
-
   return (
     <div className="p-4 w-full space-y-6">
-
-     
-
-
-
-
       {/* About Me Section */}
       <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
