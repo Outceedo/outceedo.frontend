@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import profile1 from "../assets/images/profile1.jpg";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-
+import { useNavigate } from "react-router-dom";
 import Reviews from "./playerreviews";
 import { Card } from "@/components/ui/card";
 import PlayerMedia from "./playermedia";
@@ -62,11 +62,12 @@ const ExpertviewProfile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
     "details"
   );
-
+  const navigate=useNavigate();
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
       <div className="flex-1 p-4">
         <div className="ml-8">
+        <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
           <div className="flex flex-col lg:flex-row gap-6 items-start mt-4">
             <img
               src={playerData.profileImage}
@@ -150,13 +151,8 @@ const ExpertviewProfile: React.FC = () => {
                   {tab}
                 </button>
               ))}
-            </div>
-            
-
-            
-            
-
-            <div className="mt-4 ">
+            </div>            
+           <div className="mt-4 ">
               {/* Pass isExpertView prop to all components to disable editing */}
               {activeTab === "details" && (
                 <ProfileDetails playerData={playerData} isExpertView={true} />

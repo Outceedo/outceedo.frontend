@@ -1,34 +1,11 @@
 import { useState } from "react";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
-import ExpertDetails from "./expertdetails";
-import ExpertReviews from "./expertreviews";
-import ExpertServices from "./expertservices";
+import ExpertDetails from "./Expertdetails";
+import ExpertReviews from "./Expertreviews";
+import ExpertServices from "./Expertservices";
 import ExpertMedia from "./expertmedia";
-
-import { useNavigate } from "react-router-dom";
-interface MediaItem {
-    id: number;
-    type: "photo" | "video";
-    url: string;
-    src: string; // Fix: Added missing 'src' property
-    title: string; // Fix: Added missing 'title' property
-  }
-  interface Review {
-    id: number;
-    name: string;
-    date: string; // Store original date as string
-    comment: string;
-  }
-  interface Service {
-    id: number;
-    name: string;
-    description: string;
-    price: string;
-  }
-  
 const expertData = {
   name: "Expert Name",
   profession: "Coach & Ex-Soccer Player Defender",
@@ -57,18 +34,8 @@ const expertData = {
   skills: ["Leadership", "Tactical Analysis", "Team Management", "Fitness Training"],
   certifications: ["UEFA Pro License", "FIFA Coaching Diploma", "Sports Science Certification"]
 };
-
-
-
-type TabType = "details" | "media" | "reviews" | "services";
 const ExpertProfile= () => {
   const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews"|"services" >("details");
-  const tabs: TabType[] = ["details", "media", "reviews", "services"];
-
-
- const navigate= useNavigate();
-
-
   return ( 
      <div className="flex -mt-5">
             {/* Main Content */}
@@ -77,11 +44,10 @@ const ExpertProfile= () => {
   {/* Left - Expert Name */}
       <div>
      <div className="flex  gap-10">
-    <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
   <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
   </div>
           {/* Social Media Icons */}
-          <div className="ml-18 justify-center  space-x-5 mt-8">
+          <div className=" justify-center  space-x-5 mt-8">
   {expertData.socialLinks.map((social, index) => (
     <a
       key={index}
@@ -178,9 +144,7 @@ const ExpertProfile= () => {
             </div>
         </div>
         </main>
-        </div>
-      
-
+        </div>   
   );
 };
 export default ExpertProfile;

@@ -182,7 +182,7 @@ const Expertspage: React.FC = () => {
         <div className="min-h-screen px-6 rounded-xl dark:bg-slate-800">
           {/* Search Box */}
           <div className="flex item-end justify-end mr-5">
-          <div className="relative w-fit mb-2 bg-white dark:bg-slate-600 dark:text-white rounded-lg ">
+          <div className="relative w-full mb-2 bg-white dark:bg-slate-600 dark:text-white rounded-lg ">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="text"

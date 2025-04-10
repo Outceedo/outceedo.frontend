@@ -68,7 +68,7 @@ const Reviews: React.FC = () => {
 
       {/* Review Modal */}
       {selectedReview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4">
+        <div className="fixed inset-0 bg-opacity-50 z-50 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
             <button
               onClick={closeModal}

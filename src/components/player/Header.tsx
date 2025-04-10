@@ -13,11 +13,21 @@ import { useLocation } from "react-router-dom";
 interface PlayerHeaderProps {
   setOpen: (open: boolean) => void;
 }
-
+const menuItems = [
+  { path: "/player/dashboard", name: "Dashboard" },
+  { path: "/player/viewexperts", name: "Experts" },
+  { path: "/player/matches", name: "Matches" },
+  { path: "/player/mybooking", name: "My Bookings" },
+  { path: "/player/sponsors", name: "Sponsors" },
+  { path: "/player/profile", name: "Profile" },
+];
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const location = useLocation();
+  const currentTitle =
+  menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??
+  "Dashboard";
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode");
     if (savedMode === "enabled") {
@@ -42,14 +52,25 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
 
   return (
     <header className="flex items-center justify-between px-4 py-3 bg-background dark:bg-slate-950">
-      <Button
-        onClick={() => setOpen(true)}
-        className="lg:hidden sm:block bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600"
-      >
-        <AlignJustify />
-        <span className="sr-only">Toggle Menu</span>
-      </Button>
-      <div className="flex justify-end gap-3 items-center w-full">
+  {/* Left Section: Menu Button + Page Title */}
+  <div className="flex items-center gap-4">
+    <Button
+      onClick={() => setOpen(true)}
+      className="lg:hidden sm:block bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600"
+    >
+      <AlignJustify />
+      <span className="sr-only">Toggle Menu</span>
+    </Button>
+    
+    {/* Show current page title on all screen sizes */}
+  <h2
+  className="text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+  {currentTitle}
+</h2>
+  </div>
+
+  {/* Right Section: Premium Button, Notifications, Theme Toggle */}
+            <div className="flex justify-end gap-3 items-center w-full">
         <Button className="h-12 w-48 md:w-56 p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors">
           <FontAwesomeIcon
             icon={faGem}
