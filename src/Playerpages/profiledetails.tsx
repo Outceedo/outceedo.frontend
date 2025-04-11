@@ -9,12 +9,7 @@ import {
   faUpload,
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faLinkedin,
-  faInstagram,
-  faFacebook,
-  faTwitter,
-} from "@fortawesome/free-brands-svg-icons";
+import { FaLinkedinIn, FaFacebookF, FaInstagram,FaTwitter } from "react-icons/fa";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -695,7 +690,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       </div>
 
       {/* Social Links - Enhanced Design */}
-      <Card className="mt-4 relative border p-4 w-fit rounded-lg dark:bg-gray-700 dark:text-white">
+      <Card className="mt-4 relative border p-6 w-1/3 rounded-lg dark:bg-gray-700 dark:text-white">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Social Media
         </h3>
@@ -705,10 +700,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* LinkedIn */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-                <FontAwesomeIcon
-                  icon={faLinkedin}
-                  className="text-blue-600 text-xl"
-                />
+              <FaLinkedinIn size={20} />
               </div>
               <Input
                 placeholder="LinkedIn URL (e.g. linkedin.com/in/username)"
@@ -721,10 +713,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Instagram */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-pink-50 dark:bg-pink-900/20">
-                <FontAwesomeIcon
-                  icon={faInstagram}
-                  className="text-pink-600 text-xl"
-                />
+              <FaInstagram size={20} />
               </div>
               <Input
                 placeholder="Instagram URL (e.g. instagram.com/username)"
@@ -739,10 +728,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Facebook */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-                <FontAwesomeIcon
-                  icon={faFacebook}
-                  className="text-blue-800 text-xl"
-                />
+              <FaFacebookF size={20} />
               </div>
               <Input
                 placeholder="Facebook URL (e.g. facebook.com/username)"
@@ -755,10 +741,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Twitter */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-                <FontAwesomeIcon
-                  icon={faTwitter}
-                  className="text-blue-500 text-xl"
-                />
+         <FaTwitter size={20} />
               </div>
               <Input
                 placeholder="Twitter URL (e.g. twitter.com/username)"
@@ -794,10 +777,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-blue-800 text-2xl" >
-                    <FontAwesomeIcon
-                      icon={faLinkedin}
-                      className="text-blue-600 text-2xl"
-                    />
+          <FaLinkedinIn size={20} />
                           </a>
               ) : (
                 !isExpertView && (
@@ -805,9 +785,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                      <FontAwesomeIcon
-                        icon={faLinkedin}
-                        className="text-gray-400 text-2xl"  />
+                  <FaLinkedinIn size={20} />
                   </button>
                 )
               )}
@@ -819,18 +797,15 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-pink-600 text-2xl" >
-                <FontAwesomeIcon
-                      icon={faInstagram}
-                      className="text-pink-600 text-2xl"   />
-                              </a>
+                <FaInstagram/>
+                 </a>
               ) : (
                 !isExpertView && (
                   <button
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                      <FontAwesomeIcon
-                        icon={faInstagram}
+                      <FaInstagram 
                         className="text-gray-400 text-2xl"/>
                   </button>
                 )
@@ -843,7 +818,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                 className="text-blue-800 text-2xl" >
-                   <FontAwesomeIcon icon={faFacebook} className="text-blue-800 text-2xl" />
+                   <FaFacebookF className="text-blue-800 text-2xl" />
               </a>
               ) : (
                 !isExpertView && (
@@ -851,7 +826,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                       <FontAwesomeIcon icon={faFacebook} className="text-gray-400 text-2xl" />
+                       <FaFacebookF className="text-gray-400 text-2xl" />
             </button>
                 )
               )}
@@ -862,7 +837,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   target="_blank"
                   rel="noopener noreferrer"
                    className="text-blue-500 text-2xl hover:text-blue-600 transition">
-                    <FontAwesomeIcon icon={faTwitter} />
+                 <FaTwitter />
                     </a>
               ) : (
                 !isExpertView && (
@@ -870,7 +845,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     onClick={() => setIsEditingSocials(true)}
                     className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
                   >
-                    <FontAwesomeIcon icon={faTwitter}/>
+              <FaTwitter />
                   </button>
                 )
               )}

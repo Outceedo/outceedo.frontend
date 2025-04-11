@@ -88,13 +88,6 @@ const [mediaItems] = useState<MediaItem[]>([
     title: "Training Session",
   },
   {
-    id: 2,
-    type: "photo",
-    url: "/photo2.jpg",
-    src: "https://images.unsplash.com/photo-1517466787929-bc90951d0974?q=80&w=500",
-    title: "Team Building",
-  },
-  {
     id: 3,
     type: "video",
     url: "/video1.mp4",
@@ -165,16 +158,16 @@ mediaFilter === "all"
   return ( 
      <div className="flex -mt-5">
             {/* Main Content */}
-            <main className="flex-1 p-6 dark:bg-gray-900 ml-15">
+            <main className="flex-1 p-6 dark:bg-gray-900 ">
         <div className="flex justify-between items-center w-full p-4 mx-auto bg-dark:bg-slate-700 ">
   {/* Left - Expert Name */}
-      <div>
+      <div >
      <div className="flex  gap-10">
     <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
+    <div className="flex items-center gap-x-32 flex-wrap">
   <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
-  </div>
           {/* Social Media Icons */}
-          <div className="ml-18 justify-center  space-x-5 mt-8">
+          <div className="flex gap-4">
   {expertData.socialLinks.map((social, index) => (
     <a
       key={index}
@@ -189,10 +182,11 @@ mediaFilter === "all"
       {social.icon}
     </a>
   ))}
+  </div>
 </div>
-
+</div>
       {/* Expert Info */}
-      <div className="flex justify-start gap-40 text-center mt-8">
+      <div className="flex justify-start gap-40 text-start mt-8">
         <div >
       <p className="text-gray-500 dark:text-white">Profession</p>
         <p className="font-semibold dark:text-white">{expertData.profession}</p>
@@ -203,7 +197,7 @@ mediaFilter === "all"
         </div>
       </div>
       {/* Additional Information */}
-      <div className="flex justify-start gap-40 mt-6 text-center">
+      <div className="flex justify-start gap-40 mt-6 text-start">
         <div>
           <p className="text-gray-500 dark:text-white">Response Time</p>
           <p className="font-semibold dark:text-white">{expertData.responseTime}</p>
@@ -229,10 +223,11 @@ mediaFilter === "all"
       {/* Stats */}
       <div className="border-t border-b py-6 mt-6 text-center">
   <div className="flex justify-around">
-    <div>
-      <p className="text-yellow-500 text-3xl">⭐⭐⭐⭐⭐</p>
-      <p className="text-gray-500 dark:text-white">{expertData.reviews} reviews</p>
-    </div>   
+  <div className="flex items-center gap-x-2">
+  <p className="text-yellow-500 text-3xl">⭐⭐⭐⭐⭐</p>
+  <p className="text-gray-500 dark:text-white">{expertData.reviews} reviews</p>
+</div>
+ 
     <div>
       <p className="text-red-500 text-3xl font-bold">{expertData.followers}</p>
       <p className="text-gray-500 dark:text-white">Followers</p>
@@ -245,7 +240,7 @@ mediaFilter === "all"
 </div>
       {/* Media Tabs */}
       <div className="mt-6">
-      <div className="flex space-x-6 border-b pb-2">
+      <div className="flex space-x-6 border-b ">
       {tabs.map((tab) => (
         <Button
           key={tab}
@@ -307,7 +302,7 @@ mediaFilter === "all"
         variant="ghost"
         onClick={() => setMediaFilter("all")}
         className={`px-4 py-2 rounded-md ${
-          mediaFilter === "all" ? "bg-yellow-200" : "hover:bg-gray-100"
+          mediaFilter === "all" ? "bg-blue-200 text-blue-600" : "hover:bg-blue-200"
         }`}
       >
         All
@@ -315,8 +310,8 @@ mediaFilter === "all"
       <Button
         variant="ghost"
         onClick={() => setMediaFilter("photo")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-          mediaFilter === "photo" ? "bg-yellow-200" : "hover:bg-gray-100"
+        className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
+          mediaFilter === "photo" ? "bg-blue-200 text-blue-600" : "hover:bg-gray-100"
         }`}
       >
         <FontAwesomeIcon icon={faCamera} />
@@ -325,8 +320,8 @@ mediaFilter === "all"
       <Button
         variant="ghost"
         onClick={() => setMediaFilter("video")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-md ${
-          mediaFilter === "video" ? "bg-yellow-200" : "hover:bg-gray-100"
+        className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
+          mediaFilter === "video" ? "bg-blue-200 text-blue-600" : "hover:bg-gray-100"
         }`}
       >
         <FontAwesomeIcon icon={faVideo} />
@@ -512,15 +507,23 @@ mediaFilter === "all"
 
           return (
             <Card key={review.id} className="dark:bg-slate-800">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <h3 className="text-lg font-semibold text-black dark:text-white">
-                  {review.name}
-                </h3>
-                <span className="text-sm text-black dark:text-white">
-                  {moment(review.date).fromNow()}
-                </span>
-              </CardHeader>
-
+             <CardHeader className="flex items-center gap-4 pb-2">
+                  {/* Profile Picture */}
+                  <img
+                    src={review.profilePhoto || "/default-profile.jpg"} // Fallback image
+                    alt={review.name}
+                    className="w-10 h-10 rounded-full object-cover"
+                  />
+                  {/* Name + Date */}
+                  <div className="flex flex-col">
+                    <h3 className="text-sm font-semibold text-black dark:text-white">
+                      {review.name}
+                    </h3>
+                    <span className="text-sm text-gray-600 dark:text-gray-300">
+                      {moment(review.date).fromNow()}
+                    </span>
+                  </div>
+                </CardHeader>
               <CardContent>
                 <p
                   className={`text-black dark:text-white transition-all ${
@@ -541,14 +544,26 @@ mediaFilter === "all"
                       </Button>
                     </DialogTrigger>
                     <DialogContent className="sm:max-w-lg dark:bg-gray-800">
-                      <DialogHeader>
-                        <DialogTitle className="text-black dark:text-white">
-                          {review.name}
-                        </DialogTitle>
-                        <DialogDescription>
-                          {moment(review.date).format("MMMM D, YYYY")}
-                        </DialogDescription>
-                      </DialogHeader>
+            <DialogHeader>
+              <div className="flex items-center gap-4">
+                {/* Profile Image */}
+                    <img
+                      src={review.profilePhoto || "/default-profile.jpg"}
+                      alt={review.name}
+                      className="w-12 h-12 rounded-full object-cover"
+                    />
+
+                    {/* Name + Date */}
+                    <div>
+                      <DialogTitle className="text-black text-xl dark:text-white">
+                        {review.name}
+                      </DialogTitle>
+                      <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
+                        {moment(review.date).format("MMMM D, YYYY")}
+                      </DialogDescription>
+                    </div>
+                  </div>
+                </DialogHeader>
 
                       <p className="text-gray-800 dark:text-gray-200 whitespace-pre-line">
                         {review.comment}
