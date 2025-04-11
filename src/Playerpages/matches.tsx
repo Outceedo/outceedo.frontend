@@ -1,16 +1,8 @@
 import "react-circular-progressbar/dist/styles.css";
 import { useState } from "react";
 import CommonForm from "../common/Commonform";
-
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {Table,TableBody,TableCell,TableHead,TableHeader,TableRow,} from "@/components/ui/table";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 
@@ -146,14 +138,9 @@ const Matches: React.FC = () => {
       <div className="grid grid-cols-1 gap-6">
         {/* Match Form */}
         <Card className="w-full">
-          <CardHeader>
-            <CardTitle>
-              {editingId !== null ? "Edit Match" : "Add Match"}
-            </CardTitle>
-          </CardHeader>
           <CardContent>
             <CommonForm
-              formControls={formControls}
+              formControls={formControls} // Optional if you're dynamically rendering
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
@@ -161,14 +148,12 @@ const Matches: React.FC = () => {
               isBtnDisabled={false}
             />
           </CardContent>
-        </Card>
-        
+        </Card>   
 
         {/* Match Table */}
         <Card className="w-full">
           <CardHeader>
-            <CardTitle>Matches</CardTitle>
-          </CardHeader>
+                </CardHeader>
           <CardContent>
             <div className="overflow-x-auto">
               <Table>

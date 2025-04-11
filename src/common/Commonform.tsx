@@ -99,7 +99,7 @@ function CommonForm({
                 [getControlItem.name]: event.target.value,
               })
             }
-            className="p-2 border rounded-md dark:bg-slate-600 dark:text-white"
+            className="p-2 border rounded-md dark:bg-slate-600 dark:text-white h-24 resize-none"
           />
         );
         break;
@@ -128,22 +128,34 @@ function CommonForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="max-w-lg mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={onSubmit} className="w-full">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {formControls.map((controlItem) => (
-          <div className="grid gap-1.5" key={controlItem.name}>
-            <Label className="font-medium">{controlItem.label}</Label>
+          <div className="grid gap-1.5 col-span-1 md:col-span-1" key={controlItem.name}>
+            <Label className="font-medium text-sm text-gray-700 dark:text-gray-200">
+              {controlItem.label}
+            </Label>
             {renderInputsByComponentType(controlItem)}
           </div>
         ))}
       </div>
-      <Button
-        disabled={isBtnDisabled}
-        type="submit"
-        className="mt-6 w-full bg-[#FF323B] text-white"
-      >
-        {buttonText || "Submit"}
-      </Button>
+
+      <div className="flex justify-end gap-3 mt-6">
+        <Button
+          type="button"
+          variant="outline"
+          className="text-gray-600 bg-gray-100 hover:bg-gray-200"
+        >
+          Cancel
+        </Button>
+        <Button
+          disabled={isBtnDisabled}
+          type="submit"
+          className="bg-[#FF323B] text-white"
+        >
+          {buttonText || "Submit"}
+        </Button>
+      </div>
     </form>
   );
 }
