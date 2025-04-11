@@ -21,12 +21,10 @@ const initialStats: Stat[] = [
   { label: "Defending", percentage: 90, color: "#2D6A4F" },
   { label: "Physical", percentage: 60, color: "#F4A261" },
 ];
-
 const calculateOVR = (stats: Stat[]) => {
   const total = stats.reduce((sum, stat) => sum + stat.percentage, 0);
   return (total / stats.length).toFixed(1);
 };
-
 // Initial player data
 const initialPlayerData = {
   id: "player123",
@@ -53,7 +51,6 @@ const initialPlayerData = {
     twitter: "https://twitter.com/rohan_player",
   },
 };
-
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
     "details"
@@ -75,7 +72,6 @@ const Profile: React.FC = () => {
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
   };
-
   const handlePhotoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -96,7 +92,6 @@ const Profile: React.FC = () => {
     };
     reader.readAsDataURL(file);
   };
-
    return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
       <div className="flex-1 p-4">
@@ -111,8 +106,7 @@ const Profile: React.FC = () => {
               />
               <div
                 onClick={handlePhotoClick}
-                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-lg cursor-pointer"
-              >
+                className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-lg cursor-pointer" >
                 <div className="text-white text-center">
                   <FontAwesomeIcon icon={faCamera} size="2x" className="mb-2" />
                   <p className="text-sm font-medium">Change Photo</p>
@@ -126,14 +120,13 @@ const Profile: React.FC = () => {
                 className="hidden"
               />
             </div>
-
             {/* Profile Info */}
-            <div className="relative mt-6">
+            <div className="relative mt-4">
                   <div>
                     <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
                       {playerData.name}
                     </h2>
-                    <div className="flex flex-wrap gap-12 text-gray-600 font-Opensans mt-5 dark:text-gray-300">
+                    <div className="flex flex-wrap gap-8 text-gray-600 font-Opensans mt-5 dark:text-gray-300">
                       <span>Age: {playerData.age}</span>
                       <span>Height: {playerData.height}</span>
                       <span>Weight: {playerData.weight}</span>
@@ -158,8 +151,7 @@ const Profile: React.FC = () => {
                       <div key={index} className="flex flex-col items-center">
                         <div
                           className="w-20 h-20 relative"
-                          style={{ transform: "rotate(-90deg)" }}
-                        >
+                          style={{ transform: "rotate(-90deg)" }}>
                           <CircularProgressbar
                             value={stat.percentage}
                             styles={buildStyles({
@@ -186,7 +178,6 @@ const Profile: React.FC = () => {
                 </Card>
                 </div>
                 </div>
-
           {/* Tabs Section */}
           <div className="mt-8">
             <div className="flex gap-4 border-b pb-2">
@@ -217,7 +208,7 @@ const Profile: React.FC = () => {
       )}
     </>
   )}
-</div>
+            </div>
           </div>
         </div>
       </div>
