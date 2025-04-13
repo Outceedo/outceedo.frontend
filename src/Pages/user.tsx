@@ -5,7 +5,6 @@ import {
   faFutbol,
   faChalkboardTeacher,
   faUsers,
-  faDollarSign,
   faTrophy,
   faHandshake,
 } from "@fortawesome/free-solid-svg-icons";

@@ -139,16 +139,21 @@ const Matches: React.FC = () => {
         {/* Match Form */}
         <Card className="w-full">
           <CardContent>
-            <CommonForm
-              formControls={formControls} // Optional if you're dynamically rendering
+          <CommonForm
+              formControls={formControls}
               formData={formData}
               setFormData={setFormData}
               onSubmit={handleSubmit}
               buttonText={editingId !== null ? "Update" : "Submit"}
               isBtnDisabled={false}
-            />
-          </CardContent>
-        </Card>   
+              onCancel={() => {
+                setFormData({});
+              }}
+            >
+         </CommonForm>
+
+        </CardContent>
+      </Card>
 
         {/* Match Table */}
         <Card className="w-full">

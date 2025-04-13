@@ -9,7 +9,8 @@ import {
 } from "../components/ui/select";
 import { Textarea } from "../components/ui/textarea";
 import { Button } from "../components/ui/button";
-import React from "react";
+import React  from "react";
+import { useState } from "react";
 
 interface FormControl {
   name: string;
@@ -27,6 +28,7 @@ interface CommonFormProps {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   buttonText?: string;
   isBtnDisabled?: boolean;
+  onCancel?: () => void;
 }
 
 function CommonForm({
@@ -36,8 +38,9 @@ function CommonForm({
   onSubmit,
   buttonText,
   isBtnDisabled,
+  onCancel,
 }: CommonFormProps) {
-  function renderInputsByComponentType(getControlItem: FormControl) {
+  function renderInputsByComponentType(getControlItem: FormControl) {  
     let element = null;
     const value = formData[getControlItem.name] || "";
 
@@ -56,7 +59,10 @@ function CommonForm({
                 [getControlItem.name]: event.target.value,
               })
             }
-            className="p-2 border rounded-md dark:bg-slate-600 dark:text-white"
+            className={`p-2 border rounded-md dark:bg-slate-600 dark:text-white ${
+              errors[getControlItem.name] ? 'border-red-500' : ''
+            }`}
+            
           />
         );
         break;
@@ -99,7 +105,10 @@ function CommonForm({
                 [getControlItem.name]: event.target.value,
               })
             }
-            className="p-2 border rounded-md dark:bg-slate-600 dark:text-white h-24 resize-none"
+            className={`p-2 border rounded-md dark:bg-slate-600 dark:text-white ${
+              errors[getControlItem.name] ? 'border-red-500' : ''
+            }`}
+            
           />
         );
         break;
@@ -118,7 +127,10 @@ function CommonForm({
                 [getControlItem.name]: event.target.value,
               })
             }
-            className="p-2 border rounded-md dark:bg-slate-600 dark:text-white"
+            className={`p-2 border rounded-md dark:bg-slate-600 dark:text-white ${
+              errors[getControlItem.name] ? 'border-red-500' : ''
+            }`}
+            
           />
         );
         break;
@@ -126,9 +138,25 @@ function CommonForm({
 
     return element;
   }
-
+  const [errors, setErrors] = useState<{ [key: string]: boolean }>({});
+  const handleInternalSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+  
+    const newErrors: { [key: string]: boolean } = {};
+    formControls.forEach((control) => {
+      if (!formData[control.name]?.trim()) {
+        newErrors[control.name] = true;
+      }
+    });
+  
+    setErrors(newErrors);
+  
+    if (Object.keys(newErrors).length === 0) {
+      onSubmit(e); // only submit if no errors
+    }
+  };
   return (
-    <form onSubmit={onSubmit} className="w-full">
+    <form onSubmit={handleInternalSubmit} className="w-full">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {formControls.map((controlItem) => (
           <div className="grid gap-1.5 col-span-1 md:col-span-1" key={controlItem.name}>
@@ -141,13 +169,17 @@ function CommonForm({
       </div>
 
       <div className="flex justify-end gap-3 mt-6">
-        <Button
-          type="button"
-          variant="outline"
-          className="text-gray-600 bg-gray-100 hover:bg-gray-200"
-        >
-          Cancel
-        </Button>
+      <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              onCancel?.();          // this calls parent clear logic
+              setErrors({});         // <-- clear validation errors
+            }}
+            className="text-gray-600 bg-gray-100 hover:bg-gray-200"
+          >
+            Cancel
+          </Button>
         <Button
           disabled={isBtnDisabled}
           type="submit"

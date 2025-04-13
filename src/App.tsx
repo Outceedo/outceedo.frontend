@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+//pages 
 import HomePage from "./Pages/HomePage";
 import EmailVerification from "./Pages/EmailVerification";
 import Login from "./Pages/Login";
@@ -7,26 +8,31 @@ import ForgotPassword from "./Pages/ForgotPassword";
 import Detailsform from "./Pages/Detailsform";
 import SignUp from "./Pages/Signup";
 import ResetPassword from "./Pages/Resetpassword";
+//playerpage
 import Profile from "./Playerpages/playerprofile";
 import Dashboard from "./Playerpages/dashboard";
 import Matches from "./Playerpages/matches";
 import MyBooking from "./Playerpages/mybooking";
 import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
-
+import AssessmentReport from "./Playerpages/AssessmentReport";
+import BookingCalendar from "./Playerpages/BookService";
+//store
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken } from "./store/auth-slice";
+//common
 import CheckAuth from "./common/Checkauth";
+//components
 import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
+//expertpage
 import PlayersProfile from "./expertpages/playerProfiles";
 import ExpertviewProfile from "./expertpages/playerinfo";
-
 import ExpertProfile from "./expertpages/expertdata";
 import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
-import BookingCalendar from "./Playerpages/BookService";
+
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -94,6 +100,12 @@ const App: React.FC = () => {
             }
           />
           <Route
+           path="/player/AssessmentReport"
+            element={
+            <AssessmentReport />
+            } 
+            />
+          <Route
             path="/player/viewexperts"
             element={
               // <CheckAuth isAuthenticated={isAuthenticated} user={user}>
@@ -118,6 +130,10 @@ const App: React.FC = () => {
             }
           />
         </Route>
+       
+
+
+
 
         {/* Expert Outlet */}
         <Route path="/expert" element={<ExpertLayout />}>

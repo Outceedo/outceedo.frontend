@@ -589,7 +589,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                           <img
                             src={award.imageUrl}
                             alt={award.title || `Award ${index}`}
-                            className="w-full h-40 object-cover rounded-md mb-2"
+                            className="w-10 h-10 object-cover  rounded-md mb-2"
                           />
                           <Button
                             variant="outline"
