@@ -9,17 +9,21 @@ import {
   faUpload,
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faLinkedin,
-  faInstagram,
-  faFacebook,
-  faTwitter,
-} from "@fortawesome/free-brands-svg-icons";
+import { FaLinkedinIn, FaFacebookF, FaInstagram,FaTwitter } from "react-icons/fa";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { faLinkedin, faInstagram, faFacebook,faTwitter} from "@fortawesome/free-brands-svg-icons";
+
+
+  const icons = [
+    { icon: faLinkedin, color: '#0077B5', link: 'https://www.linkedin.com' },
+    { icon: faFacebook, color: '#3b5998', link: 'https://www.facebook.com' },
+    { icon: faInstagram, color: '#E1306C', link: 'https://www.instagram.com' },
+    { icon: faTwitter, color: '#1DA1F2', link: 'https://www.twitter.com' },
+  ];
 
 interface AchievementItem {
   id: string;
@@ -695,7 +699,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       </div>
 
       {/* Social Links - Enhanced Design */}
-      <Card className="mt-4 relative border p-4 w-fit rounded-lg dark:bg-gray-700 dark:text-white">
+      <Card className="mt-4 relative border p-6 w-1/3 rounded-lg dark:bg-gray-700 dark:text-white">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Social Media
         </h3>
@@ -705,10 +709,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* LinkedIn */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-                <FontAwesomeIcon
-                  icon={faLinkedin}
-                  className="text-blue-600 text-xl"
-                />
+              <FaLinkedinIn size={20} />
               </div>
               <Input
                 placeholder="LinkedIn URL (e.g. linkedin.com/in/username)"
@@ -721,10 +722,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Instagram */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-pink-50 dark:bg-pink-900/20">
-                <FontAwesomeIcon
-                  icon={faInstagram}
-                  className="text-pink-600 text-xl"
-                />
+              <FaInstagram size={20} />
               </div>
               <Input
                 placeholder="Instagram URL (e.g. instagram.com/username)"
@@ -739,10 +737,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Facebook */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-                <FontAwesomeIcon
-                  icon={faFacebook}
-                  className="text-blue-800 text-xl"
-                />
+              <FaFacebookF size={20} />
               </div>
               <Input
                 placeholder="Facebook URL (e.g. facebook.com/username)"
@@ -755,10 +750,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Twitter */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-                <FontAwesomeIcon
-                  icon={faTwitter}
-                  className="text-blue-500 text-xl"
-                />
+         <FaTwitter size={20} />
               </div>
               <Input
                 placeholder="Twitter URL (e.g. twitter.com/username)"
@@ -787,93 +779,28 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         ) : (
           <>
             <div className="flex gap-5">
-              {/* LinkedIn */}
-              {socials.linkedin ? (
-                <a
-                  href={formatUrl(socials.linkedin)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-800 text-2xl" >
-                    <FontAwesomeIcon
-                      icon={faLinkedin}
-                      className="text-blue-600 text-2xl"
-                    />
-                          </a>
-              ) : (
-                !isExpertView && (
-                  <button
-                    onClick={() => setIsEditingSocials(true)}
-                    className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                  >
-                      <FontAwesomeIcon
-                        icon={faLinkedin}
-                        className="text-gray-400 text-2xl"  />
-                  </button>
-                )
-              )}
+            
+            <div className="flex justify-center gap-6 mt-4">
+      {icons.map((item, index) => (
+        <a
+          key={index}
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
+          style={{
+            background: item.icon === faInstagram 
+              ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)' 
+              : item.color
+          }}
+        >
+          <FontAwesomeIcon icon={item.icon} />
+        </a>
+      ))}
+    </div> 
+             
 
-              {/* Instagram */}
-              {socials.instagram ? (
-                <a
-                  href={formatUrl(socials.instagram)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-pink-600 text-2xl" >
-                <FontAwesomeIcon
-                      icon={faInstagram}
-                      className="text-pink-600 text-2xl"   />
-                              </a>
-              ) : (
-                !isExpertView && (
-                  <button
-                    onClick={() => setIsEditingSocials(true)}
-                    className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                  >
-                      <FontAwesomeIcon
-                        icon={faInstagram}
-                        className="text-gray-400 text-2xl"/>
-                  </button>
-                )
-              )}
-
-              {/* Facebook */}
-              {socials.facebook ? (
-                <a
-                  href={formatUrl(socials.facebook)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                className="text-blue-800 text-2xl" >
-                   <FontAwesomeIcon icon={faFacebook} className="text-blue-800 text-2xl" />
-              </a>
-              ) : (
-                !isExpertView && (
-                  <button
-                    onClick={() => setIsEditingSocials(true)}
-                    className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                  >
-                       <FontAwesomeIcon icon={faFacebook} className="text-gray-400 text-2xl" />
-            </button>
-                )
-              )}
-              {/* Twitter */}
-              {socials.twitter ? (
-                <a
-                  href={formatUrl(socials.twitter)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                   className="text-blue-500 text-2xl hover:text-blue-600 transition">
-                    <FontAwesomeIcon icon={faTwitter} />
-                    </a>
-              ) : (
-                !isExpertView && (
-                  <button
-                    onClick={() => setIsEditingSocials(true)}
-                    className="flex flex-col items-center p-4 bg-white hover:bg-gray-50 shadow-sm rounded-xl border border-gray-100 border-dashed transition-all duration-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:border-gray-700"
-                  >
-                    <FontAwesomeIcon icon={faTwitter}/>
-                  </button>
-                )
-              )}
+             
             </div>
             {/* Only show edit button if not expert view and there's at least one social */}
             {!isExpertView &&

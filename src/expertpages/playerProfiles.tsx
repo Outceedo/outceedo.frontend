@@ -1,9 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import profile2 from "../assets/images/profile2.jpg";
-import profile3 from "../assets/images/profile3.jpg";
-import profile4 from "../assets/images/profile4.jpg";
-import profile5 from "../assets/images/profile5.jpg";
+
+import player from "../assets/images/player.jpg"
+import player1 from "../assets/images/player1.jpg"
+import player2 from "../assets/images/player2.jpg"
+import player3 from "../assets/images/player3.jpg"
+import player4 from "../assets/images/player4.jpg"
+import player5 from "../assets/images/player5.jpg"
+
+
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {  faStar } from "@fortawesome/free-solid-svg-icons";
 
 import {
   Card,
@@ -35,56 +42,56 @@ const experts: Expert[] = [
   {
     name: "John Doe",
     rating: 3.5,
-    profilePic: profile2,
+    profilePic: player,
     reviews: 100,
     verified: true,
   },
   {
     name: "Jane Smith",
     rating: 3.5,
-    profilePic: profile3,
+    profilePic: player1,
     reviews: 100,
     verified: false,
   },
   {
     name: "Mike Johnson",
     rating: 3.5,
-    profilePic: profile4,
+    profilePic: player2,
     reviews: 100,
     verified: true,
   },
   {
     name: "Kai Liddell",
     rating: 3.5,
-    profilePic: profile5,
+    profilePic: player3,
     reviews: 100,
     verified: false,
   },
   {
     name: "Jane Smith",
     rating: 3.5,
-    profilePic: profile5,
+    profilePic: player4,
     reviews: 100,
     verified: false,
   },
   {
     name: "Mike Johnson",
     rating: 3.5,
-    profilePic: profile4,
+    profilePic: player5,
     reviews: 100,
     verified: true,
   },
   {
     name: "Kai Liddell",
     rating: 3.5,
-    profilePic: profile3,
+    profilePic:player,
     reviews: 100,
     verified: false,
   },
   {
     name: "Kai Liddell",
     rating: 3.5,
-    profilePic: profile2,
+    profilePic:player1,
     reviews: 100,
     verified: false,
   },
@@ -229,7 +236,7 @@ const PlayersProfile: React.FC = () => {
                     alt={expert.name}
                   />
                   {expert.verified && (
-                    <Badge className="absolute top-2 right-2 rounded-full bg-green-400 hover:bg-green-500">
+                    <Badge className="absolute top-2 right-4 rounded-full bg-green-400 hover:bg-green-500">
                        ✔
                     </Badge>
                   )}
@@ -243,7 +250,7 @@ const PlayersProfile: React.FC = () => {
                 <CardContent className="px-2">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center">
-                      <span className="text-yellow-500 text-lg">⭐</span>
+                      <span className="text-yellow-300  text-lg"><FontAwesomeIcon icon={faStar}/></span>
                       <span className="ml-1 text-gray-700 dark:text-gray-300">
                         {expert.rating}/5
                       </span>

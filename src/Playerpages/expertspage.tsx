@@ -181,8 +181,8 @@ const Expertspage: React.FC = () => {
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
         <div className="min-h-screen px-6 rounded-xl dark:bg-slate-800">
           {/* Search Box */}
-          <div className="flex item-end justify-end mr-5">
-          <div className="relative w-full mb-2 bg-white dark:bg-slate-600 dark:text-white rounded-lg ">
+          <div className="flex mr-5">
+          <div className="relative mb-2 w-full bg-white dark:bg-slate-600 dark:text-white rounded-lg ">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="text"
@@ -234,7 +234,7 @@ const Expertspage: React.FC = () => {
                     src={expert.profilePic}
                     alt={expert.name}  />
                   {expert.verified && (
-                    <span className="absolute top-2 right-2 bg-green-400 text-white text-xs px-2 py-1 rounded-full">
+                    <span className="absolute top-4 right-10 bg-green-400 text-white text-xs px-2 py-1 rounded-full">
                       ✔
                     </span>
                   )}

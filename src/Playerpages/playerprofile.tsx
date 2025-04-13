@@ -180,7 +180,7 @@ const Profile: React.FC = () => {
                 </div>
           {/* Tabs Section */}
           <div className="mt-8">
-            <div className="flex gap-4 border-b pb-2">
+            <div className="flex gap-4 border-b ">
               {(["details", "media", "reviews"] as const).map((tab) => (
                 <button
                   key={tab}
