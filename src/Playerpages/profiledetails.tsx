@@ -778,7 +778,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           </div>
         ) : (
           <>
-            <div className="flex gap-5">
+            <div className="flex gap-5 ">
             
             <div className="flex justify-center gap-6 mt-4">
       {icons.map((item, index) => (

@@ -245,14 +245,14 @@ const toggleVisibility = (id: number) => {
                       {booking.bookingStatus}
                     </Badge>
                   </TableCell>
+                  
                   <TableCell className="text-center">
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <FontAwesomeIcon icon={faVideo} />
                     </Button>
                   </TableCell>
-                  
+                 
                   <TableCell className="text-center">
-
                   <Button variant="ghost" size="icon" className="w-8 h-8" >
                   <Dialog>
                   <DialogTrigger asChild>
@@ -260,16 +260,13 @@ const toggleVisibility = (id: number) => {
                   <FontAwesomeIcon icon={faFileAlt} />
                    </Button>
                    </DialogTrigger>
-                   
                   <DialogContent className="  w-min-screen h-min-screen flex items-center justify-center p-6 mt-28  ">
-                  
                   <AssessmentReport />
                   </DialogContent>
-
                   </Dialog>
-
                    </Button>
                   </TableCell>
+
                   <TableCell className="text-center">
                   <Button
                   variant="ghost"
