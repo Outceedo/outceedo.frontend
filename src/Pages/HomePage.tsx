@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 // import Background from "../assets/images/Background.jpg";
+import Hero from "../assets/images/Hero.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -14,6 +15,7 @@ import Features from "./Features";
 import Pricing from "./Pricing";
 import Contact from "./Contact";
 import User from "./user";
+import { url } from "inspector";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -41,7 +43,7 @@ const HomePage: React.FC = () => {
         {/* Background image */}
         <div className="absolute inset-0">
           <img
-            src="\src\assets\images\Hero.png"
+            src={Hero}
             alt="Stadium background"
             className="w-full h-full object-cover"
           />
