@@ -6,6 +6,8 @@ import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
+import player from "../assets/images/player.jpg"
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 import {
   Dialog,
   DialogTrigger,
@@ -16,6 +18,17 @@ import {
 } from "@/components/ui/dialog";
 import { faCamera, faVideo } from "@fortawesome/free-solid-svg-icons"
 import { useNavigate } from "react-router-dom";
+
+
+
+
+const icons = [
+  { icon: faLinkedin, color: '#0077B5', link: 'https://www.linkedin.com' },
+  { icon: faFacebook, color: '#3b5998', link: 'https://www.facebook.com' },
+  { icon: faInstagram, color: '#E1306C', link: 'https://www.instagram.com' },
+  { icon: faTwitter, color: '#1DA1F2', link: 'https://www.twitter.com' },
+];
+
 interface MediaItem {
     id: number;
     type: "photo" | "video";
@@ -23,12 +36,15 @@ interface MediaItem {
     src: string; // Fix: Added missing 'src' property
     title: string; // Fix: Added missing 'title' property
   }
+ 
   interface Review {
     id: number;
     name: string;
-    date: string; // Store original date as string
+    date: string;
     comment: string;
+    
   }
+  
   interface Service {
     id: number;
     name: string;
@@ -135,25 +151,30 @@ mediaFilter === "all"
       name: "John Doe",
       date: "2024-02-15", // Example date
       comment: "Great service! Highly recommend.teaches very well.He is a good coach.would definatly recommand.",
+      
     },
     {
       id: 2,
       name: "Alice Johnson",
       date: "2024-02-10",
       comment: "The experience was amazing. Will come again!",
+      
     },
     {
       id: 3,
       name: "Michael Smith",
       date: "2024-01-25",
       comment: "Good quality, but the waiting time was a bit long.",
+      
     },
     {
         id: 4,
         name: "Michael Smith",
         date: "2024-01-25",
         comment: "Good quality, but the waiting time was a bit long.",
+        
       },  ]);
+   
 
   return ( 
      <div className="flex -mt-5">
@@ -167,24 +188,24 @@ mediaFilter === "all"
     <div className="flex items-center gap-x-32 flex-wrap">
   <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
           {/* Social Media Icons */}
-          <div className="flex gap-4">
-  {expertData.socialLinks.map((social, index) => (
-    <a
-      key={index}
-      href={social.link}
-      className={`text-3xl transition-colors duration-300 ${
-        index === 0 ? "text-blue-700 hover:text-blue-900" : // LinkedIn
-        index === 1 ? "text-pink-500 hover:text-pink-700" : // Instagram
-        index === 2 ? "text-blue-600 hover:text-blue-800" :  // Facebook 
-        index === 3 ? "text-blue-500 hover:text-blue-900" : // Twitter
-        "text-gray-500 hover:text-gray-700" // Default
-      }`}    >
-      {social.icon}
-    </a>
-  ))}
-  </div>
-</div>
-</div>
+          <div className="flex justify-center gap-6 mt-3">
+      {icons.map((item, index) => (
+        <a
+          key={index}
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
+          style={{
+            background: item.icon === faInstagram 
+              ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)' 
+              : item.color
+          }}
+        >
+          <FontAwesomeIcon icon={item.icon} />
+        </a>
+      ))}
+    </div>
       {/* Expert Info */}
       <div className="flex justify-start gap-40 text-start mt-8">
         <div >
@@ -213,7 +234,7 @@ mediaFilter === "all"
       </div>
       </div>
   {/* Right - Profile Picture in a Rectangle */}
-  <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md">
+  <div className="w-full h-50 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md">
     <img
       src={profile2}
       alt="Expert"
@@ -224,7 +245,7 @@ mediaFilter === "all"
       <div className="border-t border-b py-6 mt-6 text-center">
   <div className="flex justify-around">
   <div className="flex items-center gap-x-2">
-  <p className="text-yellow-500 text-3xl">⭐⭐⭐⭐⭐</p>
+  <p className="text-yellow-300 text-3xl"><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/></p>
   <p className="text-gray-500 dark:text-white">{expertData.reviews} reviews</p>
 </div>
  
@@ -510,7 +531,7 @@ mediaFilter === "all"
              <CardHeader className="flex items-center gap-4 pb-2">
                   {/* Profile Picture */}
                   <img
-                    src={review.profilePhoto || "/default-profile.jpg"} // Fallback image
+                    src={player}
                     alt={review.name}
                     className="w-10 h-10 rounded-full object-cover"
                   />
@@ -548,7 +569,7 @@ mediaFilter === "all"
               <div className="flex items-center gap-4">
                 {/* Profile Image */}
                     <img
-                      src={review.profilePhoto || "/default-profile.jpg"}
+                      src={player}
                       alt={review.name}
                       className="w-12 h-12 rounded-full object-cover"
                     />
@@ -618,11 +639,14 @@ mediaFilter === "all"
                 )}
               </div>
             )}
+                  </div>
+                  </div>
                   </main>
-            </div>
+                  </div>
+            
   );
 };
 export default Experts;
 
 
-//ExpertProfile
+

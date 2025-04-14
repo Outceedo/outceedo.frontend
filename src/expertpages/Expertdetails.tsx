@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPen,
@@ -7,22 +7,13 @@ import {
   faPlus,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faLinkedin,
-  faInstagram,
-  faFacebook,
-  faTwitter,
-} from "@fortawesome/free-brands-svg-icons";
+
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-interface SocialLink {
-  icon: any;
-  link: string;
-  platform: string;
-}
+
 
 const ExpertDetails: React.FC = () => {
   // About Me state

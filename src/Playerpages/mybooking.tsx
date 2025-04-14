@@ -1,4 +1,7 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
+import AssessmentReport from "./AssessmentReport" // Adjust path as needed
+
 import {
   faVideo,
   faFileAlt,
@@ -107,8 +110,9 @@ const initialBookings: Booking[] = [
 const MyBooking: React.FC = () => {
   const [bookings] = useState<Booking[]>(initialBookings);
   const [bookingStatus, setBookingStatus] = useState("all");
-  const [isVisible, setIsVisible] = useState(true);
   const [search, setSearch] = useState("");
+
+ 
 
   // Updated with the standard Shadcn Badge variants: default, secondary, outline, destructive
   // For additional colors, use className instead of variant
@@ -143,6 +147,15 @@ const MyBooking: React.FC = () => {
       booking.expertName.toLowerCase().includes(search.toLowerCase()) &&
       (bookingStatus === "all" || booking.bookingStatus === bookingStatus)
   );
+    
+  const [visibilityMap, setVisibilityMap] = useState<{ [id: number]: boolean }>({});
+
+const toggleVisibility = (id: number) => {
+  setVisibilityMap((prev) => ({
+    ...prev,
+    [id]: !prev[id],
+  }));
+};
 
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
@@ -232,25 +245,40 @@ const MyBooking: React.FC = () => {
                       {booking.bookingStatus}
                     </Badge>
                   </TableCell>
+                  
                   <TableCell className="text-center">
                     <Button variant="ghost" size="icon" className="h-8 w-8">
                       <FontAwesomeIcon icon={faVideo} />
                     </Button>
                   </TableCell>
+                 
                   <TableCell className="text-center">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <FontAwesomeIcon icon={faFileAlt} />
-                    </Button>
+                  <Button variant="ghost" size="icon" className="w-8 h-8" >
+                  <Dialog>
+                  <DialogTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <FontAwesomeIcon icon={faFileAlt} />
+                   </Button>
+                   </DialogTrigger>
+                  <DialogContent className="  w-min-screen h-min-screen flex items-center justify-center p-6 mt-28  ">
+                  <AssessmentReport />
+                  </DialogContent>
+                  </Dialog>
+                   </Button>
                   </TableCell>
+
                   <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => setIsVisible(!isVisible)}
-                    >
-                      <FontAwesomeIcon icon={isVisible ? faEye : faEyeSlash} />
-                    </Button>
+                  <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={() => toggleVisibility(booking.id)}
+                  >
+                 <FontAwesomeIcon
+                 icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
+                 />
+                 </Button>
+
                   </TableCell>
                 </TableRow>
               ))

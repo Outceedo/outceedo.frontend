@@ -1,7 +1,14 @@
 import "react-circular-progressbar/dist/styles.css";
 import { useState } from "react";
 import CommonForm from "../common/Commonform";
-import {Table,TableBody,TableCell,TableHead,TableHeader,TableRow,} from "@/components/ui/table";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
@@ -20,7 +27,7 @@ const Matches: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([
     {
       id: 1,
-      date: "Feb 14, 2025",
+      date: "2025-02-14",
       homeTeam: "ByeWind",
       awayTeam: "ByeWind",
       type: "State",
@@ -29,7 +36,7 @@ const Matches: React.FC = () => {
     },
     {
       id: 2,
-      date: "Feb 10, 2025",
+      date: "2025-02-10",
       homeTeam: "Natali Craig",
       awayTeam: "Natali Craig",
       type: "Inter university",
@@ -38,7 +45,7 @@ const Matches: React.FC = () => {
     },
     {
       id: 3,
-      date: "Jan 20, 2025",
+      date: "2025-01-20",
       homeTeam: "Drew Cano",
       awayTeam: "Drew Cano",
       type: "International",
@@ -47,7 +54,7 @@ const Matches: React.FC = () => {
     },
     {
       id: 4,
-      date: "Dec 15, 2024",
+      date: "2024-12-15",
       homeTeam: "Orlando Diggs",
       awayTeam: "Orlando Diggs",
       type: "State",
@@ -56,7 +63,7 @@ const Matches: React.FC = () => {
     },
     {
       id: 5,
-      date: "Nov 25, 2024",
+      date: "2024-11-25",
       homeTeam: "Andi Lane",
       awayTeam: "Andi Lane",
       type: "State",
@@ -139,7 +146,7 @@ const Matches: React.FC = () => {
         {/* Match Form */}
         <Card className="w-full">
           <CardContent>
-          <CommonForm
+            <CommonForm
               formControls={formControls}
               formData={formData}
               setFormData={setFormData}
@@ -147,18 +154,24 @@ const Matches: React.FC = () => {
               buttonText={editingId !== null ? "Update" : "Submit"}
               isBtnDisabled={false}
               onCancel={() => {
-                setFormData({});
+                setFormData({
+                  id: 0,
+                  date: "",
+                  homeTeam: "",
+                  awayTeam: "",
+                  type: "",
+                  status: "",
+                  result: "",
+                });
+                setEditingId(null);
               }}
-            >
-         </CommonForm>
-
-        </CardContent>
-      </Card>
+            />
+          </CardContent>
+        </Card>
 
         {/* Match Table */}
         <Card className="w-full">
-          <CardHeader>
-                </CardHeader>
+          <CardHeader />
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
@@ -181,8 +194,11 @@ const Matches: React.FC = () => {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    matches.map((match) => (
-                      <TableRow key={match.id}>
+                    matches.map((match, index) => (
+                      <TableRow
+                        key={match.id}
+                        className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}
+                      >
                         <TableCell className="font-medium">
                           {match.date}
                         </TableCell>

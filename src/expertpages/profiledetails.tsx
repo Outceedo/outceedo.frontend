@@ -8,6 +8,14 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import { Card } from "@/components/ui/card";
 
+
+const icons = [
+  { icon: faLinkedin, color: '#0077B5', link: 'https://www.linkedin.com' },
+  { icon: faFacebook, color: '#3b5998', link: 'https://www.facebook.com' },
+  { icon: faInstagram, color: '#E1306C', link: 'https://www.instagram.com' },
+  { icon: faTwitter, color: '#1DA1F2', link: 'https://www.twitter.com' },
+];
+
 interface PlayerData {
   id?: string;
   name?: string;
@@ -30,21 +38,16 @@ interface ProfileDetailsProps {
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   playerData = {},
-  isExpertView = false,
+
 }) => {
   const {
     aboutMe = "No information available",
     certificates = [],
     awards = [],
-    socials = {},
+  
   } = playerData;
 
-  function formatUrl(url: string): string {
-    if (!url) return "#"; // fallback to avoid errors
-    return url.startsWith("http://") || url.startsWith("https://")
-      ? url
-      : `https://${url}`;
-  }
+ 
   
 
   return (
@@ -104,50 +107,25 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
     Social Media
   </h3>
-
-  <div className="flex gap-5">
-    {/* LinkedIn */}
-    <a
-      href={formatUrl(socials.linkedin || "")}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-600 text-2xl hover:text-blue-800 transition"
-    >
-      <FontAwesomeIcon icon={faLinkedin} />
-    </a>
-
-    {/* Instagram */}
-    <a
-      href={formatUrl(socials.instagram || "")}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-pink-600 text-2xl hover:text-pink-800 transition"
-    >
-      <FontAwesomeIcon icon={faInstagram} />
-    </a>
-
-    {/* Facebook */}
-    <a
-      href={formatUrl(socials.facebook || "")}
-      
-
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-800 text-2xl hover:text-blue-900 transition"
-    >
-      <FontAwesomeIcon icon={faFacebook} />
-    </a>
-
-    {/* Twitter */}
-    <a
-      href={formatUrl(socials.twitter || "")}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="text-blue-500 text-2xl hover:text-blue-700 transition"
-    >
-      <FontAwesomeIcon icon={faTwitter} />
-    </a>
-  </div>
+  <div className="flex justify-center gap-6 mt-4">
+      {icons.map((item, index) => (
+        <a
+          key={index}
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
+          style={{
+            background: item.icon === faInstagram 
+              ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)' 
+              : item.color
+          }}
+        >
+          <FontAwesomeIcon icon={item.icon} />
+        </a>
+      ))}
+    </div>
+  
 </Card>
 
      

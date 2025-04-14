@@ -1,11 +1,21 @@
 import { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
+import { faLinkedin, faInstagram, faFacebook,faTwitter} from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
 import ExpertDetails from "./Expertdetails";
 import ExpertReviews from "./Expertreviews";
 import ExpertServices from "./Expertservices";
 import ExpertMedia from "./expertmedia";
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+
+
+  const icons = [
+    { icon: faLinkedin, color: '#0077B5', link: 'https://www.linkedin.com' },
+    { icon: faFacebook, color: '#3b5998', link: 'https://www.facebook.com' },
+    { icon: faInstagram, color: '#E1306C', link: 'https://www.instagram.com' },
+    { icon: faTwitter, color: '#1DA1F2', link: 'https://www.twitter.com' },
+  ];
+
 const expertData = {
   name: "Expert Name",
   profession: "Coach & Ex-Soccer Player Defender",
@@ -18,13 +28,7 @@ const expertData = {
   assessments: "100+",
   profileImage: "/profile-image.jpg", // Replace with actual image
   backgroundImage: "/background-image.jpg", // Replace with actual image
-  socialLinks: [
-    { icon: <FontAwesomeIcon icon={faLinkedin} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faInstagram} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faFacebook} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faTwitter} />, link: "#" }
-
-  ],
+  
   media: [
     { id: 1, type: "photo", src: "/photo1.jpg", title: "Suit Suits me" },
     { id: 2, type: "photo", src: "/photo2.jpg", title: "Electric guitar" },
@@ -46,47 +50,50 @@ const ExpertProfile= () => {
      <div className="flex  gap-10">
   
   <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
-  </div>
-          {/* Social Media Icons */}
-          <div className=" justify-center  space-x-5 mt-8">
-  {expertData.socialLinks.map((social, index) => (
-    <a
-      key={index}
-      href={social.link}
-      className={`text-3xl transition-colors duration-300 ${
-        index === 0 ? "text-blue-700 hover:text-blue-900" : // LinkedIn
-        index === 1 ? "text-pink-500 hover:text-pink-700" : // Instagram
-        index === 2 ? "text-blue-600 hover:text-blue-800" :  // Facebook 
-        index === 3 ? "text-blue-500 hover:text-blue-900" : // Twitter
-        "text-gray-500 hover:text-gray-700" // Default
-      }`}    >
-      {social.icon}
-    </a>
-  ))}
-</div>
+
+  <div className="gap-4 ml-32 flex">
+      {icons.map((item, index) => (
+        <a
+          key={index}
+          href={item.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
+          style={{
+            background: item.icon === faInstagram 
+              ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)' 
+              : item.color
+          }}
+        >
+          <FontAwesomeIcon icon={item.icon} />
+        </a>
+      ))}
+    </div>
+    </div>
+
 
       {/* Expert Info */}
       <div className="flex justify-start gap-40 text-center mt-8">
-        <div >
-      <p className="text-gray-500 dark:text-white">Profession</p>
-        <p className="font-semibold dark:text-white">{expertData.profession}</p>
+        <div className="text-left">
+        <p className="text-gray-500 dark:text-white">Profession</p>
+        <p className="font-semibold  dark:text-white">{expertData.profession}</p>
         </div>
-        <div>
+        <div className="text-left">
         <p className="text-gray-500 dark:text-white ">Location</p>
         <p className="font-semibold dark:text-white">{expertData.location}</p>
         </div>
       </div>
       {/* Additional Information */}
       <div className="flex justify-start gap-40 mt-6 text-center">
-        <div>
+        <div  className="text-left">
           <p className="text-gray-500 dark:text-white">Response Time</p>
           <p className="font-semibold dark:text-white">{expertData.responseTime}</p>
         </div>
-        <div>
+        <div  className="text-left">
           <p className="text-gray-500 dark:text-white">Travel Limit</p>
           <p className="font-semibold dark:text-white">{expertData.travelLimit}</p>
         </div>
-        <div>
+        <div  className="text-left">
           <p className="text-gray-500 dark:text-white">Certification Level</p>
           <p className="font-semibold dark:text-white">{expertData.certificationLevel}</p>
         </div>
@@ -103,8 +110,8 @@ const ExpertProfile= () => {
       {/* Stats */}
       <div className="border-t border-b py-6 mt-6 text-center">
   <div className="flex justify-around">
-    <div>
-      <p className="text-yellow-500 text-3xl">⭐⭐⭐⭐⭐</p>
+    <div className="flex items-center gap-x-2">
+      <p className="text-yellow-300 text-3xl"><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/> </p>
       <p className="text-gray-500 dark:text-white">{expertData.reviews} reviews</p>
     </div>   
     <div>
@@ -119,7 +126,7 @@ const ExpertProfile= () => {
 </div>
       {/* Tabs Section */}
       <div className="mt-8">
-            <div className="flex gap-4 border-b pb-2">
+            <div className="flex gap-4 border-b ">
               {(["details", "media", "reviews", "services"] as const).map(
                 (tab) => (
                   <button
@@ -136,6 +143,8 @@ const ExpertProfile= () => {
                 )
               )}
             </div>
+
+         
 
             <div className="mt-4">
               {activeTab === "details" && <ExpertDetails />}
