@@ -37,6 +37,8 @@ import ExpertMatches from "./expertpages/ExpertMatches";
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
+  localStorage.setItem("role", user?.role);
+  console.log(user);
 
   useEffect(() => {
     dispatch(validateToken());

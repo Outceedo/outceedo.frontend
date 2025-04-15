@@ -24,7 +24,12 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     }
   } else {
     if (location.pathname === "/login" || location.pathname === "/signup") {
-      return <Navigate to="/dashboard" />;
+      if (user?.role === "expert") {
+        return <Navigate to="/expert/dashboard" />;
+      }
+      if (user?.role === "player") {
+        return <Navigate to="/player/dashboard" />;
+      }
     }
     if (user?.role === "expert" && location.pathname.startsWith("/player")) {
       return <Navigate to="/unauthorized" />;
