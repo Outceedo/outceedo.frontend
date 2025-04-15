@@ -255,12 +255,12 @@ const toggleVisibility = (id: number) => {
                   <TableCell className="text-center">
                   <Button variant="ghost" size="icon" className="w-8 h-8" >
                   <Dialog>
-                  <DialogTrigger asChild>
+                  <DialogTrigger >
                   <Button variant="ghost" size="icon" className="h-8 w-8">
                   <FontAwesomeIcon icon={faFileAlt} />
                    </Button>
                    </DialogTrigger>
-                  <DialogContent className="  w-min-screen h-min-screen flex items-center justify-center p-6 mt-28  ">
+                  <DialogContent className="flex items-center justify-center p-6 mt-28 ">
                   <AssessmentReport />
                   </DialogContent>
                   </Dialog>

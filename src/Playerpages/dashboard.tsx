@@ -2,6 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "react-circular-progressbar/dist/styles.css";
 import profile from "../assets/images/profile.jpg";
 import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
+import { faStar } from '@fortawesome/free-solid-svg-icons';
 import {
   Table,
   TableBody,
@@ -67,7 +68,7 @@ const Dashboard: React.FC = () => {
       <span>in Wembley, England</span>
     </div>
 
-    <button className="mt-15 px-4 py-2 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition">
+    <button className="mt-15 px-4 py-2 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition cursor-pointer">
       Know about their team
     </button>
   </div>
@@ -100,12 +101,12 @@ const Dashboard: React.FC = () => {
                     <div>
                       <p className="font-medium">Expert Name</p>
                       <p className="text-gray-500 text-sm dark:text-white">
-                        10+ years ⭐ 3.5/5
+                        10+ years <FontAwesomeIcon className="text-amber-300" icon={faStar}/> 3.5/5
                       </p>
                     </div>
                     <FontAwesomeIcon
                       icon={faArrowUpRightFromSquare}
-                      className="text-gray-500 dark:text-white ml-4"
+                      className="text-gray-500 dark:text-white ml-4 cursor-pointer"
                     />
                   </div>
                 </div>

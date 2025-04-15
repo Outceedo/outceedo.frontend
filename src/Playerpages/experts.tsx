@@ -168,7 +168,7 @@ mediaFilter === "all"
       
     },
     {
-        id: 4,
+       id: 4,
         name: "Michael Smith",
         date: "2024-01-25",
         comment: "Good quality, but the waiting time was a bit long.",
@@ -184,7 +184,7 @@ mediaFilter === "all"
   {/* Left - Expert Name */}
       <div >
      <div className="flex  gap-10">
-    <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start"> ← </div> 
+    <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start cursor-pointer"> ← </div> 
     <div className="flex items-center gap-x-32 flex-wrap">
   <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
           {/* Social Media Icons */}

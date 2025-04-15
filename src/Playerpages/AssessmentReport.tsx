@@ -30,7 +30,7 @@ const AssessmentReport: React.FC = () => {
   <>
     {isVisible && (
       
-    <div className="p-6 bg-white min-h-screen space-y-6 absolute  left1/4 ">
+    <div className="p-6 bg-white  space-y-6 left1/4  w-min-screen h-min-screen  items-center justify-center ">
       
       {/* Header */}
       
