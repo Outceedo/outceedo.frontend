@@ -4,7 +4,8 @@ import profile2 from "../assets/images/profile2.jpg";
 import profile3 from "../assets/images/profile3.jpg";
 import profile4 from "../assets/images/profile4.jpg";
 import profile5 from "../assets/images/profile5.jpg";
-
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   Card,
   CardContent,
@@ -248,7 +249,7 @@ const Expertspage: React.FC = () => {
                   </p>
                   <div className="flex items-center justify-between mt-4">
                     <div className="flex items-center">
-                      <span className="text-yellow-500 text-lg">⭐</span>
+                      <span className="text-yellow-500 text-lg"><FontAwesomeIcon className="text-amber-300" icon={faStar}/></span>
                       <span className="ml-1 text-gray-700 dark:text-white">
                         {expert.rating}/5
                       </span>
@@ -263,7 +264,7 @@ const Expertspage: React.FC = () => {
                     </div>
                   </div>
                   <Button
-                    className="mt-4 bg-red-600 hover:bg-red-700 w-full text-lg"
+                    className="mt-4 bg-red-600 hover:bg-red-700 w-full text-lg cursor-pointer"
                     onClick={() => navigate("/player/exdetails")}  >
                     View Profile
                   </Button>
