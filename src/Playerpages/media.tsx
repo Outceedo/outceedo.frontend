@@ -4,7 +4,7 @@ import "react-circular-progressbar/dist/styles.css";
 import MediaUpload from "./MediaUpload";
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-
+import Swal from "sweetalert2";
 interface UploadItem {
   id: number;
   title: string;
@@ -36,14 +36,25 @@ const Media: React.FC = () => {
       : media.filter((item) =>
           activeTab === "Photos" ? item.type === "photo" : item.type === "video"
         );
-
-  const handleDeleteSingle = (id: number) => {
-    const updated = media.filter((item) => item.id !== id);
-    setMedia(updated);
-    setSelectedMedia(selectedMedia.filter((mid) => mid !== id));
-    localStorage.setItem("savedMedia", JSON.stringify(updated));
-  };
-
+        const handleDeleteSingle = (id: number) => {
+          Swal.fire({
+            title: "Are you sure?",
+            text: "Do you want to delete this media item?",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            cancelButtonColor: "#3085d6",
+            confirmButtonText: "Yes, delete it!",
+          }).then((result) => {
+            if (result.isConfirmed) {
+              const updated = media.filter((item) => item.id !== id);
+              setMedia(updated);
+              setSelectedMedia(selectedMedia.filter((mid) => mid !== id));
+              localStorage.setItem("savedMedia", JSON.stringify(updated));
+              Swal.fire("Deleted!", "The media item has been removed.", "success");
+            }
+          });
+        };
   return (
     <div className="p-4 w-full -ml-4 -mt-4">
       {/* Top Tabs & Upload */}
