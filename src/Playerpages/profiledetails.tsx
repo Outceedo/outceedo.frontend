@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { faLinkedin, faInstagram, faFacebook,faTwitter} from "@fortawesome/free-brands-svg-icons";
-
+import Swal from "sweetalert2";
 
   const icons = [
     { icon: faLinkedin, color: '#0077B5', link: 'https://www.linkedin.com' },
@@ -204,17 +204,41 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   };
 
   const handleRemoveCertificate = (index: number) => {
-    const newCertificates = [...certificates];
-    newCertificates.splice(index, 1);
-    setCertificates(newCertificates);
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this certificate?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const newCertificates = [...certificates];
+        newCertificates.splice(index, 1);
+        setCertificates(newCertificates);
+        Swal.fire("Deleted!", "The certificate has been removed.", "success");
+      }
+    });
   };
-
   const handleRemoveAward = (index: number) => {
-    const newAwards = [...awards];
-    newAwards.splice(index, 1);
-    setAwards(newAwards);
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this award?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        const newAwards = [...awards];
+        newAwards.splice(index, 1);
+        setAwards(newAwards);
+        Swal.fire("Deleted!", "The award has been removed.", "success");
+      }
+    });
   };
-
   // Handle image upload for certificates and awards
   const handleCertificateImageUpload = (
     index: number,
@@ -322,7 +346,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
             Certificates
           </h3>
-
           {isEditingCertificates ? (
             <div className="space-y-5">
               {certificates.map((cert, index) => (
@@ -343,7 +366,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       <FontAwesomeIcon icon={faTrash} />
                     </Button>
                   </div>
-
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Title <span className="text-red-500">*</span>
@@ -358,18 +380,15 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       required
                     />
                   </div>
-
-
                   <input
-  type="file"
-  accept="image/*"
-  className="hidden"
-  ref={(el) => {
-    certificateFileRefs.current[index] = el;
-  }}
-  onChange={(e) => handleCertificateImageUpload(index, e)}
-/>
-
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      ref={(el) => {
+                        certificateFileRefs.current[index] = el;
+                      }}
+                      onChange={(e) => handleCertificateImageUpload(index, e)}
+                    />
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Description (Optional)
@@ -387,7 +406,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       className="w-full min-h-[80px] dark:bg-gray-700"
                     />
                   </div>
-
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Image (Optional)
@@ -402,8 +420,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       }}
                      onChange={(e) => handleCertificateImageUpload(index, e)}
                      />
-
-
                       {cert.imageUrl ? (
                         <div className="relative">
                           <img
@@ -417,8 +433,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                             onClick={() =>
                               certificateFileRefs.current[index]?.click()
                             }
-                            className="mt-2"
-                          >
+                            className="mt-2" >
                             <FontAwesomeIcon icon={faUpload} className="mr-2" />
                             Change Image
                           </Button>
@@ -468,41 +483,42 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           ) : (
             <>
               <div className="space-y-4">
-                {certificates.length > 0 ? (
-                  certificates.map((cert, index) => (
-                    <div
-                      key={cert.id || index}
-                      className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm"
-                    >
-                      {cert.imageUrl && (
-                        <div className="w-full h-32 overflow-hidden">
-                          <img
-                            src={cert.imageUrl}
-                            alt={cert.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                          {cert.title}
-                        </h4>
-                        {cert.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {cert.description}
-                          </p>
+                  {certificates.length > 0 ? (
+                    certificates.map((cert, index) => (
+                      <div
+                        key={cert.id || index}
+                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                      >
+                        {/* Image Section */}
+                        {cert.imageUrl && (
+                          <div className="w-20 h-15 flex-shrink-0">
+                            <img
+                              src={cert.imageUrl}
+                              alt={cert.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         )}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 italic">
-                    No certificates added yet
-                  </p>
-                )}
-              </div>
 
-              {!isExpertView && (
+                        {/* Text Content */}
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                            {cert.title}
+                          </h4>
+                          {cert.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {cert.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 italic">No certificates added yet.</p>
+                  )}
+                </div>
+
+                  {!isExpertView && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -542,7 +558,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       <FontAwesomeIcon icon={faTrash} />
                     </Button>
                   </div>
-
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Title <span className="text-red-500">*</span>
@@ -557,7 +572,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       required
                     />
                   </div>
-
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Description (Optional)
@@ -571,7 +585,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       className="w-full min-h-[80px] dark:bg-gray-700"
                     />
                   </div>
-
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Image (Optional)
@@ -586,8 +599,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       }}
                         onChange={(e) => handleAwardImageUpload(index, e)}
                        />
-
-
                       {award.imageUrl ? (
                         <div className="relative">
                           <img
@@ -648,40 +659,43 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             </div>
           ) : (
             <>
-              <div className="space-y-4">
-                {awards.length > 0 ? (
-                  awards.map((award, index) => (
-                    <div
-                      key={award.id || index}
-                      className="bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-lg overflow-hidden shadow-sm"
-                    >
-                      {award.imageUrl && (
-                        <div className="w-full h-32 overflow-hidden">
-                          <img
-                            src={award.imageUrl}
-                            alt={award.title}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                      )}
-                      <div className="p-4">
-                        <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-1">
-                          {award.title}
-                        </h4>
-                        {award.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {award.description}
-                          </p>
+           <div className="space-y-4">
+                  {awards.length > 0 ? (
+                    awards.map((award, index) => (
+                      <div
+                        key={award.id || index}
+                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                      >
+                        {/* Image Section */}
+                        {award.imageUrl && (
+                          <div className="w-20 h-15 flex-shrink-0">
+                            <img
+                              src={award.imageUrl}
+                              alt={award.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
                         )}
+
+                        {/* Text Content */}
+                        <div className="p-4">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                            {award.title}
+                          </h4>
+                          {award.description && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              {award.description}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 italic">
-                    No awards added yet
-                  </p>
-                )}
-              </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500 dark:text-gray-400 italic">
+                      No awards added yet.
+                    </p>
+                  )}
+                </div>
 
               {!isExpertView && (
                 <Button
