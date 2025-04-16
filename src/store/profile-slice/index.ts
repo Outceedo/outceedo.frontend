@@ -1,6 +1,8 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { userService } from "../apiConfig";
-import { Role } from "@prisma/client";
+
+// Define Role type instead of importing from Prisma
+type Role = "player" | "expert" | "admin";
 
 // Define types
 interface Profile {
@@ -54,6 +56,15 @@ const initialState: ProfileState = {
   expertServices: [],
   status: "idle",
   error: null,
+};
+
+// Helper function to get role from localStorage
+const getRoleFromStorage = (): Role | null => {
+  const role = localStorage.getItem("role") as Role;
+  if (role && ["player", "expert", "admin"].includes(role)) {
+    return role;
+  }
+  return null;
 };
 
 // Create profile thunk
@@ -263,6 +274,13 @@ const profileSlice = createSlice({
       state.status = "idle";
       state.error = null;
     },
+    // Add action to set current profile from localStorage
+    setCurrentProfileFromStorage: (state) => {
+      const role = getRoleFromStorage();
+      if (state.currentProfile && role) {
+        state.currentProfile.role = role;
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -275,6 +293,8 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.currentProfile = action.payload;
+          // Store role in localStorage
+          localStorage.setItem("role", action.payload.role);
         }
       )
       .addCase(createProfile.rejected, (state, action) => {
@@ -291,6 +311,10 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.currentProfile = action.payload;
+          // Update role in localStorage if it changed
+          if (action.payload.role) {
+            localStorage.setItem("role", action.payload.role);
+          }
           // If the viewed profile is the same as the current profile, update it as well
           if (
             state.viewedProfile &&
@@ -440,6 +464,10 @@ const profileSlice = createSlice({
   },
 });
 
-export const { resetProfileState, resetProfileStatus } = profileSlice.actions;
+export const {
+  resetProfileState,
+  resetProfileStatus,
+  setCurrentProfileFromStorage,
+} = profileSlice.actions;
 
 export default profileSlice.reducer;

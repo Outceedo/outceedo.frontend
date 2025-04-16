@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-//pages 
+//pages
 import HomePage from "./Pages/HomePage";
 import EmailVerification from "./Pages/EmailVerification";
 import Login from "./Pages/Login";
@@ -32,7 +32,6 @@ import ExpertProfile from "./expertpages/expertdata";
 import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
-
 
 const App: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -102,11 +101,9 @@ const App: React.FC = () => {
             }
           />
           <Route
-           path="/player/AssessmentReport"
-            element={
-            <AssessmentReport />
-            } 
-            />
+            path="/player/AssessmentReport"
+            element={<AssessmentReport />}
+          />
           <Route
             path="/player/viewexperts"
             element={
@@ -132,10 +129,6 @@ const App: React.FC = () => {
             }
           />
         </Route>
-       
-
-
-
 
         {/* Expert Outlet */}
         <Route path="/expert" element={<ExpertLayout />}>
