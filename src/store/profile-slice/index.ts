@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { userService } from "../apiConfig";
+import { RootState } from "../store";
 
 // Define Role type instead of importing from Prisma
 type Role = "player" | "expert" | "admin";
@@ -67,6 +68,92 @@ const getRoleFromStorage = (): Role | null => {
   return null;
 };
 
+// Helper function to get username from localStorage
+const getUsernameFromStorage = (): string | null => {
+  const username = localStorage.getItem("username");
+  return username;
+};
+
+// Helper function to get auth token from localStorage
+const getAuthToken = (): string | null => {
+  return localStorage.getItem("token");
+};
+
+// Helper function to check if a profile is complete
+const isProfileComplete = (profile: Profile | null): boolean => {
+  if (!profile) return false;
+  
+  // Define required fields for player profile
+  if (profile.role === 'player') {
+    const requiredFields = [
+      'name', 'age', 'gender', 'phone', 'country', 'city',
+      'height', 'weight', 'profession'
+    ];
+    
+    return requiredFields.every(field => 
+      profile[field] !== undefined && 
+      profile[field] !== null &&
+      profile[field] !== ''
+    );
+  }
+  
+  // Define required fields for expert profile
+  if (profile.role === 'expert') {
+    const requiredFields = [
+      'name', 'age', 'gender', 'phone', 'country', 'city', 
+      'profession', 'experience'
+    ];
+    
+    return requiredFields.every(field => 
+      profile[field] !== undefined && 
+      profile[field] !== null &&
+      profile[field] !== ''
+    );
+  }
+  
+  return false;
+}
+
+// Check profile completion and determine redirect
+export const checkProfileCompletion = createAsyncThunk(
+  "profile/checkProfileCompletion",
+  async (_, { getState, dispatch }) => {
+    const state = getState() as RootState;
+    const { user } = state.auth;
+    
+    if (!user || !user.username) {
+      return { redirect: "/login" };
+    }
+    
+    try {
+      // Try to fetch the profile using the username
+      const resultAction = await dispatch(getProfile(user.username));
+      
+      if (getProfile.fulfilled.match(resultAction)) {
+        const fetchedProfile = resultAction.payload;
+        
+        if (!fetchedProfile || !isProfileComplete(fetchedProfile)) {
+          // Profile is incomplete or doesn't exist, redirect to details form
+          return { redirect: "/detailsform" };
+        } else {
+          // Profile is complete, redirect based on role
+          if (fetchedProfile.role === 'player') {
+            return { redirect: "/player/dashboard" };
+          } else if (fetchedProfile.role === 'expert') {
+            return { redirect: "/expert/dashboard" };
+          }
+        }
+      }
+      
+      // If we couldn't fetch a profile, redirect to details form
+      return { redirect: "/detailsform" };
+    } catch (error) {
+      console.error("Error checking profile:", error);
+      return { redirect: "/detailsform" };
+    }
+  }
+);
+
 // Create profile thunk
 export const createProfile = createAsyncThunk(
   "profile/createProfile",
@@ -75,10 +162,22 @@ export const createProfile = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await userService.post("/profile", {
+      const username = getUsernameFromStorage();
+      const token = getAuthToken();
+      
+      if (!username) {
+        return rejectWithValue("No username found");
+      }
+      
+      const response = await userService.post(`/profile/${username}`, {
         role,
         profileData,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+      
       return response.data.user;
     } catch (error: any) {
       return rejectWithValue(
@@ -93,7 +192,12 @@ export const updateProfile = createAsyncThunk(
   "profile/updateProfile",
   async (data: any, { rejectWithValue }) => {
     try {
-      const response = await userService.patch("/profile", data);
+      const token = getAuthToken();
+      const response = await userService.patch("/profile", data, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -108,7 +212,12 @@ export const getProfile = createAsyncThunk(
   "profile/getProfile",
   async (username: string, { rejectWithValue }) => {
     try {
-      const response = await userService.get(`/profile/${username}`);
+      const token = getAuthToken();
+      const response = await userService.get(`/profile/${username}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -126,8 +235,12 @@ export const getProfiles = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      const token = getAuthToken();
       const response = await userService.get("/profiles", {
         params: { page, limit, userType },
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       return response.data;
     } catch (error: any) {
@@ -143,12 +256,14 @@ export const updateProfilePhoto = createAsyncThunk(
   "profile/updateProfilePhoto",
   async (photoFile: File, { rejectWithValue }) => {
     try {
+      const token = getAuthToken();
       const formData = new FormData();
       formData.append("photo", photoFile);
 
       const response = await userService.patch("/profile/photo", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`
         },
       });
       return response.data;
@@ -165,7 +280,12 @@ export const getPlatformServices = createAsyncThunk(
   "profile/getPlatformServices",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await userService.get("/services");
+      const token = getAuthToken();
+      const response = await userService.get("/services", {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -187,9 +307,14 @@ export const addExpertService = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      const token = getAuthToken();
       const response = await userService.post(`/profile/service/${serviceId}`, {
         price,
         additionalDetails,
+      }, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
       });
       return response.data;
     } catch (error: any) {
@@ -212,11 +337,17 @@ export const updateExpertService = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
+      const token = getAuthToken();
       const response = await userService.patch(
         `/profile/service/${serviceId}`,
         {
           price,
           additionalDetails,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
       );
       return response.data;
@@ -233,8 +364,14 @@ export const deleteExpertService = createAsyncThunk(
   "profile/deleteExpertService",
   async (serviceId: string, { rejectWithValue }) => {
     try {
+      const token = getAuthToken();
       const response = await userService.delete(
-        `/profile/service/${serviceId}`
+        `/profile/service/${serviceId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       return { serviceId, data: response.data };
     } catch (error: any) {
@@ -250,8 +387,14 @@ export const getExpertServices = createAsyncThunk(
   "profile/getExpertServices",
   async (expertId: string, { rejectWithValue }) => {
     try {
+      const token = getAuthToken();
       const response = await userService.get(
-        `/profile/expert/${expertId}/services`
+        `/profile/expert/${expertId}/services`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
       );
       return { expertId, services: response.data };
     } catch (error: any) {
@@ -338,6 +481,12 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.viewedProfile = action.payload;
+          
+          // If this is the current user's profile, also update currentProfile
+          const currentUsername = localStorage.getItem("username");
+          if (currentUsername && action.payload.username === currentUsername) {
+            state.currentProfile = action.payload;
+          }
         }
       )
       .addCase(getProfile.rejected, (state, action) => {

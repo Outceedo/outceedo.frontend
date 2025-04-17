@@ -37,6 +37,8 @@ const App: React.FC = () => {
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   localStorage.setItem("role", user?.role);
+  localStorage.setItem("userid", user?.role);
+  localStorage.setItem("username", user?.username);
   console.log(user);
 
   useEffect(() => {
@@ -58,7 +60,7 @@ const App: React.FC = () => {
 
         {/* Protected routes - you need to wrap each Route with CheckAuth */}
         <Route
-          path="/detailsform"
+          path="/details-form"
           element={
             <CheckAuth isAuthenticated={isAuthenticated} user={user}>
               <Detailsform />

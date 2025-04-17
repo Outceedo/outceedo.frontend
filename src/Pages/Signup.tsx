@@ -21,6 +21,7 @@ const Signup: React.FC = () => {
   const [showDropdown, setShowDropdown] = useState(false);
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -28,6 +29,7 @@ const Signup: React.FC = () => {
   const [mobileNumber, setMobileNumber] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [registrationAttempted, setRegistrationAttempted] = useState(false);
+  const [usernameGenerated, setUsernameGenerated] = useState(false);
 
   // Add debug logging for Redux state changes
   useEffect(() => {
@@ -47,6 +49,18 @@ const Signup: React.FC = () => {
     setCountryList(Object.values(myCountryCodesObject));
   }, []);
 
+  // Generate a username suggestion when first and last name change
+  useEffect(() => {
+    if (firstName && lastName && !usernameGenerated) {
+      const generatedUsername =
+        `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(
+          /\s+/g,
+          ""
+        );
+      setUsername(generatedUsername);
+    }
+  }, [firstName, lastName, usernameGenerated]);
+
   const filteredCountries = countryList.filter((country) =>
     country.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -63,6 +77,11 @@ const Signup: React.FC = () => {
     console.log("Role from localStorage:", storedRole); // Debugging role
     setRole(storedRole);
   }, []);
+
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+    setUsernameGenerated(true);
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,12 +102,19 @@ const Signup: React.FC = () => {
 
     if (!firstName) errors.firstName = "First name is required.";
     if (!lastName) errors.lastName = "Last name is required.";
+    if (!username) errors.username = "Username is required.";
     if (!email) errors.email = "Email is required.";
     if (!password) errors.password = "Password is required.";
     if (!confirmPassword)
       errors.confirmPassword = "Confirm Password is required.";
     if (!countryCode) errors.countryCode = "Country code is required.";
     if (!mobileNumber) errors.mobileNumber = "Mobile number is required.";
+
+    // Username validation - allow letters, numbers, underscores only
+    if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
+      errors.username =
+        "Username can only contain letters, numbers, and underscores.";
+    }
 
     if (password && password.length < 8)
       errors.password = "Password must be at least 8 characters long.";
@@ -107,6 +133,7 @@ const Signup: React.FC = () => {
       mobileNumber: `${countryCode} ${mobileNumber}`,
       firstName,
       lastName,
+      username, // Add the username field to the request
     };
 
     console.log("Submitting registration with data:", requestData);
@@ -122,6 +149,7 @@ const Signup: React.FC = () => {
         // Handle the success case directly
         console.log("Registration successful:", resultAction.payload);
         localStorage.setItem("verificationEmail", email);
+        localStorage.setItem("username", username); // Store username in localStorage
         alert("Signup successful! Redirecting to email verification.");
         navigate("/emailverification");
       } else if (registerUser.rejected.match(resultAction)) {
@@ -139,9 +167,18 @@ const Signup: React.FC = () => {
         "Registration successful via effect, redirecting to email verification"
       );
       localStorage.setItem("verificationEmail", email);
+      localStorage.setItem("username", username); // Store username in localStorage
       navigate("/emailverification");
     }
-  }, [registrationAttempted, isLoading, user, error, navigate, email]);
+  }, [
+    registrationAttempted,
+    isLoading,
+    user,
+    error,
+    navigate,
+    email,
+    username,
+  ]);
 
   return (
     <div className="relative w-full min-h-screen flex flex-col lg:flex-row items-center justify-center px-6 lg:px-20">
@@ -219,6 +256,33 @@ const Signup: React.FC = () => {
                 <p className="text-red-500 text-sm">{fieldErrors.lastName}</p>
               )}
             </div>
+          </div>
+
+          <div>
+            <label
+              className={`block text-sm font-medium ${
+                fieldErrors.username ? "text-red-500" : "text-gray-700"
+              }`}
+            >
+              Username <span className="text-red-500 ml-1">*</span>
+            </label>
+            <input
+              type="text"
+              placeholder="Choose a username"
+              value={username}
+              onChange={handleUsernameChange}
+              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
+                fieldErrors.username
+                  ? "border-red-500 ring-red-500"
+                  : "border-gray-300 focus:ring-blue-500"
+              }`}
+            />
+            {fieldErrors.username && (
+              <p className="text-red-500 text-sm">{fieldErrors.username}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1">
+              Only letters, numbers, and underscores allowed. No spaces.
+            </p>
           </div>
 
           <div>

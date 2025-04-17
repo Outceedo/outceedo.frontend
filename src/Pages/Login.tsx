@@ -3,12 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import football from "../assets/images/football.jpg";
 import { loginUser, clearError } from "../store/auth-slice";
+import { checkProfileCompletion } from "../store/profile-slice";
 import User from "./user";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector((state) => state.auth);
+  const { status: profileStatus } = useAppSelector((state) => state.profile);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,26 +49,28 @@ const Login: React.FC = () => {
   useEffect(() => {
     // Navigate based on role when user logs in
     if (user) {
+      console.log("User logged in:", user); // Debug log
       setLoginSuccess(true);
 
-      // Use setTimeout to allow the success message to be displayed for a moment
-      const timer = setTimeout(() => {
-        const userRole = user.role?.toLowerCase() || "";
+      // Manual redirect based on role
+      const userRole = user.role?.toLowerCase() || "";
+
+      // Direct navigation without profile check (simpler approach)
+      setTimeout(() => {
         if (userRole === "player") {
-          navigate("/player/profile");
+          navigate("/details-form");
         } else if (userRole === "expert") {
-          navigate("/expert/profile");
+          navigate("/expert/dashboard");
         } else {
           navigate("/home");
         }
       }, 1000);
-
-      return () => clearTimeout(timer);
     }
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Login form submitted"); // Debug log
 
     // Reset form errors
     setFormError("");
@@ -78,7 +82,12 @@ const Login: React.FC = () => {
     }
 
     // Dispatch login action
-    dispatch(loginUser({ email, password }));
+    try {
+      console.log("Dispatching login:", { email }); // Debug log
+      await dispatch(loginUser({ email, password }));
+    } catch (err) {
+      console.error("Login error:", err);
+    }
   };
 
   // Close modal and clear errors when modal is closed
@@ -136,11 +145,20 @@ const Login: React.FC = () => {
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-md mx-auto lg:w-96 mt-12 sm:mt-16 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Login</h2>
 
+        {/* User Debug - REMOVE IN PRODUCTION */}
+        {user && (
+          <div className="mb-4 p-2 bg-blue-100 text-blue-800 rounded border border-blue-300">
+            <p className="font-medium">User detected:</p>
+            <p className="text-sm">Role: {user.role}</p>
+            <p className="text-xs">Username: {user.username}</p>
+          </div>
+        )}
+
         {/* Success Message */}
         {loginSuccess && (
           <div className="mb-4 p-2 bg-green-100 text-green-800 rounded border border-green-300">
             <p className="font-medium">Login successful!</p>
-            <p className="text-sm">Redirecting you to your dashboard...</p>
+            <p className="text-sm">Redirecting to appropriate page...</p>
           </div>
         )}
 
@@ -224,6 +242,22 @@ const Login: React.FC = () => {
             )}
           </button>
         </form>
+
+        {/* Manual Navigation Buttons - REMOVE IN PRODUCTION */}
+        <div className="mt-4 flex space-x-2">
+          <button
+            onClick={() => navigate("/detailsform")}
+            className="bg-gray-200 px-2 py-1 text-xs rounded"
+          >
+            Go to Details Form
+          </button>
+          <button
+            onClick={() => navigate("/player/dashboard")}
+            className="bg-gray-200 px-2 py-1 text-xs rounded"
+          >
+            Go to Player Dashboard
+          </button>
+        </div>
 
         <div className="mt-4">
           <button
