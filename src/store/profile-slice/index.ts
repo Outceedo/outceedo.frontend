@@ -10,6 +10,31 @@ interface Profile {
   id: string;
   username: string;
   role: Role;
+  firstName?: string;
+  lastName?: string;
+  age?: number;
+  gender?: string;
+  phone?: string;
+  country?: string;
+  city?: string;
+  height?: number;
+  weight?: number;
+  profession?: string;
+  subProfession?: string;
+  bio?: string;
+  photo?: string;
+  language?: string[];
+  company?: string;
+  socialLinks?: {
+    linkedin?: string;
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+  };
+  interests?: string[];
+  certificates?: Array<{ name: string; organization: string }>;
+  awards?: string[];
+  experience?: string;
   [key: string]: any; // For additional fields based on role
 }
 
@@ -82,37 +107,104 @@ const getAuthToken = (): string | null => {
 // Helper function to check if a profile is complete
 const isProfileComplete = (profile: Profile | null): boolean => {
   if (!profile) return false;
-  
+
   // Define required fields for player profile
-  if (profile.role === 'player') {
+  if (profile.role === "player") {
     const requiredFields = [
-      'name', 'age', 'gender', 'phone', 'country', 'city',
-      'height', 'weight', 'profession'
+      "firstName",
+      "lastName",
+      "age",
+      "gender",
+
+      "country",
+      "city",
+      "height",
+      "weight",
+      "profession",
+      "subProfession",
     ];
-    
-    return requiredFields.every(field => 
-      profile[field] !== undefined && 
-      profile[field] !== null &&
-      profile[field] !== ''
+
+    return requiredFields.every(
+      (field) =>
+        profile[field] !== undefined &&
+        profile[field] !== null &&
+        profile[field] !== ""
     );
   }
-  
+
   // Define required fields for expert profile
-  if (profile.role === 'expert') {
+  if (profile.role === "expert") {
     const requiredFields = [
-      'name', 'age', 'gender', 'phone', 'country', 'city', 
-      'profession', 'experience'
+      "firstName",
+      "lastName",
+      "age",
+      "gender",
+
+      "country",
+      "city",
+      "profession",
+      "subProfession",
     ];
-    
-    return requiredFields.every(field => 
-      profile[field] !== undefined && 
-      profile[field] !== null &&
-      profile[field] !== ''
+
+    return requiredFields.every(
+      (field) =>
+        profile[field] !== undefined &&
+        profile[field] !== null &&
+        profile[field] !== ""
     );
   }
-  
+
   return false;
-}
+};
+
+// Debug function to log profile completion status
+const logProfileStatus = (profile: Profile | null): void => {
+  if (!profile) {
+    console.log("Profile completion check: No profile found");
+    return;
+  }
+
+  const role = profile.role;
+  const requiredFields =
+    role === "player"
+      ? [
+          "firstName",
+          "lastName",
+          "age",
+          "gender",
+
+          "country",
+          "city",
+          "height",
+          "weight",
+          "profession",
+          "subProfession",
+        ]
+      : [
+          "firstName",
+          "lastName",
+          "age",
+          "gender",
+
+          "country",
+          "city",
+          "profession",
+          "subProfession",
+        ];
+
+  const missingFields = requiredFields.filter(
+    (field) =>
+      profile[field] === undefined ||
+      profile[field] === null ||
+      profile[field] === ""
+  );
+
+  console.log(`Profile completion check for ${role}:`, {
+    isComplete: missingFields.length === 0,
+    missingFields,
+    profile,
+  });
+};
 
 // Check profile completion and determine redirect
 export const checkProfileCompletion = createAsyncThunk(
@@ -120,36 +212,51 @@ export const checkProfileCompletion = createAsyncThunk(
   async (_, { getState, dispatch }) => {
     const state = getState() as RootState;
     const { user } = state.auth;
-    
+
     if (!user || !user.username) {
+      console.log("No user found in auth state, redirecting to login");
       return { redirect: "/login" };
     }
-    
+
     try {
+      console.log("Checking profile completion for:", user.username);
+
       // Try to fetch the profile using the username
       const resultAction = await dispatch(getProfile(user.username));
-      
+
       if (getProfile.fulfilled.match(resultAction)) {
         const fetchedProfile = resultAction.payload;
-        
+
+        // Log profile status for debugging
+        logProfileStatus(fetchedProfile);
+
+        // Store profile data in localStorage to prefill form if redirected to details form
+        if (fetchedProfile) {
+          // Store the profile data in local storage for form prefilling
+          localStorage.setItem("profileData", JSON.stringify(fetchedProfile));
+        }
+
         if (!fetchedProfile || !isProfileComplete(fetchedProfile)) {
-          // Profile is incomplete or doesn't exist, redirect to details form
-          return { redirect: "/detailsform" };
+          console.log("Profile is incomplete, redirecting to details form");
+          return { redirect: "/details-form" };
         } else {
+          console.log("Profile is complete, redirecting to dashboard");
           // Profile is complete, redirect based on role
-          if (fetchedProfile.role === 'player') {
+          if (fetchedProfile.role === "player") {
             return { redirect: "/player/dashboard" };
-          } else if (fetchedProfile.role === 'expert') {
+          } else if (fetchedProfile.role === "expert") {
             return { redirect: "/expert/dashboard" };
+          } else {
+            return { redirect: "/home" };
           }
         }
+      } else {
+        console.log("Failed to fetch profile, redirecting to details form");
+        return { redirect: "/details-form" };
       }
-      
-      // If we couldn't fetch a profile, redirect to details form
-      return { redirect: "/detailsform" };
     } catch (error) {
       console.error("Error checking profile:", error);
-      return { redirect: "/detailsform" };
+      return { redirect: "/details-form" };
     }
   }
 );
@@ -164,20 +271,24 @@ export const createProfile = createAsyncThunk(
     try {
       const username = getUsernameFromStorage();
       const token = getAuthToken();
-      
+
       if (!username) {
         return rejectWithValue("No username found");
       }
-      
-      const response = await userService.post(`/profile/${username}`, {
-        role,
-        profileData,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`,
+
+      const response = await userService.post(
+        `/profile/${username}`,
+        {
+          role,
+          profileData,
         },
-      });
-      
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
       return response.data.user;
     } catch (error: any) {
       return rejectWithValue(
@@ -195,8 +306,8 @@ export const updateProfile = createAsyncThunk(
       const token = getAuthToken();
       const response = await userService.patch("/profile", data, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       return response.data;
     } catch (error: any) {
@@ -213,13 +324,16 @@ export const getProfile = createAsyncThunk(
   async (username: string, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
+      console.log(`Fetching profile for username: ${username}`);
       const response = await userService.get(`/profile/${username}`, {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
+      console.log("Profile fetch response:", response.data);
       return response.data;
     } catch (error: any) {
+      console.error("Profile fetch error:", error.response?.data || error);
       return rejectWithValue(
         error.response?.data?.error || "Failed to get profile"
       );
@@ -239,8 +353,8 @@ export const getProfiles = createAsyncThunk(
       const response = await userService.get("/profiles", {
         params: { page, limit, userType },
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       return response.data;
     } catch (error: any) {
@@ -263,7 +377,7 @@ export const updateProfilePhoto = createAsyncThunk(
       const response = await userService.patch("/profile/photo", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
       });
       return response.data;
@@ -283,8 +397,8 @@ export const getPlatformServices = createAsyncThunk(
       const token = getAuthToken();
       const response = await userService.get("/services", {
         headers: {
-          Authorization: `Bearer ${token}`
-        }
+          Authorization: `Bearer ${token}`,
+        },
       });
       return response.data;
     } catch (error: any) {
@@ -308,14 +422,18 @@ export const addExpertService = createAsyncThunk(
   ) => {
     try {
       const token = getAuthToken();
-      const response = await userService.post(`/profile/service/${serviceId}`, {
-        price,
-        additionalDetails,
-      }, {
-        headers: {
-          Authorization: `Bearer ${token}`
+      const response = await userService.post(
+        `/profile/service/${serviceId}`,
+        {
+          price,
+          additionalDetails,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
+      );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
@@ -346,8 +464,8 @@ export const updateExpertService = createAsyncThunk(
         },
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       return response.data;
@@ -369,8 +487,8 @@ export const deleteExpertService = createAsyncThunk(
         `/profile/service/${serviceId}`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       return { serviceId, data: response.data };
@@ -392,8 +510,8 @@ export const getExpertServices = createAsyncThunk(
         `/profile/expert/${expertId}/services`,
         {
           headers: {
-            Authorization: `Bearer ${token}`
-          }
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
       return { expertId, services: response.data };
@@ -481,7 +599,7 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.viewedProfile = action.payload;
-          
+
           // If this is the current user's profile, also update currentProfile
           const currentUsername = localStorage.getItem("username");
           if (currentUsername && action.payload.username === currentUsername) {
@@ -503,6 +621,18 @@ const profileSlice = createSlice({
         state.profiles = action.payload;
       })
       .addCase(getProfiles.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload as string;
+      })
+
+      // Check profile completion
+      .addCase(checkProfileCompletion.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(checkProfileCompletion.fulfilled, (state) => {
+        state.status = "succeeded";
+      })
+      .addCase(checkProfileCompletion.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload as string;
       })

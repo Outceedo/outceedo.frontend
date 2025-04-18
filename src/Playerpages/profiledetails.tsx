@@ -9,35 +9,58 @@ import {
   faUpload,
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
-import { FaLinkedinIn, FaFacebookF, FaInstagram,FaTwitter } from "react-icons/fa";
+import {
+  FaLinkedinIn,
+  FaFacebookF,
+  FaInstagram,
+  FaTwitter,
+} from "react-icons/fa";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { faLinkedin, faInstagram, faFacebook,faTwitter} from "@fortawesome/free-brands-svg-icons";
+import {
+  faLinkedin,
+  faInstagram,
+  faFacebook,
+  faTwitter,
+} from "@fortawesome/free-brands-svg-icons";
 import Swal from "sweetalert2";
+import axios from "axios";
 
-  const icons = [
-    { icon: faLinkedin, color: '#0077B5', link: 'https://www.linkedin.com' },
-    { icon: faFacebook, color: '#3b5998', link: 'https://www.facebook.com' },
-    { icon: faInstagram, color: '#E1306C', link: 'https://www.instagram.com' },
-    { icon: faTwitter, color: '#1DA1F2', link: 'https://www.twitter.com' },
-  ];
+const icons = [
+  { icon: faLinkedin, color: "#0077B5", link: "linkedin" },
+  { icon: faFacebook, color: "#3b5998", link: "facebook" },
+  { icon: faInstagram, color: "#E1306C", link: "instagram" },
+  { icon: faTwitter, color: "#1DA1F2", link: "twitter" },
+];
+
+// API base URL
+const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
 interface AchievementItem {
   id: string;
   title: string;
-  description?: string;
+  issuedBy?: string;
+  issuedDate?: string;
+  documentId?: string;
   imageUrl?: string;
+  description?: string;
 }
 
 interface PlayerData {
   id?: string;
   name?: string;
+  age?: number | string;
+  height?: string | number;
+  weight?: string | number;
+  location?: string;
+  club?: string;
+  languages?: string[];
   aboutMe?: string;
-  certificates?: AchievementItem[];
-  awards?: AchievementItem[];
+  certificates?: AchievementItem[] | string[];
+  awards?: AchievementItem[] | string[];
   socials?: {
     linkedin?: string;
     instagram?: string;
@@ -48,8 +71,9 @@ interface PlayerData {
 }
 
 interface ProfileDetailsProps {
-  playerData?: PlayerData;
+  playerData: PlayerData;
   isExpertView?: boolean;
+  onUpdate: (data: PlayerData) => void;
 }
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({
@@ -60,12 +84,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     socials: {},
   },
   isExpertView = false,
+  onUpdate,
 }) => {
   // State for editing
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isEditingCertificates, setIsEditingCertificates] = useState(false);
   const [isEditingAwards, setIsEditingAwards] = useState(false);
   const [isEditingSocials, setIsEditingSocials] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // File input refs
   const certificateFileRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -74,10 +100,32 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   // State for data
   const [aboutMe, setAboutMe] = useState(playerData.aboutMe || "");
   const [certificates, setCertificates] = useState<AchievementItem[]>(
-    playerData.certificates || []
+    Array.isArray(playerData.certificates)
+      ? playerData.certificates.map((cert: any) => {
+          if (typeof cert === "string") {
+            return {
+              id: `cert-${Date.now()}-${Math.random()}`,
+              title: cert,
+              description: "",
+            };
+          }
+          return cert;
+        })
+      : []
   );
   const [awards, setAwards] = useState<AchievementItem[]>(
-    playerData.awards || []
+    Array.isArray(playerData.awards)
+      ? playerData.awards.map((award: any) => {
+          if (typeof award === "string") {
+            return {
+              id: `award-${Date.now()}-${Math.random()}`,
+              title: award,
+              description: "",
+            };
+          }
+          return award;
+        })
+      : []
   );
   const [socials, setSocials] = useState({
     linkedin: playerData.socials?.linkedin || "",
@@ -86,18 +134,55 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     twitter: playerData.socials?.twitter || "",
   });
 
-  // Load data from localStorage if available
-  useEffect(() => {
-    const savedAboutMe = localStorage.getItem("aboutMe");
-    const savedCertificates = localStorage.getItem("certificates");
-    const savedAwards = localStorage.getItem("awards");
-    const savedSocials = localStorage.getItem("socials");
+  // Get auth token from localStorage
+  const getAuthToken = (): string | null => {
+    return localStorage.getItem("token");
+  };
 
-    if (savedAboutMe) setAboutMe(savedAboutMe);
-    if (savedCertificates) setCertificates(JSON.parse(savedCertificates));
-    if (savedAwards) setAwards(JSON.parse(savedAwards));
-    if (savedSocials) setSocials(JSON.parse(savedSocials));
-  }, []);
+  // Update local state when playerData changes
+  useEffect(() => {
+    setAboutMe(playerData.aboutMe || "");
+
+    // Handle certificates
+    if (Array.isArray(playerData.certificates)) {
+      setCertificates(
+        playerData.certificates.map((cert: any) => {
+          if (typeof cert === "string") {
+            return {
+              id: `cert-${Date.now()}-${Math.random()}`,
+              title: cert,
+              description: "",
+            };
+          }
+          return cert;
+        })
+      );
+    }
+
+    // Handle awards
+    if (Array.isArray(playerData.awards)) {
+      setAwards(
+        playerData.awards.map((award: any) => {
+          if (typeof award === "string") {
+            return {
+              id: `award-${Date.now()}-${Math.random()}`,
+              title: award,
+              description: "",
+            };
+          }
+          return award;
+        })
+      );
+    }
+
+    // Set socials
+    setSocials({
+      linkedin: playerData.socials?.linkedin || "",
+      instagram: playerData.socials?.instagram || "",
+      facebook: playerData.socials?.facebook || "",
+      twitter: playerData.socials?.twitter || "",
+    });
+  }, [playerData]);
 
   // Update refs when certificates or awards change
   useEffect(() => {
@@ -110,40 +195,89 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
   // Format URL to ensure it has http/https
   const formatUrl = (url: string): string => {
-    if (!url || url === "#") return "#";
+    if (!url || url === "#") return "";
     return url.startsWith("http") ? url : `https://${url}`;
   };
 
-  // Save to localStorage functions
+  // Save functions
   const saveAboutMe = () => {
-    localStorage.setItem("aboutMe", aboutMe);
+    onUpdate({
+      ...playerData,
+      aboutMe: aboutMe,
+    });
     setIsEditingAbout(false);
   };
 
-  const saveCertificates = () => {
-    // Validate required fields
-    const allValid = certificates.every((cert) => cert.title.trim() !== "");
+  const saveCertificates = async () => {
+    setIsUploading(true);
 
-    if (!allValid) {
-      alert("All certificates must have a title.");
-      return;
+    try {
+      // Validate required fields
+      const allValid = certificates.every((cert) => cert.title.trim() !== "");
+
+      if (!allValid) {
+        Swal.fire({
+          title: "Validation Error",
+          text: "All certificates must have a title.",
+          icon: "error",
+        });
+        return;
+      }
+
+      // Format certificates for API - only extract titles
+      const formattedCerts = certificates.map((cert) => cert.title);
+
+      onUpdate({
+        ...playerData,
+        certificates: formattedCerts,
+      });
+    } catch (error) {
+      console.error("Error saving certificates:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to save certificates",
+      });
+    } finally {
+      setIsUploading(false);
+      setIsEditingCertificates(false);
     }
-
-    localStorage.setItem("certificates", JSON.stringify(certificates));
-    setIsEditingCertificates(false);
   };
 
-  const saveAwards = () => {
-    // Validate required fields
-    const allValid = awards.every((award) => award.title.trim() !== "");
+  const saveAwards = async () => {
+    setIsUploading(true);
 
-    if (!allValid) {
-      alert("All awards must have a title.");
-      return;
+    try {
+      // Validate required fields
+      const allValid = awards.every((award) => award.title.trim() !== "");
+
+      if (!allValid) {
+        Swal.fire({
+          title: "Validation Error",
+          text: "All awards must have a title.",
+          icon: "error",
+        });
+        return;
+      }
+
+      // Format awards for API - only extract titles
+      const formattedAwards = awards.map((award) => award.title);
+
+      onUpdate({
+        ...playerData,
+        awards: formattedAwards,
+      });
+    } catch (error) {
+      console.error("Error saving awards:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to save awards",
+      });
+    } finally {
+      setIsUploading(false);
+      setIsEditingAwards(false);
     }
-
-    localStorage.setItem("awards", JSON.stringify(awards));
-    setIsEditingAwards(false);
   };
 
   const saveSocials = () => {
@@ -156,7 +290,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     };
 
     setSocials(formattedSocials);
-    localStorage.setItem("socials", JSON.stringify(formattedSocials));
+
+    onUpdate({
+      ...playerData,
+      socials: formattedSocials,
+    });
+
     setIsEditingSocials(false);
   };
 
@@ -167,6 +306,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       {
         id: `cert-${Date.now()}`,
         title: "",
+        issuedBy: "",
+        issuedDate: new Date().toISOString().split("T")[0],
         description: "",
       },
     ]);
@@ -178,6 +319,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       {
         id: `award-${Date.now()}`,
         title: "",
+        issuedBy: "",
+        issuedDate: new Date().toISOString().split("T")[0],
         description: "",
       },
     ]);
@@ -203,7 +346,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     setAwards(newAwards);
   };
 
-  const handleRemoveCertificate = (index: number) => {
+  const handleRemoveCertificate = async (index: number) => {
     Swal.fire({
       title: "Are you sure?",
       text: "Do you want to delete this certificate?",
@@ -212,16 +355,43 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        const newCertificates = [...certificates];
-        newCertificates.splice(index, 1);
-        setCertificates(newCertificates);
-        Swal.fire("Deleted!", "The certificate has been removed.", "success");
+        try {
+          const cert = certificates[index];
+
+          // If certificate has a document ID, delete it from the server
+          if (cert.documentId) {
+            const token = getAuthToken();
+            await axios.delete(
+              `${API_BASE_URL}/user/document/${cert.documentId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+          }
+
+          // Remove from local state
+          const newCertificates = [...certificates];
+          newCertificates.splice(index, 1);
+          setCertificates(newCertificates);
+
+          Swal.fire("Deleted!", "The certificate has been removed.", "success");
+        } catch (error) {
+          console.error("Error deleting certificate:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to delete the certificate",
+          });
+        }
       }
     });
   };
-  const handleRemoveAward = (index: number) => {
+
+  const handleRemoveAward = async (index: number) => {
     Swal.fire({
       title: "Are you sure?",
       text: "Do you want to delete this award?",
@@ -230,56 +400,180 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       confirmButtonColor: "#d33",
       cancelButtonColor: "#3085d6",
       confirmButtonText: "Yes, delete it!",
-    }).then((result) => {
+    }).then(async (result) => {
       if (result.isConfirmed) {
-        const newAwards = [...awards];
-        newAwards.splice(index, 1);
-        setAwards(newAwards);
-        Swal.fire("Deleted!", "The award has been removed.", "success");
+        try {
+          const award = awards[index];
+
+          // If award has a document ID, delete it from the server
+          if (award.documentId) {
+            const token = getAuthToken();
+            await axios.delete(
+              `${API_BASE_URL}/user/document/${award.documentId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+          }
+
+          // Remove from local state
+          const newAwards = [...awards];
+          newAwards.splice(index, 1);
+          setAwards(newAwards);
+
+          Swal.fire("Deleted!", "The award has been removed.", "success");
+        } catch (error) {
+          console.error("Error deleting award:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to delete the award",
+          });
+        }
       }
     });
   };
+
   // Handle image upload for certificates and awards
-  const handleCertificateImageUpload = (
+  const handleCertificateImageUpload = async (
     index: number,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        const newCertificates = [...certificates];
-        newCertificates[index] = {
-          ...newCertificates[index],
-          imageUrl: event.target.result as string,
-        };
-        setCertificates(newCertificates);
+    try {
+      setIsUploading(true);
+
+      // Create form data for document upload
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append(
+        "title",
+        certificates[index].title || `Certificate ${index + 1}`
+      );
+      formData.append("issuedBy", certificates[index].issuedBy || "");
+      formData.append(
+        "issuedDate",
+        certificates[index].issuedDate || new Date().toISOString().split("T")[0]
+      );
+      formData.append("type", "certificate");
+      if (certificates[index].description) {
+        formData.append("description", certificates[index].description);
       }
-    };
-    reader.readAsDataURL(file);
+
+      // Upload document
+      const token = getAuthToken();
+      const response = await axios.post(
+        `${API_BASE_URL}/user/document`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Document upload response:", response.data);
+
+      // Update certificate with document ID and image URL
+      const newCertificates = [...certificates];
+      newCertificates[index] = {
+        ...newCertificates[index],
+        documentId: response.data.id || response.data._id,
+        imageUrl: response.data.url,
+      };
+      setCertificates(newCertificates);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Certificate image uploaded successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Error uploading certificate image:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: "Failed to upload certificate image",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleAwardImageUpload = (
+  const handleAwardImageUpload = async (
     index: number,
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      if (event.target?.result) {
-        const newAwards = [...awards];
-        newAwards[index] = {
-          ...newAwards[index],
-          imageUrl: event.target.result as string,
-        };
-        setAwards(newAwards);
+    try {
+      setIsUploading(true);
+
+      // Create form data for document upload
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("title", awards[index].title || `Award ${index + 1}`);
+      formData.append("issuedBy", awards[index].issuedBy || "");
+      formData.append(
+        "issuedDate",
+        awards[index].issuedDate || new Date().toISOString().split("T")[0]
+      );
+      formData.append("type", "award");
+      if (awards[index].description) {
+        formData.append("description", awards[index].description);
       }
-    };
-    reader.readAsDataURL(file);
+
+      // Upload document
+      const token = getAuthToken();
+      const response = await axios.post(
+        `${API_BASE_URL}/user/document`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Document upload response:", response.data);
+
+      // Update award with document ID and image URL
+      const newAwards = [...awards];
+      newAwards[index] = {
+        ...newAwards[index],
+        documentId: response.data.id || response.data._id,
+        imageUrl: response.data.url,
+      };
+      setAwards(newAwards);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Award image uploaded successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Error uploading award image:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: "Failed to upload award image",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   // Handle social media changes
@@ -362,6 +656,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       size="sm"
                       className="text-red-500 hover:text-red-700"
                       onClick={() => handleRemoveCertificate(index)}
+                      disabled={isUploading}
                     >
                       <FontAwesomeIcon icon={faTrash} />
                     </Button>
@@ -380,15 +675,40 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       required
                     />
                   </div>
-                  <input
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      ref={(el) => {
-                        certificateFileRefs.current[index] = el;
-                      }}
-                      onChange={(e) => handleCertificateImageUpload(index, e)}
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Issued By
+                    </Label>
+                    <Input
+                      value={cert.issuedBy || ""}
+                      onChange={(e) =>
+                        handleCertificateChange(
+                          index,
+                          "issuedBy",
+                          e.target.value
+                        )
+                      }
+                      placeholder="Organization name"
+                      className="w-full dark:bg-gray-700"
                     />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Issue Date
+                    </Label>
+                    <Input
+                      type="date"
+                      value={cert.issuedDate || ""}
+                      onChange={(e) =>
+                        handleCertificateChange(
+                          index,
+                          "issuedDate",
+                          e.target.value
+                        )
+                      }
+                      className="w-full dark:bg-gray-700"
+                    />
+                  </div>
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Description (Optional)
@@ -408,18 +728,18 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   </div>
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                      Image (Optional)
+                      Certificate Image
                     </Label>
                     <div className="flex flex-col space-y-2">
-                    <input
-                     type="file"
-                      accept="image/*"
-                      className="hidden"
-                       ref={(el) => {
-                        certificateFileRefs.current[index] = el;
-                      }}
-                     onChange={(e) => handleCertificateImageUpload(index, e)}
-                     />
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        ref={(el) => {
+                          certificateFileRefs.current[index] = el;
+                        }}
+                        onChange={(e) => handleCertificateImageUpload(index, e)}
+                      />
                       {cert.imageUrl ? (
                         <div className="relative">
                           <img
@@ -433,7 +753,9 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                             onClick={() =>
                               certificateFileRefs.current[index]?.click()
                             }
-                            className="mt-2" >
+                            className="mt-2"
+                            disabled={isUploading}
+                          >
                             <FontAwesomeIcon icon={faUpload} className="mr-2" />
                             Change Image
                           </Button>
@@ -445,9 +767,41 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                             certificateFileRefs.current[index]?.click()
                           }
                           className="flex items-center justify-center border-dashed w-full h-32"
+                          disabled={isUploading}
                         >
-                          <FontAwesomeIcon icon={faImage} className="mr-2" />
-                          Upload Image
+                          {isUploading ? (
+                            <div className="flex items-center">
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Uploading...
+                            </div>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon
+                                icon={faImage}
+                                className="mr-2"
+                              />
+                              Upload Image
+                            </>
+                          )}
                         </Button>
                       )}
                     </div>
@@ -459,6 +813,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 variant="outline"
                 className="w-full mt-4"
                 onClick={handleAddCertificate}
+                disabled={isUploading}
               >
                 <FontAwesomeIcon icon={faPlus} className="mr-1" /> Add New
                 Certificate
@@ -468,6 +823,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 <Button
                   variant="outline"
                   onClick={() => setIsEditingCertificates(false)}
+                  disabled={isUploading}
                 >
                   <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
                 </Button>
@@ -475,50 +831,90 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   variant="default"
                   className="bg-red-600 hover:bg-red-700"
                   onClick={saveCertificates}
+                  disabled={isUploading}
                 >
-                  <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                  {isUploading ? (
+                    <div className="flex items-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </div>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
           ) : (
             <>
               <div className="space-y-4">
-                  {certificates.length > 0 ? (
-                    certificates.map((cert, index) => (
-                      <div
-                        key={cert.id || index}
-                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
-                      >
-                        {/* Image Section */}
-                        {cert.imageUrl && (
-                          <div className="w-20 h-15 flex-shrink-0">
-                            <img
-                              src={cert.imageUrl}
-                              alt={cert.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-
-                        {/* Text Content */}
-                        <div className="p-4">
-                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
-                            {cert.title}
-                          </h4>
-                          {cert.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {cert.description}
-                            </p>
-                          )}
+                {certificates.length > 0 ? (
+                  certificates.map((cert, index) => (
+                    <div
+                      key={cert.id || index}
+                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                    >
+                      {/* Image Section */}
+                      {cert.imageUrl && (
+                        <div className="w-20 h-15 flex-shrink-0">
+                          <img
+                            src={cert.imageUrl}
+                            alt={cert.title}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 italic">No certificates added yet.</p>
-                  )}
-                </div>
+                      )}
 
-                  {!isExpertView && (
+                      {/* Text Content */}
+                      <div className="p-4">
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                          {cert.title}
+                        </h4>
+                        {cert.issuedBy && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Issued by: {cert.issuedBy}
+                            {cert.issuedDate &&
+                              ` (${new Date(
+                                cert.issuedDate
+                              ).toLocaleDateString()})`}
+                          </p>
+                        )}
+                        {cert.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {cert.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 italic">
+                    No certificates added yet.
+                  </p>
+                )}
+              </div>
+
+              {!isExpertView && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -554,6 +950,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       size="sm"
                       className="text-red-500 hover:text-red-700"
                       onClick={() => handleRemoveAward(index)}
+                      disabled={isUploading}
                     >
                       <FontAwesomeIcon icon={faTrash} />
                     </Button>
@@ -574,6 +971,32 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   </div>
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Issued By
+                    </Label>
+                    <Input
+                      value={award.issuedBy || ""}
+                      onChange={(e) =>
+                        handleAwardChange(index, "issuedBy", e.target.value)
+                      }
+                      placeholder="Organization name"
+                      className="w-full dark:bg-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Issue Date
+                    </Label>
+                    <Input
+                      type="date"
+                      value={award.issuedDate || ""}
+                      onChange={(e) =>
+                        handleAwardChange(index, "issuedDate", e.target.value)
+                      }
+                      className="w-full dark:bg-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                       Description (Optional)
                     </Label>
                     <Textarea
@@ -587,24 +1010,24 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   </div>
                   <div>
                     <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                      Image (Optional)
+                      Award Image
                     </Label>
                     <div className="flex flex-col space-y-2">
-                    <input
-                      type="file"
-                       accept="image/*"
-                      className="hidden"
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
                         ref={(el) => {
-                       awardFileRefs.current[index] = el;
-                      }}
+                          awardFileRefs.current[index] = el;
+                        }}
                         onChange={(e) => handleAwardImageUpload(index, e)}
-                       />
+                      />
                       {award.imageUrl ? (
                         <div className="relative">
                           <img
                             src={award.imageUrl}
                             alt={award.title || `Award ${index}`}
-                            className="w-10 h-10 object-cover  rounded-md mb-2"
+                            className="w-10 h-10 object-cover rounded-md mb-2"
                           />
                           <Button
                             variant="outline"
@@ -613,6 +1036,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                               awardFileRefs.current[index]?.click()
                             }
                             className="mt-2"
+                            disabled={isUploading}
                           >
                             <FontAwesomeIcon icon={faUpload} className="mr-2" />
                             Change Image
@@ -623,9 +1047,41 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                           variant="outline"
                           onClick={() => awardFileRefs.current[index]?.click()}
                           className="flex items-center justify-center border-dashed w-full h-32"
+                          disabled={isUploading}
                         >
-                          <FontAwesomeIcon icon={faImage} className="mr-2" />
-                          Upload Image
+                          {isUploading ? (
+                            <div className="flex items-center">
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Uploading...
+                            </div>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon
+                                icon={faImage}
+                                className="mr-2"
+                              />
+                              Upload Image
+                            </>
+                          )}
                         </Button>
                       )}
                     </div>
@@ -637,6 +1093,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 variant="outline"
                 className="w-full mt-4"
                 onClick={handleAddAward}
+                disabled={isUploading}
               >
                 <FontAwesomeIcon icon={faPlus} className="mr-1" /> Add New Award
               </Button>
@@ -645,6 +1102,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 <Button
                   variant="outline"
                   onClick={() => setIsEditingAwards(false)}
+                  disabled={isUploading}
                 >
                   <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
                 </Button>
@@ -652,50 +1110,88 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   variant="default"
                   className="bg-red-600 hover:bg-red-700"
                   onClick={saveAwards}
+                  disabled={isUploading}
                 >
-                  <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                  {isUploading ? (
+                    <div className="flex items-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </div>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
           ) : (
             <>
-           <div className="space-y-4">
-                  {awards.length > 0 ? (
-                    awards.map((award, index) => (
-                      <div
-                        key={award.id || index}
-                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
-                      >
-                        {/* Image Section */}
-                        {award.imageUrl && (
-                          <div className="w-20 h-15 flex-shrink-0">
-                            <img
-                              src={award.imageUrl}
-                              alt={award.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-
-                        {/* Text Content */}
-                        <div className="p-4">
-                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
-                            {award.title}
-                          </h4>
-                          {award.description && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              {award.description}
-                            </p>
-                          )}
+              <div className="space-y-4">
+                {awards.length > 0 ? (
+                  awards.map((award, index) => (
+                    <div
+                      key={award.id || index}
+                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                    >
+                      {/* Image Section */}
+                      {award.imageUrl && (
+                        <div className="w-20 h-15 flex-shrink-0">
+                          <img
+                            src={award.imageUrl}
+                            alt={award.title}
+                            className="w-full h-full object-cover"
+                          />
                         </div>
+                      )}
+
+                      {/* Text Content */}
+                      <div className="p-4">
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                          {award.title}
+                        </h4>
+                        {award.issuedBy && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Issued by: {award.issuedBy}
+                            {award.issuedDate &&
+                              ` (${new Date(
+                                award.issuedDate
+                              ).toLocaleDateString()})`}
+                          </p>
+                        )}
+                        {award.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {award.description}
+                          </p>
+                        )}
                       </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500 dark:text-gray-400 italic">
-                      No awards added yet.
-                    </p>
-                  )}
-                </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 italic">
+                    No awards added yet.
+                  </p>
+                )}
+              </div>
 
               {!isExpertView && (
                 <Button
@@ -723,7 +1219,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* LinkedIn */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-              <FaLinkedinIn size={20} />
+                <FaLinkedinIn size={20} />
               </div>
               <Input
                 placeholder="LinkedIn URL (e.g. linkedin.com/in/username)"
@@ -736,7 +1232,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Instagram */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-pink-50 dark:bg-pink-900/20">
-              <FaInstagram size={20} />
+                <FaInstagram size={20} />
               </div>
               <Input
                 placeholder="Instagram URL (e.g. instagram.com/username)"
@@ -751,7 +1247,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Facebook */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-              <FaFacebookF size={20} />
+                <FaFacebookF size={20} />
               </div>
               <Input
                 placeholder="Facebook URL (e.g. facebook.com/username)"
@@ -764,7 +1260,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Twitter */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-         <FaTwitter size={20} />
+                <FaTwitter size={20} />
               </div>
               <Input
                 placeholder="Twitter URL (e.g. twitter.com/username)"
@@ -792,45 +1288,42 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           </div>
         ) : (
           <>
-            <div className="flex gap-5 ">
-            
-            <div className="flex justify-center gap-6 mt-4">
-      {icons.map((item, index) => (
-        <a
-          key={index}
-          href={item.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
-          style={{
-            background: item.icon === faInstagram 
-              ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)' 
-              : item.color
-          }}
-        >
-          <FontAwesomeIcon icon={item.icon} />
-        </a>
-      ))}
-    </div> 
-             
-
-             
+            <div className="flex gap-5">
+              <div className="flex justify-center gap-6 mt-4">
+                {icons.map((item, index) => (
+                  <a
+                    key={index}
+                    href={socials[item.link as keyof typeof socials] || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg ${
+                      !socials[item.link as keyof typeof socials]
+                        ? "opacity-50"
+                        : ""
+                    }`}
+                    style={{
+                      background:
+                        item.icon === faInstagram
+                          ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                          : item.color,
+                    }}
+                  >
+                    <FontAwesomeIcon icon={item.icon} />
+                  </a>
+                ))}
+              </div>
             </div>
-            {/* Only show edit button if not expert view and there's at least one social */}
-            {!isExpertView &&
-              (socials.linkedin ||
-                socials.instagram ||
-                socials.facebook ||
-                socials.twitter) && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                  onClick={() => setIsEditingSocials(true)}
-                >
-                  <FontAwesomeIcon icon={faPen} />
-                </Button>
-              )}
+
+            {!isExpertView && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={() => setIsEditingSocials(true)}
+              >
+                <FontAwesomeIcon icon={faPen} />
+              </Button>
+            )}
           </>
         )}
       </Card>

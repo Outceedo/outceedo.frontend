@@ -3,20 +3,27 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import football from "../assets/images/football.jpg";
 import { loginUser, clearError } from "../store/auth-slice";
-import { checkProfileCompletion } from "../store/profile-slice";
+import { checkProfileCompletion } from "../store/profile-slice"; // Import this thunk
 import User from "./user";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector((state) => state.auth);
-  const { status: profileStatus } = useAppSelector((state) => state.profile);
+  // const { status: profileStatus } = useAppSelector((state) => state.profile);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  // localStorage.setItem("role", user?.role);
+  console.log(user);
+  localStorage.setItem("username", user?.username);
+  localStorage.setItem("role", user?.role);
+  localStorage.setItem("userid", user?.role);
+  localStorage.setItem("username", user?.username);
 
   useEffect(() => {
     // Clear any previous errors when component mounts
@@ -47,26 +54,36 @@ const Login: React.FC = () => {
   }, [error]);
 
   useEffect(() => {
-    // Navigate based on role when user logs in
-    if (user) {
+    // Only proceed with navigation if user is logged in and not already redirecting
+    if (user && !isRedirecting) {
       console.log("User logged in:", user); // Debug log
       setLoginSuccess(true);
+      setIsRedirecting(true);
 
-      // Manual redirect based on role
-      const userRole = user.role?.toLowerCase() || "";
+      // Check profile completion and navigate accordingly
+      dispatch(checkProfileCompletion()).then((resultAction) => {
+        // Extract the redirect path from the payload
+        if (checkProfileCompletion.fulfilled.match(resultAction)) {
+          const { redirect } = resultAction.payload;
+          console.log("Redirect path:", redirect);
 
-      // Direct navigation without profile check (simpler approach)
-      setTimeout(() => {
-        if (userRole === "player") {
-          navigate("/details-form");
-        } else if (userRole === "expert") {
-          navigate("/expert/dashboard");
+          // Navigate to the appropriate page
+          navigate(redirect);
         } else {
-          navigate("/home");
+          // Fallback navigation in case of error
+          const userRole = user.role?.toLowerCase() || "";
+
+          if (userRole === "player") {
+            navigate("/player/dashboard");
+          } else if (userRole === "expert") {
+            navigate("/expert/dashboard");
+          } else {
+            navigate("/home");
+          }
         }
-      }, 1000);
+      });
     }
-  }, [user, navigate]);
+  }, [user, navigate, dispatch, isRedirecting]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,12 +225,14 @@ const Login: React.FC = () => {
 
           <button
             type="submit"
-            disabled={isLoading}
+            disabled={isLoading || isRedirecting}
             className={`w-full bg-[#FE221E] text-white py-2 rounded-lg transition duration-300 ${
-              isLoading ? "opacity-70 cursor-not-allowed" : "hover:bg-[#C91C1A]"
+              isLoading || isRedirecting
+                ? "opacity-70 cursor-not-allowed"
+                : "hover:bg-[#C91C1A]"
             }`}
           >
-            {isLoading ? (
+            {isLoading || isRedirecting ? (
               <div className="flex items-center justify-center">
                 <svg
                   className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
@@ -235,7 +254,7 @@ const Login: React.FC = () => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                Logging in...
+                {isRedirecting ? "Redirecting..." : "Logging in..."}
               </div>
             ) : (
               "Login"
@@ -246,7 +265,7 @@ const Login: React.FC = () => {
         {/* Manual Navigation Buttons - REMOVE IN PRODUCTION */}
         <div className="mt-4 flex space-x-2">
           <button
-            onClick={() => navigate("/detailsform")}
+            onClick={() => navigate("/details-form")}
             className="bg-gray-200 px-2 py-1 text-xs rounded"
           >
             Go to Details Form

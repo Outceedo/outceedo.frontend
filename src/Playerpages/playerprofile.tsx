@@ -49,11 +49,8 @@ const fallbackPlayerData = {
   stats: initialStats,
   aboutMe:
     "I am from London, UK. A passionate versatile player with dedication to improving my skills.",
-  certificates: [
-    "Youth Football Academy Certificate",
-    "Junior League MVP 2023",
-  ],
-  awards: ["Best Young Talent 2022", "Regional Championship Winner 2023"],
+  certificates: [],
+  awards: [],
   socials: {
     linkedin: "https://linkedin.com/in/rohan-roshan",
     instagram: "https://instagram.com/rohan.player",
@@ -70,20 +67,24 @@ const Profile: React.FC = () => {
   const dispatch = useAppDispatch();
 
   // Get profile state from Redux store
-  const { currentProfile, status, error } = useAppSelector(
+  // viewedProfile is set by getProfile thunk
+  const { currentProfile, viewedProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
-  const user = useAppSelector((state) => state.auth.user);
 
   // Local state for player stats which might not be directly part of the API response
   const [playerStats, setPlayerStats] = useState(initialStats);
 
   // Fetch profile data on component mount
   useEffect(() => {
-    if (user?.username) {
-      dispatch(getProfile(user.username));
+    // Get username from localStorage as set in the slice code
+    const username = localStorage.getItem("username");
+    console.log(username);
+    if (username) {
+      // Dispatch the getProfile action with the username
+      dispatch(getProfile(username));
     }
-  }, [dispatch, user]);
+  }, [dispatch]);
 
   // Get stats from localStorage if available
   useEffect(() => {
@@ -102,7 +103,7 @@ const Profile: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Dispatch action to update profile photo
+    // Dispatch action to update profile photo using the thunk defined in the slice
     dispatch(updateProfilePhoto(file));
 
     // Reset the input
@@ -111,24 +112,87 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Merge API profile data with local data
-  const playerData = currentProfile
-    ? {
-        ...fallbackPlayerData,
-        ...currentProfile,
-        // Keep local stats if they're not provided by the API
-        stats: playerStats,
-        // Use profile image from API if available
-        profileImage:
-          currentProfile.profileImage || fallbackPlayerData.profileImage,
+  // Format the profile data from the API response for display
+  const formatProfileData = () => {
+    // Use the profile that was fetched (viewedProfile)
+    const profile = viewedProfile;
+    console.log("Profile data:", profile);
+
+    if (!profile) return fallbackPlayerData;
+
+    // Filter certificates and awards from documents
+    const certificates =
+      profile.documents?.filter((doc) => doc.type === "certificate") || [];
+    const awards =
+      profile.documents?.filter((doc) => doc.type === "award") || [];
+
+    // Get media items (photos/videos)
+    const mediaItems = profile.uploads || [];
+
+    // Get profile photo from uploads if available
+    let profileImage = fallbackPlayerData.profileImage;
+    if (profile.photo) {
+      profileImage = profile.photo;
+    } else if (mediaItems.length > 0) {
+      const profilePhoto = mediaItems.find((item) => item.type === "photo");
+      if (profilePhoto) {
+        profileImage = profilePhoto.url;
       }
-    : fallbackPlayerData;
+    }
+
+    return {
+      id: profile.id || fallbackPlayerData.id,
+      name:
+        `${profile.firstName || ""} ${profile.lastName || ""}`.trim() ||
+        fallbackPlayerData.name,
+      age: profile.age || fallbackPlayerData.age,
+      height: profile.height
+        ? `${profile.height}cm`
+        : fallbackPlayerData.height,
+      weight: profile.weight
+        ? `${profile.weight}kg`
+        : fallbackPlayerData.weight,
+      location:
+        profile.city && profile.country
+          ? `${profile.city}, ${profile.country}`
+          : fallbackPlayerData.location,
+      club: profile.company || fallbackPlayerData.club,
+      languages:
+        Array.isArray(profile.language) && profile.language.length > 0
+          ? profile.language
+          : fallbackPlayerData.languages,
+      profileImage: profileImage,
+      stats: playerStats, // Use local stats if not provided by API
+      aboutMe: profile.bio || fallbackPlayerData.aboutMe,
+
+      // Process certificates from documents array
+      certificates:
+        certificates.length > 0
+          ? certificates
+          : fallbackPlayerData.certificates,
+
+      // Process awards from documents array
+      awards: awards.length > 0 ? awards : fallbackPlayerData.awards,
+
+      // Handle social links
+      socials: profile.socialLinks || fallbackPlayerData.socials,
+
+      // Store original uploads data for media tab
+      uploads: mediaItems,
+
+      // Store original documents data for certificates and awards tabs
+      documents: profile.documents || [],
+    };
+  };
+
+  // Get the formatted player data
+  const playerData = formatProfileData();
 
   // Calculate OVR score
   const ovrScore = calculateOVR(playerData.stats);
 
   // Show loading state
-  if (status === "loading" && !currentProfile) {
+  if (status === "loading" && !viewedProfile) {
     return (
       <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center">
         <div className="text-center">
@@ -148,9 +212,12 @@ const Profile: React.FC = () => {
         <div className="text-center text-red-600 p-4 bg-red-100 dark:bg-red-900 dark:text-red-200 rounded-lg">
           <p>Error loading profile: {error}</p>
           <button
-            onClick={() =>
-              user?.username && dispatch(getProfile(user.username))
-            }
+            onClick={() => {
+              const username = localStorage.getItem("username");
+              if (username) {
+                dispatch(getProfile(username));
+              }
+            }}
             className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
           >
             Try Again
@@ -272,13 +339,32 @@ const Profile: React.FC = () => {
                     <ProfileDetails
                       playerData={playerData}
                       isExpertView={false}
-                      onUpdate={(data) => dispatch(updateProfile(data))}
+                      onUpdate={(data) => {
+                        // Format data for update according to the backend schema
+                        const updateData = {
+                          firstName: data.name?.split(" ")[0] || "",
+                          lastName: data.name?.split(" ")[1] || "",
+                          bio: data.aboutMe,
+                          age: parseInt(data.age.toString()),
+                          height: parseInt(data.height.toString()),
+                          weight: parseInt(data.weight.toString()),
+                          city: data.location?.split(", ")[0] || "",
+                          country: data.location?.split(", ")[1] || "",
+                          company: data.club,
+                          language: data.languages,
+                          socialLinks: data.socials,
+                        };
+
+                        // Dispatch update profile action with the formatted data
+                        dispatch(updateProfile(updateData));
+                      }}
                     />
                   )}
                   {activeTab === "media" && (
                     <PlayerMedia
                       playerId={playerData.id}
                       isExpertView={false}
+                      playerdata={playerData}
                     />
                   )}
                   {activeTab === "reviews" && (

@@ -1,33 +1,135 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCamera, faVideo, faUpload, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCamera,
+  faVideo,
+  faUpload,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import MediaUpload from "./MediaUpload";
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import Swal from "sweetalert2";
+import axios from "axios";
+
 interface UploadItem {
-  id: number;
+  id: string | number;
   title: string;
   file: File | null;
   preview: string | null;
   type: "photo" | "video";
+  url?: string;
 }
 
-const Media: React.FC = () => {
+interface MediaProps {
+  playerdata?: any; // Optional player data with uploads
+  isExpertView?: boolean;
+}
+
+const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
+
+const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
   const [activeTab, setActiveTab] = useState<string>("All");
   const [previewItem, setPreviewItem] = useState<UploadItem | null>(null);
   const [media, setMedia] = useState<UploadItem[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<number[]>([]);
+  const [selectedMedia, setSelectedMedia] = useState<(string | number)[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Get auth token from localStorage
+  const getAuthToken = (): string | null => {
+    return localStorage.getItem("token");
+  };
 
   useEffect(() => {
-    const savedMedia = JSON.parse(localStorage.getItem("savedMedia") || "[]");
-    setMedia(savedMedia);
-  }, []);
+    // Check if player data with uploads is available
+    if (
+      playerdata &&
+      playerdata.uploads &&
+      Array.isArray(playerdata.uploads) &&
+      playerdata.uploads.length > 0
+    ) {
+      console.log("Using media from playerdata:", playerdata.uploads);
 
-  const handleMediaUpdate = () => {
-    const updatedMedia = JSON.parse(localStorage.getItem("savedMedia") || "[]");
-    setMedia(updatedMedia);
+      // Transform uploads to match our UploadItem format
+      const mediaItems: UploadItem[] = playerdata.uploads.map((item: any) => ({
+        id: item.id || item._id,
+        title: item.title || "Untitled",
+        file: null,
+        preview: item.url,
+        url: item.url,
+        type: item.type === "video" ? "video" : "photo",
+      }));
+
+      setMedia(mediaItems);
+      setIsLoading(false);
+    } else {
+      // Fetch media from API if no player data
+      fetchMediaFromAPI();
+    }
+  }, [playerdata]);
+
+  // Fetch media from API
+  const fetchMediaFromAPI = async () => {
+    setIsLoading(true);
+    try {
+      const token = getAuthToken();
+      const username = localStorage.getItem("username");
+
+      if (!token || !username) {
+        console.error("No auth token or username found");
+
+        // Use local storage as fallback if API access not available
+        const savedMedia = JSON.parse(
+          localStorage.getItem("savedMedia") || "[]"
+        );
+        setMedia(savedMedia);
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await axios.get(`${API_BASE_URL}/user/media`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.data && Array.isArray(response.data)) {
+        // Transform API response to match our UploadItem format
+        const mediaItems: UploadItem[] = response.data.map((item: any) => ({
+          id: item.id || item._id,
+          title: item.title || "Untitled",
+          file: null,
+          preview: item.url,
+          url: item.url,
+          type: item.type === "video" ? "video" : "photo",
+        }));
+
+        setMedia(mediaItems);
+
+        // Update local storage for offline access
+        localStorage.setItem("savedMedia", JSON.stringify(mediaItems));
+      }
+    } catch (error) {
+      console.error("Error fetching media:", error);
+
+      // Use local storage as fallback if API fails
+      const savedMedia = JSON.parse(localStorage.getItem("savedMedia") || "[]");
+      setMedia(savedMedia);
+
+      Swal.fire({
+        icon: "error",
+        title: "Failed to load media",
+        text: "There was a problem loading your media files.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleMediaUpdate = async () => {
+    // Refetch media from API after update
+    fetchMediaFromAPI();
   };
 
   const filteredMedia =
@@ -36,25 +138,64 @@ const Media: React.FC = () => {
       : media.filter((item) =>
           activeTab === "Photos" ? item.type === "photo" : item.type === "video"
         );
-        const handleDeleteSingle = (id: number) => {
+
+  const handleDeleteSingle = async (id: string | number) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this media item?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const token = getAuthToken();
+
+          if (token) {
+            // Delete from API if we have a token
+            await axios.delete(`${API_BASE_URL}/user/media/${id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+          }
+
+          // Update local state and localStorage
+          const updated = media.filter((item) => item.id !== id);
+          setMedia(updated);
+          setSelectedMedia(selectedMedia.filter((mid) => mid !== id));
+          localStorage.setItem("savedMedia", JSON.stringify(updated));
+
+          Swal.fire("Deleted!", "The media item has been removed.", "success");
+        } catch (error) {
+          console.error("Error deleting media:", error);
+
+          // Update local state even if API call fails
+          const updated = media.filter((item) => item.id !== id);
+          setMedia(updated);
+          setSelectedMedia(selectedMedia.filter((mid) => mid !== id));
+          localStorage.setItem("savedMedia", JSON.stringify(updated));
+
           Swal.fire({
-            title: "Are you sure?",
-            text: "Do you want to delete this media item?",
-            icon: "warning",
-            showCancelButton: true,
-            confirmButtonColor: "#d33",
-            cancelButtonColor: "#3085d6",
-            confirmButtonText: "Yes, delete it!",
-          }).then((result) => {
-            if (result.isConfirmed) {
-              const updated = media.filter((item) => item.id !== id);
-              setMedia(updated);
-              setSelectedMedia(selectedMedia.filter((mid) => mid !== id));
-              localStorage.setItem("savedMedia", JSON.stringify(updated));
-              Swal.fire("Deleted!", "The media item has been removed.", "success");
-            }
+            icon: "error",
+            title: "Delete Failed",
+            text: "Failed to delete the media item from server, but it was removed locally.",
           });
-        };
+        }
+      }
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 w-full -ml-4 -mt-4">
       {/* Top Tabs & Upload */}
@@ -71,28 +212,34 @@ const Media: React.FC = () => {
                 ? "bg-yellow-200 dark:bg-yellow-400 font-semibold"
                 : "bg-transparent text-gray-600 hover:text-black dark:text-gray-300"
             }`}
-            onClick={() => setActiveTab(tab.name as "All" | "Photos" | "Videos")}
+            onClick={() =>
+              setActiveTab(tab.name as "All" | "Photos" | "Videos")
+            }
           >
             {tab.icon && <FontAwesomeIcon icon={tab.icon} />}
             {tab.name}
           </button>
         ))}
 
-        <div className="flex justify-end w-full">
-          <Button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-[#FE221E] hover:bg-red-500 text-white font-semibold px-5 py-2 rounded-lg flex items-center gap-2"
-          >
-            <FontAwesomeIcon icon={faUpload} />
-            Upload
-          </Button>
-        </div>
+        {!isExpertView && (
+          <div className="flex justify-end w-full">
+            <Button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#FE221E] hover:bg-red-500 text-white font-semibold px-5 py-2 rounded-lg flex items-center gap-2"
+            >
+              <FontAwesomeIcon icon={faUpload} />
+              Upload
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Media Section */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6">
         {filteredMedia.length === 0 ? (
-          <p className="text-gray-400 text-center w-full">No Media Available</p>
+          <p className="text-gray-400 text-center col-span-3">
+            No Media Available
+          </p>
         ) : (
           <>
             {activeTab === "All" && (
@@ -106,14 +253,15 @@ const Media: React.FC = () => {
                     {media
                       .filter((item) => item.type === "photo")
                       .map((item) => (
-                        <MediaCard 
+                        <MediaCard
                           key={item.id}
                           item={item}
                           selectedMedia={selectedMedia}
                           onDelete={handleDeleteSingle}
                           onPreview={() => setPreviewItem(item)}
                           className="w-fit h-40"
-                          />
+                          isExpertView={isExpertView}
+                        />
                       ))}
                   </>
                 )}
@@ -133,6 +281,7 @@ const Media: React.FC = () => {
                           selectedMedia={selectedMedia}
                           onDelete={handleDeleteSingle}
                           onPreview={() => setPreviewItem(item)}
+                          isExpertView={isExpertView}
                         />
                       ))}
                   </>
@@ -148,6 +297,7 @@ const Media: React.FC = () => {
                   selectedMedia={selectedMedia}
                   onDelete={handleDeleteSingle}
                   onPreview={() => setPreviewItem(item)}
+                  isExpertView={isExpertView}
                 />
               ))}
           </>
@@ -158,7 +308,10 @@ const Media: React.FC = () => {
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
           <div className="relative">
-            <MediaUpload onClose={() => setIsModalOpen(false)} onMediaUpdate={handleMediaUpdate} />
+            <MediaUpload
+              onClose={() => setIsModalOpen(false)}
+              onMediaUpdate={handleMediaUpdate}
+            />
           </div>
         </div>
       )}
@@ -184,13 +337,13 @@ const Media: React.FC = () => {
             </h2>
             {previewItem.type === "photo" ? (
               <img
-                src={previewItem.preview || ""}
+                src={previewItem.preview || previewItem.url || ""}
                 alt={previewItem.title}
                 className="w-fit max-h-[500px] object-contain"
               />
             ) : (
               <video
-                src={previewItem.preview || ""}
+                src={previewItem.preview || previewItem.url || ""}
                 controls
                 className="w-fit max-h-[500px] rounded-lg"
               />
@@ -206,22 +359,29 @@ export default Media;
 
 //  Reusable MediaCard Component
 interface UploadItem {
-  id: number;
+  id: string | number;
   title: string;
   file: File | null;
   preview: string | null;
   type: "photo" | "video";
+  url?: string;
 }
 
 interface MediaCardProps {
   item: UploadItem;
-  selectedMedia: number[];
-  onDelete: (id: number) => void;
+  selectedMedia: (string | number)[];
+  onDelete: (id: string | number) => void;
   onPreview: () => void;
   className?: string;
+  isExpertView?: boolean;
 }
 
-const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview, }) => {
+const MediaCard: React.FC<MediaCardProps> = ({
+  item,
+  onDelete,
+  onPreview,
+  isExpertView = false,
+}) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -238,42 +398,43 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview, }) => 
 
   return (
     <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 ">
-      {/* Three-dot delete menu */}
-      <div className="absolute top-2 right-2 z-10" ref={menuRef}>
-        <Button
-          className="text-gray-100 dark:text-white text-lg"
-          onClick={() => setMenuOpen((prev) => !prev)}
-        >
-          ⋮
-        </Button>
-        {menuOpen && (
-          <div className="absolute right-0 mt-1 bg-white dark:bg-gray-800 shadow-md rounded-md">
-            <Button
-              onClick={() => {
-                onDelete(item.id); // Corrected here
-                setMenuOpen(false);
-              }}
-              className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-gray-700 w-full text-left"
-            >
-              <FontAwesomeIcon icon={faTrash} className="mr-2" />
-              Delete
-            </Button>
-          </div>
-        )}
-      </div>
+      {/* Three-dot delete menu - Only show if not in expert view */}
+      {!isExpertView && (
+        <div className="absolute top-2 right-2 z-10" ref={menuRef}>
+          <Button
+            className="text-gray-100 dark:text-white text-lg"
+            onClick={() => setMenuOpen((prev) => !prev)}
+          >
+            ⋮
+          </Button>
+          {menuOpen && (
+            <div className="absolute right-0 mt-1 bg-white dark:bg-gray-800 shadow-md rounded-md">
+              <Button
+                onClick={() => {
+                  onDelete(item.id);
+                  setMenuOpen(false);
+                }}
+                className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-gray-700 w-full text-left"
+              >
+                <FontAwesomeIcon icon={faTrash} className="mr-2" />
+                Delete
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Preview on Click */}
       <div onClick={onPreview} className="cursor-pointer">
         {item.type === "photo" ? (
           <img
-            src={item.preview || ""}
+            src={item.preview || item.url || ""}
             alt={item.title}
             className="w-full h-40 object-cover rounded-lg mt-2"
           />
         ) : (
           <video
-            src={item.preview || ""}
-            controls
+            src={item.preview || item.url || ""}
             className="w-full h-40 rounded-lg mt-2"
           />
         )}
@@ -286,6 +447,3 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview, }) => 
     </div>
   );
 };
-
-
-//ExpertMedia

@@ -2,7 +2,6 @@ import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { authService } from "../apiConfig";
 
-
 interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -14,12 +13,34 @@ interface AuthState {
   resetPasswordSuccess: boolean;
   emailSent: boolean;
   forgotPasswordError: string | null;
+  tokenValidationInProgress: boolean;
 }
 
+// IMPORTANT: Initialize auth state immediately on load
+// Check if token exists in localStorage on initialization
+const token = localStorage.getItem("token");
+const username = localStorage.getItem("username");
+const role = localStorage.getItem("role");
+
+// Create initial user object right away if we have the data
+const initialUser =
+  token && username
+    ? {
+        username,
+        role,
+        id: localStorage.getItem("userId") || undefined,
+        email: localStorage.getItem("email") || undefined,
+        firstName: localStorage.getItem("firstName") || undefined,
+        lastName: localStorage.getItem("lastName") || undefined,
+      }
+    : null;
+
 const initialState: AuthState = {
-  isAuthenticated: false,
+  // Set isAuthenticated based on token presence IMMEDIATELY
+  isAuthenticated: !!token,
   isLoading: false,
-  user: null,
+  // Set user based on localStorage data IMMEDIATELY
+  user: initialUser,
   registrationSuccess: false,
   error: null,
   resetPasswordLoading: false,
@@ -27,7 +48,13 @@ const initialState: AuthState = {
   resetPasswordSuccess: false,
   emailSent: false,
   forgotPasswordError: null,
+  tokenValidationInProgress: !!token, // Track validation status
 };
+
+// If token exists, set it in axios defaults immediately
+if (token) {
+  authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+}
 
 // Define a type for the thunk API
 interface ThunkApiConfig {
@@ -57,9 +84,18 @@ export const loginUser = createAsyncThunk<any, any, ThunkApiConfig>(
   async (formData, { rejectWithValue }) => {
     try {
       const response = await authService.post("/login", formData);
-      const { token } = response.data;
+      const { token, user } = response.data;
       if (token) {
-        localStorage.setItem("accessToken", token);
+        localStorage.setItem("token", token);
+        // Store complete user data in localStorage
+        if (user) {
+          localStorage.setItem("username", user.username || "");
+          localStorage.setItem("role", user.role || "");
+          if (user.id) localStorage.setItem("userId", user.id);
+          if (user.email) localStorage.setItem("email", user.email);
+          if (user.firstName) localStorage.setItem("firstName", user.firstName);
+          if (user.lastName) localStorage.setItem("lastName", user.lastName);
+        }
         authService.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${token}`;
@@ -129,21 +165,114 @@ export const changePassword = createAsyncThunk<any, any, ThunkApiConfig>(
 // Validate Token
 export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
   "auth/validateToken",
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, dispatch }) => {
     try {
+      // Get token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        return rejectWithValue("No token found");
+      }
+
+      // Set authorization header
+      authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+      // Before making the API call, set a basic user object from localStorage
+      // to prevent flashing of login screen
+      const username = localStorage.getItem("username");
+      const role = localStorage.getItem("role");
+      const userId = localStorage.getItem("userId");
+      const email = localStorage.getItem("email");
+      const firstName = localStorage.getItem("firstName");
+      const lastName = localStorage.getItem("lastName");
+
+      // If we have user data in localStorage, dispatch a setUser action
+      if (username && role) {
+        dispatch(
+          setUser({
+            user: {
+              username,
+              role,
+              id: userId,
+              email,
+              firstName,
+              lastName,
+            },
+          })
+        );
+      }
+
+      // Now proceed with actual token validation
       const response = await authService.get("/validate");
+
+      // If validation is successful, update user data in localStorage
+      if (response.data && response.data.user) {
+        const user = response.data.user;
+        localStorage.setItem("username", user.username || "");
+        localStorage.setItem("role", user.role || "");
+        if (user.id) localStorage.setItem("userId", user.id);
+        if (user.email) localStorage.setItem("email", user.email);
+        if (user.firstName) localStorage.setItem("firstName", user.firstName);
+        if (user.lastName) localStorage.setItem("lastName", user.lastName);
+      }
+
       return response.data;
     } catch (err) {
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
-      localStorage.removeItem("accessToken");
-      delete authService.defaults.headers.common["Authorization"];
+
+      // Don't clear auth data on network errors - only on actual authentication failures
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        localStorage.removeItem("role");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("email");
+        localStorage.removeItem("firstName");
+        localStorage.removeItem("lastName");
+        delete authService.defaults.headers.common["Authorization"];
+      }
+
       return rejectWithValue(
         (error.response?.data as string) || "Token validation failed"
       );
     }
   }
 );
+
+// Reconstruct user from localStorage (for page reloads)
+export const reconstructUserFromStorage = createAsyncThunk<
+  any,
+  void,
+  ThunkApiConfig
+>("auth/reconstructUserFromStorage", async (_, { dispatch }) => {
+  const token = localStorage.getItem("token");
+  const username = localStorage.getItem("username");
+  const role = localStorage.getItem("role");
+  const userId = localStorage.getItem("userId");
+  const email = localStorage.getItem("email");
+  const firstName = localStorage.getItem("firstName");
+  const lastName = localStorage.getItem("lastName");
+
+  if (token) {
+    // Set token in axios headers
+    authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
+
+    // Return user object from localStorage while token validation is in progress
+    return {
+      user: {
+        username,
+        role,
+        id: userId,
+        email,
+        firstName,
+        lastName,
+      },
+    };
+  }
+
+  return { user: null };
+});
 
 // Forgot Password
 export const forgotPassword = createAsyncThunk<any, any, ThunkApiConfig>(
@@ -199,6 +328,18 @@ export const resetPassword = createAsyncThunk<
   }
 });
 
+// Logout
+export const logout = createAsyncThunk<void, void>("auth/logout", async () => {
+  localStorage.removeItem("token");
+  localStorage.removeItem("username");
+  localStorage.removeItem("role");
+  localStorage.removeItem("userId");
+  localStorage.removeItem("email");
+  localStorage.removeItem("firstName");
+  localStorage.removeItem("lastName");
+  delete authService.defaults.headers.common["Authorization"];
+});
+
 const authSlice = createSlice({
   name: "auth",
   initialState,
@@ -213,6 +354,52 @@ const authSlice = createSlice({
     },
     clearRegistrationState: (state) => {
       state.registrationSuccess = false;
+    },
+    initializeFromLocalStorage: (state) => {
+      const token = localStorage.getItem("token");
+      const username = localStorage.getItem("username");
+      const role = localStorage.getItem("role");
+      const userId = localStorage.getItem("userId");
+      const email = localStorage.getItem("email");
+      const firstName = localStorage.getItem("firstName");
+      const lastName = localStorage.getItem("lastName");
+
+      if (token) {
+        // Set authorization header
+        authService.defaults.headers.common[
+          "Authorization"
+        ] = `Bearer ${token}`;
+
+        // Update authentication state
+        state.isAuthenticated = true;
+        state.user = {
+          username,
+          role,
+          id: userId || undefined,
+          email: email || undefined,
+          firstName: firstName || undefined,
+          lastName: lastName || undefined,
+        };
+      } else {
+        // No token, so not authenticated
+        state.isAuthenticated = false;
+        state.user = null;
+      }
+    },
+    clearAuth: (state) => {
+      // Clear all authentication data
+      localStorage.removeItem("token");
+      localStorage.removeItem("username");
+      localStorage.removeItem("role");
+      localStorage.removeItem("userId");
+      localStorage.removeItem("email");
+      localStorage.removeItem("firstName");
+      localStorage.removeItem("lastName");
+      delete authService.defaults.headers.common["Authorization"];
+
+      state.isAuthenticated = false;
+      state.user = null;
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -299,18 +486,55 @@ const authSlice = createSlice({
       // Validate Token
       .addCase(validateToken.pending, (state) => {
         state.isLoading = true;
+        state.tokenValidationInProgress = true;
         state.error = null;
       })
       .addCase(validateToken.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.user = action.payload.user || null;
-        state.isAuthenticated = !!action.payload.user;
+        state.tokenValidationInProgress = false;
+        if (action.payload && action.payload.user) {
+          state.user = action.payload.user;
+          state.isAuthenticated = true;
+        }
       })
       .addCase(validateToken.rejected, (state, action) => {
+        // Important: On token validation failure, we need to be careful
+        // Only reset authentication state if the error is actually related to auth
         state.isLoading = false;
+        state.tokenValidationInProgress = false;
+
+        // The error might be a network error or something unrelated to auth
+        // Check if the error explicitly mentions auth failure
+        const errorMsg = action.payload as string;
+        if (
+          errorMsg &&
+          (errorMsg.includes("unauthorized") ||
+            errorMsg.includes("Unauthorized") ||
+            errorMsg.includes("token") ||
+            errorMsg.includes("Token") ||
+            errorMsg.includes("auth") ||
+            errorMsg.includes("Auth"))
+        ) {
+          state.user = null;
+          state.isAuthenticated = false;
+          state.error = errorMsg;
+        } else {
+          // For other errors, maintain the auth state but set the error
+          state.error = errorMsg;
+          // Keep isAuthenticated and user as they were
+        }
+      })
+
+      // Reconstruct user from localStorage
+      .addCase(reconstructUserFromStorage.fulfilled, (state, action) => {
+        if (action.payload.user) {
+          state.user = action.payload.user;
+          state.isAuthenticated = true;
+        }
+      })
+      .addCase(reconstructUserFromStorage.rejected, (state) => {
         state.user = null;
         state.isAuthenticated = false;
-        state.error = action.payload as string;
       })
 
       // Forgot Password
@@ -350,20 +574,32 @@ const authSlice = createSlice({
         state.resetPasswordError = null;
         state.resetPasswordSuccess = false;
       })
-      .addCase(resetPassword.fulfilled, (state, action) => {
+      .addCase(resetPassword.fulfilled, (state) => {
         state.resetPasswordLoading = false;
         state.resetPasswordSuccess = true;
       })
       .addCase(resetPassword.rejected, (state, action) => {
         state.resetPasswordLoading = false;
         state.resetPasswordError = action.payload as string;
+      })
+
+      // Logout
+      .addCase(logout.fulfilled, (state) => {
+        state.user = null;
+        state.isAuthenticated = false;
+        state.error = null;
       });
   },
 });
 
 // Actions
-export const { setUser, clearError, clearRegistrationState } =
-  authSlice.actions;
+export const {
+  setUser,
+  clearError,
+  clearRegistrationState,
+  initializeFromLocalStorage,
+  clearAuth,
+} = authSlice.actions;
 
 // Reducer
 export default authSlice.reducer;
