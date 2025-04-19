@@ -422,11 +422,12 @@ export const addExpertService = createAsyncThunk(
   ) => {
     try {
       const token = getAuthToken();
+      // The serviceId is passed as a URL parameter
       const response = await userService.post(
         `/profile/service/${serviceId}`,
         {
-          price,
-          additionalDetails,
+          price, // Price is required in the body
+          additionalDetails, // Optional additional details
         },
         {
           headers: {
@@ -459,7 +460,7 @@ export const updateExpertService = createAsyncThunk(
       const response = await userService.patch(
         `/profile/service/${serviceId}`,
         {
-          price,
+          price, // Price might be optional in update
           additionalDetails,
         },
         {
@@ -476,6 +477,8 @@ export const updateExpertService = createAsyncThunk(
     }
   }
 );
+
+
 
 // Delete expert service thunk
 export const deleteExpertService = createAsyncThunk(
