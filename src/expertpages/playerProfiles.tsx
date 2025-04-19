@@ -37,31 +37,64 @@ const defaultImages = [player, player1, player2, player3, player4, player5];
 
 type Role = "player" | "expert" | "admin";
 
-interface Profile {
+export interface DocumentItem {
+  id: string;
+  title: string;
+  issuedBy?: string;
+  issuedDate?: string;
+  imageUrl?: string;
+  type?: string;
+  description?: string;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface UploadItem {
+  id: string;
+  title: string;
+  url: string;
+  type?: string;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SocialLinks {
+  linkedin?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+}
+
+export interface Profile {
   id: string;
   username: string;
   firstName?: string;
   lastName?: string;
   age?: number;
+  birthYear?: number;
+  bio?: string;
   gender?: string;
-  phone?: string;
-  country?: string;
+  photo?: string;
   city?: string;
+  country?: string;
   height?: number;
   weight?: number;
+  skinColor?: string | null;
+  company?: string;
   profession?: string;
   subProfession?: string;
-  bio?: string;
-  photo?: string;
+  role?: "player" | "expert" | "admin";
   language?: string[];
-  company?: string;
-  socialLinks?: {
-    linkedin?: string;
-    facebook?: string;
-    instagram?: string;
-    twitter?: string;
-  };
-  role?: Role;
+  interests?: string[];
+  services?: any[];
+  documents?: DocumentItem[];
+  uploads?: UploadItem[];
+  socialLinks?: SocialLinks;
+  createdAt?: string;
+  updatedAt?: string;
+  // ...any additional fields
   [key: string]: any;
 }
 
@@ -148,6 +181,38 @@ const PlayersProfile: React.FC = () => {
   useEffect(() => {
     fetchProfiles();
   }, [currentPage, limit, dispatch, profileType]);
+
+  useEffect(() => {
+    // This will run whenever the profiles data changes
+    if (status === "succeeded" && usersArray.length > 0) {
+      console.log("All fetched profiles:", usersArray);
+
+      // Log important fields for debugging
+      usersArray.forEach((profile, index) => {
+        console.log(
+          `Profile ${index + 1} (${profile.username || profile.id}):`
+        );
+        console.log("- documents:", profile.documents);
+        console.log("- uploads:", profile.uploads);
+        console.log("- socialLinks:", profile.socialLinks);
+      });
+
+      // Check for any profiles without documents or uploads
+      const missingDocs = usersArray.filter(
+        (p) => !p.documents || !Array.isArray(p.documents)
+      ).length;
+      const missingUploads = usersArray.filter(
+        (p) => !p.uploads || !Array.isArray(p.uploads)
+      ).length;
+
+      console.log(
+        `Profiles without documents array: ${missingDocs}/${usersArray.length}`
+      );
+      console.log(
+        `Profiles without uploads array: ${missingUploads}/${usersArray.length}`
+      );
+    }
+  }, [status, usersArray]);
 
   // Function to fetch profiles
   const fetchProfiles = () => {
@@ -299,79 +364,31 @@ const PlayersProfile: React.FC = () => {
 
   // Handle profile view
   const handleViewProfile = (profile: Profile) => {
-    try {
-      // Create a normalized profile object with correctly structured data
-      const normalizedProfile = {
-        ...profile,
+    const normalizedProfile = {
+      ...profile,
+      documents: Array.isArray(profile.documents) ? profile.documents : [],
+      uploads: Array.isArray(profile.uploads) ? profile.uploads : [],
+      socialLinks: profile.socialLinks
+        ? typeof profile.socialLinks === "string"
+          ? JSON.parse(profile.socialLinks)
+          : profile.socialLinks
+        : { linkedin: "", facebook: "", instagram: "", twitter: "" },
+    };
 
-        // Handle certificates (extracted from documents of type 'certificate')
-        certificates: Array.isArray(profile.documents)
-          ? profile.documents
-              .filter((doc) => doc.type === "certificate")
-              .map((cert) => ({
-                name: cert.title || "",
-                organization: cert.issuedBy || "",
-                issueDate: cert.issuedDate || "",
-                imageUrl: cert.imageUrl || "",
-                description: cert.description || "",
-              }))
-          : [],
+    // Add these logs
+    console.log("Original profile:", profile);
+    console.log("Documents array:", profile.documents);
+    console.log("Uploads array:", profile.uploads);
+    console.log("Normalized profile:", normalizedProfile);
 
-        // Handle awards (extracted from documents of type 'award')
-        awards: Array.isArray(profile.documents)
-          ? profile.documents
-              .filter((doc) => doc.type === "award")
-              .map((award) => ({
-                name: award.title || "",
-                issuedBy: award.issuedBy || "",
-                issueDate: award.issuedDate || "",
-                imageUrl: award.imageUrl || "",
-              }))
-          : [],
-
-        // Handle media (combine uploads with any existing media)
-        media: [
-          ...(Array.isArray(profile.uploads) ? profile.uploads : []),
-          ...(Array.isArray(profile.media) ? profile.media : []),
-        ].map((item) => ({
-          id: item.id || "",
-          title: item.title || "",
-          url: item.url || "",
-          type: item.type || "photo",
-          preview: item.url || "",
-        })),
-
-        // Handle social links (ensure object format)
-        socialLinks: profile.socialLinks
-          ? typeof profile.socialLinks === "string"
-            ? JSON.parse(profile.socialLinks)
-            : profile.socialLinks
-          : { linkedin: "", facebook: "", instagram: "", twitter: "" },
-      };
-
-      // Save formatted profile data to localStorage
-      localStorage.setItem(
-        "viewedProfileData",
-        JSON.stringify(normalizedProfile)
-      );
-
-      // Navigate to the profile view page based on user role
-      if (localStorage.getItem("role") === "player") {
-        navigate(`/player/playerinfo`);
-      } else {
-        navigate(`/expert/playerinfo`);
-      }
-    } catch (error) {
-      console.error("Error processing profile data:", error);
-
-      // Fallback to storing original data if formatting fails
-      localStorage.setItem("viewedProfileData", JSON.stringify(profile));
-
-      if (localStorage.getItem("role") === "player") {
-        navigate(`/player/playerinfo`);
-      } else {
-        navigate(`/expert/playerinfo`);
-      }
+    localStorage.setItem(
+      "viewedProfileData",
+      JSON.stringify(normalizedProfile)
+    );
+    if (localStorage.getItem("role") === "player") {
+      navigate(`/player/playerinfo`);
+    } else {
+      navigate(`/expert/playerinfo`);
     }
   };
 

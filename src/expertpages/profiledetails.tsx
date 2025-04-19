@@ -7,93 +7,33 @@ import {
   faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { Card } from "@/components/ui/card";
-
-// Define document structure based on provided JSON
-interface DocumentItem {
-  id: string;
-  title: string;
-  issuedBy?: string;
-  issuedDate?: string;
-  imageUrl?: string;
-  type: "certificate" | "award" | string;
-  description?: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface PlayerData {
-  id?: string;
-  bio?: string;
-  documents?: DocumentItem[];
-  uploads?: any[];
-  socialLinks?: {
-    linkedin?: string;
-    instagram?: string;
-    facebook?: string;
-    twitter?: string;
-  };
-  [key: string]: any;
-}
+import { Profile, DocumentItem } from "../types/Profile";
 
 interface ProfileDetailsProps {
-  playerData?: PlayerData;
+  playerData: Profile;
   isExpertView?: boolean;
 }
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({
-  playerData = {},
+  playerData,
   isExpertView = false,
 }) => {
-  // Get bio data
+  // Get player info
   const aboutMe = playerData.bio || "No information available";
 
-  // Get certificates and awards from documents array
-  const certificates =
-    playerData.documents?.filter((doc) => doc.type === "certificate") || [];
-  const awards =
-    playerData.documents?.filter((doc) => doc.type === "award") || [];
+  // Extract certificates and awards from documents array
+  const documents = Array.isArray(playerData.documents)
+    ? playerData.documents
+    : [];
+  const certificates = documents.filter((doc) => doc.type === "certificate");
+  const awards = documents.filter((doc) => doc.type === "award");
 
   // Handle social links
-  const socialLinks = playerData.socialLinks || {
-    linkedin: "",
-    instagram: "",
-    facebook: "",
-    twitter: "",
-  };
+  const socialLinks = playerData.socialLinks || {};
 
-  // Create social media configuration
-  const socialConfig = [
-    {
-      icon: faLinkedin,
-      color: "#0077B5",
-      link: socialLinks.linkedin || "https://www.linkedin.com",
-      name: "LinkedIn",
-    },
-    {
-      icon: faFacebook,
-      color: "#3b5998",
-      link: socialLinks.facebook || "https://www.facebook.com",
-      name: "Facebook",
-    },
-    {
-      icon: faInstagram,
-      color: "#E1306C",
-      link: socialLinks.instagram || "https://www.instagram.com",
-      name: "Instagram",
-    },
-    {
-      icon: faTwitter,
-      color: "#1DA1F2",
-      link: socialLinks.twitter || "https://www.twitter.com",
-      name: "Twitter",
-    },
-  ];
-
-  // Check if social links have valid values
+  // Function to determine if any valid social links exist
   const hasSocialLinks = () => {
     if (!socialLinks) return false;
-
     return Object.values(socialLinks).some(
       (link) =>
         link &&
@@ -103,10 +43,37 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     );
   };
 
-  // Format date for display
+  // Create social media configuration for display
+  const socialConfig = [
+    {
+      icon: faLinkedin,
+      color: "#0077B5",
+      link: socialLinks.linkedin || "",
+      name: "LinkedIn",
+    },
+    {
+      icon: faFacebook,
+      color: "#3b5998",
+      link: socialLinks.facebook || "",
+      name: "Facebook",
+    },
+    {
+      icon: faInstagram,
+      color: "#E1306C",
+      link: socialLinks.instagram || "",
+      name: "Instagram",
+    },
+    {
+      icon: faTwitter,
+      color: "#1DA1F2",
+      link: socialLinks.twitter || "",
+      name: "Twitter",
+    },
+  ];
+
+  // Format dates to readable format
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
-
     try {
       const date = new Date(dateString);
       return date.toLocaleDateString("en-US", {
@@ -118,8 +85,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       return dateString;
     }
   };
-
-  console.log("ProfileDetails received documents:", playerData.documents);
 
   return (
     <div className="p-4 w-full space-y-6">
@@ -136,49 +101,47 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           <h3 className="text-lg font-semibold mb-3">Certificates</h3>
           <div className="space-y-4">
             {certificates.length > 0 ? (
-              certificates.map((cert) => (
+              certificates.map((cert: DocumentItem, index) => (
                 <div
-                  key={cert.id}
+                  key={cert.id || index}
                   className="p-4 border rounded-lg dark:border-gray-600 dark:bg-gray-600"
                 >
-                  <h4 className="font-medium text-base">
-                    {cert.title || "Certificate"}
-                  </h4>
-
-                  {cert.issuedBy && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      <span className="font-medium">Issued by:</span>{" "}
-                      {cert.issuedBy}
-                    </p>
-                  )}
-
-                  {cert.issuedDate && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      <span className="font-medium">Date:</span>{" "}
-                      {formatDate(cert.issuedDate)}
-                    </p>
-                  )}
-
-                  {cert.imageUrl && (
-                    <div className="mt-3 relative">
-                      <img
-                        src={cert.imageUrl}
-                        alt={cert.title}
-                        className="w-full max-h-40 object-cover rounded cursor-pointer"
-                        onClick={() => window.open(cert.imageUrl, "_blank")}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {cert.description && (
-                    <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
-                      {cert.description}
-                    </p>
-                  )}
+                  <div>
+                    <h4 className="font-medium text-base">
+                      {cert.title || "Certificate"}
+                    </h4>
+                    {cert.issuedBy && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <span className="font-medium">Issued by:</span>{" "}
+                        {cert.issuedBy}
+                      </p>
+                    )}
+                    {cert.issuedDate && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-medium">Date:</span>{" "}
+                        {formatDate(cert.issuedDate)}
+                      </p>
+                    )}
+                    {cert.imageUrl && (
+                      <div className="mt-3 relative">
+                        <img
+                          src={cert.imageUrl}
+                          alt={cert.title || "Certificate"}
+                          className="w-full max-h-40 object-cover rounded cursor-pointer"
+                          onClick={() => window.open(cert.imageUrl, "_blank")}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                        />
+                      </div>
+                    )}
+                    {cert.description && (
+                      <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
+                        {cert.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -194,49 +157,47 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           <h3 className="text-lg font-semibold mb-3">Awards</h3>
           <div className="space-y-4">
             {awards.length > 0 ? (
-              awards.map((award) => (
+              awards.map((award: DocumentItem, index) => (
                 <div
-                  key={award.id}
+                  key={award.id || index}
                   className="p-4 border rounded-lg dark:border-gray-600 dark:bg-gray-600"
                 >
-                  <h4 className="font-medium text-base">
-                    {award.title || "Award"}
-                  </h4>
-
-                  {award.issuedBy && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                      <span className="font-medium">Issued by:</span>{" "}
-                      {award.issuedBy}
-                    </p>
-                  )}
-
-                  {award.issuedDate && (
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      <span className="font-medium">Date:</span>{" "}
-                      {formatDate(award.issuedDate)}
-                    </p>
-                  )}
-
-                  {award.imageUrl && (
-                    <div className="mt-3 relative">
-                      <img
-                        src={award.imageUrl}
-                        alt={award.title}
-                        className="w-full max-h-40 object-cover rounded cursor-pointer"
-                        onClick={() => window.open(award.imageUrl, "_blank")}
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = "none";
-                        }}
-                      />
-                    </div>
-                  )}
-
-                  {award.description && (
-                    <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
-                      {award.description}
-                    </p>
-                  )}
+                  <div>
+                    <h4 className="font-medium text-base">
+                      {award.title || "Award"}
+                    </h4>
+                    {award.issuedBy && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                        <span className="font-medium">Issued by:</span>{" "}
+                        {award.issuedBy}
+                      </p>
+                    )}
+                    {award.issuedDate && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        <span className="font-medium">Date:</span>{" "}
+                        {formatDate(award.issuedDate)}
+                      </p>
+                    )}
+                    {award.imageUrl && (
+                      <div className="mt-3 relative">
+                        <img
+                          src={award.imageUrl}
+                          alt={award.title || "Award"}
+                          className="w-full max-h-40 object-cover rounded cursor-pointer"
+                          onClick={() => window.open(award.imageUrl, "_blank")}
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.style.display = "none";
+                          }}
+                        />
+                      </div>
+                    )}
+                    {award.description && (
+                      <p className="text-sm mt-2 text-gray-600 dark:text-gray-300">
+                        {award.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
               ))
             ) : (
@@ -256,6 +217,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         {hasSocialLinks() ? (
           <div className="flex justify-center gap-6 mt-4">
             {socialConfig.map((item, index) => {
+              // Only show icons for links that are specified and not just default domains
               const linkValue = item.link || "";
               const isDefault =
                 !linkValue ||
