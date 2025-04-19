@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPen,
@@ -12,44 +12,88 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useAppDispatch } from "../store/hooks";
+import { updateProfile } from "../store/profile-slice";
+import Swal from "sweetalert2";
 
+interface ExpertDetailProps {
+  expertData?: any;
+}
 
+const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
+  const dispatch = useAppDispatch();
 
-const ExpertDetails: React.FC = () => {
   // About Me state
   const [aboutMe, setAboutMe] = useState(
-    localStorage.getItem("aboutMe") ||
+    expertData.about ||
       "I am from London, UK. A passionate, versatile expert bringing years of experience to help players improve their skills and reach their potential."
   );
   const [isEditingAbout, setIsEditingAbout] = useState(false);
 
   // Skills state
   const [skills, setSkills] = useState<string[]>(
-    JSON.parse(
-      localStorage.getItem("expertSkills") ||
-        JSON.stringify([
-          "Leadership",
-          "Tactical Analysis",
-          "Team Management",
-          "Fitness Training",
-        ])
-    )
+    expertData.skills || [
+      "Leadership",
+      "Tactical Analysis",
+      "Team Management",
+      "Fitness Training",
+    ]
   );
   const [tempSkills, setTempSkills] = useState<string[]>([...skills]);
   const [newSkill, setNewSkill] = useState("");
   const [isEditingSkills, setIsEditingSkills] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
- 
+  // Update state when expertData changes (e.g., after initial API load)
+  useEffect(() => {
+    if (expertData) {
+      if (expertData.about) {
+        setAboutMe(expertData.about);
+      }
+      if (expertData.skills && expertData.skills.length > 0) {
+        setSkills(expertData.skills);
+        setTempSkills(expertData.skills);
+      }
+    }
+  }, [expertData]);
 
   // Save about me
-  const handleSaveAboutMe = () => {
-    localStorage.setItem("aboutMe", aboutMe);
-    setIsEditingAbout(false);
+  const handleSaveAboutMe = async () => {
+    setIsSubmitting(true);
+
+    try {
+      // Format data for API update
+      const updateData = {
+        ...expertData.rawProfile,
+        bio: aboutMe,
+      };
+
+      // Save to API
+      await dispatch(updateProfile(updateData)).unwrap();
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "About section updated successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setIsEditingAbout(false);
+    } catch (error: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: error.message || "Failed to update profile",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Cancel about me edit
   const cancelAboutMe = () => {
-    setAboutMe(localStorage.getItem("aboutMe") || "");
+    setAboutMe(expertData.about || "");
     setIsEditingAbout(false);
   };
 
@@ -65,10 +109,40 @@ const ExpertDetails: React.FC = () => {
     setTempSkills(tempSkills.filter((skill) => skill !== skillToRemove));
   };
 
-  const handleSaveSkills = () => {
-    setSkills([...tempSkills]);
-    localStorage.setItem("expertSkills", JSON.stringify(tempSkills));
-    setIsEditingSkills(false);
+  const handleSaveSkills = async () => {
+    setIsSubmitting(true);
+
+    try {
+      // Format data for API update
+      const updateData = {
+        ...expertData.rawProfile,
+        skills: tempSkills,
+      };
+
+      // Save to API
+      await dispatch(updateProfile(updateData)).unwrap();
+
+      // Update local state
+      setSkills([...tempSkills]);
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Skills updated successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setIsEditingSkills(false);
+    } catch (error: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: error.message || "Failed to update skills",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const cancelSkillsEdit = () => {
@@ -91,17 +165,32 @@ const ExpertDetails: React.FC = () => {
               onChange={(e) => setAboutMe(e.target.value)}
               placeholder="Write about yourself..."
               className="min-h-[120px] dark:bg-gray-800"
+              disabled={isSubmitting}
             />
             <div className="flex justify-end space-x-2 mt-3">
-              <Button variant="outline" onClick={cancelAboutMe}>
+              <Button
+                variant="outline"
+                onClick={cancelAboutMe}
+                disabled={isSubmitting}
+              >
                 <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
               </Button>
               <Button
                 variant="default"
                 className="bg-red-600 hover:bg-red-700"
                 onClick={handleSaveAboutMe}
+                disabled={isSubmitting}
               >
-                <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                  </>
+                )}
               </Button>
             </div>
           </>
@@ -139,11 +228,13 @@ const ExpertDetails: React.FC = () => {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") handleAddSkill();
                   }}
+                  disabled={isSubmitting}
                 />
                 <Button
                   variant="default"
                   className="bg-red-600 hover:bg-red-700"
                   onClick={handleAddSkill}
+                  disabled={isSubmitting}
                 >
                   <FontAwesomeIcon icon={faPlus} />
                 </Button>
@@ -163,6 +254,7 @@ const ExpertDetails: React.FC = () => {
                       size="sm"
                       className="text-red-500 hover:text-red-700"
                       onClick={() => handleRemoveSkill(skill)}
+                      disabled={isSubmitting}
                     >
                       <FontAwesomeIcon icon={faTrash} />
                     </Button>
@@ -171,15 +263,29 @@ const ExpertDetails: React.FC = () => {
               </div>
 
               <div className="flex justify-end space-x-2 mt-4">
-                <Button variant="outline" onClick={cancelSkillsEdit}>
+                <Button
+                  variant="outline"
+                  onClick={cancelSkillsEdit}
+                  disabled={isSubmitting}
+                >
                   <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
                 </Button>
                 <Button
                   variant="default"
                   className="bg-red-600 hover:bg-red-700"
                   onClick={handleSaveSkills}
+                  disabled={isSubmitting}
                 >
-                  <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -194,6 +300,11 @@ const ExpertDetails: React.FC = () => {
                     {skill}
                   </span>
                 ))}
+                {skills.length === 0 && (
+                  <p className="text-gray-500 dark:text-gray-400">
+                    No skills listed
+                  </p>
+                )}
               </div>
               <Button
                 variant="ghost"
@@ -207,8 +318,31 @@ const ExpertDetails: React.FC = () => {
           )}
         </Card>
 
-       
-     
+        {/* Certifications Section */}
+        <Card className="p-6 shadow-sm dark:bg-gray-700">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+            Certifications
+          </h3>
+          <div className="space-y-2">
+            {expertData.certifications &&
+            expertData.certifications.length > 0 ? (
+              expertData.certifications.map((cert: string, index: number) => (
+                <div
+                  key={index}
+                  className="flex items-center bg-gray-50 dark:bg-gray-600 p-2 rounded-md"
+                >
+                  <span className="text-gray-700 dark:text-gray-200">
+                    {cert}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <p className="text-gray-500 dark:text-gray-400">
+                No certifications available
+              </p>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );
