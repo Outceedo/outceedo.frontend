@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { userService } from "../apiConfig";
+import { userService, usersService } from "../apiConfig";
 import { RootState } from "../store";
 
 // Define Role type instead of importing from Prisma

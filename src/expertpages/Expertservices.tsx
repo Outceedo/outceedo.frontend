@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Check, PlusCircle } from "lucide-react";
 import {
@@ -28,7 +28,7 @@ interface Service {
   serviceId?: string;
   name: string;
   description?: string;
-  additionalDetails?: string;
+  additionalDetails?: string | object;
   price: string | number;
   isActive?: boolean;
 }
@@ -56,6 +56,53 @@ const getAuthToken = (): string | null => {
 const PLATFORM_SERVICE_IDS = ["1", "2", "3"]; // Platform service IDs
 const CUSTOM_SERVICE_PREFIX = "custom-";
 const CUSTOM_SERVICE_START_ID = 4; // Custom services start from ID 4
+
+// Service name mapping
+const SERVICE_NAME_MAP: Record<string, string> = {
+  "1": "ONLINE ASSESSMENT",
+  "2": "ONLINE TRAINING",
+  "3": "ON GROUND ASSESSMENT",
+};
+
+// Helper function to get service name from ID
+const getServiceNameById = (serviceId: string | number | undefined): string => {
+  if (!serviceId) return "Unknown Service";
+
+  const id = String(serviceId);
+  return SERVICE_NAME_MAP[id] || "Custom Service";
+};
+
+// Helper function to format additionalDetails for display
+const formatAdditionalDetails = (
+  details: string | object | undefined
+): string => {
+  if (!details) return "No description available";
+
+  if (typeof details === "string") return details;
+
+  if (typeof details === "object") {
+    try {
+      // Try to get description property or stringify the object
+      if ((details as any).description) {
+        return (details as any).description;
+      }
+
+      // Convert object to readable format
+      const detailsArray = Object.entries(details)
+        .map(([key, value]) => {
+          if (key === "duration") return null; // Skip duration in display
+          return `${key}: ${value}`;
+        })
+        .filter(Boolean); // Remove nulls
+
+      return detailsArray.join(", ");
+    } catch (error) {
+      return "Additional details available";
+    }
+  }
+
+  return "No description available";
+};
 
 const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
   const dispatch = useAppDispatch();
@@ -86,8 +133,52 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
     Record<string, Record<string, string>>
   >({});
 
+  // Modal management
+  const modalRef = useRef<HTMLDivElement>(null);
+
   // Get platform services from Redux state
   const { platformServices, status } = useAppSelector((state) => state.profile);
+
+  // Handle modal overlay
+  useEffect(() => {
+    // Disable body scroll when any modal is open
+    if (isAddingPlatformService || isAddingCustomService) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+
+    // Cleanup
+    return () => {
+      document.body.style.overflow = "auto";
+    };
+  }, [isAddingPlatformService, isAddingCustomService]);
+
+  // Handle click outside modal
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
+        if (isAddingPlatformService) {
+          setIsAddingPlatformService(false);
+          setSelectedPlatformService(null);
+        }
+        if (isAddingCustomService) {
+          setIsAddingCustomService(false);
+        }
+      }
+    };
+
+    if (isAddingPlatformService || isAddingCustomService) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAddingPlatformService, isAddingCustomService]);
 
   // Call getPlatformServices when component initializes
   useEffect(() => {
@@ -120,6 +211,9 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
           // Get ID from service
           const serviceId = service.serviceId || service._id || service.id;
 
+          // Get service name from mapping or set it as custom
+          const serviceName = getServiceNameById(serviceId);
+
           // Check if this is a custom service ID (non-platform) and update maxId if needed
           if (
             !PLATFORM_SERVICE_IDS.includes(serviceId.toString()) &&
@@ -131,11 +225,26 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
             }
           }
 
+          // Handle additionalDetails properly
+          let description = "";
+          if (service.description) {
+            description = service.description;
+          } else if (service.additionalDetails) {
+            if (typeof service.additionalDetails === "string") {
+              description = service.additionalDetails;
+            } else if (
+              typeof service.additionalDetails === "object" &&
+              service.additionalDetails.description
+            ) {
+              description = service.additionalDetails.description;
+            }
+          }
+
           return {
             id: service._id || service.id,
             serviceId: serviceId,
-            name: service.name || "Unnamed Service",
-            description: service.description || "",
+            name: serviceName,
+            description: description,
             additionalDetails: service.additionalDetails || "",
             price: service.price || 0,
             isActive: service.isActive || false,
@@ -156,24 +265,24 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
           JSON.stringify([
             {
               id: "service-1",
-              serviceId: "1", // Match platform service ID format
-              name: "Online Video Assessment",
+              serviceId: "1",
+              name: "ONLINE ASSESSMENT",
               description: "Video Assessment. Report.",
               price: 50,
               isActive: true,
             },
             {
               id: "service-2",
-              serviceId: "2", // Match platform service ID format
-              name: "Online Training",
+              serviceId: "2",
+              name: "ONLINE TRAINING",
               description: "Live Assessment. Report",
               price: 30,
               isActive: false,
             },
             {
               id: "service-3",
-              serviceId: "3", // Match platform service ID format
-              name: "On Ground Assessment",
+              serviceId: "3",
+              name: "ON GROUND ASSESSMENT",
               description: "1 on 1 advise. doubts",
               price: 80,
               isActive: true,
@@ -239,6 +348,19 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
     setTempServices(updatedServices);
   };
 
+  // Handle ESC key press to close modal
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      if (isAddingPlatformService) {
+        setIsAddingPlatformService(false);
+        setSelectedPlatformService(null);
+      }
+      if (isAddingCustomService) {
+        setIsAddingCustomService(false);
+      }
+    }
+  };
+
   // Save services
   const handleSave = async () => {
     // Validate all services first
@@ -280,6 +402,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
       // Process deleted services first
       for (const serviceId of deletedServices) {
         if (serviceId && typeof serviceId === "string") {
+          // Using the service ID directly for deletion
           await dispatch(deleteExpertService(serviceId)).unwrap();
           console.log(`Deleted service with ID: ${serviceId}`);
         }
@@ -289,28 +412,33 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
       const servicesToUpdate = tempServices.filter(
         (service) =>
           !newServices.some((newService) => newService.id === service.id) &&
+          service.id && // Use the id for update, not serviceId
           service.serviceId
       );
 
       for (const service of servicesToUpdate) {
-        if (service.serviceId) {
+        if (service.id) {
+          // Use id for update API endpoint
           const priceValue = parsePrice(service.price);
-          console.log("Updating service with serviceId:", service.serviceId);
+          console.log("Updating service with id:", service.id);
           console.log("With price:", priceValue);
 
-          // Ensure price is a valid number and serviceId is a string
+          // Create additionalDetails object from description
+          const additionalDetails = {
+            description: service.description || "",
+            duration: "60 minutes", // Default duration
+          };
+
+          // Using the service ID directly for updates
           await dispatch(
             updateExpertService({
-              serviceId: service.serviceId.toString(),
+              serviceId: service.id.toString(), // Use id not serviceId
               price: Number(priceValue),
-              additionalDetails:
-                service.description || service.additionalDetails || "",
+              additionalDetails,
             })
           ).unwrap();
 
-          console.log(
-            `Service ${service.serviceId} updated with price ${priceValue}`
-          );
+          console.log(`Service ${service.id} updated with price ${priceValue}`);
         }
       }
 
@@ -321,12 +449,18 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
           console.log("Adding service with serviceId:", service.serviceId);
           console.log("With price:", priceValue);
 
-          // Ensure price is a valid number and serviceId is a string
+          // Create additionalDetails object
+          const additionalDetails = {
+            description: service.description || "",
+            duration: "60 minutes", // Default duration
+          };
+
+          // Use the platform service ID for adding new services
           await dispatch(
             addExpertService({
               serviceId: service.serviceId.toString(),
               price: Number(priceValue),
-              additionalDetails: service.description || "",
+              additionalDetails,
             })
           ).unwrap();
 
@@ -429,6 +563,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
     setNewServices([...newServices, newService]);
 
     setIsAddingPlatformService(false);
+    setSelectedPlatformService(null);
 
     Swal.fire({
       icon: "success",
@@ -500,9 +635,9 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
     if (newServices.some((s) => s.id === service.id)) {
       setNewServices(newServices.filter((s) => s.id !== service.id));
     }
-    // If it's an existing service with serviceId, add to deletedServices
-    else if (service.serviceId) {
-      setDeletedServices([...deletedServices, service.serviceId.toString()]);
+    // If it's an existing service with ID, add to deletedServices
+    else if (service.id) {
+      setDeletedServices([...deletedServices, service.id.toString()]);
     }
 
     // Remove from tempServices in any case
@@ -518,9 +653,9 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
 
   // Toggle service active state
   const handleToggleActive = async (service: Service) => {
-    if (!service.serviceId) return;
+    if (!service.id) return;
 
-    const serviceId = service.serviceId.toString();
+    const serviceId = service.id.toString();
     setIsToggling({ ...isToggling, [serviceId]: true });
 
     try {
@@ -528,18 +663,26 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
       console.log("Toggling service:", serviceId);
       console.log("With price:", priceValue);
 
+      // Create additionalDetails object with isActive toggle
+      const additionalDetails = {
+        description:
+          typeof service.description === "string" ? service.description : "",
+        isActive: !service.isActive,
+        duration: "60 minutes", // Add duration to ensure it's preserved
+      };
+
+      // Use the service ID directly for toggles
       await dispatch(
         updateExpertService({
           serviceId: serviceId,
           price: Number(priceValue),
-          additionalDetails:
-            service.description || service.additionalDetails || "",
+          additionalDetails,
         })
       ).unwrap();
 
       // Update local state
       const updatedServices = services.map((s) =>
-        s.serviceId === service.serviceId ? { ...s, isActive: !s.isActive } : s
+        s.id === service.id ? { ...s, isActive: !s.isActive } : s
       );
       setServices(updatedServices);
 
@@ -606,15 +749,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="border-green-500 text-green-500 hover:bg-green-50"
-              onClick={() => setIsAddingCustomService(true)}
-              disabled={isSubmitting}
-            >
-              <FontAwesomeIcon icon={faPlus} className="mr-1" /> Add Custom
-              Service
-            </Button>
+            
             <Button
               variant="outline"
               onClick={handleCancel}
@@ -666,7 +801,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                   </div>
                   <Button
                     variant="secondary"
-                    className="bg-green-600 hover:bg-green-700 text-white w-full"
+                    className="bg-red-600 hover:bg-red-700 text-white w-full"
                     onClick={() => openAddPlatformServiceModal(ps)}
                     disabled={tempServices.some((s) => s.serviceId === ps.id)}
                   >
@@ -695,137 +830,85 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
 
       {/* Platform Service Price Modal */}
       {isAddingPlatformService && selectedPlatformService && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-lg w-full">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              Add {selectedPlatformService.name}
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Service Description
-                </label>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  {selectedPlatformService.description ||
-                    "No description available"}
-                </p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Set Your Price ($) *
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={platformServicePrice}
-                  onChange={(e) =>
-                    setPlatformServicePrice(e.target.valueAsNumber || 0)
-                  }
-                  placeholder="Enter your price for this service"
-                />
-                <p className="text-sm text-gray-500 mt-1">
-                  Set the price you want to charge for this service
-                </p>
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsAddingPlatformService(false);
-                    setSelectedPlatformService(null);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={handleAddPlatformServiceSubmit}
-                >
-                  Add Service
-                </Button>
+        <>
+          {/* Modal Backdrop - fixed, covers entire screen with blur */}
+          <div
+            className="fixed inset-0 backdrop-blur-xs z-40"
+            aria-hidden="true"
+          />
+
+          {/* Modal Dialog */}
+          <div
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 overflow-hidden"
+            role="dialog"
+            aria-modal="true"
+            onKeyDown={handleKeyDown}
+          >
+            <div
+              ref={modalRef}
+              className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full max-h-[90vh] overflow-auto"
+              tabIndex={-1}
+            >
+              <div className="p-6">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
+                  Add {selectedPlatformService.name}
+                </h3>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Service Description
+                    </label>
+                    <p className="text-gray-600 dark:text-gray-400 mb-4 p-2 bg-gray-50 dark:bg-gray-700 rounded-md">
+                      {selectedPlatformService.description ||
+                        "No description available"}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Set Your Price ($) *
+                    </label>
+                    <Input
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={platformServicePrice}
+                      onChange={(e) =>
+                        setPlatformServicePrice(e.target.valueAsNumber || 0)
+                      }
+                      placeholder="Enter your price for this service"
+                      className="focus:ring-2 focus:ring-red-500"
+                      autoFocus
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      Set the price you want to charge for this service
+                    </p>
+                  </div>
+                  <div className="flex justify-end gap-2 mt-4">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setIsAddingPlatformService(false);
+                        setSelectedPlatformService(null);
+                      }}
+                      className="focus:ring-2 focus:ring-gray-400"
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      className="bg-red-600 hover:bg-red-700 focus:ring-2 focus:ring-red-500"
+                      onClick={handleAddPlatformServiceSubmit}
+                    >
+                      Add Service
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
-          </Card>
-        </div>
+          </div>
+        </>
       )}
 
-      {/* Custom Service Modal */}
-      {isAddingCustomService && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <Card className="p-6 max-w-lg w-full">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
-              Add Custom Service
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Service Name *
-                </label>
-                <Input
-                  type="text"
-                  value={customService.name || ""}
-                  onChange={(e) =>
-                    setCustomService({ ...customService, name: e.target.value })
-                  }
-                  placeholder="Enter service name"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Description
-                </label>
-                <Textarea
-                  value={customService.description || ""}
-                  onChange={(e) =>
-                    setCustomService({
-                      ...customService,
-                      description: e.target.value,
-                    })
-                  }
-                  placeholder="Enter service description"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                  Price ($) *
-                </label>
-                <Input
-                  type="number"
-                  min="1"
-                  step="1"
-                  value={parsePrice(customService.price)}
-                  onChange={(e) => {
-                    const numValue = e.target.valueAsNumber || 0;
-                    setCustomService({ ...customService, price: numValue });
-                  }}
-                />
-              </div>
-              <div className="flex justify-end gap-2 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setIsAddingCustomService(false);
-                    setCustomService({
-                      name: "",
-                      description: "",
-                      price: 0,
-                    });
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={handleAddCustomServiceSubmit}
-                >
-                  Add Service
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      )}
+      
 
       {/* Current Services Grid */}
       <div>
@@ -880,7 +963,13 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                         Additional Details
                       </label>
                       <Textarea
-                        value={service.description || ""}
+                        value={
+                          typeof service.description === "string"
+                            ? service.description
+                            : typeof service.description === "object"
+                            ? JSON.stringify(service.description)
+                            : ""
+                        }
                         onChange={(e) =>
                           handleUpdateService(
                             index,
@@ -918,23 +1007,6 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                         </p>
                       )}
                     </div>
-
-                    <div className="mt-1">
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full ${
-                          isPlatformService(service.serviceId)
-                            ? "bg-purple-100 text-purple-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {isPlatformService(service.serviceId)
-                          ? "Platform Service"
-                          : "Custom Service"}
-                      </span>
-                      <span className="text-xs text-gray-500 ml-2">
-                        ID: {service.serviceId}
-                      </span>
-                    </div>
                   </div>
                 </Card>
               ))
@@ -957,17 +1029,6 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
                         {service.name}
                       </h3>
-                      <span
-                        className={`text-xs px-2 py-1 rounded-full mb-2 inline-block ${
-                          isPlatformService(service.serviceId)
-                            ? "bg-purple-100 text-purple-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {isPlatformService(service.serviceId)
-                          ? "Platform Service"
-                          : "Custom Service"}
-                      </span>
                     </div>
                     <span className="text-lg text-red-600 font-semibold">
                       {formatPrice(service.price)}/h
@@ -975,52 +1036,12 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                   </div>
 
                   <p className="text-gray-700 dark:text-gray-300 mb-6">
-                    {service.description ||
-                      service.additionalDetails ||
-                      "No description available"}
+                    {formatAdditionalDetails(
+                      service.description || service.additionalDetails
+                    )}
                   </p>
 
-                  <div className="flex gap-10">
-                    {/* Activate Button */}
-                    <Button
-                      onClick={() => handleToggleActive(service)}
-                      disabled={isToggling[service.serviceId?.toString() || ""]}
-                      className={`flex items-center gap-4 px-4 py-2 w-40 rounded font-semibold transition cursor-pointer
-                            ${
-                              service.isActive
-                                ? "bg-red-400 text-white hover:bg-red-500"
-                                : "bg-red-600 hover:bg-red-700 text-white"
-                            }
-                          `}
-                    >
-                      {isToggling[service.serviceId?.toString() || ""] ? (
-                        <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
-                      ) : (
-                        service.isActive && <Check className="w-4 h-4" />
-                      )}
-                      Activate
-                    </Button>
-
-                    {/* Deactivate Button */}
-                    <Button
-                      onClick={() => handleToggleActive(service)}
-                      disabled={isToggling[service.serviceId?.toString() || ""]}
-                      className={`flex items-center gap-2 px-4 py-2 w-40 rounded font-semibold transition cursor-pointer
-                            ${
-                              !service.isActive
-                                ? "bg-white text-black border-2 border-red-500 hover:bg-white"
-                                : "bg-white border-2 border-red-500 text-black hover:bg-white"
-                            }
-                          `}
-                    >
-                      {isToggling[service.serviceId?.toString() || ""] ? (
-                        <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-red-500 rounded-full"></div>
-                      ) : (
-                        !service.isActive && <Check className="w-4 h-4" />
-                      )}
-                      Deactivate
-                    </Button>
-                  </div>
+                  
                 </div>
               </Card>
             ))

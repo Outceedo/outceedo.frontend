@@ -62,6 +62,16 @@ interface Service {
   isActive?: boolean;
 }
 
+interface Certificate {
+  id: string;
+  title: string;
+  issuedBy?: string;
+  issuedDate?: string;
+  imageUrl?: string;
+  type: string;
+  description?: string;
+}
+
 type TabType = "details" | "media" | "reviews" | "services";
 
 const Experts = () => {
@@ -73,6 +83,11 @@ const Experts = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">(
     "all"
   );
+  // Certificate preview state
+  const [selectedCertificate, setSelectedCertificate] =
+    useState<Certificate | null>(null);
+  const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] =
+    useState(false);
 
   // Redux state
   const dispatch = useAppDispatch();
@@ -90,6 +105,21 @@ const Experts = () => {
       console.error("No expert username found in localStorage");
     }
   }, [dispatch]);
+
+  // Get certificates from documents
+  const certificates = viewedProfile?.documents
+    ? viewedProfile.documents
+        .filter((doc: any) => doc.type === "certificate")
+        .map((cert: any) => ({
+          id: cert.id,
+          title: cert.title,
+          issuedBy: cert.issuedBy || "",
+          issuedDate: cert.issuedDate || "",
+          imageUrl: cert.imageUrl || "",
+          type: cert.type,
+          description: cert.description || "",
+        }))
+    : [];
 
   // Prepare data for display once profile is loaded
   const expertData = viewedProfile
@@ -125,9 +155,7 @@ const Experts = () => {
             "Tactical Analysis",
             "Team Management",
           ],
-        certifications: viewedProfile.certificates
-          ? viewedProfile.certificates.map((cert: any) => cert.name)
-          : ["Professional Certification"],
+        certificates: certificates,
         services: viewedProfile.services || [],
       }
     : {
@@ -149,11 +177,7 @@ const Experts = () => {
           "Team Management",
           "Fitness Training",
         ],
-        certifications: [
-          "UEFA Pro License",
-          "FIFA Coaching Diploma",
-          "Sports Science Certification",
-        ],
+        certificates: [],
         services: [],
       };
 
@@ -190,26 +214,110 @@ const Experts = () => {
       comment: "Good quality, but the waiting time was a bit long.",
     },
   ];
+  const SERVICE_NAME_MAP: Record<string, string> = {
+    "1": "ONLINE ASSESSMENT",
+    "2": "ONLINE TRAINING",
+    "3": "ON GROUND ASSESSMENT",
+  };
 
+  // Helper function to get service name from ID
+  const getServiceNameById = (
+    serviceId: string | number | undefined
+  ): string => {
+    if (!serviceId) return "Unknown Service";
+
+    const id = String(serviceId);
+    return SERVICE_NAME_MAP[id] || "Custom Service";
+  };
+
+  // Format service description
+  const formatServiceDescription = (description: any): string => {
+    if (!description) return "No description available";
+
+    if (typeof description === "string") {
+      return description;
+    }
+
+    if (typeof description === "object") {
+      // Handle case where description is an object
+      if (description.description) {
+        return description.description;
+      }
+
+      // Try to create a readable string from the object
+      try {
+        const entries = Object.entries(description);
+        if (entries.length === 0) return "No description available";
+
+        return entries
+          .map(([key, value]) => {
+            // Skip rendering duration in the description text
+            if (key === "duration") return null;
+            return `${key}: ${value}`;
+          })
+          .filter(Boolean) // Remove null values
+          .join(", ");
+      } catch (e) {
+        return "No description available";
+      }
+    }
+
+    return "No description available";
+  };
+
+  // Map services with correct names
   const services =
-    expertData.services?.map((service: any) => ({
-      id: service.id || service.serviceId,
-      name: service.name || "Service",
-      description:
-        service.description ||
-        service.additionalDetails ||
-        "No description available",
-      price:
-        typeof service.price === "number"
-          ? `$${service.price}/h`
-          : `$${service.price || 0}/h`,
-    })) || [];
+    expertData.services?.map((service: any) => {
+      // Get service name from ID mapping
+      const serviceName = getServiceNameById(service.serviceId);
+
+      // Format additionalDetails for display
+      let displayDescription;
+      if (typeof service.additionalDetails === "object") {
+        // If additionalDetails is an object, extract description
+        displayDescription = formatServiceDescription(
+          service.additionalDetails
+        );
+      } else {
+        // Otherwise use existing description or additionalDetails
+        displayDescription =
+          service.description ||
+          service.additionalDetails ||
+          "No description available";
+      }
+
+      return {
+        id: service.id || service.serviceId,
+        name: serviceName,
+        description: displayDescription,
+        price:
+          typeof service.price === "number"
+            ? `$${service.price}/h`
+            : `$${service.price || 0}/h`,
+      };
+    }) || [];
 
   // Filter media based on selection
   const filteredMedia =
     mediaFilter === "all"
       ? mediaItems
       : mediaItems.filter((item) => item.type === mediaFilter);
+
+  // Format issue date
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Handle certificate click for preview
+  const handleCertificateClick = (certificate: Certificate) => {
+    setSelectedCertificate(certificate);
+    setIsCertificatePreviewOpen(true);
+  };
 
   // Loading state
   if (status === "loading") {
@@ -434,18 +542,41 @@ const Experts = () => {
                 <div className="flex justify-between mb-4">
                   <h2 className="text-xl font-bold">Certifications</h2>
                 </div>
-                <div>
-                  {expertData.certifications &&
-                  expertData.certifications.length > 0 ? (
-                    expertData.certifications.map(
-                      (cert: string, index: number) => (
-                        <div key={index} className="mb-2">
-                          <p className="text-gray-800 dark:text-gray-200">
-                            {cert}
-                          </p>
+                <div className="space-y-3">
+                  {expertData.certificates &&
+                  expertData.certificates.length > 0 ? (
+                    expertData.certificates.map((cert: Certificate) => (
+                      <div
+                        key={cert.id}
+                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                        onClick={() => handleCertificateClick(cert)}
+                      >
+                        {/* Image thumbnail if available */}
+                        {cert.imageUrl && (
+                          <div className="w-16 h-16 flex-shrink-0">
+                            <img
+                              src={cert.imageUrl}
+                              alt={cert.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Certificate details */}
+                        <div className="p-3 flex-1">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                            {cert.title}
+                          </h4>
+                          {cert.issuedBy && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Issued by: {cert.issuedBy}
+                              {cert.issuedDate &&
+                                ` (${formatDate(cert.issuedDate)})`}
+                            </p>
+                          )}
                         </div>
-                      )
-                    )
+                      </div>
+                    ))
                   ) : (
                     <p className="text-gray-500">No certifications available</p>
                   )}
@@ -675,6 +806,56 @@ const Experts = () => {
                 autoPlay
                 className="max-w-full max-h-[70vh] mx-auto"
               />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Certificate Preview Modal */}
+      {selectedCertificate && isCertificatePreviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-3xl p-4 relative">
+            <button
+              onClick={() => setIsCertificatePreviewOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-2 text-center">
+              {selectedCertificate.title}
+            </h3>
+
+            {selectedCertificate.issuedBy && (
+              <p className="text-center text-gray-600 dark:text-gray-400 mb-4">
+                Issued by: {selectedCertificate.issuedBy}
+                {selectedCertificate.issuedDate &&
+                  ` • ${formatDate(selectedCertificate.issuedDate)}`}
+              </p>
+            )}
+
+            {selectedCertificate.imageUrl ? (
+              <img
+                src={selectedCertificate.imageUrl}
+                alt={selectedCertificate.title}
+                className="max-w-full max-h-[60vh] mx-auto object-contain border border-gray-200 dark:border-gray-700 rounded-lg"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-60 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <p className="text-gray-400 dark:text-gray-500">
+                  No image available
+                </p>
+              </div>
+            )}
+
+            {selectedCertificate.description && (
+              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
+                  Description
+                </h4>
+                <p className="text-gray-700 dark:text-gray-300">
+                  {selectedCertificate.description}
+                </p>
+              </div>
             )}
           </div>
         </div>
