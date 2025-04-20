@@ -478,8 +478,6 @@ export const updateExpertService = createAsyncThunk(
   }
 );
 
-
-
 // Delete expert service thunk
 export const deleteExpertService = createAsyncThunk(
   "profile/deleteExpertService",

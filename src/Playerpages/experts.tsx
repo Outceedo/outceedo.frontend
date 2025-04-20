@@ -1,13 +1,23 @@
-import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import moment from "moment";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faLinkedin, faInstagram, faFacebook,faTwitter } from "@fortawesome/free-brands-svg-icons";
+import {
+  faLinkedin,
+  faInstagram,
+  faFacebook,
+  faTwitter,
+} from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
-import player from "../assets/images/player.jpg"
-import { faStar } from '@fortawesome/free-solid-svg-icons';
+import player from "../assets/images/player.jpg";
+import {
+  faStar,
+  faCamera,
+  faVideo,
+  faPen,
+} from "@fortawesome/free-solid-svg-icons";
 import {
   Dialog,
   DialogTrigger,
@@ -16,637 +26,614 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { faCamera, faVideo } from "@fortawesome/free-solid-svg-icons"
 import { useNavigate } from "react-router-dom";
-
-
-
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { getProfile } from "../store/profile-slice";
 
 const icons = [
-  { icon: faLinkedin, color: '#0077B5', link: 'https://www.linkedin.com' },
-  { icon: faFacebook, color: '#3b5998', link: 'https://www.facebook.com' },
-  { icon: faInstagram, color: '#E1306C', link: 'https://www.instagram.com' },
-  { icon: faTwitter, color: '#1DA1F2', link: 'https://www.twitter.com' },
+  { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
+  { icon: faFacebook, color: "#3b5998", link: "https://www.facebook.com" },
+  { icon: faInstagram, color: "#E1306C", link: "https://www.instagram.com" },
+  { icon: faTwitter, color: "#1DA1F2", link: "https://www.twitter.com" },
 ];
 
 interface MediaItem {
-    id: number;
-    type: "photo" | "video";
-    url: string;
-    src: string; // Fix: Added missing 'src' property
-    title: string; // Fix: Added missing 'title' property
-  }
- 
-  interface Review {
-    id: number;
-    name: string;
-    date: string;
-    comment: string;
-    
-  }
-  
-  interface Service {
-    id: number;
-    name: string;
-    description: string;
-    price: string;
-  }
-  
-const expertData = {
-  name: "Expert Name",
-  profession: "Coach & Ex-Soccer Player Defender",
-  location: "London, UK",
-  responseTime: "40 mins",
-  travelLimit: "30 kms",
-  certificationLevel: "3rd highest",
-  reviews: 120,
-  followers: 110,
-  assessments: "100+",
-  profileImage: "/profile-image.jpg", // Replace with actual image
-  backgroundImage: "/background-image.jpg", // Replace with actual image
-  socialLinks: [
-    { icon: <FontAwesomeIcon icon={faLinkedin} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faInstagram} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faFacebook} />, link: "#" },
-    { icon: <FontAwesomeIcon icon={faTwitter} />, link: "#" }
+  id: number | string;
+  type: "photo" | "video";
+  url: string;
+  src: string;
+  title: string;
+}
 
-  ],
-  media: [
-    { id: 1, type: "photo", src: "/photo1.jpg", title: "Suit Suits me" },
-    { id: 2, type: "photo", src: "/photo2.jpg", title: "Electric guitar" },
-    { id: 3, type: "video", src: "/video1.mp4", title: "Training Session" },
-  ],
-  about: "Experienced soccer coach with a strong background in player development and strategy.",
-  skills: ["Leadership", "Tactical Analysis", "Team Management", "Fitness Training"],
-  certifications: ["UEFA Pro License", "FIFA Coaching Diploma", "Sports Science Certification"]
-};
+interface Review {
+  id: number | string;
+  name: string;
+  date: string;
+  comment: string;
+}
 
-
+interface Service {
+  id: number | string;
+  serviceId?: string;
+  name: string;
+  description?: string;
+  additionalDetails?: string;
+  price: string | number;
+  isActive?: boolean;
+}
 
 type TabType = "details" | "media" | "reviews" | "services";
-const Experts= () => {
-  const [activeTab, setActiveTab] = useState<"details" | "media"| "reviews"|"services" >("details");
+
+const Experts = () => {
+  const [activeTab, setActiveTab] = useState<TabType>("details");
   const tabs: TabType[] = ["details", "media", "reviews", "services"];
   const [readMore, setReadMore] = useState(false);
+  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">(
+    "all"
+  );
+
+  // Redux state
+  const dispatch = useAppDispatch();
+  const { viewedProfile, status, error } = useAppSelector(
+    (state) => state.profile
+  );
+  const navigate = useNavigate();
+
+  // Fetch expert profile on component mount
+  useEffect(() => {
+    const expertUsername = localStorage.getItem("viewexpertusername");
+    if (expertUsername) {
+      dispatch(getProfile(expertUsername));
+    } else {
+      console.error("No expert username found in localStorage");
+    }
+  }, [dispatch]);
+
+  // Prepare data for display once profile is loaded
+  const expertData = viewedProfile
+    ? {
+        id: viewedProfile.id,
+        username: viewedProfile.username,
+        name:
+          `${viewedProfile.firstName || ""} ${
+            viewedProfile.lastName || ""
+          }`.trim() || viewedProfile.username,
+        profession: viewedProfile.profession || "Coach",
+        subProfession: viewedProfile.subProfession || "",
+        location:
+          viewedProfile.city && viewedProfile.country
+            ? `${viewedProfile.city}, ${viewedProfile.country}`
+            : viewedProfile.city ||
+              viewedProfile.country ||
+              "Location Not Specified",
+        responseTime: viewedProfile.responseTime || "40 mins",
+        travelLimit: viewedProfile.travelLimit || "30 kms",
+        certificationLevel: viewedProfile.certificationLevel || "3rd highest",
+        reviews: Math.floor(Math.random() * 150) + 50, // Random number for demo
+        followers: Math.floor(Math.random() * 200) + 50, // Random number for demo
+        assessments: Math.floor(Math.random() * 150) + 50, // Random number for demo
+        profileImage: viewedProfile.photo || profile2,
+        socialLinks: viewedProfile.socialLinks || {},
+        about:
+          viewedProfile.bio ||
+          "Experienced soccer coach with a strong background in player development and strategy.",
+        skills: viewedProfile.skills ||
+          viewedProfile.interests || [
+            "Leadership",
+            "Tactical Analysis",
+            "Team Management",
+          ],
+        certifications: viewedProfile.certificates
+          ? viewedProfile.certificates.map((cert: any) => cert.name)
+          : ["Professional Certification"],
+        services: viewedProfile.services || [],
+      }
+    : {
+        name: "Neek Chaturvedi",
+        profession: "Coach & Ex-Soccer Player Defender",
+        location: "London, UK",
+        responseTime: "40 mins",
+        travelLimit: "30 kms",
+        certificationLevel: "3rd highest",
+        reviews: 120,
+        followers: 110,
+        assessments: 100,
+        profileImage: profile2,
+        about:
+          "Experienced soccer coach with a strong background in player development and strategy.",
+        skills: [
+          "Leadership",
+          "Tactical Analysis",
+          "Team Management",
+          "Fitness Training",
+        ],
+        certifications: [
+          "UEFA Pro License",
+          "FIFA Coaching Diploma",
+          "Sports Science Certification",
+        ],
+        services: [],
+      };
+
+  // Determine if text should be clamped
   const shouldClamp = expertData.about?.split(" ").length > 25;
-    const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
-const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
- const navigate= useNavigate();
+  // Media, reviews, and services
+  const mediaItems =
+    viewedProfile?.uploads?.map((upload: any) => ({
+      id: upload.id,
+      type: upload.url?.match(/\.(mp4|mov|avi|webm)$/i) ? "video" : "photo",
+      url: upload.url,
+      src: upload.url,
+      title: upload.title || "Untitled",
+    })) || [];
 
- // Sample media data
-const [mediaItems] = useState<MediaItem[]>([
-  {
-    id: 1,
-    type: "photo",
-    url: "/photo1.jpg",
-    src: "https://images.unsplash.com/photo-1546519638-68e109498ffc?q=80&w=500",
-    title: "Training Session",
-  },
-  {
-    id: 3,
-    type: "video",
-    url: "/video1.mp4",
-    src: "https://www.w3schools.com/html/mov_bbb.mp4",
-    title: "Coaching Tips",
-  },
-]);
-// Filter state for media
-const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">("all");
- 
-// Filtered media based on selection
-const filteredMedia =
-mediaFilter === "all"
-  ? mediaItems
-  : mediaItems.filter((item) =>
-      mediaFilter === "photo"
-        ? item.type === "photo"
-        : item.type === "video"
-    );
-
-  // Sample Services Data
-  const services: Service[] = [
-    {
-      id: 1,
-      name: "Online Video Assessment",
-      description: ["Video Assessment.", "Report."].join(" "),
-      price: "$50/h",
-    },
-    {
-      id: 2,
-      name: "On-Field Assessment",
-      description: ["Live Assessment.","Report"].join(" "),
-      price: "$30/h",
-    },
-    {
-      id: 3,
-      name: "1-1 Training",
-      description: ["1 on 1 advise.","doubts"].join(" "),
-      price: "$80/h",
-    },
-  ];
-  const [reviews] = useState<Review[]>([
+  const reviews = [
     {
       id: 1,
       name: "John Doe",
-      date: "2024-02-15", // Example date
-      comment: "Great service! Highly recommend.teaches very well.He is a good coach.would definatly recommand.",
-      
+      date: "2024-02-15",
+      comment: "Great service! Highly recommend.",
     },
     {
       id: 2,
       name: "Alice Johnson",
       date: "2024-02-10",
       comment: "The experience was amazing. Will come again!",
-      
     },
     {
       id: 3,
       name: "Michael Smith",
       date: "2024-01-25",
       comment: "Good quality, but the waiting time was a bit long.",
-      
     },
-    {
-       id: 4,
-        name: "Michael Smith",
-        date: "2024-01-25",
-        comment: "Good quality, but the waiting time was a bit long.",
-        
-      },  ]);
-   
+  ];
 
-  return ( 
-     <div className="flex -mt-5">
-            {/* Main Content */}
-            <main className="flex-1 p-6 dark:bg-gray-900 ">
-        <div className="flex justify-between items-center w-full p-4 mx-auto bg-dark:bg-slate-700 ">
-  {/* Left - Expert Name */}
-      <div >
-     <div className="flex  gap-10">
-    <div  onClick={() => navigate(-1)} className=" flex flex-col text-4xl font-bold text-start cursor-pointer"> ← </div> 
-    <div className="flex items-center gap-x-32 flex-wrap">
-  <h1 className="text-4xl font-bold dark:text-white">{expertData.name}</h1>
-          {/* Social Media Icons */}
-          <div className="flex justify-center gap-6 mt-3">
-      {icons.map((item, index) => (
-        <a
-          key={index}
-          href={item.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
-          style={{
-            background: item.icon === faInstagram 
-              ? 'radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)' 
-              : item.color
-          }}
-        >
-          <FontAwesomeIcon icon={item.icon} />
-        </a>
-      ))}
-    </div>
-      {/* Expert Info */}
-      <div className="flex justify-start gap-40 text-start mt-8">
-        <div >
-      <p className="text-gray-500 dark:text-white">Profession</p>
-        <p className="font-semibold dark:text-white">{expertData.profession}</p>
-        </div>
-        <div>
-        <p className="text-gray-500 dark:text-white ">Location</p>
-        <p className="font-semibold dark:text-white">{expertData.location}</p>
-        </div>
+  const services =
+    expertData.services?.map((service: any) => ({
+      id: service.id || service.serviceId,
+      name: service.name || "Service",
+      description:
+        service.description ||
+        service.additionalDetails ||
+        "No description available",
+      price:
+        typeof service.price === "number"
+          ? `$${service.price}/h`
+          : `$${service.price || 0}/h`,
+    })) || [];
+
+  // Filter media based on selection
+  const filteredMedia =
+    mediaFilter === "all"
+      ? mediaItems
+      : mediaItems.filter((item) => item.type === mediaFilter);
+
+  // Loading state
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center h-screen dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
       </div>
-      {/* Additional Information */}
-      <div className="flex justify-start gap-40 mt-6 text-start">
-        <div>
-          <p className="text-gray-500 dark:text-white">Response Time</p>
-          <p className="font-semibold dark:text-white">{expertData.responseTime}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 dark:text-white">Travel Limit</p>
-          <p className="font-semibold dark:text-white">{expertData.travelLimit}</p>
-        </div>
-        <div>
-          <p className="text-gray-500 dark:text-white">Certification Level</p>
-          <p className="font-semibold dark:text-white">{expertData.certificationLevel}</p>
-        </div>
-      </div>
-      </div>
-  {/* Right - Profile Picture in a Rectangle */}
-  <div className="w-full h-50 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md">
-    <img
-      src={profile2}
-      alt="Expert"
-      className="w-full h-full "/>
-  </div>  
-  </div>
-      {/* Stats */}
-      <div className="border-t border-b py-6 mt-6 text-center">
-  <div className="flex justify-around">
-  <div className="flex items-center gap-x-2">
-  <p className="text-yellow-300 text-3xl"><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/><FontAwesomeIcon icon={faStar}/></p>
-  <p className="text-gray-500 dark:text-white">{expertData.reviews} reviews</p>
-</div>
- 
-    <div>
-      <p className="text-red-500 text-3xl font-bold">{expertData.followers}</p>
-      <p className="text-gray-500 dark:text-white">Followers</p>
-    </div>
-    <div>
-      <p className="text-red-500 text-3xl font-bold">{expertData.assessments}</p>
-      <p className="text-gray-500 dark:text-white">Assessments Evaluated</p>
-    </div>
-  </div>
-</div>
-      {/* Media Tabs */}
-      <div className="mt-6">
-      <div className="flex space-x-6 border-b ">
-      {tabs.map((tab) => (
+    );
+  }
+
+  // Error state
+  if (status === "failed" || error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-screen dark:bg-gray-900 dark:text-white">
+        <h2 className="text-2xl font-semibold mb-4">
+          Failed to load expert profile
+        </h2>
+        <p className="mb-6">{error || "An unknown error occurred"}</p>
         <Button
-          key={tab}
-          variant="ghost"
-          onClick={() => setActiveTab(tab)}
-          className={`pb-2 rounded-none shadow-none text-sm capitalize transition-none ${
-            activeTab === tab
-              ? "border-b-2 border-red-500 font-Regular font-opensans text-red-500"
-              : "text-gray-500 dark:text-white"
-          }`}       >
-          {tab}
+          className="bg-red-600 hover:bg-red-700"
+          onClick={() => navigate(-1)}
+        >
+          Go Back
         </Button>
-      ))}
-    </div>
-        {/* details Content */}
-        {activeTab === "details" && (
-   <div className="mt-6 w-full mx-auto">
-   {/* About Me Section */}
-   <Card className="dark:bg-gray-700 dark:text-white">
-     <CardContent className="p-4">
-       <h2 className="text-xl font-semibold mb-2">About Me</h2>
-       <p
-         className={cn(
-           "text-gray-600 dark:text-white transition-all",
-           !readMore && shouldClamp && "line-clamp-2"
-         )}    >
-         {expertData.about}
-       </p>
-       {shouldClamp && (
-         <Button
-           variant="ghost"
-           className="mt-2 p-0 text-sm text-blue-600 hover:underline"
-           onClick={() => setReadMore(!readMore)}     >
-           {readMore ? "Show less" : "Read more"}
-         </Button>
-       )}
-     </CardContent>
-   </Card>
-   {/* Skills Section */}
-   <div className="flex justify-between gap-8 w-full mt-6">
-     <Card className="w-[48%] bg-white dark:bg-slate-800">
-       <CardContent className="p-6">
-         <h2 className="text-lg font-semibold mb-2 dark:text-white">Skills</h2>
-         <ul className="list-disc pl-4 text-gray-600 dark:text-white">
-           {expertData.skills.map((skill: string, index: number) => (
-             <li key={index}>{skill}</li>
-           ))}
-         </ul>
-       </CardContent>
-     </Card>
-   </div>
- </div>
-)}
-{activeTab === "media" && (
-  <div>
-    {/* Filter Buttons */}
-    <div className="flex gap-4 mb-6 mt-5">
-      <Button
-        variant="ghost"
-        onClick={() => setMediaFilter("all")}
-        className={`px-4 py-2 rounded-md ${
-          mediaFilter === "all" ? "bg-blue-200 text-blue-600" : "hover:bg-blue-200"
-        }`}
-      >
-        All
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={() => setMediaFilter("photo")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
-          mediaFilter === "photo" ? "bg-blue-200 text-blue-600" : "hover:bg-gray-100"
-        }`}
-      >
-        <FontAwesomeIcon icon={faCamera} />
-        Photos
-      </Button>
-      <Button
-        variant="ghost"
-        onClick={() => setMediaFilter("video")}
-        className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
-          mediaFilter === "video" ? "bg-blue-200 text-blue-600" : "hover:bg-gray-100"
-        }`}
-      >
-        <FontAwesomeIcon icon={faVideo} />
-        Videos
-      </Button>
-    </div>
-
-    {/* Media Content */}
-    {filteredMedia.length === 0 ? (
-      <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-        <FontAwesomeIcon
-          icon={mediaFilter === "video" ? faVideo : faCamera}
-          className="text-4xl text-gray-400 mb-3"
-        />
-        <p className="text-gray-500 dark:text-gray-400">
-          No{" "}
-          {mediaFilter === "all"
-            ? "media"
-            : mediaFilter === "photo"
-            ? "photos"
-            : "videos"}{" "}
-          available
-        </p>
       </div>
-    ) : (
-      <>
-        {mediaFilter === "all" ? (
-          <>
-            {/* Photos Section */}
-            {mediaItems.some((item) => item.type === "photo") && (
-              <>
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3">
-                  Photos
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 mb-6 w-fit">
-                  {mediaItems
-                    .filter((item) => item.type === "photo")
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-md"
-                      >
-                        <div className="h-40 w-fit">
-                          <img
-                            src={item.src}
-                            alt={item.title}
-                            onClick={() => {
-                              setSelectedMedia(item);
-                              setIsPreviewOpen(true);
-                            }}
-                            className="w-full h-40 object-cover rounded-md cursor-pointer"
-                          />
-                        </div>
-                        <div className="p-3 flex justify-center ">
-                          <p className="font-medium text-gray-700 dark:text-white truncate">
-                            {item.title}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </>
-            )}
+    );
+  }
 
-            {/* Videos Section */}
-            {mediaItems.some((item) => item.type === "video") && (
-              <>
-                <h2 className="text-lg font-semibold text-gray-700 dark:text-white mb-3 mt-6">
-                  Videos
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-fit">
-                  {mediaItems
-                    .filter((item) => item.type === "video")
-                    .map((item) => (
-                      <div
-                        key={item.id}
-                        className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-md"
-                      >
-                        <div className="h-40 w-fit">
-                          <video
-                            src={item.src}
-                            controls
-                            onClick={() => {
-                              setSelectedMedia(item);
-                              setIsPreviewOpen(true);
-                            }}
-                            className="w-full h-40 object-cover rounded-md cursor-pointer"
-                          />
-                        </div>
-                        <div className="p-3 flex justify-center ">
-                          <p className="font-medium  flex item-center justify-center text-gray-700 dark:text-white truncate">
-                            {item.title}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                </div>
-              </>
-            )}
-          </>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 w-fit">
-            {filteredMedia.map((item) => (
-              <div
-                key={item.id}
-                className="bg-white dark:bg-gray-800 overflow-hidden rounded-lg shadow-md"
+  return (
+    <div className="container mx-auto py-8 px-4 max-w-6xl">
+      {/* Back button - simplified */}
+      <div className="mb-6">
+        <button
+          onClick={() => navigate(-1)}
+          className="text-3xl font-bold cursor-pointer"
+        >
+          ←
+        </button>
+      </div>
+
+      {/* Header section with profile info and image */}
+      <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
+        {/* Left side - Expert info */}
+        <div className="flex-grow">
+          <div className="mb-8">
+            <h1 className="text-4xl font-bold mb-2">{expertData.name}</h1>
+
+            {/* Social Media Icons */}
+            <div className="flex gap-3 mt-4">
+              {icons.map((item, index) => (
+                <a
+                  key={index}
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-12 h-12 flex items-center justify-center rounded-full text-white text-xl shadow-md"
+                  style={{
+                    background:
+                      item.icon === faInstagram
+                        ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                        : item.color,
+                  }}
+                >
+                  <FontAwesomeIcon icon={item.icon} />
+                </a>
+              ))}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-16 gap-y-6">
+            <div>
+              <p className="text-gray-500">Profession</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.profession}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">Location</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.location}
+              </p>
+            </div>
+            <div className="md:col-span-1"></div>{" "}
+            {/* Empty column for proper alignment */}
+            <div>
+              <p className="text-gray-500">Response Time</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.responseTime}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">Travel Limit</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.travelLimit}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">Certification Level</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.certificationLevel}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Right side - Profile image */}
+        <div className="w-full md:w-1/3 lg:w-1/4 rounded-lg overflow-hidden">
+          <img
+            src={expertData.profileImage}
+            alt={expertData.name}
+            className="w-full h-auto aspect-square object-cover rounded-lg shadow-md"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = profile2;
+            }}
+          />
+        </div>
+      </div>
+
+      {/* Stats row */}
+      <div className="border-t border-b py-6 mb-8">
+        <div className="flex flex-wrap justify-around items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="flex text-yellow-300 text-xl">
+              <FontAwesomeIcon icon={faStar} />
+              <FontAwesomeIcon icon={faStar} />
+              <FontAwesomeIcon icon={faStar} />
+              <FontAwesomeIcon icon={faStar} />
+              <FontAwesomeIcon icon={faStar} />
+            </div>
+            <p className="text-gray-500">{expertData.reviews} reviews</p>
+          </div>
+          <div className="text-center">
+            <p className="text-red-500 text-3xl font-bold">
+              {expertData.followers}
+            </p>
+            <p className="text-gray-500">Followers</p>
+          </div>
+          <div className="text-center">
+            <p className="text-red-500 text-3xl font-bold">
+              {expertData.assessments}+
+            </p>
+            <p className="text-gray-500">Assessments Evaluated</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs navigation */}
+      <div className="mb-8 border-b">
+        <div className="flex space-x-6">
+          {tabs.map((tab) => (
+            <Button
+              key={tab}
+              variant="ghost"
+              onClick={() => setActiveTab(tab)}
+              className={`pb-2 rounded-none text-base capitalize transition-none ${
+                activeTab === tab
+                  ? "text-red-500 border-b-2 border-red-500 font-semibold"
+                  : "text-gray-500"
+              }`}
+            >
+              {tab}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      {/* Tab content */}
+      <div className="mt-6">
+        {/* Details Tab */}
+        {activeTab === "details" && (
+          <Card className="p-6 relative">
+            <div className="flex justify-between mb-4">
+              <h2 className="text-xl font-bold">About Me</h2>
+              <Button variant="ghost" className="p-1 h-auto">
+                <FontAwesomeIcon icon={faPen} className="text-gray-400" />
+              </Button>
+            </div>
+            <p
+              className={cn(
+                "text-gray-700 dark:text-gray-300",
+                !readMore && shouldClamp && "line-clamp-2"
+              )}
+            >
+              {expertData.about}
+            </p>
+            {shouldClamp && (
+              <Button
+                variant="link"
+                className="p-0 text-blue-600 hover:underline mt-2"
+                onClick={() => setReadMore(!readMore)}
               >
-                <div className=" flex h-40 w-fit">
-                  {item.type === "photo" ? (
-                    <img
-                      src={item.src}
-                      alt={item.title}
-                      onClick={() => {
-                        setSelectedMedia(item);
-                        setIsPreviewOpen(true);
-                      }}
-                      className="w-full h-40 object-cover rounded-md cursor-pointer"
-                    />
-                  ) : (
-                    <video
-                      src={item.src}
-                      controls
-                      onClick={() => {
-                        setSelectedMedia(item);
-                        setIsPreviewOpen(true);
-                      }}
-                      className="w-full h-40 object-cover rounded-md cursor-pointer"
-                    />
-                  )}
-                </div>
-                <div className="p-3 flex justify-center ">
-                  <p className="font-medium text-gray-700 dark:text-white truncate">
-                    {item.title}
-                  </p>
-                </div>
+                {readMore ? "Show less" : "Read more"}
+              </Button>
+            )}
+          </Card>
+        )}
+
+        {/* Media Tab */}
+        {activeTab === "media" && (
+          <div>
+            {/* Filter Buttons */}
+            <div className="flex gap-4 mb-6">
+              <Button
+                variant="ghost"
+                onClick={() => setMediaFilter("all")}
+                className={`px-4 py-2 rounded-md ${
+                  mediaFilter === "all"
+                    ? "bg-blue-200 text-blue-600"
+                    : "hover:bg-blue-200"
+                }`}
+              >
+                All
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setMediaFilter("photo")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
+                  mediaFilter === "photo"
+                    ? "bg-blue-200 text-blue-600"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                <FontAwesomeIcon icon={faCamera} />
+                Photos
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => setMediaFilter("video")}
+                className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
+                  mediaFilter === "video"
+                    ? "bg-blue-200 text-blue-600"
+                    : "hover:bg-gray-100"
+                }`}
+              >
+                <FontAwesomeIcon icon={faVideo} />
+                Videos
+              </Button>
+            </div>
+
+            {/* Media Content */}
+            {filteredMedia.length === 0 ? (
+              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                <FontAwesomeIcon
+                  icon={mediaFilter === "video" ? faVideo : faCamera}
+                  className="text-4xl text-gray-400 mb-3"
+                />
+                <p className="text-gray-500">
+                  No{" "}
+                  {mediaFilter === "all"
+                    ? "media"
+                    : mediaFilter === "photo"
+                    ? "photos"
+                    : "videos"}{" "}
+                  available
+                </p>
               </div>
-            ))}
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+                {filteredMedia.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden"
+                  >
+                    <div className="h-48 overflow-hidden">
+                      {item.type === "photo" ? (
+                        <img
+                          src={item.src}
+                          alt={item.title}
+                          onClick={() => {
+                            setSelectedMedia(item);
+                            setIsPreviewOpen(true);
+                          }}
+                          className="w-full h-full object-cover cursor-pointer"
+                        />
+                      ) : (
+                        <video
+                          src={item.src}
+                          controls
+                          className="w-full h-full object-cover"
+                          onClick={() => {
+                            setSelectedMedia(item);
+                            setIsPreviewOpen(true);
+                          }}
+                        />
+                      )}
+                    </div>
+                    <div className="p-3 text-center">
+                      <h3 className="font-medium text-gray-800 dark:text-white truncate">
+                        {item.title}
+                      </h3>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
-      </>
-    )}
-  </div>
-)}
-</div>
-{/*preview the photos and videos */}
-{selectedMedia && isPreviewOpen && (
-  <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex justify-center items-center">
-    <div className="bg-white dark:bg-gray-900 p-4 rounded-lg max-w-3xl w-full relative">
-      <button
-        onClick={() => setIsPreviewOpen(false)}
-        className="absolute top-2 right-2 text-gray-500 hover:text-red-500"  >
-        ✖
-      </button>
-      <h2 className="text-lg font-semibold text-center mb-4 text-gray-800 dark:text-white">
-        {selectedMedia.title}
-      </h2>
-      {selectedMedia.type === "photo" ? (
-        <img
-          src={selectedMedia.src}
-          alt={selectedMedia.title}
-          className="w-full h-auto max-h-[75vh] object-contain rounded-md"
-        />
-      ) : (
-        <video
-          src={selectedMedia.src}
-          controls
-          autoPlay
-          className="w-full max-h-[75vh] rounded-md"/>
-      )}
-    </div>
-  </div>
-)}
 
-{/* Reviews Section (Only show when "Reviews" tab is active) */}
-{activeTab === "reviews" && (
-  <div className="w-full mt-6">
-    {reviews.length === 0 ? (
-      <p className="text-gray-400">No reviews yet.</p>
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {reviews.map((review) => {
-          const shouldClamp = review.comment.length > 50;
-
-          return (
-            <Card key={review.id} className="dark:bg-slate-800">
-             <CardHeader className="flex items-center gap-4 pb-2">
-                  {/* Profile Picture */}
-                  <img
-                    src={player}
-                    alt={review.name}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
-                  {/* Name + Date */}
-                  <div className="flex flex-col">
-                    <h3 className="text-sm font-semibold text-black dark:text-white">
-                      {review.name}
-                    </h3>
-                    <span className="text-sm text-gray-600 dark:text-gray-300">
-                      {moment(review.date).fromNow()}
-                    </span>
-                  </div>
-                </CardHeader>
-              <CardContent>
-                <p
-                  className={`text-black dark:text-white transition-all ${
-                    shouldClamp ? "line-clamp-2" : ""
-                  }`}
-                >
-                  {review.comment}
-                </p>
-
-                {shouldClamp && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button
-                        variant="link"
-                        className="p-0 text-sm text-blue-600 hover:underline mt-2"
-                      >
-                        Read more
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent className="sm:max-w-lg dark:bg-gray-800">
-            <DialogHeader>
-              <div className="flex items-center gap-4">
-                {/* Profile Image */}
+        {/* Reviews Tab */}
+        {activeTab === "reviews" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {reviews.map((review) => (
+              <Card key={review.id} className="overflow-hidden">
+                <div className="p-4">
+                  <div className="flex items-center gap-3 mb-4">
                     <img
                       src={player}
                       alt={review.name}
-                      className="w-12 h-12 rounded-full object-cover"
+                      className="w-10 h-10 rounded-full object-cover"
                     />
-
-                    {/* Name + Date */}
                     <div>
-                      <DialogTitle className="text-black text-xl dark:text-white">
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
                         {review.name}
-                      </DialogTitle>
-                      <DialogDescription className="text-sm text-gray-600 dark:text-gray-400">
-                        {moment(review.date).format("MMMM D, YYYY")}
-                      </DialogDescription>
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {moment(review.date).fromNow()}
+                      </p>
                     </div>
                   </div>
-                </DialogHeader>
-
-                      <p className="text-gray-800 dark:text-gray-200 whitespace-pre-line">
-                        {review.comment}
-                      </p>
-                    </DialogContent>
-                  </Dialog>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    )}
-  </div>
-)}
-
-      {/* Services Section (Only show when "Services" tab is active) */}
-      {activeTab === "services" && (
-  <div className="w-full mt-6">
-    {services.length === 0 ? (
-      <p className="text-gray-400">No services available.</p>
-    ) : (
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {services.map((service) => (
-           <Card
-                          key={service.id}
-                          className="shadow-md dark:bg-gray-700 overflow-hidden"
-                        >
-                          <div className="px-4">
-                            <div className="flex justify-between items-start">
-                              <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                                {service.name}
-                              </h3>
-                              <span className="text-lg text-red-600 font-semibold">
-                                {service.price}
-                              </span>
-                            </div>
-          
-                            <p className="text-gray-700 dark:text-gray-300 mb-6">
-                              {service.description}
-                            </p>
-                          </div>
+                  <p className="text-gray-700 dark:text-gray-300">
+                    {review.comment.length > 100 ? (
+                      <>
+                        {review.comment.substring(0, 100)}...
+                        <Dialog>
+                          <DialogTrigger asChild>
                             <Button
-                              onClick={() => navigate("/book") }
-                            className="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-md transition w-fit duration-200 ml-5" >
-                              Book Now
+                              variant="link"
+                              className="p-0 text-blue-600"
+                            >
+                              Read more
                             </Button>
-                        
-                        </Card>
-                    ))}
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>{review.name}</DialogTitle>
+                              <DialogDescription>
+                                {moment(review.date).format("MMMM D, YYYY")}
+                              </DialogDescription>
+                            </DialogHeader>
+                            <p className="mt-4 text-gray-700 dark:text-gray-300">
+                              {review.comment}
+                            </p>
+                          </DialogContent>
+                        </Dialog>
+                      </>
+                    ) : (
+                      review.comment
+                    )}
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* Services Tab */}
+        {activeTab === "services" && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {services.length > 0 ? (
+              services.map((service) => (
+                <Card key={service.id} className="overflow-hidden">
+                  <div className="p-5">
+                    <div className="flex justify-between items-start mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {service.name}
+                      </h3>
+                      <span className="text-red-600 font-bold">
+                        {service.price}
+                      </span>
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 mb-4">
+                      {service.description}
+                    </p>
+                    <Button
+                      onClick={() => navigate("/book")}
+                      className="bg-red-600 hover:bg-red-700 text-white"
+                    >
+                      Book Now
+                    </Button>
                   </div>
-                )}
-              </div>
+                </Card>
+              ))
+            ) : (
+              <p className="col-span-2 text-center text-gray-500">
+                No services available.
+              </p>
             )}
-                  </div>
-                  </div>
-                  </main>
-                  </div>
-            
+          </div>
+        )}
+      </div>
+
+      {/* Media Preview Modal */}
+      {selectedMedia && isPreviewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-3xl p-4 relative">
+            <button
+              onClick={() => setIsPreviewOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-4 text-center">
+              {selectedMedia.title}
+            </h3>
+            {selectedMedia.type === "photo" ? (
+              <img
+                src={selectedMedia.src}
+                alt={selectedMedia.title}
+                className="max-w-full max-h-[70vh] mx-auto object-contain"
+              />
+            ) : (
+              <video
+                src={selectedMedia.src}
+                controls
+                autoPlay
+                className="max-w-full max-h-[70vh] mx-auto"
+              />
+            )}
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
+
 export default Experts;
-
-
-

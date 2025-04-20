@@ -6,6 +6,8 @@ import Reviews from "./playerreviews";
 import { Card } from "@/components/ui/card";
 import PlayerMedia from "./playermedia";
 import ProfileDetails from "./profiledetails";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { getProfile } from "../store/profile-slice";
 
 // Import default images
 import player from "../assets/images/player.jpg";
@@ -23,7 +25,6 @@ interface Stat {
   color: string;
 }
 
-// Default stats data
 const defaultStats: Stat[] = [
   { label: "Pace", percentage: 60, color: "#E63946" },
   { label: "Shooting", percentage: 55, color: "#D62828" },
@@ -42,36 +43,73 @@ const PlayerInfo: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
     "details"
   );
-  const [profileData, setProfileData] = useState<any>(null);
+  const [profileData, setProfileData] = useState<Profile | null>(null);
   const [playerStats, setPlayerStats] = useState<Stat[]>(defaultStats);
   const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
-  // Load profile data from localStorage
+  // Get profile data from Redux store
+  const { viewedProfile, status } = useAppSelector((state) => state.profile);
+
   useEffect(() => {
-    setIsLoading(true);
-    try {
-      const storedProfile = localStorage.getItem("viewedProfileData");
-      if (storedProfile) {
-        const parsedProfile = JSON.parse(storedProfile);
-        console.log("Loaded profile data:", parsedProfile);
-        setProfileData(parsedProfile);
+    const loadProfile = async () => {
+      setIsLoading(true);
+      try {
+        // First try to get username from localStorage
+        const username = localStorage.getItem("viewplayerusername");
 
-        // Generate stats based on player attributes if available
-        if (parsedProfile.role === "player") {
-          generatePlayerStats(parsedProfile);
+        if (username) {
+          console.log(`Found username in localStorage: ${username}`);
+          // Dispatch action to fetch profile by username
+          await dispatch(getProfile(username));
+        } else {
+          // Fallback to stored profile data if username is not available
+          console.log("Username not found in localStorage");
+          setIsLoading(false);
         }
+      } catch (error) {
+        console.error("Error loading profile data:", error);
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error loading profile data:", error);
-    } finally {
+    };
+
+    loadProfile();
+  }, [dispatch]);
+
+  // Update profile data when the Redux state changes
+  useEffect(() => {
+    if (status === "succeeded" && viewedProfile) {
+      console.log("Profile data from Redux:", viewedProfile);
+
+      // IMPORTANT: Check what the structure of your profile data is
+      // It may be nested inside a 'user' object or be the direct response
+      let processedProfile = viewedProfile;
+
+      // Check if profile is nested inside a property (common API pattern)
+      if (viewedProfile.user) {
+        processedProfile = viewedProfile.user;
+      } else if (viewedProfile.data) {
+        processedProfile = viewedProfile.data;
+      }
+
+      // Log what we're actually setting as profile data
+      console.log("Setting profile data:", processedProfile);
+
+      setProfileData(processedProfile);
+      setIsLoading(false);
+
+      // Generate stats based on player attributes if available
+      if (processedProfile.role === "player") {
+        generatePlayerStats(processedProfile);
+      }
+    } else if (status === "failed") {
       setIsLoading(false);
     }
-  }, []);
+  }, [viewedProfile, status]);
 
   // Generate player stats based on profile attributes
-  const generatePlayerStats = (profile: any) => {
-    // Use physical attributes to generate stats
+  const generatePlayerStats = (profile: Profile) => {
     const height = profile.height || 0;
     const weight = profile.weight || 0;
     const age = profile.age || 20;
@@ -80,7 +118,10 @@ const PlayerInfo: React.FC = () => {
     const stats: Stat[] = [
       {
         label: "Pace",
-        percentage: Math.min(95, Math.max(50, 100 - (weight / height) * 100)),
+        percentage: Math.min(
+          95,
+          Math.max(50, height && weight ? 100 - (weight / height) * 100 : 60)
+        ),
         color: "#E63946",
       },
       {
@@ -100,29 +141,34 @@ const PlayerInfo: React.FC = () => {
       },
       {
         label: "Defending",
-        percentage: Math.min(95, Math.max(50, 60 + (weight / 100) * 30)),
+        percentage: Math.min(
+          95,
+          Math.max(50, weight ? 60 + (weight / 100) * 30 : 60)
+        ),
         color: "#2D6A4F",
       },
       {
         label: "Physical",
-        percentage: Math.min(95, Math.max(50, (weight / height) * 200)),
+        percentage: Math.min(
+          95,
+          Math.max(50, height && weight ? (weight / height) * 200 : 60)
+        ),
         color: "#F4A261",
       },
     ];
 
     // Round all percentages to integers
-    const roundedStats = stats.map((stat) => ({
-      ...stat,
-      percentage: Math.round(stat.percentage),
-    }));
-
-    setPlayerStats(roundedStats);
+    setPlayerStats(
+      stats.map((stat) => ({
+        ...stat,
+        percentage: Math.round(stat.percentage),
+      }))
+    );
   };
 
-  // Get OVR rating
+  // Calculate OVR rating
   const OVR = calculateOVR(playerStats);
 
-  // Display loading state
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen w-full">
@@ -131,7 +177,6 @@ const PlayerInfo: React.FC = () => {
     );
   }
 
-  // If no profile data is found
   if (!profileData) {
     return (
       <div className="flex flex-col items-center justify-center h-screen">
@@ -151,17 +196,16 @@ const PlayerInfo: React.FC = () => {
     );
   }
 
-  // Create a formatted display name
   const displayName =
     `${profileData.firstName || ""} ${profileData.lastName || ""}`.trim() ||
     profileData.username ||
     "Anonymous User";
-
-  // Create formatted location
   const location =
     profileData.city && profileData.country
       ? `${profileData.city}, ${profileData.country}`
       : profileData.country || profileData.city || "N/A";
+
+  console.log("About to render with profile:", profileData);
 
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
@@ -275,15 +319,15 @@ const PlayerInfo: React.FC = () => {
               ))}
             </div>
             <div className="mt-4">
-              {/* Pass raw profile data to child components */}
+              {/* Pass the entire profile data to child components */}
               {activeTab === "details" && (
                 <ProfileDetails playerData={profileData} isExpertView={true} />
               )}
               {activeTab === "media" && (
-                <PlayerMedia playerId={profileData} isExpertView={true} />
+                <PlayerMedia playerData={profileData} isExpertView={true} />
               )}
               {activeTab === "reviews" && (
-                <Reviews playerId={profileData.id} isExpertView={true} />
+                <Reviews playerData={profileData} isExpertView={true} />
               )}
             </div>
           </div>

@@ -13,12 +13,12 @@ interface MediaItem {
 }
 
 interface PlayerMediaProps {
-  playerId?: any; // This is actually receiving the full profile object, not just the ID
+  playerData?: any; // Rename from playerId to playerData for clarity
   isExpertView?: boolean;
 }
 
 const PlayerMedia: React.FC<PlayerMediaProps> = ({
-  playerId, // This is actually the full profile object
+  playerData, // Renamed from playerId to playerData
   isExpertView = false,
 }) => {
   const [filter, setFilter] = useState<"all" | "photo" | "video">("all");
@@ -29,56 +29,40 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
   // Load media from the profile object passed as props
   useEffect(() => {
     setIsLoading(true);
+    console.log("PlayerMedia received profile data:", playerData);
 
     // Check if profile object was passed
-    if (!playerId) {
+    if (!playerData) {
       setIsLoading(false);
       return;
     }
 
-    // Extract profile data from the props
-    const profile = playerId; // Rename for clarity
     let mediaItems: MediaItem[] = [];
 
-    // Check for uploads in the profile
-    if (profile.uploads && Array.isArray(profile.uploads)) {
-      mediaItems = profile.uploads.map((upload: any, index: number) => ({
-        id: upload.id || `upload-${index}`,
-        title: upload.title || `Upload ${index + 1}`,
-        preview: upload.url || null,
-        url: upload.url || null,
-        type: upload.type || determineMediaType(upload.url),
-      }));
-    }
-    // Check for media array in profile
-    else if (profile.media && Array.isArray(profile.media)) {
-      mediaItems = profile.media.map((item: any, index: number) => ({
-        id: item.id || `media-${index}`,
-        title: item.title || `Media ${index + 1}`,
-        preview: item.url || item.preview || null,
-        url: item.url || item.preview || null,
-        type: item.type || determineMediaType(item.url || item.preview),
-      }));
-    }
-    // Check for documents with images
-    else if (profile.documents && Array.isArray(profile.documents)) {
-      const documentMedia = profile.documents
-        .filter((doc: any) => doc.imageUrl)
-        .map((doc: any, index: number) => ({
-          id: doc.id || `doc-${index}`,
-          title: doc.title || `Document ${index + 1}`,
-          preview: doc.imageUrl || null,
-          url: doc.imageUrl || null,
-          type: determineMediaType(doc.imageUrl),
+    // Process documents array
+    
+
+    // Process uploads array
+    if (playerData.uploads && Array.isArray(playerData.uploads)) {
+      console.log("Processing uploads:", playerData.uploads);
+
+      const uploadMedia = playerData.uploads
+        .filter((upload: any) => upload.url)
+        .map((upload: any, index: number) => ({
+          id: upload.id || `upload-${index}`,
+          title: upload.title || upload.name || `Upload ${index + 1}`,
+          preview: upload.url || null,
+          url: upload.url || null,
+          type: determineMediaType(upload.url || ""),
         }));
 
-      mediaItems = [...mediaItems, ...documentMedia];
+      mediaItems = [...mediaItems, ...uploadMedia];
     }
 
-    // Set the media and update loading state
+    console.log("Final processed media items:", mediaItems);
     setMedia(mediaItems);
     setIsLoading(false);
-  }, [playerId]);
+  }, [playerData]);
 
   // Helper function to determine media type from URL
   const determineMediaType = (url: string): "photo" | "video" => {
@@ -253,8 +237,6 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
                   className="max-w-full max-h-[70vh] object-contain rounded-lg"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src =
-                      "https://via.placeholder.com/800x600/CCCCCC/666666?text=Image+Not+Available";
                   }}
                 />
               ) : (

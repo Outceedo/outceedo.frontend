@@ -1,19 +1,13 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import profile2 from "../assets/images/profile2.jpg";
-import profile3 from "../assets/images/profile3.jpg";
-import profile4 from "../assets/images/profile4.jpg";
-import profile5 from "../assets/images/profile5.jpg";
-import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { getProfiles } from "../store/profile-slice";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, CheckCircle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -22,82 +16,43 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// Import fallback profile images
+import profile2 from "../assets/images/profile2.jpg";
+import profile3 from "../assets/images/profile3.jpg";
+import profile4 from "../assets/images/profile4.jpg";
+import profile5 from "../assets/images/profile5.jpg";
+
+// Default image mapping for fallbacks
+const defaultImages = [profile2, profile3, profile4, profile5];
+
 interface Expert {
-  name: string;
-  rating: number;
-  profilePic: string;
-  reviews: number;
-  verified: boolean;
+  id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  profession?: string;
+  bio?: string;
+  city?: string;
+  country?: string;
+  gender?: string;
+  language?: string[];
+  photo?: string;
+  verified?: boolean;
+  role?: string;
+  [key: string]: any; // For other potential properties
 }
 
-const experts: Expert[] = [
-  {
-    name: "John Doe",
-    rating: 3.5,
-    profilePic: profile2,
-    reviews: 100,
-    verified: true,
-  },
-  {
-    name: "Jane Smith",
-    rating: 3.5,
-    profilePic: profile3,
-    reviews: 100,
-    verified: false,
-  },
-  {
-    name: "Mike Johnson",
-    rating: 3.5,
-    profilePic: profile4,
-    reviews: 100,
-    verified: true,
-  },
-  {
-    name: "Kai Liddell",
-    rating: 3.5,
-    profilePic: profile5,
-    reviews: 100,
-    verified: false,
-  },
-  {
-    name: "Jane Smith",
-    rating: 3.5,
-    profilePic: profile5,
-    reviews: 100,
-    verified: false,
-  },
-  {
-    name: "Mike Johnson",
-    rating: 3.5,
-    profilePic: profile4,
-    reviews: 100,
-    verified: true,
-  },
-  {
-    name: "Kai Liddell",
-    rating: 3.5,
-    profilePic: profile3,
-    reviews: 100,
-    verified: false,
-  },
-  {
-    name: "Kai Liddell",
-    rating: 3.5,
-    profilePic: profile2,
-    reviews: 100,
-    verified: false,
-  },
-];
-
-const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
-  const [currentPage, setCurrentPage] = useState(1);
-
+const Pagination: React.FC<{
+  totalPages: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}> = ({ totalPages, currentPage, onPageChange }) => {
   const handlePrev = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
+    if (currentPage > 1) onPageChange(currentPage - 1);
   };
 
   const handleNext = () => {
-    if (currentPage < totalPages) setCurrentPage(currentPage + 1);
+    if (currentPage < totalPages) onPageChange(currentPage + 1);
   };
 
   return (
@@ -119,7 +74,7 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
               ? "bg-blue-500 text-white"
               : "bg-gray-200 dark:bg-slate-600 dark:text-white"
           }`}
-          onClick={() => setCurrentPage(index + 1)}
+          onClick={() => onPageChange(index + 1)}
         >
           {index + 1}
         </span>
@@ -138,6 +93,7 @@ const Pagination: React.FC<{ totalPages: number }> = ({ totalPages }) => {
 };
 
 const Expertspage: React.FC = () => {
+  // State for search, filters, and pagination
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     profession: "",
@@ -146,35 +102,182 @@ const Expertspage: React.FC = () => {
     gender: "",
     language: "",
   });
-  const navigate = useNavigate();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(8); // Number of experts per page
 
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  // Get profiles from Redux store
+  const { profiles, status, error } = useAppSelector((state) => state.profile);
+
+  // Extract experts array from the profiles response
+  const expertsArray = profiles?.users || [];
+
+  // Determine total pages from response
+  const totalPages = profiles?.totalPages || 1;
+
+  // Fetch profiles on component mount and when filters/pagination change
+  useEffect(() => {
+    fetchProfiles();
+  }, [currentPage, limit, dispatch]);
+
+  // Function to fetch expert profiles
+  const fetchProfiles = () => {
+    dispatch(
+      getProfiles({
+        page: currentPage,
+        limit,
+        userType: "expert", // Specifically fetch expert profiles
+      })
+    );
+  };
+
+  // Handle filter changes
   const handleFilterChange = (value: string, filterType: string) => {
     setFilters({
       ...filters,
       [filterType.toLowerCase()]: value,
     });
+    // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
-  // Filter experts based on search query
-  // const filteredExperts = experts.filter((expert) => {
-  //   if (
-  //     searchQuery &&
-  //     !expert.name.toLowerCase().includes(searchQuery.toLowerCase())
-  //   ) {
-  //     return false;
-  //   }
+  // Apply client-side filtering for search
+  const filteredExperts = expertsArray.filter((expert: Expert) => {
+    // Search query filtering
+    const fullName = `${expert.firstName || ""} ${
+      expert.lastName || ""
+    }`.toLowerCase();
+    const bio = expert.bio?.toLowerCase() || "";
+    const username = expert.username?.toLowerCase() || "";
 
-  //   // Apply other filters (simplified for example)
-  //   return true;
-  // });
+    if (
+      searchQuery &&
+      !fullName.includes(searchQuery.toLowerCase()) &&
+      !bio.includes(searchQuery.toLowerCase()) &&
+      !username.includes(searchQuery.toLowerCase())
+    ) {
+      return false;
+    }
 
-  // Handler for View Profile button
-  // const handleViewProfile = (expert: Expert) => {
-  //   // Store expert details in localStorage
-  //   localStorage.setItem("selectedExpert", JSON.stringify(expert));
-  //   // Navigate to expert details page
-  //   navigate("/player/exdetails");
-  // };
+    // Apply other filters if they're set
+    if (
+      filters.profession &&
+      expert.profession &&
+      expert.profession.toLowerCase() !== filters.profession.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (
+      filters.city &&
+      expert.city &&
+      expert.city.toLowerCase() !== filters.city.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (
+      filters.country &&
+      expert.country &&
+      expert.country.toLowerCase() !== filters.country.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (
+      filters.gender &&
+      expert.gender &&
+      expert.gender.toLowerCase() !== filters.gender.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (filters.language && expert.language) {
+      const languages = Array.isArray(expert.language)
+        ? expert.language
+        : [expert.language];
+      if (
+        !languages.some(
+          (lang) => lang.toLowerCase() === filters.language.toLowerCase()
+        )
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Extract unique filter values from profiles
+  const extractFilterOptions = (key: keyof Expert): string[] => {
+    const options = new Set<string>();
+
+    expertsArray.forEach((expert: Expert) => {
+      if (key === "language" && expert.language) {
+        const langs = Array.isArray(expert.language)
+          ? expert.language
+          : [expert.language];
+        langs.forEach((lang) => {
+          if (lang) options.add(lang);
+        });
+      } else {
+        const value = expert[key];
+        if (value && typeof value === "string") options.add(value);
+      }
+    });
+
+    return Array.from(options);
+  };
+
+  // Get profile filter options
+  const professionOptions = extractFilterOptions("profession");
+  const cityOptions = extractFilterOptions("city");
+  const countryOptions = extractFilterOptions("country");
+  const genderOptions = extractFilterOptions("gender");
+  const languageOptions = extractFilterOptions("language");
+
+  // Generate filter objects
+  const filterConfig = [
+    {
+      name: "Profession",
+      options:
+        professionOptions.length > 0
+          ? professionOptions
+          : ["Coach", "Trainer", "Scout"],
+    },
+    {
+      name: "City",
+      options:
+        cityOptions.length > 0
+          ? cityOptions
+          : ["London", "Manchester", "Liverpool"],
+    },
+    {
+      name: "Country",
+      options:
+        countryOptions.length > 0 ? countryOptions : ["UK", "Spain", "Germany"],
+    },
+    {
+      name: "Gender",
+      options:
+        genderOptions.length > 0 ? genderOptions : ["Male", "Female", "Other"],
+    },
+    {
+      name: "Language",
+      options:
+        languageOptions.length > 0
+          ? languageOptions
+          : ["English", "Spanish", "French"],
+    },
+  ];
+
+  // Handle view expert profile
+  const handleViewProfile = (expert: Expert) => {
+    localStorage.setItem("viewexpertusername", expert.username);
+    navigate("/player/exdetails");
+  };
 
   return (
     <div className="flex">
@@ -183,7 +286,7 @@ const Expertspage: React.FC = () => {
         <div className="min-h-screen px-6 rounded-xl dark:bg-slate-800">
           {/* Search Box */}
           <div className="flex mr-5">
-          <div className="relative mb-2 w-full bg-white dark:bg-slate-600 dark:text-white rounded-lg ">
+            <div className="relative mb-2 w-full bg-white dark:bg-slate-600 dark:text-white rounded-lg">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="text"
@@ -197,18 +300,13 @@ const Expertspage: React.FC = () => {
 
           {/* Filters Section */}
           <div className="flex flex-wrap gap-4 justify-start mb-6">
-            {[
-              { name: "Profession", options: ["Profession 1", "Profession 2"] },
-              { name: "City", options: ["City 1", "City 2"] },
-              { name: "Country", options: ["Country 1", "Country 2"] },
-              { name: "Gender", options: ["Male", "Female", "Other"] },
-              { name: "Language", options: ["English", "Spanish", "French"] },
-            ].map((filter) => (
+            {filterConfig.map((filter) => (
               <Select
                 key={filter.name}
                 onValueChange={(value) =>
                   handleFilterChange(value, filter.name)
-                }>
+                }
+              >
                 <SelectTrigger className="w-[180px] bg-white dark:bg-slate-600">
                   <SelectValue placeholder={filter.name} />
                 </SelectTrigger>
@@ -223,59 +321,141 @@ const Expertspage: React.FC = () => {
             ))}
           </div>
 
+          {/* Loading State */}
+          {status === "loading" && (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+            </div>
+          )}
+
+          {/* Error State */}
+          {status === "failed" && error && (
+            <div className="text-center p-6 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
+              <p className="text-lg font-semibold">
+                Failed to load expert profiles
+              </p>
+              <p>{error}</p>
+              <Button
+                className="mt-4 bg-red-600 hover:bg-red-700"
+                onClick={fetchProfiles}
+              >
+                Try Again
+              </Button>
+            </div>
+          )}
+
+          {/* No Experts State */}
+          {status === "succeeded" && filteredExperts.length === 0 && (
+            <div className="text-center p-10">
+              <p className="text-lg text-gray-500 dark:text-gray-400">
+                No experts found matching your criteria.
+              </p>
+            </div>
+          )}
+
           {/* Experts Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {experts.map((expert, index) => (
-              <Card
-                key={index}
-                className="w-80 shadow-md dark:bg-slate-600 dark:text-white"  >
-                <CardHeader className="relative ">
-                  <img
-                    className="rounded-lg w-full h-50 object-cover -mb-7"
-                    src={expert.profilePic}
-                    alt={expert.name}  />
-                  {expert.verified && (
-                    <span className="absolute top-4 right-10 bg-green-400 text-white text-xs px-2 py-1 rounded-full">
-                      ✔
-                    </span>
-                  )}
-                </CardHeader>
-                <CardContent className="text-center p-3">
-                  <h3 className="text-lg font-semibold text-left">
-                    {expert.name}
-                  </h3>
-                  <p className="text-gray-500 text-sm text-left dark:text-white">
-                    Lorem ipsum dolor sit amet consectetur.
-                  </p>
-                  <div className="flex items-center justify-between mt-4">
-                    <div className="flex items-center">
-                      <span className="text-yellow-500 text-lg"><FontAwesomeIcon className="text-amber-300" icon={faStar}/></span>
-                      <span className="ml-1 text-gray-700 dark:text-white">
-                        {expert.rating}/5
-                      </span>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-red-600 text-xl font-bold flex justify-center item-center">
-                        {expert.reviews}+
+          {status === "succeeded" && filteredExperts.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredExperts.map((expert: Expert, index: number) => {
+                // Create display name from available fields
+                const displayName =
+                  `${expert.firstName || ""} ${expert.lastName || ""}`.trim() ||
+                  expert.username ||
+                  "Expert User";
+
+                // Calculate random rating and reviews count if not available
+                const rating =
+                  expert.rating || Math.floor(Math.random() * 2) + 3.5;
+                const reviews =
+                  expert.reviews || Math.floor(Math.random() * 150) + 50;
+
+                // Use photo from profile or fallback to default images
+                const expertImage =
+                  expert.photo || defaultImages[index % defaultImages.length];
+
+                // Use verified status if available, or generate randomly
+                const isVerified =
+                  expert.verified !== undefined
+                    ? expert.verified
+                    : Math.random() > 0.5;
+
+                return (
+                  <Card
+                    key={expert.id}
+                    className="w-80 shadow-md dark:bg-slate-600 dark:text-white"
+                  >
+                    <CardHeader className="relative">
+                      <img
+                        className="rounded-lg w-full h-50 object-cover -mb-7"
+                        src={expertImage}
+                        alt={displayName}
+                        onError={(e) => {
+                          // If image fails to load, use default image
+                          const target = e.target as HTMLImageElement;
+                          target.src =
+                            defaultImages[index % defaultImages.length];
+                        }}
+                      />
+                      {isVerified && (
+                        <span className="absolute top-4 right-10 bg-green-400 text-white text-xs px-2 py-1 rounded-full">
+                          ✔
+                        </span>
+                      )}
+                    </CardHeader>
+                    <CardContent className="text-center p-3">
+                      <h3 className="text-lg font-semibold text-left">
+                        {displayName}
+                      </h3>
+                      <p className="text-gray-500 text-sm text-left dark:text-white">
+                        {expert.profession || "Expert Coach"}
+                        {expert.city && expert.country
+                          ? ` • ${expert.city}, ${expert.country}`
+                          : ""}
                       </p>
-                      <p className="text-gray-700 text-sm dark:text-white">
-                        Assessments Evaluated
-                      </p>
-                    </div>
-                  </div>
-                  <Button
-                    className="mt-4 bg-red-600 hover:bg-red-700 w-full text-lg cursor-pointer"
-                    onClick={() => navigate("/player/exdetails")}  >
-                    View Profile
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                      <div className="flex items-center justify-between mt-4">
+                        <div className="flex items-center">
+                          <span className="text-yellow-500 text-lg">
+                            <FontAwesomeIcon
+                              className="text-amber-300"
+                              icon={faStar}
+                            />
+                          </span>
+                          <span className="ml-1 text-gray-700 dark:text-white">
+                            {rating}/5
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-red-600 text-xl font-bold flex justify-center item-center">
+                            {reviews}+
+                          </p>
+                          <p className="text-gray-700 text-sm dark:text-white">
+                            Assessments Evaluated
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        className="mt-4 bg-red-600 hover:bg-red-700 w-full text-lg cursor-pointer"
+                        onClick={() => handleViewProfile(expert)}
+                      >
+                        View Profile
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+
           {/* Pagination */}
-          <div className="mt-8 mb-8 flex justify-end item-end">
-            <Pagination totalPages={2} />
-          </div>      
+          {status === "succeeded" && (
+            <div className="mt-8 mb-8 flex justify-end item-end">
+              <Pagination
+                totalPages={totalPages}
+                currentPage={currentPage}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </div>
       </main>
     </div>

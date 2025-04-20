@@ -182,37 +182,7 @@ const PlayersProfile: React.FC = () => {
     fetchProfiles();
   }, [currentPage, limit, dispatch, profileType]);
 
-  useEffect(() => {
-    // This will run whenever the profiles data changes
-    if (status === "succeeded" && usersArray.length > 0) {
-      console.log("All fetched profiles:", usersArray);
-
-      // Log important fields for debugging
-      usersArray.forEach((profile, index) => {
-        console.log(
-          `Profile ${index + 1} (${profile.username || profile.id}):`
-        );
-        console.log("- documents:", profile.documents);
-        console.log("- uploads:", profile.uploads);
-        console.log("- socialLinks:", profile.socialLinks);
-      });
-
-      // Check for any profiles without documents or uploads
-      const missingDocs = usersArray.filter(
-        (p) => !p.documents || !Array.isArray(p.documents)
-      ).length;
-      const missingUploads = usersArray.filter(
-        (p) => !p.uploads || !Array.isArray(p.uploads)
-      ).length;
-
-      console.log(
-        `Profiles without documents array: ${missingDocs}/${usersArray.length}`
-      );
-      console.log(
-        `Profiles without uploads array: ${missingUploads}/${usersArray.length}`
-      );
-    }
-  }, [status, usersArray]);
+  
 
   // Function to fetch profiles
   const fetchProfiles = () => {
@@ -364,27 +334,7 @@ const PlayersProfile: React.FC = () => {
 
   // Handle profile view
   const handleViewProfile = (profile: Profile) => {
-    const normalizedProfile = {
-      ...profile,
-      documents: Array.isArray(profile.documents) ? profile.documents : [],
-      uploads: Array.isArray(profile.uploads) ? profile.uploads : [],
-      socialLinks: profile.socialLinks
-        ? typeof profile.socialLinks === "string"
-          ? JSON.parse(profile.socialLinks)
-          : profile.socialLinks
-        : { linkedin: "", facebook: "", instagram: "", twitter: "" },
-    };
-
-    // Add these logs
-    console.log("Original profile:", profile);
-    console.log("Documents array:", profile.documents);
-    console.log("Uploads array:", profile.uploads);
-    console.log("Normalized profile:", normalizedProfile);
-
-    localStorage.setItem(
-      "viewedProfileData",
-      JSON.stringify(normalizedProfile)
-    );
+    localStorage.setItem("viewplayerusername", profile.username);
     if (localStorage.getItem("role") === "player") {
       navigate(`/player/playerinfo`);
     } else {

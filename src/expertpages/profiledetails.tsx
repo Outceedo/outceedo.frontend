@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -21,12 +21,46 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   // Get player info
   const aboutMe = playerData.bio || "No information available";
 
-  // Extract certificates and awards from documents array
+  // Extract certificates and awards from documents array with debug logging
   const documents = Array.isArray(playerData.documents)
     ? playerData.documents
     : [];
-  const certificates = documents.filter((doc) => doc.type === "certificate");
-  const awards = documents.filter((doc) => doc.type === "award");
+
+  // Debug log for documents
+  useEffect(() => {
+    console.log("All documents:", documents);
+    if (documents.length > 0) {
+      console.log(
+        "First document structure:",
+        JSON.stringify(documents[0], null, 2)
+      );
+      console.log(
+        "Document types:",
+        documents.map((doc) => doc.type)
+      );
+    }
+  }, [documents]);
+
+  // More robust type checking for certificates and awards
+  const certificates = documents.filter(
+    (doc) =>
+      doc.type === "certificate" ||
+      (doc.title && doc.title.toLowerCase().includes("certificate")) ||
+      (doc.description && doc.description.toLowerCase().includes("certificate"))
+  );
+
+  const awards = documents.filter(
+    (doc) =>
+      doc.type === "award" ||
+      (doc.title && doc.title.toLowerCase().includes("award")) ||
+      (doc.description && doc.description.toLowerCase().includes("award"))
+  );
+
+  // Debug log for filtered documents
+  useEffect(() => {
+    console.log("Certificates found:", certificates.length);
+    console.log("Awards found:", awards.length);
+  }, [certificates, awards]);
 
   // Handle social links
   const socialLinks = playerData.socialLinks || {};
