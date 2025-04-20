@@ -283,10 +283,10 @@ const Expertspage: React.FC = () => {
     <div className="flex">
       {/* Main Content */}
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
-        <div className="min-h-screen px-6 rounded-xl dark:bg-slate-800">
+        <div className="min-h-screen px-6 py-4 rounded-xl dark:bg-slate-800">
           {/* Search Box */}
-          <div className="flex mr-5">
-            <div className="relative mb-2 w-full bg-white dark:bg-slate-600 dark:text-white rounded-lg">
+          <div className="mb-6">
+            <div className="relative w-full bg-white dark:bg-slate-600 dark:text-white rounded-lg">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="text"
@@ -299,7 +299,7 @@ const Expertspage: React.FC = () => {
           </div>
 
           {/* Filters Section */}
-          <div className="flex flex-wrap gap-4 justify-start mb-6">
+          <div className="flex flex-wrap gap-4 justify-start mb-8">
             {filterConfig.map((filter) => (
               <Select
                 key={filter.name}
@@ -355,7 +355,7 @@ const Expertspage: React.FC = () => {
 
           {/* Experts Grid */}
           {status === "succeeded" && filteredExperts.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {filteredExperts.map((expert: Expert, index: number) => {
                 // Create display name from available fields
                 const displayName =
@@ -382,11 +382,12 @@ const Expertspage: React.FC = () => {
                 return (
                   <Card
                     key={expert.id}
-                    className="w-80 shadow-md dark:bg-slate-600 dark:text-white"
+                    className="overflow-hidden shadow-md dark:bg-slate-600 dark:text-white"
                   >
-                    <CardHeader className="relative">
+                    {/* Image Container */}
+                    <div className="relative w-full h-60">
                       <img
-                        className="rounded-lg w-full h-50 object-cover -mb-7"
+                        className="w-full h-full object-cover"
                         src={expertImage}
                         alt={displayName}
                         onError={(e) => {
@@ -397,44 +398,44 @@ const Expertspage: React.FC = () => {
                         }}
                       />
                       {isVerified && (
-                        <span className="absolute top-4 right-10 bg-green-400 text-white text-xs px-2 py-1 rounded-full">
-                          ✔
-                        </span>
+                        <div className="absolute top-4 right-4 bg-green-500 rounded-full p-1 w-8 h-8 flex items-center justify-center">
+                          <CheckCircle className="h-5 w-5 text-white" />
+                        </div>
                       )}
-                    </CardHeader>
-                    <CardContent className="text-center p-3">
-                      <h3 className="text-lg font-semibold text-left">
-                        {displayName}
-                      </h3>
-                      <p className="text-gray-500 text-sm text-left dark:text-white">
+                    </div>
+
+                    {/* Content */}
+                    <CardContent className="p-4">
+                      <h3 className="text-lg font-semibold">{displayName}</h3>
+                      <p className="text-gray-500 text-sm mb-3 dark:text-gray-300">
                         {expert.profession || "Expert Coach"}
                         {expert.city && expert.country
                           ? ` • ${expert.city}, ${expert.country}`
                           : ""}
                       </p>
+
                       <div className="flex items-center justify-between mt-4">
                         <div className="flex items-center">
-                          <span className="text-yellow-500 text-lg">
-                            <FontAwesomeIcon
-                              className="text-amber-300"
-                              icon={faStar}
-                            />
-                          </span>
+                          <FontAwesomeIcon
+                            className="text-yellow-400"
+                            icon={faStar}
+                          />
                           <span className="ml-1 text-gray-700 dark:text-white">
                             {rating}/5
                           </span>
                         </div>
                         <div className="text-right">
-                          <p className="text-red-600 text-xl font-bold flex justify-center item-center">
+                          <p className="text-red-600 text-xl font-bold">
                             {reviews}+
                           </p>
-                          <p className="text-gray-700 text-sm dark:text-white">
+                          <p className="text-gray-700 text-xs dark:text-gray-300">
                             Assessments Evaluated
                           </p>
                         </div>
                       </div>
+
                       <Button
-                        className="mt-4 bg-red-600 hover:bg-red-700 w-full text-lg cursor-pointer"
+                        className="mt-4 bg-red-600 hover:bg-red-700 w-full"
                         onClick={() => handleViewProfile(expert)}
                       >
                         View Profile
@@ -448,7 +449,7 @@ const Expertspage: React.FC = () => {
 
           {/* Pagination */}
           {status === "succeeded" && (
-            <div className="mt-8 mb-8 flex justify-end item-end">
+            <div className="mt-8 mb-8 flex justify-center">
               <Pagination
                 totalPages={totalPages}
                 currentPage={currentPage}
@@ -463,3 +464,4 @@ const Expertspage: React.FC = () => {
 };
 
 export default Expertspage;
+  

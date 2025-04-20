@@ -381,31 +381,78 @@ const Experts = () => {
       <div className="mt-6">
         {/* Details Tab */}
         {activeTab === "details" && (
-          <Card className="p-6 relative">
-            <div className="flex justify-between mb-4">
-              <h2 className="text-xl font-bold">About Me</h2>
-              <Button variant="ghost" className="p-1 h-auto">
-                <FontAwesomeIcon icon={faPen} className="text-gray-400" />
-              </Button>
-            </div>
-            <p
-              className={cn(
-                "text-gray-700 dark:text-gray-300",
-                !readMore && shouldClamp && "line-clamp-2"
-              )}
-            >
-              {expertData.about}
-            </p>
-            {shouldClamp && (
-              <Button
-                variant="link"
-                className="p-0 text-blue-600 hover:underline mt-2"
-                onClick={() => setReadMore(!readMore)}
+          <div className="space-y-8">
+            {/* About Me Card */}
+            <Card className="p-6 relative">
+              <div className="flex justify-between mb-4">
+                <h2 className="text-xl font-bold">About Me</h2>
+              </div>
+              <p
+                className={cn(
+                  "text-gray-700 dark:text-gray-300",
+                  !readMore && shouldClamp && "line-clamp-2"
+                )}
               >
-                {readMore ? "Show less" : "Read more"}
-              </Button>
-            )}
-          </Card>
+                {expertData.about}
+              </p>
+              {shouldClamp && (
+                <Button
+                  variant="link"
+                  className="p-0 text-blue-600 hover:underline mt-2"
+                  onClick={() => setReadMore(!readMore)}
+                >
+                  {readMore ? "Show less" : "Read more"}
+                </Button>
+              )}
+            </Card>
+
+            {/* Skills Card */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Skills Section */}
+              <Card className="p-6 relative">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">Skills</h2>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {expertData.skills && expertData.skills.length > 0 ? (
+                    expertData.skills.map((skill: string, index: number) => (
+                      <span
+                        key={index}
+                        className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
+                      >
+                        {skill}
+                      </span>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">No skills available</p>
+                  )}
+                </div>
+              </Card>
+
+              {/* Certifications Section */}
+              <Card className="p-6 relative">
+                <div className="flex justify-between mb-4">
+                  <h2 className="text-xl font-bold">Certifications</h2>
+                </div>
+                <div>
+                  {expertData.certifications &&
+                  expertData.certifications.length > 0 ? (
+                    expertData.certifications.map(
+                      (cert: string, index: number) => (
+                        <div key={index} className="mb-2">
+                          <p className="text-gray-800 dark:text-gray-200">
+                            {cert}
+                          </p>
+                        </div>
+                      )
+                    )
+                  ) : (
+                    <p className="text-gray-500">No certifications available</p>
+                  )}
+                </div>
+              </Card>
+            </div>
+          </div>
         )}
 
         {/* Media Tab */}
