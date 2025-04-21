@@ -19,7 +19,6 @@ const Login: React.FC = () => {
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
   // localStorage.setItem("role", user?.role);
-  console.log(user);
   localStorage.setItem("username", user?.username);
   localStorage.setItem("role", user?.role);
   localStorage.setItem("userid", user?.role);

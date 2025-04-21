@@ -49,10 +49,7 @@ const AppContent: React.FC = () => {
   const hasToken = !!localStorage.getItem("token");
 
   // Debug logging
-  console.log("Token:", localStorage.getItem("token"));
-  console.log("User:", user);
-  console.log("Is Authenticated:", isAuthenticated);
-  console.log("Token Validation In Progress:", tokenValidationInProgress);
+
 
   useEffect(() => {
     const initApp = async () => {

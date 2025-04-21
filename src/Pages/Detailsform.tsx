@@ -1,8 +1,12 @@
 import React, { ChangeEvent, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import { useAppDispatch } from "../store/hooks";
-import { updateProfile, updateProfilePhoto } from "../store/profile-slice";
+import { useAppDispatch, useAppSelector } from "../store/hooks";
+import {
+  getProfile,
+  updateProfile,
+  updateProfilePhoto,
+} from "../store/profile-slice";
 import {
   faLinkedin,
   faInstagram,
@@ -46,8 +50,10 @@ interface Media {
 type GenderType = "male" | "female" | "other" | "prefer_not_to_say";
 
 const Detailsform: React.FC = () => {
+  const profileData = useAppSelector((state) => state.profile.viewedProfile);
   const navigate = useNavigate();
   const dispatch = useAppDispatch(); // Use Redux dispatch
+  // Get profile data from Redux
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -98,8 +104,6 @@ const Detailsform: React.FC = () => {
   const [showCountryDropdown, setShowCountryDropdown] =
     useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
-  const [showDialCodeDropdown, setShowDialCodeDropdown] =
-    useState<boolean>(false);
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
@@ -108,86 +112,88 @@ const Detailsform: React.FC = () => {
   const getAuthToken = (): string | null => {
     return localStorage.getItem("token");
   };
+  const username = localStorage.getItem("username");
+
+  // Fetch profile data when component mounts
   useEffect(() => {
-    try {
-      const savedProfileData = localStorage.getItem("profileData");
+    if (username) {
+      dispatch(getProfile(username));
+    } else {
+      console.error("No username found in localStorage");
+    }
+  }, [dispatch, username]);
 
-      if (savedProfileData) {
-        const profileData = JSON.parse(savedProfileData);
-        console.log("Prefilling form with saved profile data:", profileData);
+  // Populate form with profile data when available
+  useEffect(() => {
+    if (profileData) {
+      console.log("Prefilling form with profile data:", profileData);
 
-        // Map the profile data to form data structure
-        setFormData((prevData) => ({
-          ...prevData,
-          firstName: profileData.firstName || "",
-          lastName: profileData.lastName || "",
-          profession: profileData.profession || "",
-          subProfession: profileData.subProfession || "",
-          age: profileData.age?.toString() || "",
-          birthYear: profileData.birthYear?.toString() || "",
-          gender: profileData.gender || "",
-          languages: Array.isArray(profileData.language)
-            ? profileData.language.join(", ")
-            : "",
-          height: profileData.height?.toString() || "",
-          weight: profileData.weight?.toString() || "",
-          country: profileData.country || "",
-          city: profileData.city || "",
+      // Map the profile data to form data structure
+      setFormData((prevData) => ({
+        ...prevData,
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
+        profession: profileData.profession || "",
+        subProfession: profileData.subProfession || "",
+        age: profileData.age?.toString() || "",
+        birthYear: profileData.birthYear?.toString() || "",
+        gender: profileData.gender || ("" as GenderType),
+        languages: Array.isArray(profileData.language)
+          ? profileData.language.join(", ")
+          : "",
+        height: profileData.height?.toString() || "",
+        weight: profileData.weight?.toString() || "",
+        country: profileData.country || "",
+        city: profileData.city || "",
+        footballClub: profileData.company || "",
+        bio: profileData.bio || "",
 
-          bio: profileData.bio || "",
+        // Handle social links
+        linkedin: profileData.socialLinks?.linkedin || "",
+        facebook: profileData.socialLinks?.facebook || "",
+        instagram: profileData.socialLinks?.instagram || "",
+        twitter: profileData.socialLinks?.twitter || "",
+      }));
 
-          // Handle social links
-          linkedin: profileData.socialLinks?.linkedin || "",
-          facebook: profileData.socialLinks?.facebook || "",
-          instagram: profileData.socialLinks?.instagram || "",
-          twitter: profileData.socialLinks?.twitter || "",
-        }));
-
-        // Set selected country if it exists
-        if (profileData.country) {
-          const country = countries.find((c) => c.name === profileData.country);
-          if (country) {
-            setSelectedCountry(country);
-            setSearchTerm(country.name);
-          }
-        }
-
-        // Set city search term
-        if (profileData.city) {
-          setCitySearchTerm(profileData.city);
-        }
-
-        // Handle certificates if available
-        if (profileData.certificates && profileData.certificates.length > 0) {
-          const formattedCerts = profileData.certificates.map(
-            (cert: any, index: number) => ({
-              id: Date.now() + index,
-              name: cert.name,
-              organization: cert.organization,
-              uploadedDocId: cert.documentId,
-            })
-          );
-          setCertificates(formattedCerts);
-        }
-
-        // Handle awards if available
-        if (profileData.awards && profileData.awards.length > 0) {
-          const formattedAwards = profileData.awards.map(
-            (awardName: string, index: number) => ({
-              id: Date.now() + index,
-              name: awardName,
-            })
-          );
-          setAwards(formattedAwards);
+      // Set country search term
+      if (profileData.country) {
+        setSearchTerm(profileData.country);
+        const country = countries.find((c) => c.name === profileData.country);
+        if (country) {
+          setSelectedCountry(country);
         }
       }
-    } catch (error) {
-      console.error("Error loading saved profile data:", error);
-    }
-  }, [countries]);
-  // Depend on countries to ensure it's loaded before trying to use it
 
-  // In the handleSubmit function, clean up the localStorage after successful submission:
+      // Set city search term
+      if (profileData.city) {
+        setCitySearchTerm(profileData.city);
+      }
+
+      // Handle documents (certificates) if available
+      if (profileData.documents && profileData.documents.length > 0) {
+        const formattedCerts = profileData.documents.map(
+          (doc: any, index: number) => ({
+            id: Date.now() + index,
+            name: doc.title,
+            organization: doc.issuedBy,
+            uploadedDocId: doc.id,
+          })
+        );
+        setCertificates(formattedCerts);
+      }
+
+      // Handle uploads (media) if available
+      if (profileData.uploads && profileData.uploads.length > 0) {
+        const media = profileData.uploads.map((upload: any) => ({
+          id: upload.id,
+          title: upload.title,
+          url: upload.url,
+          type: upload.type,
+        }));
+        setUploadedMedia(media);
+      }
+    }
+  }, [profileData, countries]);
 
   // Helper to create axios instance with auth header
   const createAuthAxios = () => {
@@ -268,8 +274,6 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Handle file uploads
-
   // Upload media file to server
   const uploadMediaFile = async (
     file: File,
@@ -317,7 +321,6 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Upload document (certificate)
   // Handle file uploads
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
@@ -372,7 +375,6 @@ const Detailsform: React.FC = () => {
   };
 
   // Upload document (certificate/award)
-
   const uploadDocument = async (
     file: File,
     title: string,
@@ -493,29 +495,7 @@ const Detailsform: React.FC = () => {
     setShowCityDropdown(false);
   };
 
-  // Handle dial code selection
-
-  // Map UI gender values to backend-expected values
-  const mapGenderValue = (uiGender: string): GenderType => {
-    switch (uiGender.toLowerCase()) {
-      case "male":
-        return "male";
-      case "female":
-        return "female";
-      case "other":
-        return "other";
-      case "prefer not to say":
-        return "prefer_not_to_say";
-      default:
-        return "prefer_not_to_say";
-    }
-  };
-
   // Final submit function
-  // In the handleSubmit function, update the profileData object to match the schema:
-
-  // In the handleSubmit function:
-
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
 
@@ -537,17 +517,10 @@ const Detailsform: React.FC = () => {
           .map((lang) => lang.trim());
       }
 
-      // Format certificates and awards are handled through the document endpoints separately
-      // They are already uploaded during the form process
-
       // Prepare the profile data to match the schema exactly
-      const profileData = {
+      const profileUpdateData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        mobileNumber:
-          formData.countryCode && formData.phoneNumber
-            ? `${formData.countryCode} ${formData.phoneNumber}`
-            : null,
         photo: professionalPhotoMedia?.id || null,
         gender: formData.gender || null,
         age: formData.age ? parseInt(formData.age) : null,
@@ -572,16 +545,13 @@ const Detailsform: React.FC = () => {
         role: localStorage.getItem("role") || "player",
       };
 
-      console.log("Submitting profile data:", profileData);
+      console.log("Submitting profile data:", profileUpdateData);
 
       // Use the updateProfile thunk instead of direct API call
-      const resultAction = await dispatch(updateProfile(profileData));
+      const resultAction = await dispatch(updateProfile(profileUpdateData));
 
       if (updateProfile.fulfilled.match(resultAction)) {
         console.log("Profile updated successfully:", resultAction.payload);
-
-        // Clean up stored profile data
-        localStorage.removeItem("profileData");
 
         // After profile is updated, update the profile photo using the Redux thunk
         if (profilePhoto) {
