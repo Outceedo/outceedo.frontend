@@ -39,14 +39,14 @@ const icons = [
 // API base URL
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
-interface AchievementItem {
+interface DocumentItem {
   id: string;
   title: string;
   issuedBy?: string;
   issuedDate?: string;
-  documentId?: string;
   imageUrl?: string;
   description?: string;
+  type: "certificate" | "award"; // Add type field to identify document type
 }
 
 interface PlayerData {
@@ -59,8 +59,7 @@ interface PlayerData {
   club?: string;
   languages?: string[];
   aboutMe?: string;
-  certificates?: AchievementItem[] | string[];
-  awards?: AchievementItem[] | string[];
+  documents?: DocumentItem[]; // Updated to use documents instead of separate arrays
   socials?: {
     linkedin?: string;
     instagram?: string;
@@ -79,8 +78,7 @@ interface ProfileDetailsProps {
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   playerData = {
     aboutMe: "I am a passionate player dedicated to improving my skills.",
-    certificates: [],
-    awards: [],
+    documents: [],
     socials: {},
   },
   isExpertView = false,
@@ -99,34 +97,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
   // State for data
   const [aboutMe, setAboutMe] = useState(playerData.aboutMe || "");
-  const [certificates, setCertificates] = useState<AchievementItem[]>(
-    Array.isArray(playerData.certificates)
-      ? playerData.certificates.map((cert: any) => {
-          if (typeof cert === "string") {
-            return {
-              id: `cert-${Date.now()}-${Math.random()}`,
-              title: cert,
-              description: "",
-            };
-          }
-          return cert;
-        })
-      : []
-  );
-  const [awards, setAwards] = useState<AchievementItem[]>(
-    Array.isArray(playerData.awards)
-      ? playerData.awards.map((award: any) => {
-          if (typeof award === "string") {
-            return {
-              id: `award-${Date.now()}-${Math.random()}`,
-              title: award,
-              description: "",
-            };
-          }
-          return award;
-        })
-      : []
-  );
+  const [certificates, setCertificates] = useState<DocumentItem[]>([]);
+  const [awards, setAwards] = useState<DocumentItem[]>([]);
   const [socials, setSocials] = useState({
     linkedin: playerData.socials?.linkedin || "",
     instagram: playerData.socials?.instagram || "",
@@ -143,36 +115,34 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   useEffect(() => {
     setAboutMe(playerData.aboutMe || "");
 
-    // Handle certificates
-    if (Array.isArray(playerData.certificates)) {
-      setCertificates(
-        playerData.certificates.map((cert: any) => {
-          if (typeof cert === "string") {
-            return {
-              id: `cert-${Date.now()}-${Math.random()}`,
-              title: cert,
-              description: "",
-            };
-          }
-          return cert;
-        })
-      );
-    }
+    // Process documents array to separate certificates and awards
+    if (Array.isArray(playerData.documents)) {
+      const certificateItems: DocumentItem[] = playerData.documents
+        .filter((doc: any) => doc.type === "certificate")
+        .map((doc: any) => ({
+          id: doc.id,
+          title: doc.title,
+          issuedBy: doc.issuedBy || "",
+          issuedDate: doc.issuedDate || "",
+          imageUrl: doc.imageUrl || "",
+          description: doc.description || "",
+          type: "certificate",
+        }));
 
-    // Handle awards
-    if (Array.isArray(playerData.awards)) {
-      setAwards(
-        playerData.awards.map((award: any) => {
-          if (typeof award === "string") {
-            return {
-              id: `award-${Date.now()}-${Math.random()}`,
-              title: award,
-              description: "",
-            };
-          }
-          return award;
-        })
-      );
+      const awardItems: DocumentItem[] = playerData.documents
+        .filter((doc: any) => doc.type === "award")
+        .map((doc: any) => ({
+          id: doc.id,
+          title: doc.title,
+          issuedBy: doc.issuedBy || "",
+          issuedDate: doc.issuedDate || "",
+          imageUrl: doc.imageUrl || "",
+          description: doc.description || "",
+          type: "award",
+        }));
+
+      setCertificates(certificateItems);
+      setAwards(awardItems);
     }
 
     // Set socials
@@ -224,12 +194,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         return;
       }
 
-      // Format certificates for API - only extract titles
-      const formattedCerts = certificates.map((cert) => cert.title);
+      // Merge certificates with existing documents (replace certificates only)
+      const existingAwards =
+        playerData.documents?.filter((doc) => doc.type === "award") || [];
+      const updatedDocuments = [...existingAwards, ...certificates];
 
       onUpdate({
         ...playerData,
-        certificates: formattedCerts,
+        documents: updatedDocuments,
       });
     } catch (error) {
       console.error("Error saving certificates:", error);
@@ -260,12 +232,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         return;
       }
 
-      // Format awards for API - only extract titles
-      const formattedAwards = awards.map((award) => award.title);
+      // Merge awards with existing documents (replace awards only)
+      const existingCertificates =
+        playerData.documents?.filter((doc) => doc.type === "certificate") || [];
+      const updatedDocuments = [...existingCertificates, ...awards];
 
       onUpdate({
         ...playerData,
-        awards: formattedAwards,
+        documents: updatedDocuments,
       });
     } catch (error) {
       console.error("Error saving awards:", error);
@@ -309,6 +283,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         issuedBy: "",
         issuedDate: new Date().toISOString().split("T")[0],
         description: "",
+        type: "certificate",
       },
     ]);
   };
@@ -322,13 +297,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         issuedBy: "",
         issuedDate: new Date().toISOString().split("T")[0],
         description: "",
+        type: "award",
       },
     ]);
   };
 
   const handleCertificateChange = (
     index: number,
-    field: keyof AchievementItem,
+    field: keyof DocumentItem,
     value: string
   ) => {
     const newCertificates = [...certificates];
@@ -338,7 +314,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
   const handleAwardChange = (
     index: number,
-    field: keyof AchievementItem,
+    field: keyof DocumentItem,
     value: string
   ) => {
     const newAwards = [...awards];
@@ -360,17 +336,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         try {
           const cert = certificates[index];
 
-          // If certificate has a document ID, delete it from the server
-          if (cert.documentId) {
+          // If certificate has an ID, delete it from the server
+          if (cert.id) {
             const token = getAuthToken();
-            await axios.delete(
-              `${API_BASE_URL}/user/document/${cert.documentId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
+            await axios.delete(`${API_BASE_URL}/user/document/${cert.id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
           }
 
           // Remove from local state
@@ -405,17 +378,14 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         try {
           const award = awards[index];
 
-          // If award has a document ID, delete it from the server
-          if (award.documentId) {
+          // If award has an ID, delete it from the server
+          if (award.id) {
             const token = getAuthToken();
-            await axios.delete(
-              `${API_BASE_URL}/user/document/${award.documentId}`,
-              {
-                headers: {
-                  Authorization: `Bearer ${token}`,
-                },
-              }
-            );
+            await axios.delete(`${API_BASE_URL}/user/document/${award.id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
           }
 
           // Remove from local state
@@ -483,7 +453,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       const newCertificates = [...certificates];
       newCertificates[index] = {
         ...newCertificates[index],
-        documentId: response.data.id || response.data._id,
+        id: response.data.id || response.data._id,
         imageUrl: response.data.url,
       };
       setCertificates(newCertificates);
@@ -551,7 +521,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       const newAwards = [...awards];
       newAwards[index] = {
         ...newAwards[index],
-        documentId: response.data.id || response.data._id,
+        id: response.data.id || response.data._id,
         imageUrl: response.data.url,
       };
       setAwards(newAwards);
@@ -1027,7 +997,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                           <img
                             src={award.imageUrl}
                             alt={award.title || `Award ${index}`}
-                            className="w-10 h-10 object-cover rounded-md mb-2"
+                            className="w-full h-40 object-cover rounded-md mb-2"
                           />
                           <Button
                             variant="outline"
