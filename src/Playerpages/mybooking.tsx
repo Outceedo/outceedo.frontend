@@ -1,7 +1,4 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import AssessmentReport from "./AssessmentReport" // Adjust path as needed
-
 import {
   faVideo,
   faFileAlt,
@@ -11,6 +8,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import React, { useState } from "react";
+import Video from "./Video";
+import AssessmentReport from "../Playerpages/AssessmentReport";
+import { X } from "lucide-react";
 
 import {
   Table,
@@ -112,10 +112,32 @@ const MyBooking: React.FC = () => {
   const [bookingStatus, setBookingStatus] = useState("all");
   const [search, setSearch] = useState("");
 
- 
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(
+    null
+  );
 
-  // Updated with the standard Shadcn Badge variants: default, secondary, outline, destructive
-  // For additional colors, use className instead of variant
+  const openVideoModal = (id: number) => {
+    setSelectedBookingId(id);
+    setIsVideoOpen(true);
+  };
+
+  const closeVideoModal = () => {
+    setIsVideoOpen(false);
+    setSelectedBookingId(null);
+  };
+
+  const openReportModal = (id: number) => {
+    setSelectedBookingId(id);
+    setIsReportOpen(true);
+  };
+
+  const closeReportModal = () => {
+    setIsReportOpen(false);
+    setSelectedBookingId(null);
+  };
+
   const getActionBadgeStyle = (status: string) => {
     switch (status) {
       case "Accepted":
@@ -147,20 +169,21 @@ const MyBooking: React.FC = () => {
       booking.expertName.toLowerCase().includes(search.toLowerCase()) &&
       (bookingStatus === "all" || booking.bookingStatus === bookingStatus)
   );
-    
-  const [visibilityMap, setVisibilityMap] = useState<{ [id: number]: boolean }>({});
 
-const toggleVisibility = (id: number) => {
-  setVisibilityMap((prev) => ({
-    ...prev,
-    [id]: !prev[id],
-  }));
-};
+  const [visibilityMap, setVisibilityMap] = useState<{ [id: number]: boolean }>(
+    {}
+  );
+
+  const toggleVisibility = (id: number) => {
+    setVisibilityMap((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
 
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
       <div className="flex items-center space-x-4 mb-6">
-        {/* Search Input with Icon */}
         <div className="relative w-1/3">
           <FontAwesomeIcon
             icon={faSearch}
@@ -175,7 +198,6 @@ const toggleVisibility = (id: number) => {
           />
         </div>
 
-        {/* Booking Status Dropdown */}
         <Select value={bookingStatus} onValueChange={setBookingStatus}>
           <SelectTrigger className="w-[180px]">
             <SelectValue placeholder="Booking Status" />
@@ -245,40 +267,37 @@ const toggleVisibility = (id: number) => {
                       {booking.bookingStatus}
                     </Badge>
                   </TableCell>
-                  
                   <TableCell className="text-center">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 cursor-pointer"
+                      onClick={() => openVideoModal(booking.id)}
+                    >
                       <FontAwesomeIcon icon={faVideo} />
                     </Button>
                   </TableCell>
-                 
                   <TableCell className="text-center">
-                  <Button variant="ghost" size="icon" className="w-8 h-8" >
-                  <Dialog>
-                  <DialogTrigger >
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <FontAwesomeIcon icon={faFileAlt} />
-                   </Button>
-                   </DialogTrigger>
-                  <DialogContent className="flex items-center justify-center p-6 mt-28 ">
-                  <AssessmentReport />
-                  </DialogContent>
-                  </Dialog>
-                   </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 cursor-pointer"
+                      onClick={() => openReportModal(booking.id)}
+                    >
+                      <FontAwesomeIcon icon={faFileAlt} />
+                    </Button>
                   </TableCell>
-
                   <TableCell className="text-center">
-                  <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => toggleVisibility(booking.id)}
-                  >
-                 <FontAwesomeIcon
-                 icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
-                 />
-                 </Button>
-
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => toggleVisibility(booking.id)}
+                    >
+                      <FontAwesomeIcon
+                        icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
+                      />
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -286,6 +305,35 @@ const toggleVisibility = (id: number) => {
           </TableBody>
         </Table>
       </div>
+
+      {/* Video Modal */}
+      {isVideoOpen && (
+        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-3xl relative">
+            <button
+              onClick={closeVideoModal}
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-4xl cursor-pointer"
+            >
+              ×
+            </button>
+            <Video />
+          </div>
+        </div>
+      )}
+
+      {/* Assessment Report Modal */}
+      {isReportOpen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex justify-end p-4">
+            <button onClick={closeReportModal}>
+              <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <AssessmentReport />
+          </div>
+        </div>
+      )}
     </div>
   );
 };
