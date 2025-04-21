@@ -29,6 +29,7 @@ interface Certificate {
   issuedDate?: string;
   documentId?: string;
   imageUrl?: string;
+  type?: string;
   description?: string;
 }
 
@@ -59,24 +60,9 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   const [newSkill, setNewSkill] = useState("");
   const [isEditingSkills, setIsEditingSkills] = useState(false);
 
-  // Certifications state
-  const [certificates, setCertificates] = useState<Certificate[]>(
-    Array.isArray(expertData.certifications)
-      ? expertData.certifications.map((cert: any) => {
-          if (typeof cert === "string") {
-            return {
-              id: `cert-${Date.now()}-${Math.random()}`,
-              title: cert,
-              description: "",
-            };
-          }
-          return cert;
-        })
-      : []
-  );
-  const [tempCertificates, setTempCertificates] = useState<Certificate[]>([
-    ...certificates,
-  ]);
+  // Certifications state - initialize from documents
+  const [certificates, setCertificates] = useState<Certificate[]>([]);
+  const [tempCertificates, setTempCertificates] = useState<Certificate[]>([]);
   const [isEditingCertifications, setIsEditingCertifications] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -89,6 +75,50 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     return localStorage.getItem("token");
   };
 
+  // Initialize certificates from documents
+  useEffect(() => {
+    if (
+      expertData &&
+      expertData.rawProfile &&
+      expertData.rawProfile.documents
+    ) {
+      // Filter for certificates only
+      const docCertificates = expertData.rawProfile.documents
+        .filter((doc: any) => doc.type === "certificate")
+        .map((doc: any) => ({
+          id: doc.id,
+          title: doc.title,
+          issuedBy: doc.issuedBy || "",
+          issuedDate: doc.issuedDate || "",
+          documentId: doc.id,
+          imageUrl: doc.imageUrl,
+          description: doc.description || "",
+          type: doc.type,
+        }));
+
+      console.log("Certificates from documents:", docCertificates);
+      setCertificates(docCertificates);
+      setTempCertificates(docCertificates);
+    } else if (expertData.certificates) {
+      // Fallback to certificates if documents not available
+      const formattedCerts = Array.isArray(expertData.certificates)
+        ? expertData.certificates.map((cert: any) => {
+            if (typeof cert === "string") {
+              return {
+                id: `cert-${Date.now()}-${Math.random()}`,
+                title: cert,
+                description: "",
+              };
+            }
+            return cert;
+          })
+        : [];
+
+      setCertificates(formattedCerts);
+      setTempCertificates(formattedCerts);
+    }
+  }, [expertData]);
+
   // Update state when expertData changes
   useEffect(() => {
     if (expertData) {
@@ -98,20 +128,6 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
       if (expertData.skills && expertData.skills.length > 0) {
         setSkills(expertData.skills);
         setTempSkills(expertData.skills);
-      }
-      if (Array.isArray(expertData.certifications)) {
-        const formattedCerts = expertData.certifications.map((cert: any) => {
-          if (typeof cert === "string") {
-            return {
-              id: `cert-${Date.now()}-${Math.random()}`,
-              title: cert,
-              description: "",
-            };
-          }
-          return cert;
-        });
-        setCertificates(formattedCerts);
-        setTempCertificates(formattedCerts);
       }
     }
   }, [expertData]);
@@ -128,7 +144,6 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     try {
       // Format data for API update
       const updateData = {
-        ...expertData.rawProfile,
         bio: aboutMe,
       };
 
@@ -177,9 +192,8 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     setIsSubmitting(true);
 
     try {
-      // Format data for API update
+      // Format data for API update - only include skills
       const updateData = {
-        ...expertData.rawProfile,
         skills: tempSkills,
       };
 
@@ -224,6 +238,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
         issuedBy: "",
         issuedDate: new Date().toISOString().split("T")[0],
         description: "",
+        type: "certificate",
       },
     ]);
   };
@@ -331,7 +346,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
       newCertificates[index] = {
         ...newCertificates[index],
         documentId: response.data.id || response.data._id,
-        imageUrl: response.data.url,
+        imageUrl: response.data.imageUrl || response.data.url,
       };
       setTempCertificates(newCertificates);
 
@@ -374,28 +389,9 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
         return;
       }
 
-      // Format certificates for API - include all certificate data
-      const formattedCertificates = tempCertificates.map((cert) => {
-        return {
-          title: cert.title,
-          issuedBy: cert.issuedBy || "",
-          issuedDate: cert.issuedDate || "",
-          documentId: cert.documentId || "",
-          imageUrl: cert.imageUrl || "",
-          description: cert.description || "",
-        };
-      });
-
-      // Format data for API update
-      const updateData = {
-        ...expertData.rawProfile,
-        certificates: formattedCertificates,
-      };
-
-      // Save to API
-      await dispatch(updateProfile(updateData)).unwrap();
-
-      // Update local state
+      // We don't need to update the profile API for certificates
+      // as they're managed through the document API
+      // Just update the local state
       setCertificates([...tempCertificates]);
 
       Swal.fire({
@@ -421,6 +417,17 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   const cancelCertificationsEdit = () => {
     setTempCertificates([...certificates]);
     setIsEditingCertifications(false);
+  };
+
+  // Format date for display
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+
+    try {
+      return new Date(dateString).toLocaleDateString();
+    } catch (e) {
+      return dateString;
+    }
   };
 
   return (
@@ -703,6 +710,12 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                             src={cert.imageUrl}
                             alt={cert.title || `Certificate ${index}`}
                             className="w-full h-40 object-cover rounded-md mb-2"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://via.placeholder.com/400x300?text=Certificate+Image+Not+Found";
+                              target.onerror = null; // Prevent infinite loop
+                            }}
                           />
                           <Button
                             variant="outline"
@@ -838,12 +851,18 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                             src={cert.imageUrl}
                             alt={cert.title}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://via.placeholder.com/80x80?text=Image";
+                              target.onerror = null; // Prevent infinite loop
+                            }}
                           />
                         </div>
                       )}
 
                       {/* Text Content */}
-                      <div className="p-4">
+                      <div className="p-4 flex-grow">
                         <h4 className="font-semibold text-gray-800 dark:text-gray-200">
                           {cert.title}
                         </h4>
@@ -851,9 +870,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                           <p className="text-sm text-gray-600 dark:text-gray-400">
                             Issued by: {cert.issuedBy}
                             {cert.issuedDate &&
-                              ` (${new Date(
-                                cert.issuedDate
-                              ).toLocaleDateString()})`}
+                              ` (${formatDate(cert.issuedDate)})`}
                           </p>
                         )}
                         {cert.description && (
