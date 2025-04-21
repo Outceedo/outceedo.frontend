@@ -137,7 +137,7 @@ const Detailsform: React.FC = () => {
         subProfession: profileData.subProfession || "",
         age: profileData.age?.toString() || "",
         birthYear: profileData.birthYear?.toString() || "",
-        gender: profileData.gender || ("" as GenderType),
+        gender: (profileData.gender as GenderType) || ("" as GenderType),
         languages: Array.isArray(profileData.language)
           ? profileData.language.join(", ")
           : "",
