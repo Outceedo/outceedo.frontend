@@ -9,7 +9,8 @@ import "react-circular-progressbar/dist/styles.css";
 import MediaUpload from "./MediaUpload";
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import Swal from "sweetalert2";
+import Swal from "sweetalert2/dist/sweetalert2.js";
+import "sweetalert2/dist/sweetalert2.min.css";
 import axios from "axios";
 
 interface UploadItem {
