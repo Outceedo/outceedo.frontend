@@ -11,21 +11,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
+import profile2 from "../assets/images/profile2.jpg"; // Import a default profile image
 
 // Define interfaces for our data types
 interface Service {
-  id: number;
+  expertname?: string;
+  expertProfileImage?: string;
   name: string;
   description: string;
   price: string;
-}
-
-interface Expert {
-  name: string;
-  rating: number;
-  profilePic: string;
-  reviews: number;
-  verified: boolean;
 }
 
 const AppointmentScheduler: React.FC = () => {
@@ -33,20 +27,13 @@ const AppointmentScheduler: React.FC = () => {
   const [selectedTime, setSelectedTime] = useState<string>("12:30pm");
   const [currentMonth, setCurrentMonth] = useState<string>("April 2025");
   const [service, setService] = useState<Service | null>(null);
-  const [expert, setExpert] = useState<Expert | null>(null);
   const navigate = useNavigate();
 
   // Load service and expert data from localStorage
   useEffect(() => {
     const storedService = localStorage.getItem("selectedService");
-    const storedExpert = localStorage.getItem("serviceExpert");
-
     if (storedService) {
       setService(JSON.parse(storedService));
-    }
-
-    if (storedExpert) {
-      setExpert(JSON.parse(storedExpert));
     }
   }, []);
 
@@ -80,16 +67,39 @@ const AppointmentScheduler: React.FC = () => {
     navigate(-1); // Go back to the previous page
   };
 
-  const handleNext = () => {
-    // Store appointment details for the next step
-    localStorage.setItem(
-      "appointmentDate",
-      `${currentMonth} ${selectedDate}, 2025`
-    );
-    localStorage.setItem("appointmentTime", selectedTime);
+  const handleConfirm = () => {
+    // Format the appointment date
+    const formattedDate = `${currentMonth.split(" ")[0]} ${selectedDate}`;
 
-    // Navigate to confirmation or payment page
-    navigate("/confirm-appointment");
+    // Create new booking object
+    const booking = {
+      id: Math.floor(Math.random() * 1000), // Generate random ID
+      expertName: service?.expertname || "Expert",
+      expertProfileImage: service?.expertProfileImage || profile2,
+      date: `${formattedDate} at ${selectedTime}`,
+      service: {
+        name: service?.name || "",
+        description: service?.description || "",
+        price: service?.price || "",
+      },
+      amount: service?.price || "",
+      action: "Pending",
+      bookingStatus: "Not Paid",
+    };
+
+    // Get existing bookings or initialize empty array
+    const existingBookings = JSON.parse(
+      localStorage.getItem("bookings") || "[]"
+    );
+
+    // Add new booking to existing bookings
+    localStorage.setItem(
+      "bookings",
+      JSON.stringify([...existingBookings, booking])
+    );
+
+    // Navigate to the bookings page
+    navigate("/player/mybooking");
   };
 
   // Format the selected date
@@ -123,6 +133,24 @@ const AppointmentScheduler: React.FC = () => {
               </Button>
 
               <div className="space-y-6">
+                {/* Expert Profile Section */}
+                {service?.expertname && (
+                  <div className="flex flex-col items-center mb-6">
+                    <img
+                      src={service.expertProfileImage || profile2}
+                      alt={service.expertname}
+                      className="w-20 h-20 rounded-full object-cover mb-2"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = profile2; // Default image on error
+                      }}
+                    />
+                    <h3 className="text-lg font-semibold text-center">
+                      {service.expertname}
+                    </h3>
+                  </div>
+                )}
+
                 {/* Service Name */}
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">
@@ -131,13 +159,6 @@ const AppointmentScheduler: React.FC = () => {
                   <p className="text-sm text-gray-500">
                     {service?.description || "Service description"}
                   </p>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <User className="h-5 w-5 text-gray-500" />
-                  <span className="text-gray-600">
-                    {expert?.name || "Expert"}
-                  </span>
                 </div>
 
                 <div className="flex items-center gap-3">
@@ -266,13 +287,13 @@ const AppointmentScheduler: React.FC = () => {
         </CardContent>
       </Card>
 
-      {/* Next button */}
+      {/* Confirm button */}
       <div className="absolute bottom-8 right-8">
         <Button
           className="bg-red-500 hover:bg-red-600 text-white px-8"
-          onClick={handleNext}
+          onClick={handleConfirm}
         >
-          Next
+          Confirm Booking
         </Button>
       </div>
     </div>

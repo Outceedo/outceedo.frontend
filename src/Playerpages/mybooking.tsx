@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faVideo,
@@ -7,10 +8,10 @@ import {
   faSearch,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
-import React, { useState } from "react";
 import Video from "./Video";
 import AssessmentReport from "../Playerpages/AssessmentReport";
 import { X } from "lucide-react";
+import profile2 from "../assets/images/profile2.jpg"; // Import a default profile image
 
 import {
   Table,
@@ -34,81 +35,21 @@ import { Button } from "@/components/ui/button";
 interface Booking {
   id: number;
   expertName: string;
+  expertProfileImage?: string;
   date: string;
-  service: string;
+  service: {
+    name: string;
+    description: string;
+    price: string;
+  };
   amount: string;
-  action: "Accepted" | "Rejected" | "Re-Scheduled";
+  action: "Accepted" | "Rejected" | "Re-Scheduled" | "Pending";
   bookingStatus: "Paid" | "Not Paid" | "Pending";
+  createdAt?: string; // Add timestamp for when booking was created
 }
 
-const initialBookings: Booking[] = [
-  {
-    id: 145,
-    expertName: "Cody Fisher",
-    date: "2 Jan 2025",
-    service: "Online Video Assessment",
-    amount: "$20",
-    action: "Accepted",
-    bookingStatus: "Paid",
-  },
-  {
-    id: 123,
-    expertName: "Karen",
-    date: "20 Dec 2024",
-    service: "Online Live Assessment",
-    amount: "$50",
-    action: "Rejected",
-    bookingStatus: "Paid",
-  },
-  {
-    id: 432,
-    expertName: "Samuel Moore",
-    date: "12 Dec 2024",
-    service: "Online 1 on 1 Advise",
-    amount: "$25",
-    action: "Re-Scheduled",
-    bookingStatus: "Paid",
-  },
-  {
-    id: 342,
-    expertName: "Andy",
-    date: "25 Nov 2024",
-    service: "Online Video Assessment",
-    amount: "$10",
-    action: "Accepted",
-    bookingStatus: "Not Paid",
-  },
-  {
-    id: 100,
-    expertName: "Miguel Mendes",
-    date: "10 Oct 2024",
-    service: "Online 1 on 1 Advise",
-    amount: "$75",
-    action: "Rejected",
-    bookingStatus: "Pending",
-  },
-  {
-    id: 70,
-    expertName: "Jonatan Katalaskajo",
-    date: "15 Sep 2024",
-    service: "Online Video Assessment",
-    amount: "$15",
-    action: "Accepted",
-    bookingStatus: "Pending",
-  },
-  {
-    id: 32,
-    expertName: "Michael",
-    date: "2 Aug 2025",
-    service: "Online 1 on 1 Advise",
-    amount: "$150",
-    action: "Re-Scheduled",
-    bookingStatus: "Not Paid",
-  },
-];
-
 const MyBooking: React.FC = () => {
-  const [bookings] = useState<Booking[]>(initialBookings);
+  const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingStatus, setBookingStatus] = useState("all");
   const [search, setSearch] = useState("");
 
@@ -117,6 +58,43 @@ const MyBooking: React.FC = () => {
   const [selectedBookingId, setSelectedBookingId] = useState<number | null>(
     null
   );
+
+  const [visibilityMap, setVisibilityMap] = useState<{ [id: number]: boolean }>(
+    {}
+  );
+
+  // Load bookings from localStorage on component mount
+  useEffect(() => {
+    const storedBookings = localStorage.getItem("bookings");
+    if (storedBookings) {
+      let parsedBookings: Booking[] = JSON.parse(storedBookings);
+
+      // Add createdAt field if not present (for older bookings)
+      parsedBookings = parsedBookings.map((booking) => {
+        if (!booking.createdAt) {
+          return { ...booking, createdAt: new Date().toISOString() };
+        }
+        return booking;
+      });
+
+      // Sort bookings by date in ascending order (oldest first)
+      parsedBookings.sort((a, b) => {
+        // Try to parse date strings for comparison
+        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+
+        // If we can't parse the dates properly, try to sort by ID as a fallback
+        // Lower ID typically means it was created earlier
+        if (isNaN(dateA) || isNaN(dateB)) {
+          return a.id - b.id;
+        }
+
+        return dateA - dateB;
+      });
+
+      setBookings(parsedBookings);
+    }
+  }, []);
 
   const openVideoModal = (id: number) => {
     setSelectedBookingId(id);
@@ -138,6 +116,13 @@ const MyBooking: React.FC = () => {
     setSelectedBookingId(null);
   };
 
+  const toggleVisibility = (id: number) => {
+    setVisibilityMap((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
   const getActionBadgeStyle = (status: string) => {
     switch (status) {
       case "Accepted":
@@ -146,6 +131,8 @@ const MyBooking: React.FC = () => {
         return "bg-red-100 text-red-800 hover:bg-red-100";
       case "Re-Scheduled":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+      case "Pending":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
       default:
         return "";
     }
@@ -170,15 +157,13 @@ const MyBooking: React.FC = () => {
       (bookingStatus === "all" || booking.bookingStatus === bookingStatus)
   );
 
-  const [visibilityMap, setVisibilityMap] = useState<{ [id: number]: boolean }>(
-    {}
-  );
-
-  const toggleVisibility = (id: number) => {
-    setVisibilityMap((prev) => ({
-      ...prev,
-      [id]: !prev[id],
-    }));
+  const formatBookingDate = (dateString: string) => {
+    // Check if the date has the redundant year pattern
+    if (dateString.includes(", 2025 at")) {
+      // Fix formatting
+      return dateString.replace(", 2025 at", " at");
+    }
+    return dateString;
   };
 
   return (
@@ -216,15 +201,15 @@ const MyBooking: React.FC = () => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[80px]">Booking ID</TableHead>
-              <TableHead>Expert Name</TableHead>
+              <TableHead>Expert</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead>Service</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Booking Status</TableHead>
+              <TableHead>Service Name</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Payment</TableHead>
               <TableHead className="text-center">Video</TableHead>
-              <TableHead className="text-center">Assessment Report</TableHead>
-              <TableHead className="text-center">Display/Hide</TableHead>
+              <TableHead className="text-center">Report</TableHead>
+              <TableHead className="text-center">View</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -240,17 +225,12 @@ const MyBooking: React.FC = () => {
                   <TableCell className="font-medium">{booking.id}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <img
-                        src={`https://i.pravatar.cc/40?u=${booking.id}`}
-                        alt="avatar"
-                        className="w-8 h-8 rounded-full"
-                      />
                       <span>{booking.expertName}</span>
                     </div>
                   </TableCell>
-                  <TableCell>{booking.date}</TableCell>
-                  <TableCell>{booking.service}</TableCell>
-                  <TableCell>{booking.amount}</TableCell>
+                  <TableCell>{formatBookingDate(booking.date)}</TableCell>
+                  <TableCell>{booking.service.name}</TableCell>
+                  <TableCell>{booking.service.price}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

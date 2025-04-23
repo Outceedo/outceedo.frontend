@@ -346,6 +346,23 @@ const Experts = () => {
     );
   }
 
+  const handlebook = (service: Service) => {
+    // Save service details to localStorage
+    localStorage.setItem(
+      "selectedService",
+      JSON.stringify({
+        expertname: expertData.name, // Add expert name
+        expertProfileImage: expertData.profileImage, // Add expert profile image
+        name: service.name,
+        description: service.description,
+        price: service.price,
+      })
+    );
+
+    // Navigate to the BookService page
+    navigate("/book");
+  };
+
   return (
     <div className="container mx-auto py-8 px-4 max-w-6xl">
       {/* Back button - simplified */}
@@ -763,7 +780,7 @@ const Experts = () => {
                       {service.description}
                     </p>
                     <Button
-                      onClick={() => navigate("/book")}
+                      onClick={() => handlebook(service)}
                       className="bg-red-600 hover:bg-red-700 text-white"
                     >
                       Book Now

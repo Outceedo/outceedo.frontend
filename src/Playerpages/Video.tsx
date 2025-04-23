@@ -58,7 +58,7 @@ const Video: React.FC = () => {
       {/* CARD CONTAINER */}
       <div className="bg-white dark:bg-gray-900 rounded-2xl p-6 sm:p-8">
         {/* Top Tabs & Upload */}
-        <div className="flex space-x-4 mb-6  ">
+        <div className="flex space-x-4 mb-6">
           {[{ name: "Videos", icon: faVideo }].map((tab) => (
             <button
               key={tab.name}
