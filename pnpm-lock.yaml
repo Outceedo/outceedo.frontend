@@ -101,6 +101,9 @@ importers:
       react-router-dom:
         specifier: ^7.4.0
         version: 7.4.1(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      sweetalert2:
+        specifier: ^11.19.1
+        version: 11.19.1
       tailwind-merge:
         specifier: ^3.0.2
         version: 3.0.2
@@ -1937,6 +1940,9 @@ packages:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
 
+  sweetalert2@11.19.1:
+    resolution: {integrity: sha512-+8yws3Sc1srAZbrgdhmEIZny1I1UOYhJOIOdtOlv4TYaP5kkwQ9Zm8/BT23Qg+KdByCNOazltxEJAHzXVu8mhA==}
+
   tailwind-merge@3.0.2:
     resolution: {integrity: sha512-l7z+OYZ7mu3DTqrL88RiKrKIqO3NcpEO8V/Od04bNpvk0kiIFndGEoqfuzvj4yuhRkHKjRkII2z+KS2HfPcSxw==}
 
@@ -3713,6 +3719,8 @@ snapshots:
   supports-color@7.2.0:
     dependencies:
       has-flag: 4.0.0
+
+  sweetalert2@11.19.1: {}
 
   tailwind-merge@3.0.2: {}
 
