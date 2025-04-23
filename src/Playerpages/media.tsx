@@ -4,13 +4,15 @@ import {
   faVideo,
   faUpload,
   faTrash,
+  faTimes,
+  faExclamationTriangle,
+  faCheckCircle,
+  faTimesCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import MediaUpload from "./MediaUpload";
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import Swal from "sweetalert2/dist/sweetalert2.js";
-import "sweetalert2/dist/sweetalert2.min.css";
 import axios from "axios";
 
 interface UploadItem {
@@ -27,7 +29,106 @@ interface MediaProps {
   isExpertView?: boolean;
 }
 
+interface AlertProps {
+  type: "success" | "error" | "warning" | "confirm";
+  title: string;
+  text?: string;
+  onConfirm?: () => void;
+  onCancel?: () => void;
+}
+
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
+
+// Custom Alert Component
+const CustomAlert: React.FC<AlertProps & { onClose: () => void }> = ({
+  type,
+  title,
+  text,
+  onConfirm,
+  onCancel,
+  onClose,
+}) => {
+  const getIcon = () => {
+    switch (type) {
+      case "success":
+        return faCheckCircle;
+      case "error":
+        return faTimesCircle;
+      case "warning":
+      case "confirm":
+        return faExclamationTriangle;
+      default:
+        return faCheckCircle;
+    }
+  };
+
+  const getIconColor = () => {
+    switch (type) {
+      case "success":
+        return "text-green-500";
+      case "error":
+        return "text-red-500";
+      case "warning":
+      case "confirm":
+        return "text-yellow-500";
+      default:
+        return "text-blue-500";
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg w-11/12 max-w-md">
+        <div className="flex flex-col items-center mb-4">
+          <FontAwesomeIcon
+            icon={getIcon()}
+            className={`text-4xl mb-3 ${getIconColor()}`}
+          />
+          <h2 className="text-xl font-semibold">{title}</h2>
+          {text && (
+            <p className="mt-2 text-gray-600 dark:text-gray-300 text-center">
+              {text}
+            </p>
+          )}
+        </div>
+
+        <div className="flex justify-center gap-3 mt-6">
+          {type === "confirm" && (
+            <Button
+              onClick={() => {
+                onCancel?.();
+                onClose();
+              }}
+              className="px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800"
+            >
+              Cancel
+            </Button>
+          )}
+
+          <Button
+            onClick={() => {
+              if (type === "confirm") {
+                onConfirm?.();
+              }
+              onClose();
+            }}
+            className={`px-5 py-2 ${
+              type === "confirm"
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : type === "success"
+                ? "bg-green-600 hover:bg-green-700 text-white"
+                : type === "error"
+                ? "bg-blue-600 hover:bg-blue-700 text-white"
+                : "bg-yellow-600 hover:bg-yellow-700 text-white"
+            }`}
+          >
+            {type === "confirm" ? "Yes, delete it!" : "OK"}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
   const [activeTab, setActiveTab] = useState<string>("All");
@@ -36,6 +137,14 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<(string | number)[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Alert state
+  const [alert, setAlert] = useState<AlertProps & { show: boolean }>({
+    show: false,
+    type: "success",
+    title: "",
+    text: "",
+  });
 
   // Get auth token from localStorage
   const getAuthToken = (): string | null => {
@@ -118,8 +227,10 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
       const savedMedia = JSON.parse(localStorage.getItem("savedMedia") || "[]");
       setMedia(savedMedia);
 
-      Swal.fire({
-        icon: "error",
+      // Show error alert
+      setAlert({
+        show: true,
+        type: "error",
         title: "Failed to load media",
         text: "There was a problem loading your media files.",
       });
@@ -141,16 +252,13 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
         );
 
   const handleDeleteSingle = async (id: string | number) => {
-    Swal.fire({
+    // Show confirm alert
+    setAlert({
+      show: true,
+      type: "confirm",
       title: "Are you sure?",
       text: "Do you want to delete this media item?",
-      icon: "warning",
-      showCancelButton: true,
-      confirmButtonColor: "#d33",
-      cancelButtonColor: "#3085d6",
-      confirmButtonText: "Yes, delete it!",
-    }).then(async (result) => {
-      if (result.isConfirmed) {
+      onConfirm: async () => {
         try {
           const token = getAuthToken();
 
@@ -169,7 +277,13 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
           setSelectedMedia(selectedMedia.filter((mid) => mid !== id));
           localStorage.setItem("savedMedia", JSON.stringify(updated));
 
-          Swal.fire("Deleted!", "The media item has been removed.", "success");
+          // Show success alert
+          setAlert({
+            show: true,
+            type: "success",
+            title: "Deleted!",
+            text: "The media item has been removed.",
+          });
         } catch (error) {
           console.error("Error deleting media:", error);
 
@@ -179,13 +293,15 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
           setSelectedMedia(selectedMedia.filter((mid) => mid !== id));
           localStorage.setItem("savedMedia", JSON.stringify(updated));
 
-          Swal.fire({
-            icon: "error",
+          // Show error alert
+          setAlert({
+            show: true,
+            type: "error",
             title: "Delete Failed",
             text: "Failed to delete the media item from server, but it was removed locally.",
           });
         }
-      }
+      },
     });
   };
 
@@ -351,6 +467,18 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
             )}
           </div>
         </div>
+      )}
+
+      {/* Custom Alert Dialog */}
+      {alert.show && (
+        <CustomAlert
+          type={alert.type}
+          title={alert.title}
+          text={alert.text}
+          onConfirm={alert.onConfirm}
+          onCancel={alert.onCancel}
+          onClose={() => setAlert({ ...alert, show: false })}
+        />
       )}
     </div>
   );
