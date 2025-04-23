@@ -51,44 +51,7 @@ const BookingExpertside: React.FC = () => {
     );
 
     // Get static bookings (this would normally come from an API)
-    const staticBookings: Booking[] = [
-      {
-        id: 145,
-        expertName: "Cody Fisher",
-        date: "2 Jan 2025",
-        service: "Online Video Assessment",
-        amount: "$20",
-        action: "Accepted",
-        bookingStatus: "Paid",
-      },
-      {
-        id: 123,
-        expertName: "Karen",
-        date: "20 Dec 2024",
-        service: "Online Live Assessment",
-        amount: "$50",
-        action: "Rejected",
-        bookingStatus: "Paid",
-      },
-      {
-        id: 432,
-        expertName: "Samuel Moore",
-        date: "12 Dec 2024",
-        service: "Online 1 on 1 Advise",
-        amount: "$25",
-        action: "Re-Scheduled",
-        bookingStatus: "Paid",
-      },
-      {
-        id: 342,
-        expertName: "Andy",
-        date: "25 Nov 2024",
-        service: "Online Video Assessment",
-        amount: "$10",
-        action: "Accepted",
-        bookingStatus: "Not Paid",
-      },
-    ];
+    const staticBookings: Booking[] = [];
 
     // Combine all bookings
     setBookings([...staticBookings, ...localStorageBookings]);
