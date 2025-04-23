@@ -11,10 +11,4 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  // Add the rollupOptions to externalize sweetalert2
-  build: {
-    rollupOptions: {
-      external: ["sweetalert2"],
-    },
-  },
 });
