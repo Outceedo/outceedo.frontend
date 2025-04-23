@@ -520,7 +520,7 @@ const Profile: React.FC = () => {
                 <div className="mt-5 relative">
                   <div className="flex justify-between items-start">
                     <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
-                     Profile
+                      Profile
                     </h3>
                     {!isEditingBasicInfo ? (
                       <Button
