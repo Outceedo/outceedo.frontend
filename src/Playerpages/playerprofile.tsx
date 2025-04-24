@@ -271,21 +271,7 @@ const Profile: React.FC = () => {
   const playerData = formatProfileData();
 
   // Initialize edit data when entering edit mode
-  const handleEditBasicInfo = () => {
-    const locationParts = playerData.location.split(", ");
-
-    setEditData({
-      age: playerData.age.toString(),
-      height: playerData.height.replace("cm", ""),
-      weight: playerData.weight.replace("kg", ""),
-      city: locationParts[0] || "",
-      country: locationParts[1] || "",
-      club: playerData.club,
-      languages: [...playerData.languages],
-    });
-
-    setIsEditingBasicInfo(true);
-  };
+  
 
   // Handle changes to edit fields
   const handleInputChange = (
@@ -523,15 +509,7 @@ const Profile: React.FC = () => {
                       Profile
                     </h3>
                     {!isEditingBasicInfo ? (
-                      <Button
-                        onClick={handleEditBasicInfo}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-1 text-blue-600"
-                      >
-                        <FontAwesomeIcon icon={faPen} className="text-xs" />
-                        <span>Edit</span>
-                      </Button>
+                      null
                     ) : (
                       <div className="flex gap-2">
                         <Button

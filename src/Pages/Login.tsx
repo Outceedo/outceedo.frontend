@@ -262,20 +262,6 @@ const Login: React.FC = () => {
         </form>
 
         {/* Manual Navigation Buttons - REMOVE IN PRODUCTION */}
-        <div className="mt-4 flex space-x-2">
-          <button
-            onClick={() => navigate("/details-form")}
-            className="bg-gray-200 px-2 py-1 text-xs rounded"
-          >
-            Go to Details Form
-          </button>
-          <button
-            onClick={() => navigate("/player/dashboard")}
-            className="bg-gray-200 px-2 py-1 text-xs rounded"
-          >
-            Go to Player Dashboard
-          </button>
-        </div>
 
         <div className="mt-4">
           <button
