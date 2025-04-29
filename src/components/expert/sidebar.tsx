@@ -12,6 +12,7 @@ interface MenuItem {
   name: string;
   icon: string;
   path: string;
+  isLogout?: boolean;
 }
 
 const expertSidebarMenuItems: MenuItem[] = [
@@ -41,6 +42,13 @@ const expertSidebarMenuItems: MenuItem[] = [
     path: "/expert/sponsors",
   },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
+  {
+    id: 7,
+    name: "Logout",
+    icon: "fas fa-sign-out-alt",
+    path: "/logout",
+    isLogout: true,
+  },
 ];
 
 interface MenuItemsProps {
@@ -53,20 +61,22 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const dispatch = useAppDispatch();
 
   // Fetch profile data from Redux store
-  const { viewedProfile, status } = useAppSelector((state) => state.profile);
+  const { currentProfile, status } = useAppSelector((state) => state.profile);
 
   // Format name from profile data
-  const expertName = viewedProfile
-    ? `${viewedProfile.firstName || ""} ${viewedProfile.lastName || ""}`.trim()
+  const expertName = currentProfile
+    ? `${currentProfile.firstName || ""} ${
+        currentProfile.lastName || ""
+      }`.trim()
     : "Loading...";
 
   // Get age and profession details from profile data
-  const expertAge = viewedProfile?.age ? `Age ${viewedProfile.age}` : "";
-  const expertProfession = viewedProfile?.profession || "Expert";
-  const expertSubProfession = viewedProfile?.subProfession || "";
+  const expertAge = currentProfile?.age ? `Age ${currentProfile.age}` : "";
+  const expertProfession = currentProfile?.profession || "Expert";
+  const expertSubProfession = currentProfile?.subProfession || "";
 
   // Function to handle logout
-  function handleLogout(event: MouseEvent<HTMLDivElement>) {
+  function handleLogout() {
     // Clear the token from localStorage
     localStorage.removeItem("token");
 
@@ -81,6 +91,16 @@ function MenuItems({ setOpen }: MenuItemsProps) {
     // Refresh the page to ensure all state is reset
     window.location.reload();
   }
+
+  // Handle menu item click
+  const handleMenuItemClick = (menuItem: MenuItem) => {
+    if (menuItem.isLogout) {
+      handleLogout();
+    } else {
+      navigate(menuItem.path);
+      if (setOpen) setOpen(false);
+    }
+  };
 
   // Fetch profile data when component mounts
   useEffect(() => {
@@ -102,7 +122,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       {/* Profile Section */}
       <div className="flex flex-col items-center gap-2 mb-6">
         <img
-          src={viewedProfile?.photo || profile}
+          src={currentProfile?.photo || profile}
           alt="Profile"
           className="rounded-full w-20 h-20 cursor-pointer object-cover"
           onClick={() => navigate("/details-form")}
@@ -135,19 +155,19 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       {/* Navigation Items */}
       <div className="flex flex-col gap-3 w-full px-4">
         {expertSidebarMenuItems.map((menuItem) => {
-          const isActive = location.pathname === menuItem.path;
+          const isActive =
+            !menuItem.isLogout && location.pathname === menuItem.path;
 
           return (
             <div
               key={menuItem.id}
-              onClick={() => {
-                navigate(menuItem.path);
-                if (setOpen) setOpen(false);
-              }}
+              onClick={() => handleMenuItemClick(menuItem)}
               className={`flex items-center gap-3 px-3 py-2 text-md cursor-pointer rounded-md transition-colors
                 ${
                   isActive
                     ? "bg-gray-100 text-black font-medium dark:bg-gray-700 dark:text-white"
+                    : menuItem.isLogout
+                    ? "text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
                     : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 }
               `}
@@ -156,6 +176,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
                 className={`${menuItem.icon} ${
                   isActive
                     ? "text-gray-800 dark:text-white"
+                    : menuItem.isLogout
+                    ? "text-red-500 dark:text-red-400"
                     : "text-gray-500 dark:text-gray-400"
                 }`}
               ></i>
@@ -165,13 +187,6 @@ function MenuItems({ setOpen }: MenuItemsProps) {
             </div>
           );
         })}
-        <div
-          className="cursor-pointer px-6 flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
-          onClick={handleLogout}
-        >
-          <LogOut size={18} />
-          <span>Logout</span>
-        </div>
       </div>
     </nav>
   );

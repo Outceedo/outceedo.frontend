@@ -31,7 +31,7 @@ const ExpertProfile = () => {
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
 
   // Get profile state from Redux store
-  const { viewedProfile, status, error } = useAppSelector(
+  const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
 
@@ -48,7 +48,7 @@ const ExpertProfile = () => {
 
   // Format the expert data from API response
   const formatExpertData = () => {
-    if (!viewedProfile)
+    if (!currentProfile)
       return {
         name: "",
         profession: "",
@@ -70,7 +70,7 @@ const ExpertProfile = () => {
         rawProfile: {},
       };
 
-    const profile = viewedProfile;
+    const profile = currentProfile;
     console.log("Expert profile data:", profile);
 
     // Get media items (photos/videos)
@@ -200,7 +200,7 @@ const ExpertProfile = () => {
   const expertData = formatExpertData();
 
   // Show loading state
-  if (status === "loading" && !viewedProfile) {
+  if (status === "loading" && !currentProfile) {
     return (
       <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center">
         <div className="text-center">

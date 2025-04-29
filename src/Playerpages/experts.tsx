@@ -29,6 +29,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile } from "../store/profile-slice";
+import { MoveLeft } from "lucide-react";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
@@ -159,24 +160,18 @@ const Experts = () => {
         services: viewedProfile.services || [],
       }
     : {
-        name: "Neek Chaturvedi",
-        profession: "Coach & Ex-Soccer Player Defender",
-        location: "London, UK",
-        responseTime: "40 mins",
-        travelLimit: "30 kms",
+        name: "N/A",
+        profession: "N/A",
+        location: "N/A",
+        responseTime: "N/A",
+        travelLimit: "N/A",
         certificationLevel: "3rd highest",
         reviews: 120,
         followers: 110,
         assessments: 100,
-        profileImage: profile2,
-        about:
-          "Experienced soccer coach with a strong background in player development and strategy.",
-        skills: [
-          "Leadership",
-          "Tactical Analysis",
-          "Team Management",
-          "Fitness Training",
-        ],
+        profileImage: "N/A",
+        about: "N/A",
+        skills: [],
         certificates: [],
         services: [],
       };
@@ -364,14 +359,14 @@ const Experts = () => {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 max-w-6xl">
+    <div className="container mx-auto px-4 max-w-6xl">
       {/* Back button - simplified */}
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
           className="text-3xl font-bold cursor-pointer"
         >
-          ←
+          <MoveLeft />
         </button>
       </div>
 

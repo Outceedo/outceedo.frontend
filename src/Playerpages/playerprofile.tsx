@@ -73,8 +73,8 @@ const Profile: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get profile state from Redux store
-  // viewedProfile is set by getProfile thunk
-  const { currentProfile, viewedProfile, status, error } = useAppSelector(
+  // currentProfile is set by getProfile thunk
+  const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
 
@@ -102,20 +102,20 @@ const Profile: React.FC = () => {
 
   // Initialize edit data when profile data is loaded
   useEffect(() => {
-    if (viewedProfile) {
+    if (currentProfile) {
       setEditData({
-        age: viewedProfile.age?.toString() || "",
-        height: viewedProfile.height?.toString() || "",
-        weight: viewedProfile.weight?.toString() || "",
-        city: viewedProfile.city || "",
-        country: viewedProfile.country || "",
-        club: viewedProfile.company || "",
-        languages: Array.isArray(viewedProfile.language)
-          ? [...viewedProfile.language]
+        age: currentProfile.age?.toString() || "",
+        height: currentProfile.height?.toString() || "",
+        weight: currentProfile.weight?.toString() || "",
+        city: currentProfile.city || "",
+        country: currentProfile.country || "",
+        club: currentProfile.company || "",
+        languages: Array.isArray(currentProfile.language)
+          ? [...currentProfile.language]
           : [],
       });
     }
-  }, [viewedProfile]);
+  }, [currentProfile]);
 
   // Handle profile photo change
   const handlePhotoClick = () => {
@@ -185,8 +185,8 @@ const Profile: React.FC = () => {
 
   // Format the profile data from the API response for display
   const formatProfileData = () => {
-    // Use the profile that was fetched (viewedProfile)
-    const profile = viewedProfile;
+    // Use the profile that was fetched (currentProfile)
+    const profile = currentProfile;
 
     if (!profile) {
       return {
@@ -403,16 +403,16 @@ const Profile: React.FC = () => {
     setErrors({});
 
     // Reset form data to current profile values
-    if (viewedProfile) {
+    if (currentProfile) {
       setEditData({
-        age: viewedProfile.age?.toString() || "",
-        height: viewedProfile.height?.toString() || "",
-        weight: viewedProfile.weight?.toString() || "",
-        city: viewedProfile.city || "",
-        country: viewedProfile.country || "",
-        club: viewedProfile.company || "",
-        languages: Array.isArray(viewedProfile.language)
-          ? [...viewedProfile.language]
+        age: currentProfile.age?.toString() || "",
+        height: currentProfile.height?.toString() || "",
+        weight: currentProfile.weight?.toString() || "",
+        city: currentProfile.city || "",
+        country: currentProfile.country || "",
+        club: currentProfile.company || "",
+        languages: Array.isArray(currentProfile.language)
+          ? [...currentProfile.language]
           : [],
       });
     }
@@ -423,16 +423,16 @@ const Profile: React.FC = () => {
     setIsEditingBasicInfo(true);
 
     // Set form data to current profile values
-    if (viewedProfile) {
+    if (currentProfile) {
       setEditData({
-        age: viewedProfile.age?.toString() || "",
-        height: viewedProfile.height?.toString() || "",
-        weight: viewedProfile.weight?.toString() || "",
-        city: viewedProfile.city || "",
-        country: viewedProfile.country || "",
-        club: viewedProfile.company || "",
-        languages: Array.isArray(viewedProfile.language)
-          ? [...viewedProfile.language]
+        age: currentProfile.age?.toString() || "",
+        height: currentProfile.height?.toString() || "",
+        weight: currentProfile.weight?.toString() || "",
+        city: currentProfile.city || "",
+        country: currentProfile.country || "",
+        club: currentProfile.company || "",
+        languages: Array.isArray(currentProfile.language)
+          ? [...currentProfile.language]
           : [],
       });
     }
@@ -442,7 +442,7 @@ const Profile: React.FC = () => {
   const ovrScore = calculateOVR(playerData.stats);
 
   // Show loading state
-  if (status === "loading" && !viewedProfile) {
+  if (status === "loading" && !currentProfile) {
     return (
       <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center">
         <div className="text-center">
@@ -537,9 +537,6 @@ const Profile: React.FC = () => {
                 {/* Basic Info Section with Edit Button */}
                 <div className="mt-5 relative">
                   <div className="flex justify-between items-start">
-                    <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">
-                      Profile
-                    </h3>
                     {!isEditingBasicInfo ? (
                       <div></div>
                     ) : (
