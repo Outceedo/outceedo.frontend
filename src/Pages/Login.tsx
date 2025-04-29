@@ -124,8 +124,6 @@ const Login: React.FC = () => {
         return "An error occurred";
       }
     }
-
-    return formError;
   };
 
   return (
@@ -182,7 +180,11 @@ const Login: React.FC = () => {
         {formError && (
           <div className="mb-4 p-2 bg-red-100 text-red-800 rounded border border-red-300">
             <p className="font-medium">Error</p>
-            <p className="text-sm">{getErrorMessage()}</p>
+            <p className="text-sm">
+              {formError.includes("Invalid Password")
+                ? "Invalid Password."
+                : "An unexpected error occurred. Please contact support if the issue persists."}
+            </p>
           </div>
         )}
 

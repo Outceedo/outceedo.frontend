@@ -16,6 +16,7 @@ const Signup: React.FC = () => {
   );
 
   const [, setRole] = useState<Role | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
   const [countryList, setCountryList] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [showDropdown, setShowDropdown] = useState(false);
@@ -39,14 +40,48 @@ const Signup: React.FC = () => {
       error,
       registrationAttempted,
     });
+
+    // Update formError when error state changes
+    if (error) {
+      try {
+        // Check if error is a JSON string
+        if (typeof error === "string" && error.includes("{")) {
+          const errorObj = JSON.parse(error);
+          setFormError(errorObj.error || "Registration failed");
+        } else if (typeof error === "object" && error !== null) {
+          // If error is already an object
+          setFormError(error.error || "Registration failed");
+        } else {
+          // If error is a simple string
+          setFormError(error.toString());
+        }
+      } catch (e) {
+        console.error("Error parsing error message:", e);
+        setFormError(String(error));
+      }
+    }
   }, [user, isLoading, error, registrationAttempted]);
 
   useEffect(() => {
-    const myCountryCodesObject = countryCodes.customList(
-      "countryCode",
-      "+{countryCallingCode} ({countryNameEn})"
-    );
-    setCountryList(Object.values(myCountryCodesObject));
+    try {
+      const myCountryCodesObject = countryCodes.customList(
+        "countryCode",
+        "+{countryCallingCode} ({countryNameEn})"
+      );
+      setCountryList(Object.values(myCountryCodesObject));
+    } catch (err) {
+      console.error("Error loading country codes:", err);
+      // Fallback to some common country codes
+      setCountryList([
+        "+1 (United States)",
+        "+44 (United Kingdom)",
+        "+91 (India)",
+        "+61 (Australia)",
+        "+86 (China)",
+        "+33 (France)",
+        "+49 (Germany)",
+      ]);
+    }
   }, []);
 
   // Generate a username suggestion when first and last name change
@@ -86,6 +121,8 @@ const Signup: React.FC = () => {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
+    setFormError(null); // Clear any existing errors
+
     const selectedRole = localStorage.getItem("selectedRole") as Role | null;
     if (
       !selectedRole ||
@@ -154,9 +191,41 @@ const Signup: React.FC = () => {
         navigate("/emailverification");
       } else if (registerUser.rejected.match(resultAction)) {
         console.error("Registration failed:", resultAction.error);
+
+        // Handle error payload
+        const errorPayload = resultAction.payload;
+        if (errorPayload) {
+          try {
+            // Try to parse the error if it's a string with JSON content
+            if (
+              typeof errorPayload === "string" &&
+              errorPayload.includes("{")
+            ) {
+              const parsedError = JSON.parse(errorPayload);
+              setFormError(parsedError.error || "Registration failed");
+            } else if (
+              typeof errorPayload === "object" &&
+              errorPayload !== null
+            ) {
+              // If payload is already an object
+              setFormError(errorPayload.error || "Registration failed");
+            } else {
+              setFormError(String(errorPayload));
+            }
+          } catch (e) {
+            console.error("Error parsing error payload:", e);
+            setFormError(String(errorPayload));
+          }
+        } else {
+          // Handle error from action.error
+          const errorMessage =
+            resultAction.error?.message || "Registration failed";
+          setFormError(errorMessage);
+        }
       }
     } catch (err) {
       console.error("Error during registration:", err);
+      setFormError("An unexpected error occurred. Please try again later.");
     }
   };
 
@@ -200,14 +269,19 @@ const Signup: React.FC = () => {
           development, and strategic insights to elevate performance.
         </p>
       </div>
-      {/* Right Side - Login Form */}
+      {/* Right Side - Signup Form */}
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-12 sm:mt-16 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Sign Up</h2>
 
-        <form onSubmit={handleSignup} className="space-y-4">
-          {/* Form content remains the same */}
-          {/* ... */}
+        {/* Error Message */}
+        {formError && (
+          <div className="mb-4 p-2 bg-red-100 text-red-800 rounded border border-red-300">
+            <p className="font-medium">Error</p>
+            <p className="text-sm">{formError}</p>
+          </div>
+        )}
 
+        <form onSubmit={handleSignup} className="space-y-4">
           <div className="flex space-x-4">
             <div className="w-1/2">
               <label

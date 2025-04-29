@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 // import Background from "../assets/images/Background.jpg";
 import Hero from "../assets/images/Hero.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -15,10 +15,14 @@ import Features from "./Features";
 import Pricing from "./Pricing";
 import Contact from "./Contact";
 import User from "./user";
-import { url } from "inspector";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
+
+  const { isAuthenticated, user, tokenValidationInProgress } = useAppSelector(
+    (state) => state.auth
+  );
   const [isModalOpen, setModalOpen] = useState(false);
 
   const handleSignUpClick = () => {
@@ -27,6 +31,17 @@ const HomePage: React.FC = () => {
 
   return (
     <div>
+      {isAuthenticated && (
+        <>
+          <Navigate
+            to={
+              user?.role === "expert"
+                ? "/expert/dashboard"
+                : "/player/dashboard"
+            }
+          />
+        </>
+      )}
       {isModalOpen && (
         <>
           <div className="absolute inset-0 bg-black opacity-65"></div>
