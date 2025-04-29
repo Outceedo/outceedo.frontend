@@ -142,12 +142,12 @@ const ExpertProfile = () => {
     if (!file) return;
 
     // Validate file size and type before uploading
-    if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
+    if (file.size > 1 * 1024 * 1024) {
+      // 1MB limit (changed from 5MB)
       Swal.fire({
         icon: "error",
         title: "File too large",
-        text: "Profile photo must be less than 5MB",
+        text: "Profile photo must be less than 1MB",
       });
       return;
     }
@@ -195,7 +195,6 @@ const ExpertProfile = () => {
       }
     }
   };
-
   // Get the formatted expert data
   const expertData = formatExpertData();
 

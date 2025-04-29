@@ -178,7 +178,11 @@ const Login: React.FC = () => {
         {formError && (
           <div className="mb-4 p-2 bg-red-100 text-red-800 rounded border border-red-300">
             <p className="font-medium">Error</p>
-            <p className="text-sm">{getErrorMessage()}</p>
+            <p className="text-sm">
+              {formError.includes("Invalid Password") ? (
+                <div>Invalid Password</div>
+              ) : <>User Not Found</>}
+            </p>
           </div>
         )}
 
