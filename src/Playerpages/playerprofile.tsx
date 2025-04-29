@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import profile1 from "../assets/images/profile1.jpg";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -53,30 +52,6 @@ const calculateOVR = (stats: Stat[]) => {
   return (total / stats.length).toFixed(1);
 };
 
-// Fallback player data if profile not loaded yet
-const fallbackPlayerData = {
-  id: "player123",
-  name: "Rohan Roshan",
-  age: 14,
-  height: "166cm",
-  weight: "45kg",
-  location: "London, England",
-  club: "Local FC",
-  languages: ["English", "Spanish"],
-  profileImage: profile1,
-  stats: initialStats,
-  aboutMe:
-    "I am from London, UK. A passionate versatile player with dedication to improving my skills.",
-  certificates: [],
-  awards: [],
-  socials: {
-    linkedin: "https://linkedin.com/in/rohan-roshan",
-    instagram: "https://instagram.com/rohan.player",
-    facebook: "https://facebook.com/rohanroshan",
-    twitter: "https://twitter.com/rohan_player",
-  },
-};
-
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
     "details"
@@ -124,6 +99,23 @@ const Profile: React.FC = () => {
       setPlayerStats(JSON.parse(savedStats));
     }
   }, []);
+
+  // Initialize edit data when profile data is loaded
+  useEffect(() => {
+    if (viewedProfile) {
+      setEditData({
+        age: viewedProfile.age?.toString() || "",
+        height: viewedProfile.height?.toString() || "",
+        weight: viewedProfile.weight?.toString() || "",
+        city: viewedProfile.city || "",
+        country: viewedProfile.country || "",
+        club: viewedProfile.company || "",
+        languages: Array.isArray(viewedProfile.language)
+          ? [...viewedProfile.language]
+          : [],
+      });
+    }
+  }, [viewedProfile]);
 
   // Handle profile photo change
   const handlePhotoClick = () => {
@@ -195,9 +187,28 @@ const Profile: React.FC = () => {
   const formatProfileData = () => {
     // Use the profile that was fetched (viewedProfile)
     const profile = viewedProfile;
-    console.log("Profile data:", profile);
 
-    if (!profile) return fallbackPlayerData;
+    if (!profile) {
+      return {
+        id: "",
+        name: "",
+        age: 0,
+        height: "",
+        weight: "",
+        location: "",
+        club: "",
+        languages: [],
+        profileImage: "",
+        stats: playerStats,
+        aboutMe: "",
+        certificates: [],
+        awards: [],
+        socials: {},
+        uploads: [],
+        documents: [],
+        rawProfile: {},
+      };
+    }
 
     // Filter certificates and awards from documents
     const certificates =
@@ -208,8 +219,8 @@ const Profile: React.FC = () => {
     // Get media items (photos/videos)
     const mediaItems = profile.uploads || [];
 
-    // Get profile photo from uploads if available
-    let profileImage = fallbackPlayerData.profileImage;
+    // Get profile photo
+    let profileImage = "";
     if (profile.photo) {
       profileImage = profile.photo;
     } else if (mediaItems.length > 0) {
@@ -220,58 +231,34 @@ const Profile: React.FC = () => {
     }
 
     return {
-      id: profile.id || fallbackPlayerData.id,
-      name:
-        `${profile.firstName || ""} ${profile.lastName || ""}`.trim() ||
-        fallbackPlayerData.name,
-      age: profile.age || fallbackPlayerData.age,
-      height: profile.height
-        ? `${profile.height}cm`
-        : fallbackPlayerData.height,
-      weight: profile.weight
-        ? `${profile.weight}kg`
-        : fallbackPlayerData.weight,
+      id: profile.id || "",
+      name: `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "",
+      age: profile.age || 0,
+      height: profile.height ? `${profile.height}cm` : "",
+      weight: profile.weight ? `${profile.weight}kg` : "",
       location:
         profile.city && profile.country
           ? `${profile.city}, ${profile.country}`
-          : fallbackPlayerData.location,
-      club: profile.company || fallbackPlayerData.club,
+          : "",
+      club: profile.company || "",
       languages:
         Array.isArray(profile.language) && profile.language.length > 0
           ? profile.language
-          : fallbackPlayerData.languages,
+          : [],
       profileImage: profileImage,
-      stats: playerStats, // Use local stats if not provided by API
-      aboutMe: profile.bio || fallbackPlayerData.aboutMe,
-
-      // Process certificates from documents array
-      certificates:
-        certificates.length > 0
-          ? certificates
-          : fallbackPlayerData.certificates,
-
-      // Process awards from documents array
-      awards: awards.length > 0 ? awards : fallbackPlayerData.awards,
-
-      // Handle social links
-      socials: profile.socialLinks || fallbackPlayerData.socials,
-
-      // Store original uploads data for media tab
+      stats: playerStats, // Use local stats
+      aboutMe: profile.bio || "",
+      certificates: certificates,
+      awards: awards,
+      socials: profile.socialLinks || {},
       uploads: mediaItems,
-
-      // Store original documents data for certificates and awards tabs
       documents: profile.documents || [],
-
-      // Store raw profile data
       rawProfile: profile,
     };
   };
 
   // Get the formatted player data
   const playerData = formatProfileData();
-
-  // Initialize edit data when entering edit mode
-  
 
   // Handle changes to edit fields
   const handleInputChange = (
@@ -414,6 +401,41 @@ const Profile: React.FC = () => {
   const handleCancelEdit = () => {
     setIsEditingBasicInfo(false);
     setErrors({});
+
+    // Reset form data to current profile values
+    if (viewedProfile) {
+      setEditData({
+        age: viewedProfile.age?.toString() || "",
+        height: viewedProfile.height?.toString() || "",
+        weight: viewedProfile.weight?.toString() || "",
+        city: viewedProfile.city || "",
+        country: viewedProfile.country || "",
+        club: viewedProfile.company || "",
+        languages: Array.isArray(viewedProfile.language)
+          ? [...viewedProfile.language]
+          : [],
+      });
+    }
+  };
+
+  // Enter edit mode
+  const enterEditMode = () => {
+    setIsEditingBasicInfo(true);
+
+    // Set form data to current profile values
+    if (viewedProfile) {
+      setEditData({
+        age: viewedProfile.age?.toString() || "",
+        height: viewedProfile.height?.toString() || "",
+        weight: viewedProfile.weight?.toString() || "",
+        city: viewedProfile.city || "",
+        country: viewedProfile.country || "",
+        club: viewedProfile.company || "",
+        languages: Array.isArray(viewedProfile.language)
+          ? [...viewedProfile.language]
+          : [],
+      });
+    }
   };
 
   // Calculate OVR score
@@ -462,20 +484,30 @@ const Profile: React.FC = () => {
           <div className="flex flex-col lg:flex-row gap-6 items-start mt-4 relative">
             {/* Profile Image with Edit Capability */}
             <div className="relative group">
-              <img
-                src={playerData.profileImage}
-                alt={`${playerData.name}'s profile`}
-                className="rounded-lg w-60 h-60 object-cover shadow-md"
-              />
+              {playerData.profileImage ? (
+                <img
+                  src={playerData.profileImage}
+                  alt={`${playerData.name || "Player"}'s profile`}
+                  className="rounded-lg w-60 h-60 object-cover shadow-md"
+                />
+              ) : (
+                <div className="rounded-lg w-60 h-60 bg-gray-200 flex items-center justify-center shadow-md">
+                  <span className="text-gray-500">No profile image</span>
+                </div>
+              )}
+
               <div
                 onClick={handlePhotoClick}
                 className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-lg cursor-pointer"
               >
                 <div className="text-white text-center">
                   <FontAwesomeIcon icon={faCamera} size="2x" className="mb-2" />
-                  <p className="text-sm font-medium">Change Photo</p>
+                  <p className="text-sm font-medium">
+                    {playerData.profileImage ? "Change Photo" : "Add Photo"}
+                  </p>
                 </div>
               </div>
+
               <input
                 type="file"
                 ref={fileInputRef}
@@ -499,7 +531,7 @@ const Profile: React.FC = () => {
             <div className="relative w-full mt-4">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
-                  {playerData.name}
+                  {playerData.name || "Player Profile"}
                 </h2>
 
                 {/* Basic Info Section with Edit Button */}
@@ -509,7 +541,7 @@ const Profile: React.FC = () => {
                       Profile
                     </h3>
                     {!isEditingBasicInfo ? (
-                      null
+                      <div></div>
                     ) : (
                       <div className="flex gap-2">
                         <Button
@@ -551,12 +583,23 @@ const Profile: React.FC = () => {
                   {/* Display mode */}
                   {!isEditingBasicInfo ? (
                     <div className="flex flex-wrap gap-x-8 gap-y-2 text-gray-600 font-Opensans dark:text-gray-300">
-                      <span>Age: {playerData.age}</span>
-                      <span>Height: {playerData.height}</span>
-                      <span>Weight: {playerData.weight}</span>
-                      <span>Location: {playerData.location}</span>
-                      <span>Club: {playerData.club}</span>
-                      <span>Languages: {playerData.languages.join(", ")}</span>
+                      <span>Age: {playerData.age || "Not specified"}</span>
+                      <span>
+                        Height: {playerData.height || "Not specified"}
+                      </span>
+                      <span>
+                        Weight: {playerData.weight || "Not specified"}
+                      </span>
+                      <span>
+                        Location: {playerData.location || "Not specified"}
+                      </span>
+                      <span>Club: {playerData.club || "Not specified"}</span>
+                      <span>
+                        Languages:{" "}
+                        {playerData.languages && playerData.languages.length > 0
+                          ? playerData.languages.join(", ")
+                          : "Not specified"}
+                      </span>
                     </div>
                   ) : (
                     /* Edit mode */
@@ -806,9 +849,9 @@ const Profile: React.FC = () => {
                           firstName: data.name?.split(" ")[0] || "",
                           lastName: data.name?.split(" ")[1] || "",
                           bio: data.aboutMe,
-                          age: parseInt(data.age.toString()),
-                          height: parseInt(data.height.toString()),
-                          weight: parseInt(data.weight.toString()),
+                          age: parseInt(data.age?.toString() || "0"),
+                          height: parseInt(data.height?.toString() || "0"),
+                          weight: parseInt(data.weight?.toString() || "0"),
                           city: data.location?.split(", ")[0] || "",
                           country: data.location?.split(", ")[1] || "",
                           company: data.club,
