@@ -58,6 +58,7 @@ const Detailsform: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [isExpert, setIsExpert] = useState(false);
 
   // Form data
   const [formData, setFormData] = useState({
@@ -81,6 +82,8 @@ const Detailsform: React.FC = () => {
     facebook: "",
     instagram: "",
     twitter: "",
+    responseTime: "", // Added for expert role
+    travelLimit: "", // Added for expert role
   });
 
   // Form validation errors
@@ -113,6 +116,12 @@ const Detailsform: React.FC = () => {
     return localStorage.getItem("token");
   };
   const username = localStorage.getItem("username");
+
+  // Check if user is an expert
+  useEffect(() => {
+    const role = localStorage.getItem("role");
+    setIsExpert(role === "expert");
+  }, []);
 
   // Fetch profile data when component mounts
   useEffect(() => {
@@ -147,6 +156,10 @@ const Detailsform: React.FC = () => {
         city: profileData.city || "",
         footballClub: profileData.company || "",
         bio: profileData.bio || "",
+
+        // Handle expert-specific fields
+        // responseTime: profileData.responseTime || "",
+        // travelLimit: profileData.travelLimit?.toString() || "",
 
         // Handle social links
         linkedin: profileData.socialLinks?.linkedin || "",
@@ -245,6 +258,16 @@ const Detailsform: React.FC = () => {
       if (!formData.city) {
         errors.city = "City is required";
       }
+
+      // Validate expert-specific fields if user is an expert
+      // if (isExpert) {
+      //   if (!formData.responseTime) {
+      //     errors.responseTime = "Response time is required for experts";
+      //   }
+      //   if (!formData.travelLimit) {
+      //     errors.travelLimit = "Travel limit is required for experts";
+      //   }
+      // }
     }
 
     setValidationErrors(errors);
@@ -543,6 +566,13 @@ const Detailsform: React.FC = () => {
         subProfession: formData.subProfession || null,
         company: formData.footballClub || null,
         role: localStorage.getItem("role") || "player",
+
+        // Include expert-specific fields if user is an expert
+        // responseTime: isExpert ? formData.responseTime || null : null,
+        // travelLimit:
+        //   isExpert && formData.travelLimit
+        //     ? parseInt(formData.travelLimit)
+        //     : null,
       };
 
       console.log("Submitting profile data:", profileUpdateData);
@@ -1057,6 +1087,54 @@ const Detailsform: React.FC = () => {
               )}
             </div>
           </div>
+
+          {/* Expert-specific fields */}
+          {isExpert && (
+            <div className="flex space-x-4 mb-4">
+              <div className="w-1/2">
+                <label className="block text-black mb-1">
+                  Response Time (mins) *
+                </label>
+                <input
+                  type="text"
+                  name="responseTime"
+                  placeholder="e.g., 30 mins"
+                  value={formData.responseTime}
+                  onChange={handleInputChange}
+                  className={`border p-2 w-full rounded ${
+                    validationErrors.responseTime ? "border-red-500" : ""
+                  }`}
+                  required={isExpert}
+                />
+                {validationErrors.responseTime && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.responseTime}
+                  </p>
+                )}
+              </div>
+              <div className="w-1/2">
+                <label className="block text-black mb-1">
+                  Travel Limit (kms) *
+                </label>
+                <input
+                  type="number"
+                  name="travelLimit"
+                  placeholder="e.g., 30"
+                  value={formData.travelLimit}
+                  onChange={handleInputChange}
+                  className={`border p-2 w-full rounded ${
+                    validationErrors.travelLimit ? "border-red-500" : ""
+                  }`}
+                  required={isExpert}
+                />
+                {validationErrors.travelLimit && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors.travelLimit}
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="relative w-full">
             <label className="block text-black mb-1">Bio Data</label>

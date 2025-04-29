@@ -122,7 +122,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       {/* Profile Section */}
       <div className="flex flex-col items-center gap-2 mb-6">
         <img
-          src={currentProfile?.photo || profile}
+          src={currentProfile?.photo}
           alt="Profile"
           className="rounded-full w-20 h-20 cursor-pointer object-cover"
           onClick={() => navigate("/details-form")}

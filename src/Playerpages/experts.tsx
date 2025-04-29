@@ -145,7 +145,7 @@ const Experts = () => {
         reviews: Math.floor(Math.random() * 150) + 50, // Random number for demo
         followers: Math.floor(Math.random() * 200) + 50, // Random number for demo
         assessments: Math.floor(Math.random() * 150) + 50, // Random number for demo
-        profileImage: viewedProfile.photo || profile2,
+        profileImage: viewedProfile.photo || null,
         socialLinks: viewedProfile.socialLinks || {},
         about:
           viewedProfile.bio ||
