@@ -3,14 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import football from "../assets/images/football.jpg";
 import { loginUser, clearError } from "../store/auth-slice";
-import { checkProfileCompletion } from "../store/profile-slice"; // Import this thunk
+import { checkProfileCompletion } from "../store/profile-slice";
 import User from "./user";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector((state) => state.auth);
-  // const { status: profileStatus } = useAppSelector((state) => state.profile);
+  const { status: profileStatus } = useAppSelector((state) => state.profile);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,11 +18,6 @@ const Login: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  // localStorage.setItem("role", user?.role);
-  localStorage.setItem("username", user?.username);
-  localStorage.setItem("role", user?.role);
-  localStorage.setItem("userid", user?.role);
-  localStorage.setItem("username", user?.username);
 
   useEffect(() => {
     // Clear any previous errors when component mounts
@@ -33,9 +28,7 @@ const Login: React.FC = () => {
   useEffect(() => {
     // Update form error when error state changes
     if (error) {
-      // Handle the case where error could be an object
       if (typeof error === "object") {
-        // If error is an object, try to extract a message or stringify it
         if (error.message) {
           setFormError(error.message);
         } else {
@@ -46,7 +39,6 @@ const Login: React.FC = () => {
           }
         }
       } else {
-        // If error is a string, use it directly
         setFormError(error);
       }
     }
@@ -54,39 +46,46 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     // Only proceed with navigation if user is logged in and not already redirecting
-    if (user && !isRedirecting) {
-      console.log("User logged in:", user); // Debug log
+    if (user && !isRedirecting && user.token) {
+      console.log("User logged in:", user);
+
+      // Store essential user data in localStorage immediately after login
+      localStorage.setItem("token", user.token);
+      localStorage.setItem("username", user.username);
+      localStorage.setItem("role", user.role);
+      localStorage.setItem("userid", user.id);
+
       setLoginSuccess(true);
       setIsRedirecting(true);
 
       // Check profile completion and navigate accordingly
-      dispatch(checkProfileCompletion()).then((resultAction) => {
-        // Extract the redirect path from the payload
-        if (checkProfileCompletion.fulfilled.match(resultAction)) {
-          const { redirect } = resultAction.payload;
-          console.log("Redirect path:", redirect);
+      dispatch(checkProfileCompletion())
+        .then((resultAction) => {
+          if (checkProfileCompletion.fulfilled.match(resultAction)) {
+            const { redirect } = resultAction.payload;
+            console.log("Profile check redirect path:", redirect);
 
-          // Navigate to the appropriate page
-          navigate(redirect);
-        } else {
-          // Fallback navigation in case of error
+            // Navigate based on the returned redirect path
+            navigate(redirect);
+          }
+        })
+        .catch((err) => {
+          console.error("Error during profile check:", err);
+          // Fallback navigation
           const userRole = user.role?.toLowerCase() || "";
 
-          if (userRole === "player") {
-            navigate("/player/dashboard");
-          } else if (userRole === "expert") {
-            navigate("/expert/dashboard");
+          if (userRole) {
+            navigate("/details-form");
           } else {
-            navigate("/home");
+            navigate("/login");
           }
-        }
-      });
+        });
     }
   }, [user, navigate, dispatch, isRedirecting]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login form submitted"); // Debug log
+    console.log("Login form submitted");
 
     // Reset form errors
     setFormError("");
@@ -99,7 +98,7 @@ const Login: React.FC = () => {
 
     // Dispatch login action
     try {
-      console.log("Dispatching login:", { email }); // Debug log
+      console.log("Dispatching login:", { email });
       await dispatch(loginUser({ email, password }));
     } catch (err) {
       console.error("Login error:", err);
@@ -124,6 +123,7 @@ const Login: React.FC = () => {
         return "An error occurred";
       }
     }
+    return formError;
   };
 
   return (
@@ -159,12 +159,10 @@ const Login: React.FC = () => {
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-md mx-auto lg:w-96 mt-12 sm:mt-16 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Login</h2>
 
-        {/* User Debug - REMOVE IN PRODUCTION */}
-        {user && (
+        {/* Debug Info (remove in production) */}
+        {profileStatus === "loading" && (
           <div className="mb-4 p-2 bg-blue-100 text-blue-800 rounded border border-blue-300">
-            <p className="font-medium">User detected:</p>
-            <p className="text-sm">Role: {user.role}</p>
-            <p className="text-xs">Username: {user.username}</p>
+            <p className="text-sm">Checking profile completion...</p>
           </div>
         )}
 
@@ -180,11 +178,7 @@ const Login: React.FC = () => {
         {formError && (
           <div className="mb-4 p-2 bg-red-100 text-red-800 rounded border border-red-300">
             <p className="font-medium">Error</p>
-            <p className="text-sm">
-              {formError.includes("Invalid Password")
-                ? "Invalid Password."
-                : "An unexpected error occurred. Please contact support if the issue persists."}
-            </p>
+            <p className="text-sm">{getErrorMessage()}</p>
           </div>
         )}
 
@@ -262,8 +256,6 @@ const Login: React.FC = () => {
             )}
           </button>
         </form>
-
-        {/* Manual Navigation Buttons - REMOVE IN PRODUCTION */}
 
         <div className="mt-4">
           <button

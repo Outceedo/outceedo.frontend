@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -6,14 +6,14 @@ import {
   faFacebook,
   faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
+import { faStar, faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
 import ExpertDetails from "./Expertdetails";
 import ExpertReviews from "./Expertreviews";
 import ExpertServices from "./Expertservices";
 import ExpertMedia from "./expertmedia";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { getProfile } from "../store/profile-slice";
+import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
 
 const icons = [
@@ -63,6 +63,8 @@ const ExpertProfile = () => {
     "details" | "media" | "reviews" | "services"
   >("details");
   const dispatch = useAppDispatch();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
 
   // Get profile state from Redux store
   const { viewedProfile, status, error } = useAppSelector(
@@ -144,6 +146,73 @@ const ExpertProfile = () => {
       documents: profile.documents || [],
       rawProfile: profile, // Include raw profile for passing to child components
     };
+  };
+
+  // Handle profile photo click to open file selector
+  const handlePhotoClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle profile photo change
+  const handlePhotoChange = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size and type before uploading
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      Swal.fire({
+        icon: "error",
+        title: "File too large",
+        text: "Profile photo must be less than 5MB",
+      });
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid file type",
+        text: "Please select an image file",
+      });
+      return;
+    }
+
+    setIsUpdatingPhoto(true);
+
+    try {
+      // Dispatch action to update profile photo
+      await dispatch(updateProfilePhoto(file)).unwrap();
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Profile photo updated successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      // Refresh profile data
+      const username = localStorage.getItem("username");
+      if (username) {
+        dispatch(getProfile(username));
+      }
+    } catch (error: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: error.message || "Failed to update profile photo",
+      });
+    } finally {
+      setIsUpdatingPhoto(false);
+
+      // Reset the file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   // Get the formatted expert data
@@ -259,13 +328,48 @@ const ExpertProfile = () => {
               </div>
             </div>
           </div>
-          {/* Right - Profile Picture in a Rectangle */}
-          <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md">
+          {/* Right - Profile Picture in a Rectangle with Update Functionality */}
+          <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md relative group">
             <img
               src={expertData.profileImage}
               alt="Expert"
               className="w-full h-full object-cover"
             />
+
+            {/* Profile photo upload overlay */}
+            <div
+              onClick={handlePhotoClick}
+              className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
+            >
+              <div className="text-white text-center">
+                <FontAwesomeIcon icon={faCamera} size="2x" className="mb-2" />
+                <p className="text-sm font-medium">Change Photo</p>
+              </div>
+            </div>
+
+            {/* Hidden file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoChange}
+              accept="image/*"
+              className="hidden"
+            />
+
+            {/* Photo upload loading indicator */}
+            {isUpdatingPhoto && (
+              <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+                <div className="text-white text-center">
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    spin
+                    size="2x"
+                    className="mb-2"
+                  />
+                  <p className="mt-2 text-sm">Uploading...</p>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         {/* Stats */}
