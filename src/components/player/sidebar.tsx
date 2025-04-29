@@ -161,7 +161,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
             <div
               key={menuItem.id}
               onClick={() => handleMenuItemClick(menuItem)}
-              className={`flex items-center gap-3 px-3 text-md cursor-pointer rounded-md transition-colors
+              className={`flex items-center gap-3 px-3 py-2 text-md cursor-pointer rounded-md transition-colors
                 ${
                   isActive
                     ? "bg-gray-100 text-black font-medium dark:bg-gray-700 dark:text-white"
@@ -169,7 +169,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
                     ? "text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
                     : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 }
-              `}  
+              `}
             >
               <i
                 className={`${menuItem.icon} ${

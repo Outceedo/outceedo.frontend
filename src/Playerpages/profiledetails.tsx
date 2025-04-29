@@ -1259,28 +1259,93 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         ) : (
           <>
             <div className="flex gap-5">
-              <div className="flex justify-center gap-6 mt-4">
-                {icons.map((item, index) => (
-                  <a
-                    key={index}
-                    href={socials[item.link as keyof typeof socials] || "#"}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg ${
-                      !socials[item.link as keyof typeof socials]
-                        ? "opacity-50"
-                        : ""
-                    }`}
-                    style={{
-                      background:
-                        item.icon === faInstagram
-                          ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
-                          : item.color,
-                    }}
-                  >
-                    <FontAwesomeIcon icon={item.icon} />
-                  </a>
-                ))}
+              <div className="flex gap-5">
+                <div className="flex gap-5">
+                  <div className="flex justify-center gap-6 mt-4">
+                    {icons
+                      .map((item, index) => {
+                        // Get the social media platform identifier (linkedin, facebook, etc.)
+                        const platform = item.link;
+
+                        // Get the user-provided handle/URL from socials object
+                        const userInput =
+                          socials[platform as keyof typeof socials];
+
+                        // Skip rendering if no value provided
+                        if (
+                          !userInput ||
+                          userInput === "#" ||
+                          userInput.trim() === ""
+                        ) {
+                          return null; // Don't render this social icon at all
+                        }
+
+                        // Build the correct URL based on the platform
+                        let properUrl;
+
+                        // Extract just the username/handle/ID by removing common prefixes
+                        let cleanedInput = userInput
+                          .trim()
+                          .replace(/^(https?:\/\/)?(www\.)?/, "") // Remove protocol and www
+                          .replace(/\/$/, ""); // Remove trailing slash
+
+                        // Remove the platform name from the beginning if it exists
+                        cleanedInput = cleanedInput
+                          .replace(new RegExp(`^${platform}\\.com\\/`), "")
+                          .replace(new RegExp(`^${platform}\\.`), "");
+
+                        // Build proper URL based on platform
+                        switch (platform) {
+                          case "linkedin":
+                            // Check if it's a full profile URL or just a username
+                            properUrl = cleanedInput.includes("linkedin.com")
+                              ? `https://${cleanedInput}`
+                              : `https://www.linkedin.com/in/${cleanedInput}`;
+                            break;
+                          case "facebook":
+                            properUrl = cleanedInput.includes("facebook.com")
+                              ? `https://${cleanedInput}`
+                              : `https://www.facebook.com/${cleanedInput}`;
+                            break;
+                          case "instagram":
+                            properUrl = cleanedInput.includes("instagram.com")
+                              ? `https://${cleanedInput}`
+                              : `https://www.instagram.com/${cleanedInput}`;
+                            break;
+                          case "twitter":
+                            properUrl = cleanedInput.includes("twitter.com")
+                              ? `https://${cleanedInput}`
+                              : `https://twitter.com/${cleanedInput}`;
+                            break;
+                          default:
+                            // For any other platforms, just make sure there's a protocol
+                            properUrl = cleanedInput.match(/^https?:\/\//i)
+                              ? cleanedInput
+                              : `https://${cleanedInput}`;
+                        }
+
+                        return (
+                          <a
+                            key={index}
+                            href={properUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
+                            style={{
+                              background:
+                                item.icon === faInstagram
+                                  ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                                  : item.color,
+                            }}
+                          >
+                            <FontAwesomeIcon icon={item.icon} />
+                          </a>
+                        );
+                      })
+                      .filter(Boolean)}{" "}
+                    {/* Filter out null values */}
+                  </div>
+                </div>
               </div>
             </div>
 
