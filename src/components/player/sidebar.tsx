@@ -95,7 +95,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   return (
     <nav className="flex flex-col gap-6 p-4 w-full h-full overflow-y-auto">
       {/* Logo */}
-      <h1 className="font-bold text-center text-gray-800 dark:text-white mt-2">
+      <h1 className="font-bold text-center text-gray-800 dark:text-white">
         LOGO
       </h1>
 
@@ -166,7 +166,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           );
         })}
         <div
-          className="cursor-pointer px-6 mt-1 flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+          className="cursor-pointer px-6 flex items-center gap-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
           onClick={handleLogout}
         >
           <LogOut size={18} />

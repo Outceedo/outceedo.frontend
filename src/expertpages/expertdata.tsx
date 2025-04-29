@@ -7,7 +7,6 @@ import {
   faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { faStar, faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
-import profile2 from "../assets/images/profile2.jpg";
 import ExpertDetails from "./Expertdetails";
 import ExpertReviews from "./Expertreviews";
 import ExpertServices from "./Expertservices";
@@ -22,41 +21,6 @@ const icons = [
   { icon: faInstagram, color: "#E1306C", link: "" },
   { icon: faTwitter, color: "#1DA1F2", link: "" },
 ];
-
-// Fallback expert data if profile not loaded
-const fallbackExpertData = {
-  name: "Expert Name",
-  profession: "Coach & Ex-Soccer Player Defender",
-  location: "London, UK",
-  responseTime: "40 mins",
-  travelLimit: "30 kms",
-  certificationLevel: "3rd highest",
-  reviews: 120,
-  followers: 110,
-  assessments: "100+",
-  profileImage: profile2,
-  backgroundImage: "/background-image.jpg",
-  media: [],
-  about:
-    "Experienced soccer coach with a strong background in player development and strategy.",
-  skills: [
-    "Leadership",
-    "Tactical Analysis",
-    "Team Management",
-    "Fitness Training",
-  ],
-  certifications: [
-    "UEFA Pro License",
-    "FIFA Coaching Diploma",
-    "Sports Science Certification",
-  ],
-  socials: {
-    linkedin: "https://linkedin.com",
-    facebook: "https://facebook.com",
-    instagram: "https://instagram.com",
-    twitter: "https://twitter.com",
-  },
-};
 
 const ExpertProfile = () => {
   const [activeTab, setActiveTab] = useState<
@@ -84,7 +48,27 @@ const ExpertProfile = () => {
 
   // Format the expert data from API response
   const formatExpertData = () => {
-    if (!viewedProfile) return fallbackExpertData;
+    if (!viewedProfile)
+      return {
+        name: "",
+        profession: "",
+        location: "",
+        responseTime: "",
+        travelLimit: "",
+        certificationLevel: "",
+        reviews: 0,
+        followers: 0,
+        assessments: 0,
+        profileImage: "",
+        about: "",
+        skills: [],
+        certifications: [],
+        socials: {},
+        uploads: [],
+        documents: [],
+        id: "",
+        rawProfile: {},
+      };
 
     const profile = viewedProfile;
     console.log("Expert profile data:", profile);
@@ -93,7 +77,7 @@ const ExpertProfile = () => {
     const mediaItems = profile.uploads || [];
 
     // Get profile photo
-    let profileImage = fallbackExpertData.profileImage;
+    let profileImage = "";
     if (profile.photo) {
       profileImage = profile.photo;
     } else if (mediaItems.length > 0) {
@@ -104,7 +88,7 @@ const ExpertProfile = () => {
     }
 
     // Get social links
-    const socials = profile.socialLinks || fallbackExpertData.socials;
+    const socials = profile.socialLinks || {};
 
     // Generate icon links
     icons[0].link = socials.linkedin || "";
@@ -116,30 +100,27 @@ const ExpertProfile = () => {
     const certifications =
       profile.documents
         ?.filter((doc) => doc.type === "certificate")
-        .map((cert) => cert.title) || fallbackExpertData.certifications;
+        .map((cert) => cert.title) || [];
 
     return {
-      id: profile.id || fallbackExpertData.id,
+      id: profile.id || "",
       name:
         `${profile.firstName || ""} ${profile.lastName || ""}`.trim() ||
-        fallbackExpertData.name,
-      profession: profile.profession || fallbackExpertData.profession,
+        "Expert",
+      profession: profile.profession || "",
       location:
         profile.city && profile.country
           ? `${profile.city}, ${profile.country}`
-          : fallbackExpertData.location,
-      responseTime: profile.responseTime || fallbackExpertData.responseTime,
-      travelLimit: profile.travelLimit
-        ? `${profile.travelLimit} kms`
-        : fallbackExpertData.travelLimit,
-      certificationLevel:
-        profile.certificationLevel || fallbackExpertData.certificationLevel,
-      reviews: profile.reviews || fallbackExpertData.reviews,
-      followers: profile.followers || fallbackExpertData.followers,
-      assessments: profile.assessments || fallbackExpertData.assessments,
+          : "",
+      responseTime: profile.responseTime || "N/A",
+      travelLimit: profile.travelLimit ? `${profile.travelLimit} kms` : "N/A",
+      certificationLevel: profile.certificationLevel || "N/A",
+      reviews: profile.reviews || 0,
+      followers: profile.followers || 0,
+      assessments: profile.assessments || "0",
       profileImage: profileImage,
-      about: profile.bio || fallbackExpertData.about,
-      skills: profile.skills || fallbackExpertData.skills,
+      about: profile.bio || "",
+      skills: profile.skills || [],
       certifications: certifications,
       socials: socials,
       uploads: mediaItems,
@@ -294,13 +275,13 @@ const ExpertProfile = () => {
               <div className="text-left">
                 <p className="text-gray-500 dark:text-white">Profession</p>
                 <p className="font-semibold dark:text-white">
-                  {expertData.profession}
+                  {expertData.profession || "Not specified"}
                 </p>
               </div>
               <div className="text-left">
                 <p className="text-gray-500 dark:text-white ">Location</p>
                 <p className="font-semibold dark:text-white">
-                  {expertData.location}
+                  {expertData.location || "Not specified"}
                 </p>
               </div>
             </div>
@@ -330,11 +311,17 @@ const ExpertProfile = () => {
           </div>
           {/* Right - Profile Picture in a Rectangle with Update Functionality */}
           <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md relative group">
-            <img
-              src={expertData.profileImage}
-              alt="Expert"
-              className="w-full h-full object-cover"
-            />
+            {expertData.profileImage ? (
+              <img
+                src={expertData.profileImage}
+                alt="Expert"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500">
+                No profile image
+              </div>
+            )}
 
             {/* Profile photo upload overlay */}
             <div
@@ -343,7 +330,9 @@ const ExpertProfile = () => {
             >
               <div className="text-white text-center">
                 <FontAwesomeIcon icon={faCamera} size="2x" className="mb-2" />
-                <p className="text-sm font-medium">Change Photo</p>
+                <p className="text-sm font-medium">
+                  {expertData.profileImage ? "Change Photo" : "Add Photo"}
+                </p>
               </div>
             </div>
 
