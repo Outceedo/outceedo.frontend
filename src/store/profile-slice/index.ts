@@ -115,7 +115,7 @@ const isProfileComplete = (profile: Profile | null): boolean => {
       "lastName",
       "age",
       "gender",
-
+      "",
       "country",
       "city",
       "height",
@@ -139,7 +139,8 @@ const isProfileComplete = (profile: Profile | null): boolean => {
       "lastName",
       "age",
       "gender",
-
+      "travelLimit",
+      "responseTime",
       "country",
       "city",
       "profession",

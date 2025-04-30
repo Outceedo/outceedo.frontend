@@ -717,18 +717,6 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                               target.onerror = null; // Prevent infinite loop
                             }}
                           />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              certificateFileRefs.current[index]?.click()
-                            }
-                            className="mt-2"
-                            disabled={isUploading || isSubmitting}
-                          >
-                            <FontAwesomeIcon icon={faUpload} className="mr-2" />
-                            Change Image
-                          </Button>
                         </div>
                       ) : (
                         <Button

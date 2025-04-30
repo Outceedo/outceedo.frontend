@@ -194,14 +194,80 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         return;
       }
 
-      // Merge certificates with existing documents (replace certificates only)
+      // Create a copy of all certificates to send to the server
+      const updatedCertificates = [...certificates];
+
+      // Upload any certificates that don't have an ID yet (new certificates)
+      for (let i = 0; i < updatedCertificates.length; i++) {
+        const cert = updatedCertificates[i];
+        if (!cert.id || cert.id.startsWith("cert-")) {
+          try {
+            // Create new certificate on server
+            const token = getAuthToken();
+            const formData = new FormData();
+            formData.append("title", cert.title);
+            formData.append("issuedBy", cert.issuedBy || "");
+            formData.append(
+              "issuedDate",
+              cert.issuedDate || new Date().toISOString().split("T")[0]
+            );
+            formData.append("type", "certificate");
+            formData.append("description", cert.description || "");
+
+            // Only append image if available
+            if (certificateFileRefs.current[i]?.files?.length) {
+              formData.append(
+                "image",
+                certificateFileRefs.current[i]?.files?.[0] as File
+              );
+            }
+
+            const response = await axios.post(
+              `${API_BASE_URL}/user/document`,
+              formData,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "multipart/form-data",
+                },
+              }
+            );
+
+            // Update the certificate with server-generated ID and image URL if provided
+            updatedCertificates[i] = {
+              ...cert,
+              id: response.data.id || response.data._id,
+              imageUrl: response.data.url || cert.imageUrl,
+            };
+          } catch (error) {
+            console.error("Error creating certificate:", error);
+          }
+        }
+      }
+
+      // Merge certificates with existing awards (replace certificates only)
       const existingAwards =
         playerData.documents?.filter((doc) => doc.type === "award") || [];
-      const updatedDocuments = [...existingAwards, ...certificates];
+      const updatedDocuments = [...existingAwards, ...updatedCertificates];
 
-      onUpdate({
+      // Update the player data with the new documents
+      const updatedPlayerData = {
         ...playerData,
         documents: updatedDocuments,
+      };
+
+      // Call onUpdate with the updated player data
+      onUpdate(updatedPlayerData);
+
+      // Update local state with the updated certificates to show them immediately
+      setCertificates(updatedCertificates);
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Certificates saved successfully",
+        timer: 2000,
+        showConfirmButton: false,
       });
     } catch (error) {
       console.error("Error saving certificates:", error);
@@ -232,14 +298,80 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         return;
       }
 
-      // Merge awards with existing documents (replace awards only)
+      // Create a copy of all awards to send to the server
+      const updatedAwards = [...awards];
+
+      // Upload any awards that don't have an ID yet (new awards)
+      for (let i = 0; i < updatedAwards.length; i++) {
+        const award = updatedAwards[i];
+        if (!award.id || award.id.startsWith("award-")) {
+          try {
+            // Create new award on server
+            const token = getAuthToken();
+            const formData = new FormData();
+            formData.append("title", award.title);
+            formData.append("issuedBy", award.issuedBy || "");
+            formData.append(
+              "issuedDate",
+              award.issuedDate || new Date().toISOString().split("T")[0]
+            );
+            formData.append("type", "award");
+            formData.append("description", award.description || "");
+
+            // Only append image if available
+            if (awardFileRefs.current[i]?.files?.length) {
+              formData.append(
+                "image",
+                awardFileRefs.current[i]?.files?.[0] as File
+              );
+            }
+
+            const response = await axios.post(
+              `${API_BASE_URL}/user/document`,
+              formData,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "multipart/form-data",
+                },
+              }
+            );
+
+            // Update the award with server-generated ID and image URL if provided
+            updatedAwards[i] = {
+              ...award,
+              id: response.data.id || response.data._id,
+              imageUrl: response.data.url || award.imageUrl,
+            };
+          } catch (error) {
+            console.error("Error creating award:", error);
+          }
+        }
+      }
+
+      // Merge awards with existing certificates (replace awards only)
       const existingCertificates =
         playerData.documents?.filter((doc) => doc.type === "certificate") || [];
-      const updatedDocuments = [...existingCertificates, ...awards];
+      const updatedDocuments = [...existingCertificates, ...updatedAwards];
 
-      onUpdate({
+      // Update the player data with the new documents
+      const updatedPlayerData = {
         ...playerData,
         documents: updatedDocuments,
+      };
+
+      // Call onUpdate with the updated player data
+      onUpdate(updatedPlayerData);
+
+      // Update local state with the updated awards to show them immediately
+      setAwards(updatedAwards);
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Awards saved successfully",
+        timer: 2000,
+        showConfirmButton: false,
       });
     } catch (error) {
       console.error("Error saving awards:", error);
@@ -337,7 +469,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           const cert = certificates[index];
 
           // If certificate has an ID, delete it from the server
-          if (cert.id) {
+          if (cert.id && !cert.id.startsWith("cert-")) {
             const token = getAuthToken();
             await axios.delete(`${API_BASE_URL}/user/document/${cert.id}`, {
               headers: {
@@ -350,6 +482,15 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           const newCertificates = [...certificates];
           newCertificates.splice(index, 1);
           setCertificates(newCertificates);
+
+          // Also update the player data to reflect the change immediately
+          const existingAwards =
+            playerData.documents?.filter((doc) => doc.type === "award") || [];
+          const updatedDocuments = [...existingAwards, ...newCertificates];
+          onUpdate({
+            ...playerData,
+            documents: updatedDocuments,
+          });
 
           Swal.fire("Deleted!", "The certificate has been removed.", "success");
         } catch (error) {
@@ -379,7 +520,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           const award = awards[index];
 
           // If award has an ID, delete it from the server
-          if (award.id) {
+          if (award.id && !award.id.startsWith("award-")) {
             const token = getAuthToken();
             await axios.delete(`${API_BASE_URL}/user/document/${award.id}`, {
               headers: {
@@ -393,6 +534,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           newAwards.splice(index, 1);
           setAwards(newAwards);
 
+          // Also update the player data to reflect the change immediately
+          const existingCertificates =
+            playerData.documents?.filter((doc) => doc.type === "certificate") ||
+            [];
+          const updatedDocuments = [...existingCertificates, ...newAwards];
+          onUpdate({
+            ...playerData,
+            documents: updatedDocuments,
+          });
+
           Swal.fire("Deleted!", "The award has been removed.", "success");
         } catch (error) {
           console.error("Error deleting award:", error);
@@ -404,146 +555,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         }
       }
     });
-  };
-
-  // Handle image upload for certificates and awards
-  const handleCertificateImageUpload = async (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploading(true);
-
-      // Create form data for document upload
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append(
-        "title",
-        certificates[index].title || `Certificate ${index + 1}`
-      );
-      formData.append("issuedBy", certificates[index].issuedBy || "");
-      formData.append(
-        "issuedDate",
-        certificates[index].issuedDate || new Date().toISOString().split("T")[0]
-      );
-      formData.append("type", "certificate");
-      if (certificates[index].description) {
-        formData.append("description", certificates[index].description);
-      }
-
-      // Upload document
-      const token = getAuthToken();
-      const response = await axios.post(
-        `${API_BASE_URL}/user/document`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      console.log("Document upload response:", response.data);
-
-      // Update certificate with document ID and image URL
-      const newCertificates = [...certificates];
-      newCertificates[index] = {
-        ...newCertificates[index],
-        id: response.data.id || response.data._id,
-        imageUrl: response.data.url,
-      };
-      setCertificates(newCertificates);
-
-      // Show success message
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "Certificate image uploaded successfully",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    } catch (error) {
-      console.error("Error uploading certificate image:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Upload Failed",
-        text: "Failed to upload certificate image",
-      });
-    } finally {
-      setIsUploading(false);
-    }
-  };
-
-  const handleAwardImageUpload = async (
-    index: number,
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    try {
-      setIsUploading(true);
-
-      // Create form data for document upload
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("title", awards[index].title || `Award ${index + 1}`);
-      formData.append("issuedBy", awards[index].issuedBy || "");
-      formData.append(
-        "issuedDate",
-        awards[index].issuedDate || new Date().toISOString().split("T")[0]
-      );
-      formData.append("type", "award");
-      if (awards[index].description) {
-        formData.append("description", awards[index].description);
-      }
-
-      // Upload document
-      const token = getAuthToken();
-      const response = await axios.post(
-        `${API_BASE_URL}/user/document`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
-
-      console.log("Document upload response:", response.data);
-
-      // Update award with document ID and image URL
-      const newAwards = [...awards];
-      newAwards[index] = {
-        ...newAwards[index],
-        id: response.data.id || response.data._id,
-        imageUrl: response.data.url,
-      };
-      setAwards(newAwards);
-
-      // Show success message
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "Award image uploaded successfully",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    } catch (error) {
-      console.error("Error uploading award image:", error);
-      Swal.fire({
-        icon: "error",
-        title: "Upload Failed",
-        text: "Failed to upload award image",
-      });
-    } finally {
-      setIsUploading(false);
-    }
   };
 
   // Handle social media changes
@@ -696,41 +707,22 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       className="w-full min-h-[80px] dark:bg-gray-700"
                     />
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                      Certificate Image
-                    </Label>
-                    <div className="flex flex-col space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={(el) => {
-                          certificateFileRefs.current[index] = el;
-                        }}
-                        onChange={(e) => handleCertificateImageUpload(index, e)}
-                      />
-                      {cert.imageUrl ? (
-                        <div className="relative">
-                          <img
-                            src={cert.imageUrl}
-                            alt={cert.title || `Certificate ${index}`}
-                            className="w-full h-40 object-cover rounded-md mb-2"
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              certificateFileRefs.current[index]?.click()
-                            }
-                            className="mt-2"
-                            disabled={isUploading}
-                          >
-                            <FontAwesomeIcon icon={faUpload} className="mr-2" />
-                            Change Image
-                          </Button>
-                        </div>
-                      ) : (
+
+                  {/* Only show image upload for new certificates that don't have a server ID */}
+                  {(!cert.id || cert.id.startsWith("cert-")) && (
+                    <div>
+                      <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Certificate Image (Optional)
+                      </Label>
+                      <div className="flex flex-col space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          ref={(el) => {
+                            certificateFileRefs.current[index] = el;
+                          }}
+                        />
                         <Button
                           variant="outline"
                           onClick={() =>
@@ -769,13 +761,35 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                                 icon={faImage}
                                 className="mr-2"
                               />
-                              Upload Image
+                              Upload Image (Optional)
                             </>
                           )}
                         </Button>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Display image preview for new certificates if file is selected */}
+                  {(!cert.id || cert.id.startsWith("cert-")) &&
+                    certificateFileRefs.current[index]?.files?.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-green-600">
+                          Image selected:{" "}
+                          {certificateFileRefs.current[index]?.files?.[0].name}
+                        </p>
+                      </div>
+                    )}
+
+                  {/* Show existing image if there is one */}
+                  {cert.imageUrl && (
+                    <div className="relative mt-2">
+                      <img
+                        src={cert.imageUrl}
+                        alt={cert.title || `Certificate ${index}`}
+                        className="w-full h-40 object-cover rounded-md mb-2"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
 
@@ -978,41 +992,22 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       className="w-full min-h-[80px] dark:bg-gray-700"
                     />
                   </div>
-                  <div>
-                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                      Award Image
-                    </Label>
-                    <div className="flex flex-col space-y-2">
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        ref={(el) => {
-                          awardFileRefs.current[index] = el;
-                        }}
-                        onChange={(e) => handleAwardImageUpload(index, e)}
-                      />
-                      {award.imageUrl ? (
-                        <div className="relative">
-                          <img
-                            src={award.imageUrl}
-                            alt={award.title || `Award ${index}`}
-                            className="w-full h-40 object-cover rounded-md mb-2"
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              awardFileRefs.current[index]?.click()
-                            }
-                            className="mt-2"
-                            disabled={isUploading}
-                          >
-                            <FontAwesomeIcon icon={faUpload} className="mr-2" />
-                            Change Image
-                          </Button>
-                        </div>
-                      ) : (
+
+                  {/* Only show image upload for new awards that don't have a server ID */}
+                  {(!award.id || award.id.startsWith("award-")) && (
+                    <div>
+                      <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Award Image (Optional)
+                      </Label>
+                      <div className="flex flex-col space-y-2">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          ref={(el) => {
+                            awardFileRefs.current[index] = el;
+                          }}
+                        />
                         <Button
                           variant="outline"
                           onClick={() => awardFileRefs.current[index]?.click()}
@@ -1049,13 +1044,35 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                                 icon={faImage}
                                 className="mr-2"
                               />
-                              Upload Image
+                              Upload Image (Optional)
                             </>
                           )}
                         </Button>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Display image preview for new awards if file is selected */}
+                  {(!award.id || award.id.startsWith("award-")) &&
+                    awardFileRefs.current[index]?.files?.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-sm text-green-600">
+                          Image selected:{" "}
+                          {awardFileRefs.current[index]?.files?.[0].name}
+                        </p>
+                      </div>
+                    )}
+
+                  {/* Show existing image if there is one */}
+                  {award.imageUrl && (
+                    <div className="relative mt-2">
+                      <img
+                        src={award.imageUrl}
+                        alt={award.title || `Award ${index}`}
+                        className="w-full h-40 object-cover rounded-md mb-2"
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
 
@@ -1259,93 +1276,88 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         ) : (
           <>
             <div className="flex gap-5">
-              <div className="flex gap-5">
-                <div className="flex gap-5">
-                  <div className="flex justify-center gap-6 mt-4">
-                    {icons
-                      .map((item, index) => {
-                        // Get the social media platform identifier (linkedin, facebook, etc.)
-                        const platform = item.link;
+              <div className="flex justify-center gap-6 mt-4">
+                {icons
+                  .map((item, index) => {
+                    // Get the social media platform identifier (linkedin, facebook, etc.)
+                    const platform = item.link;
 
-                        // Get the user-provided handle/URL from socials object
-                        const userInput =
-                          socials[platform as keyof typeof socials];
+                    // Get the user-provided handle/URL from socials object
+                    const userInput = socials[platform as keyof typeof socials];
 
-                        // Skip rendering if no value provided
-                        if (
-                          !userInput ||
-                          userInput === "#" ||
-                          userInput.trim() === ""
-                        ) {
-                          return null; // Don't render this social icon at all
-                        }
+                    // Skip rendering if no value provided
+                    if (
+                      !userInput ||
+                      userInput === "#" ||
+                      userInput.trim() === ""
+                    ) {
+                      return null; // Don't render this social icon at all
+                    }
 
-                        // Build the correct URL based on the platform
-                        let properUrl;
+                    // Build the correct URL based on the platform
+                    let properUrl;
 
-                        // Extract just the username/handle/ID by removing common prefixes
-                        let cleanedInput = userInput
-                          .trim()
-                          .replace(/^(https?:\/\/)?(www\.)?/, "") // Remove protocol and www
-                          .replace(/\/$/, ""); // Remove trailing slash
+                    // Extract just the username/handle/ID by removing common prefixes
+                    let cleanedInput = userInput
+                      .trim()
+                      .replace(/^(https?:\/\/)?(www\.)?/, "") // Remove protocol and www
+                      .replace(/\/$/, ""); // Remove trailing slash
 
-                        // Remove the platform name from the beginning if it exists
-                        cleanedInput = cleanedInput
-                          .replace(new RegExp(`^${platform}\\.com\\/`), "")
-                          .replace(new RegExp(`^${platform}\\.`), "");
+                    // Remove the platform name from the beginning if it exists
+                    cleanedInput = cleanedInput
+                      .replace(new RegExp(`^${platform}\\.com\\/`), "")
+                      .replace(new RegExp(`^${platform}\\.`), "");
 
-                        // Build proper URL based on platform
-                        switch (platform) {
-                          case "linkedin":
-                            // Check if it's a full profile URL or just a username
-                            properUrl = cleanedInput.includes("linkedin.com")
-                              ? `https://${cleanedInput}`
-                              : `https://www.linkedin.com/in/${cleanedInput}`;
-                            break;
-                          case "facebook":
-                            properUrl = cleanedInput.includes("facebook.com")
-                              ? `https://${cleanedInput}`
-                              : `https://www.facebook.com/${cleanedInput}`;
-                            break;
-                          case "instagram":
-                            properUrl = cleanedInput.includes("instagram.com")
-                              ? `https://${cleanedInput}`
-                              : `https://www.instagram.com/${cleanedInput}`;
-                            break;
-                          case "twitter":
-                            properUrl = cleanedInput.includes("twitter.com")
-                              ? `https://${cleanedInput}`
-                              : `https://twitter.com/${cleanedInput}`;
-                            break;
-                          default:
-                            // For any other platforms, just make sure there's a protocol
-                            properUrl = cleanedInput.match(/^https?:\/\//i)
-                              ? cleanedInput
-                              : `https://${cleanedInput}`;
-                        }
+                    // Build proper URL based on platform
+                    switch (platform) {
+                      case "linkedin":
+                        // Check if it's a full profile URL or just a username
+                        properUrl = cleanedInput.includes("linkedin.com")
+                          ? `https://${cleanedInput}`
+                          : `https://www.linkedin.com/in/${cleanedInput}`;
+                        break;
+                      case "facebook":
+                        properUrl = cleanedInput.includes("facebook.com")
+                          ? `https://${cleanedInput}`
+                          : `https://www.facebook.com/${cleanedInput}`;
+                        break;
+                      case "instagram":
+                        properUrl = cleanedInput.includes("instagram.com")
+                          ? `https://${cleanedInput}`
+                          : `https://www.instagram.com/${cleanedInput}`;
+                        break;
+                      case "twitter":
+                        properUrl = cleanedInput.includes("twitter.com")
+                          ? `https://${cleanedInput}`
+                          : `https://twitter.com/${cleanedInput}`;
+                        break;
+                      default:
+                        // For any other platforms, just make sure there's a protocol
+                        properUrl = cleanedInput.match(/^https?:\/\//i)
+                          ? cleanedInput
+                          : `https://${cleanedInput}`;
+                    }
 
-                        return (
-                          <a
-                            key={index}
-                            href={properUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
-                            style={{
-                              background:
-                                item.icon === faInstagram
-                                  ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
-                                  : item.color,
-                            }}
-                          >
-                            <FontAwesomeIcon icon={item.icon} />
-                          </a>
-                        );
-                      })
-                      .filter(Boolean)}{" "}
-                    {/* Filter out null values */}
-                  </div>
-                </div>
+                    return (
+                      <a
+                        key={index}
+                        href={properUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
+                        style={{
+                          background:
+                            item.icon === faInstagram
+                              ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                              : item.color,
+                        }}
+                      >
+                        <FontAwesomeIcon icon={item.icon} />
+                      </a>
+                    );
+                  })
+                  .filter(Boolean)}{" "}
+                {/* Filter out null values */}
               </div>
             </div>
 

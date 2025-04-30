@@ -2,7 +2,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "react-circular-progressbar/dist/styles.css";
 import profile from "../assets/images/profile.jpg";
 import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
-import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { faStar } from "@fortawesome/free-solid-svg-icons";
 import {
   Table,
   TableBody,
@@ -12,7 +12,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-
+import { useAppSelector } from "@/store/hooks";
 
 const Dashboard: React.FC = () => {
   const recentMatches = [
@@ -33,6 +33,7 @@ const Dashboard: React.FC = () => {
     { date: "01 Feb", game: "Team A vs Team F", score: "4 - 2", result: "Won" },
   ];
 
+  const { currentProfile } = useAppSelector((state) => state.profile);
   // Function to get result class
   const getResultClass = (result: string) => {
     switch (result.toLowerCase()) {
@@ -55,33 +56,33 @@ const Dashboard: React.FC = () => {
           <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6">
             {/* Left Section (Upcoming Match) */}
             <div className="md:col-span-2 bg-[#FFF8DA] p-6 rounded-lg shadow dark:bg-slate-600 flex  justify-between">
-  {/* Left content */}
-  <div className="space-y-2">
-    <p className="font-semibold text-sm ">Up Coming Match</p>
-    <h2 className="text-2xl font-bold mt-9">Arsenal Vs Chelsa</h2>
-    <div className="flex items-center gap-2  dark:text-white text-gray-600 text-sm mt-4">
-      <i className="fa-regular fa-calendar "></i>
-      <span>22 February 2025</span>
-    </div>
-    <div className="flex items-center gap-2  dark:text-white text-gray-600 text-sm ">
-      <i className="fa-solid fa-location-dot"></i>
-      <span>in Wembley, England</span>
-    </div>
+              {/* Left content */}
+              <div className="space-y-2">
+                <p className="font-semibold text-sm ">Up Coming Match</p>
+                <h2 className="text-2xl font-bold mt-9">Arsenal Vs Chelsa</h2>
+                <div className="flex items-center gap-2  dark:text-white text-gray-600 text-sm mt-4">
+                  <i className="fa-regular fa-calendar "></i>
+                  <span>22 February 2025</span>
+                </div>
+                <div className="flex items-center gap-2  dark:text-white text-gray-600 text-sm ">
+                  <i className="fa-solid fa-location-dot"></i>
+                  <span>in Wembley, England</span>
+                </div>
 
-    <button className="mt-15 px-4 py-2 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition cursor-pointer">
-      Know about their team
-    </button>
-  </div>
+                <button className="mt-15 px-4 py-2 bg-red-500 text-white text-sm rounded-md hover:bg-red-600 transition cursor-pointer">
+                  Know about their team
+                </button>
+              </div>
 
-  {/* Player image on right */}
-  <div className="flex-shrink-0 relative h-full flex items-center">
-    <img
-      src={profile} // Replace with your player image path
-      alt="player"
-      className="w-50 h-auto object-cover -mr-6"
-    />
-  </div>
-</div>
+              {/* Player image on right */}
+              <div className="flex-shrink-0 relative h-full flex items-center">
+                <img
+                  src={currentProfile?.photo} // Replace with your player image path
+                  alt="player"
+                  className="w-96 h-auto object-cover -mr-6"
+                />
+              </div>
+            </div>
             {/* Right Section (Recommendations) */}
             <div className="bg-[#FFE8E7] p-5 rounded-lg shadow dark:bg-slate-600">
               <h2 className="text-gray-700 font-bold dark:text-white">
@@ -101,7 +102,12 @@ const Dashboard: React.FC = () => {
                     <div>
                       <p className="font-medium">Expert Name</p>
                       <p className="text-gray-500 text-sm dark:text-white">
-                        10+ years <FontAwesomeIcon className="text-amber-300" icon={faStar}/> 3.5/5
+                        10+ years{" "}
+                        <FontAwesomeIcon
+                          className="text-amber-300"
+                          icon={faStar}
+                        />{" "}
+                        3.5/5
                       </p>
                     </div>
                     <FontAwesomeIcon

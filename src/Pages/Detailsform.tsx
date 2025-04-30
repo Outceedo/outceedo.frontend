@@ -260,14 +260,14 @@ const Detailsform: React.FC = () => {
       }
 
       // Validate expert-specific fields if user is an expert
-      // if (isExpert) {
-      //   if (!formData.responseTime) {
-      //     errors.responseTime = "Response time is required for experts";
-      //   }
-      //   if (!formData.travelLimit) {
-      //     errors.travelLimit = "Travel limit is required for experts";
-      //   }
-      // }
+      if (isExpert) {
+        if (!formData.responseTime) {
+          errors.responseTime = "Response time is required for experts";
+        }
+        if (!formData.travelLimit) {
+          errors.travelLimit = "Travel limit is required for experts";
+        }
+      }
     }
 
     setValidationErrors(errors);
@@ -570,9 +570,7 @@ const Detailsform: React.FC = () => {
         // Include expert-specific fields if user is an expert
         // responseTime: isExpert ? formData.responseTime || null : null,
         // travelLimit:
-        //   isExpert && formData.travelLimit
-        //     ? parseInt(formData.travelLimit)
-        //     : null,
+        //   isExpert && formData.travelLimit ? formData.travelLimit : null,
       };
 
       console.log("Submitting profile data:", profileUpdateData);
@@ -1360,7 +1358,7 @@ const Detailsform: React.FC = () => {
         {step < 4 ? (
           <button
             onClick={nextStep}
-            className="bg-customYellow text-black px-4 py-2 rounded"
+            className="bg-yellow-300 text-black px-4 py-2 rounded"
             disabled={isSubmitting}
             type="button"
           >
@@ -1369,7 +1367,7 @@ const Detailsform: React.FC = () => {
         ) : (
           <button
             onClick={handleSubmit}
-            className={`bg-customYellow text-black px-4 py-2 rounded ${
+            className={`bg-red-500 text-white px-4 py-2 rounded ${
               isSubmitting ? "opacity-70 cursor-not-allowed" : ""
             }`}
             disabled={isSubmitting}
