@@ -40,7 +40,6 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
     let mediaItems: MediaItem[] = [];
 
     // Process documents array
-    
 
     // Process uploads array
     if (playerData.uploads && Array.isArray(playerData.uploads)) {
@@ -133,9 +132,6 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
             {(filter === "all" || filter === "photo") &&
               filteredMedia.some((item) => item.type === "photo") && (
                 <div className="w-full text-left">
-                  <h2 className="bg-red-500 text-white py-2 px-4 rounded-md mb-3">
-                    All Photos
-                  </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     {filteredMedia
                       .filter((item) => item.type === "photo")
@@ -169,9 +165,6 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
             {(filter === "all" || filter === "video") &&
               filteredMedia.some((item) => item.type === "video") && (
                 <div className="w-full text-left mt-8">
-                  <h2 className="bg-red-500 text-white py-2 px-4 rounded-md mb-3">
-                    All Videos
-                  </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                     {filteredMedia
                       .filter((item) => item.type === "video")

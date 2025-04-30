@@ -3,14 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import football from "../assets/images/football.jpg";
 import { loginUser, clearError } from "../store/auth-slice";
-import { checkProfileCompletion } from "../store/profile-slice";
 import User from "./user";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector((state) => state.auth);
-  const { status: profileStatus } = useAppSelector((state) => state.profile);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -58,28 +56,28 @@ const Login: React.FC = () => {
       setLoginSuccess(true);
       setIsRedirecting(true);
 
-      // Check profile completion and navigate accordingly
-      dispatch(checkProfileCompletion())
-        .then((resultAction) => {
-          if (checkProfileCompletion.fulfilled.match(resultAction)) {
-            const { redirect } = resultAction.payload;
-            console.log("Profile check redirect path:", redirect);
+      // Get profile completion status from localStorage
+      const profileComplete = localStorage.getItem("Profilecomplete");
+      const userRole = user.role?.toLowerCase() || "";
 
-            // Navigate based on the returned redirect path
-            navigate(redirect);
-          }
-        })
-        .catch((err) => {
-          console.error("Error during profile check:", err);
-          // Fallback navigation
-          const userRole = user.role?.toLowerCase() || "";
+      console.log("Profile complete status:", profileComplete);
 
-          if (userRole) {
-            navigate("/details-form");
-          } else {
-            navigate("/login");
-          }
-        });
+      // Redirect based on profile completion status and role
+      if (profileComplete === "false") {
+        console.log("Redirecting to details form");
+        navigate("/details-form");
+      } else {
+        if (userRole === "player") {
+          console.log("Redirecting to player profile");
+          navigate("/player/profile");
+        } else if (userRole === "expert") {
+          console.log("Redirecting to expert profile");
+          navigate("/expert/profile");
+        } else {
+          // Fallback if role is not recognized
+          navigate("/details-form");
+        }
+      }
     }
   }, [user, navigate, dispatch, isRedirecting]);
 
@@ -159,13 +157,6 @@ const Login: React.FC = () => {
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-md mx-auto lg:w-96 mt-12 sm:mt-16 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Login</h2>
 
-        {/* Debug Info (remove in production) */}
-        {profileStatus === "loading" && (
-          <div className="mb-4 p-2 bg-blue-100 text-blue-800 rounded border border-blue-300">
-            <p className="text-sm">Checking profile completion...</p>
-          </div>
-        )}
-
         {/* Success Message */}
         {loginSuccess && (
           <div className="mb-4 p-2 bg-green-100 text-green-800 rounded border border-green-300">
@@ -181,7 +172,9 @@ const Login: React.FC = () => {
             <p className="text-sm">
               {formError.includes("Invalid Password") ? (
                 <div>Invalid Password</div>
-              ) : <>User Not Found</>}
+              ) : (
+                <>User Not Found</>
+              )}
             </p>
           </div>
         )}

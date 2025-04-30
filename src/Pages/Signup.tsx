@@ -31,6 +31,7 @@ const Signup: React.FC = () => {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [registrationAttempted, setRegistrationAttempted] = useState(false);
   const [usernameGenerated, setUsernameGenerated] = useState(false);
+  const [check, setcheck] = useState(false);
 
   // Add debug logging for Redux state changes
   useEffect(() => {
@@ -235,8 +236,10 @@ const Signup: React.FC = () => {
       console.log(
         "Registration successful via effect, redirecting to email verification"
       );
+
       localStorage.setItem("verificationEmail", email);
       localStorage.setItem("username", username); // Store username in localStorage
+      localStorage.setItem("Profilecomplete", check.toString());
       navigate("/emailverification");
     }
   }, [

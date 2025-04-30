@@ -84,6 +84,8 @@ const Detailsform: React.FC = () => {
     twitter: "",
     responseTime: "", // Added for expert role
     travelLimit: "", // Added for expert role
+    certificationLevel: "", // New field for certification level
+    skills: [] as string[], // New field for skills array
   });
 
   // Form validation errors
@@ -97,6 +99,7 @@ const Detailsform: React.FC = () => {
   const [certificates, setCertificates] = useState<Certificate[]>([{ id: 1 }]);
   const [awards, setAwards] = useState<Award[]>([{ id: 1 }]);
   const [uploadedMedia, setUploadedMedia] = useState<Media[]>([]);
+  const [skillInput, setSkillInput] = useState<string>("");
 
   // Country & city data
   const [countries, setCountries] = useState<Country[]>([]);
@@ -158,8 +161,12 @@ const Detailsform: React.FC = () => {
         bio: profileData.bio || "",
 
         // Handle expert-specific fields
-        // responseTime: profileData.responseTime || "",
-        // travelLimit: profileData.travelLimit?.toString() || "",
+        responseTime: profileData.responseTime || "",
+        travelLimit: profileData.travelLimit?.toString() || "",
+
+        // New fields
+        certificationLevel: profileData.certificationLevel || "",
+        skills: profileData.skills?.map((skill: any) => skill.skills) || [],
 
         // Handle social links
         linkedin: profileData.socialLinks?.linkedin || "",
@@ -168,43 +175,7 @@ const Detailsform: React.FC = () => {
         twitter: profileData.socialLinks?.twitter || "",
       }));
 
-      // Set country search term
-      if (profileData.country) {
-        setSearchTerm(profileData.country);
-        const country = countries.find((c) => c.name === profileData.country);
-        if (country) {
-          setSelectedCountry(country);
-        }
-      }
-
-      // Set city search term
-      if (profileData.city) {
-        setCitySearchTerm(profileData.city);
-      }
-
-      // Handle documents (certificates) if available
-      if (profileData.documents && profileData.documents.length > 0) {
-        const formattedCerts = profileData.documents.map(
-          (doc: any, index: number) => ({
-            id: Date.now() + index,
-            name: doc.title,
-            organization: doc.issuedBy,
-            uploadedDocId: doc.id,
-          })
-        );
-        setCertificates(formattedCerts);
-      }
-
-      // Handle uploads (media) if available
-      if (profileData.uploads && profileData.uploads.length > 0) {
-        const media = profileData.uploads.map((upload: any) => ({
-          id: upload.id,
-          title: upload.title,
-          url: upload.url,
-          type: upload.type,
-        }));
-        setUploadedMedia(media);
-      }
+      // Other code remains the same...
     }
   }, [profileData, countries]);
 
@@ -438,6 +409,28 @@ const Detailsform: React.FC = () => {
     }
   };
 
+  // Add skill to the skills array
+  const addSkill = () => {
+    if (skillInput.trim() === "") return;
+
+    // Add the skill only if it doesn't already exist in the array
+    if (!formData.skills.includes(skillInput.trim())) {
+      setFormData((prev) => ({
+        ...prev,
+        skills: [...prev.skills, skillInput.trim()],
+      }));
+    }
+    setSkillInput(""); // Clear input after adding
+  };
+
+  // Remove skill from the skills array
+  const removeSkill = (skillToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((skill) => skill !== skillToRemove),
+    }));
+  };
+
   // Certificate functions
   const addCertificate = () => {
     setCertificates([...certificates, { id: Date.now() }]);
@@ -567,10 +560,14 @@ const Detailsform: React.FC = () => {
         company: formData.footballClub || null,
         role: localStorage.getItem("role") || "player",
 
+        // Add the new fields
+        certificationLevel: formData.certificationLevel || null,
+        skills: formData.skills, // Pass the skills array directly
+
         // Include expert-specific fields if user is an expert
-        // responseTime: isExpert ? formData.responseTime || null : null,
-        // travelLimit:
-        //   isExpert && formData.travelLimit ? formData.travelLimit : null,
+        responseTime: isExpert ? formData.responseTime || null : null,
+        travelLimit:
+          isExpert && formData.travelLimit ? formData.travelLimit : null,
       };
 
       console.log("Submitting profile data:", profileUpdateData);
@@ -633,6 +630,7 @@ const Detailsform: React.FC = () => {
       setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
+      localStorage.setItem("Profilecomplete", "true");
     }
   };
 
@@ -995,6 +993,70 @@ const Detailsform: React.FC = () => {
             >
               Browse
             </button>
+          </div>
+
+          {/* Certification Level - New Addition */}
+          <div className="w-full mb-4">
+            <label className="block text-black mb-1">Certification Level</label>
+            <select
+              name="certificationLevel"
+              value={formData.certificationLevel}
+              onChange={handleInputChange}
+              className="border p-2 w-full rounded"
+            >
+              <option value="">Select Certification Level</option>
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="advanced">Advanced</option>
+              <option value="expert">Expert</option>
+              <option value="professional">Professional</option>
+            </select>
+          </div>
+
+          {/* Skills Section - New Addition */}
+          <div className="w-full mb-4">
+            <label className="block text-black mb-1">Skills</label>
+            <div className="flex">
+              <input
+                type="text"
+                placeholder="Add a skill"
+                value={skillInput}
+                onChange={(e) => setSkillInput(e.target.value)}
+                className="border p-2 flex-grow rounded-l"
+                onKeyPress={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addSkill();
+                  }
+                }}
+              />
+              <button
+                type="button"
+                onClick={addSkill}
+                className="bg-lightYellow text-black px-4 py-2 rounded-r"
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Display added skills */}
+            <div className="flex flex-wrap gap-2 mt-2">
+              {formData.skills.map((skill, index) => (
+                <div
+                  key={index}
+                  className="bg-gray-100 px-3 py-1 rounded-full flex items-center"
+                >
+                  <span>{skill}</span>
+                  <button
+                    type="button"
+                    className="ml-2 text-red-500"
+                    onClick={() => removeSkill(skill)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="flex space-x-4 mb-2">

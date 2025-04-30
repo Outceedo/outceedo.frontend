@@ -49,12 +49,14 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
 
   // Skills state
   const [skills, setSkills] = useState<string[]>(
-    expertData.skills || [
-      "Leadership",
-      "Tactical Analysis",
-      "Team Management",
-      "Fitness Training",
-    ]
+    expertData.skills && Array.isArray(expertData.skills)
+      ? expertData.skills
+      : [
+          "Leadership",
+          "Tactical Analysis",
+          "Team Management",
+          "Fitness Training",
+        ]
   );
   const [tempSkills, setTempSkills] = useState<string[]>([...skills]);
   const [newSkill, setNewSkill] = useState("");
@@ -122,12 +124,35 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   // Update state when expertData changes
   useEffect(() => {
     if (expertData) {
-      if (expertData.about) {
+      if (expertData.bio) {
+        setAboutMe(expertData.bio);
+      } else if (expertData.about) {
         setAboutMe(expertData.about);
       }
-      if (expertData.skills && expertData.skills.length > 0) {
-        setSkills(expertData.skills);
-        setTempSkills(expertData.skills);
+
+      // Properly handle skills update from expertData
+      if (expertData.skills) {
+        // Make sure we have an array of strings
+        let skillsArray: string[] = [];
+
+        if (Array.isArray(expertData.skills)) {
+          // Handle case where skills might be array of objects with 'skills' property
+          skillsArray = expertData.skills
+            .map((skill: any) =>
+              typeof skill === "string"
+                ? skill
+                : skill && typeof skill === "object" && skill.skills
+                ? skill.skills
+                : ""
+            )
+            .filter(Boolean);
+        }
+
+        if (skillsArray.length > 0) {
+          console.log("Setting skills from expertData:", skillsArray);
+          setSkills(skillsArray);
+          setTempSkills([...skillsArray]);
+        }
       }
     }
   }, [expertData]);
@@ -172,20 +197,41 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
 
   // Cancel about me edit
   const cancelAboutMe = () => {
-    setAboutMe(expertData.about || "");
+    setAboutMe(expertData.bio || expertData.about || "");
     setIsEditingAbout(false);
   };
 
   // Skills Management
   const handleAddSkill = () => {
-    if (newSkill.trim() && !tempSkills.includes(newSkill.trim())) {
-      setTempSkills([...tempSkills, newSkill.trim()]);
-      setNewSkill("");
+    if (!newSkill.trim()) {
+      // Don't add empty skills
+      return;
+    }
+
+    // Normalize the skill text (trim and convert to lowercase for comparison)
+    const normalizedNewSkill = newSkill.trim();
+    const normalizedExistingSkills = tempSkills.map((skill) =>
+      skill.toLowerCase()
+    );
+
+    // Check if skill already exists (case-insensitive)
+    if (!normalizedExistingSkills.includes(normalizedNewSkill.toLowerCase())) {
+      setTempSkills((prev) => [...prev, normalizedNewSkill]);
+      setNewSkill(""); // Clear input field
+    } else {
+      // Alert the user or handle duplicate gracefully
+      Swal.fire({
+        icon: "info",
+        title: "Duplicate Skill",
+        text: "This skill already exists in your list",
+        timer: 2000,
+        showConfirmButton: false,
+      });
     }
   };
 
   const handleRemoveSkill = (skillToRemove: string) => {
-    setTempSkills(tempSkills.filter((skill) => skill !== skillToRemove));
+    setTempSkills((prev) => prev.filter((skill) => skill !== skillToRemove));
   };
 
   const handleSaveSkills = async () => {
@@ -196,6 +242,8 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
       const updateData = {
         skills: tempSkills,
       };
+
+      console.log("Saving skills:", updateData);
 
       // Save to API
       await dispatch(updateProfile(updateData)).unwrap();
@@ -213,6 +261,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
 
       setIsEditingSkills(false);
     } catch (error: any) {
+      console.error("Error saving skills:", error);
       Swal.fire({
         icon: "error",
         title: "Update Failed",
@@ -225,7 +274,16 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
 
   const cancelSkillsEdit = () => {
     setTempSkills([...skills]);
+    setNewSkill(""); // Clear input field
     setIsEditingSkills(false);
+  };
+
+  // Handle key press in skills input
+  const handleSkillKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddSkill();
+    }
   };
 
   // Certification Management
@@ -505,41 +563,45 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                   onChange={(e) => setNewSkill(e.target.value)}
                   placeholder="Add new skill"
                   className="flex-1"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleAddSkill();
-                  }}
+                  onKeyPress={handleSkillKeyPress}
                   disabled={isSubmitting}
                 />
                 <Button
                   variant="default"
                   className="bg-red-600 hover:bg-red-700"
                   onClick={handleAddSkill}
-                  disabled={isSubmitting}
+                  disabled={!newSkill.trim() || isSubmitting}
                 >
                   <FontAwesomeIcon icon={faPlus} />
                 </Button>
               </div>
 
               <div className="space-y-2 mt-4">
-                {tempSkills.map((skill, index) => (
-                  <div
-                    key={index}
-                    className="flex items-center justify-between bg-gray-50 dark:bg-gray-600 p-2 rounded-md"
-                  >
-                    <span className="text-gray-700 dark:text-gray-200">
-                      {skill}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-red-500 hover:text-red-700"
-                      onClick={() => handleRemoveSkill(skill)}
-                      disabled={isSubmitting}
+                {tempSkills.length > 0 ? (
+                  tempSkills.map((skill, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-600 p-2 rounded-md"
                     >
-                      <FontAwesomeIcon icon={faTrash} />
-                    </Button>
-                  </div>
-                ))}
+                      <span className="text-gray-700 dark:text-gray-200">
+                        {skill}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-500 hover:text-red-700"
+                        onClick={() => handleRemoveSkill(skill)}
+                        disabled={isSubmitting}
+                      >
+                        <FontAwesomeIcon icon={faTrash} />
+                      </Button>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 italic">
+                    No skills added yet. Add your first skill above.
+                  </p>
+                )}
               </div>
 
               <div className="flex justify-end space-x-2 mt-4">
@@ -571,16 +633,16 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
             </div>
           ) : (
             <>
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="px-3 py-1 bg-gray-100 dark:bg-gray-600 rounded-full text-sm text-gray-700 dark:text-gray-200"
-                  >
-                    {skill}
-                  </span>
-                ))}
-                {skills.length === 0 && (
+              <div className="flex flex-col space-y-2">
+                {skills.length > 0 ? (
+                  skills.map((skill, index) => (
+                    <div key={index} className="flex items-center">
+                      <span className="px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 w-full">
+                        {skill}
+                      </span>
+                    </div>
+                  ))
+                ) : (
                   <p className="text-gray-500 dark:text-gray-400">
                     No skills listed
                   </p>

@@ -35,6 +35,10 @@ interface Profile {
   certificates?: Array<{ name: string; organization: string }>;
   awards?: string[];
   experience?: string;
+  responseTime: string;
+  travelLimit: string;
+  certificationLevel: string;
+  skills?: string[];
   [key: string]: any; // For additional fields based on role
 }
 
@@ -103,164 +107,6 @@ const getUsernameFromStorage = (): string | null => {
 const getAuthToken = (): string | null => {
   return localStorage.getItem("token");
 };
-
-// Helper function to check if a profile is complete
-const isProfileComplete = (profile: Profile | null): boolean => {
-  if (!profile) return false;
-
-  // Define required fields for player profile
-  if (profile.role === "player") {
-    const requiredFields = [
-      "firstName",
-      "lastName",
-      "age",
-      "gender",
-      "",
-      "country",
-      "city",
-      "height",
-      "weight",
-      "profession",
-      "subProfession",
-    ];
-
-    return requiredFields.every(
-      (field) =>
-        profile[field] !== undefined &&
-        profile[field] !== null &&
-        profile[field] !== ""
-    );
-  }
-
-  // Define required fields for expert profile
-  if (profile.role === "expert") {
-    const requiredFields = [
-      "firstName",
-      "lastName",
-      "age",
-      "gender",
-      "travelLimit",
-      "responseTime",
-      "country",
-      "city",
-      "profession",
-      "subProfession",
-    ];
-
-    return requiredFields.every(
-      (field) =>
-        profile[field] !== undefined &&
-        profile[field] !== null &&
-        profile[field] !== ""
-    );
-  }
-
-  return false;
-};
-
-// Debug function to log profile completion status
-const logProfileStatus = (profile: Profile | null): void => {
-  if (!profile) {
-    console.log("Profile completion check: No profile found");
-    return;
-  }
-
-  const role = profile.role;
-  const requiredFields =
-    role === "player"
-      ? [
-          "firstName",
-          "lastName",
-          "age",
-          "gender",
-
-          "country",
-          "city",
-          "height",
-          "weight",
-          "profession",
-          "subProfession",
-        ]
-      : [
-          "firstName",
-          "lastName",
-          "age",
-          "gender",
-
-          "country",
-          "city",
-          "profession",
-          "subProfession",
-        ];
-
-  const missingFields = requiredFields.filter(
-    (field) =>
-      profile[field] === undefined ||
-      profile[field] === null ||
-      profile[field] === ""
-  );
-
-  console.log(`Profile completion check for ${role}:`, {
-    isComplete: missingFields.length === 0,
-    missingFields,
-    profile,
-  });
-};
-
-// Check profile completion and determine redirect
-export const checkProfileCompletion = createAsyncThunk(
-  "profile/checkProfileCompletion",
-  async (_, { getState, dispatch }) => {
-    const state = getState() as RootState;
-    const { user } = state.auth;
-
-    if (!user || !user.username) {
-      console.log("No user found in auth state, redirecting to login");
-      return { redirect: "/login" };
-    }
-
-    try {
-      console.log("Checking profile completion for:", user.username);
-
-      // Try to fetch the profile using the username
-      const resultAction = await dispatch(getProfile(user.username));
-
-      if (getProfile.fulfilled.match(resultAction)) {
-        const fetchedProfile = resultAction.payload;
-
-        // Log profile status for debugging
-        logProfileStatus(fetchedProfile);
-
-        // Store profile data in localStorage to prefill form if redirected to details form
-        if (fetchedProfile) {
-          // Store the profile data in local storage for form prefilling
-          localStorage.setItem("profileData", JSON.stringify(fetchedProfile));
-        }
-
-        if (!fetchedProfile || !isProfileComplete(fetchedProfile)) {
-          console.log("Profile is incomplete, redirecting to details form");
-          return { redirect: "/details-form" };
-        } else {
-          console.log("Profile is complete, redirecting to dashboard");
-          // Profile is complete, redirect based on role
-          if (fetchedProfile.role === "player") {
-            return { redirect: "/player/dashboard" };
-          } else if (fetchedProfile.role === "expert") {
-            return { redirect: "/expert/dashboard" };
-          } else {
-            return { redirect: "/home" };
-          }
-        }
-      } else {
-        console.log("Failed to fetch profile, redirecting to details form");
-        return { redirect: "/details-form" };
-      }
-    } catch (error) {
-      console.error("Error checking profile:", error);
-      return { redirect: "/details-form" };
-    }
-  }
-);
 
 // Create profile thunk
 export const createProfile = createAsyncThunk(
@@ -623,18 +469,6 @@ const profileSlice = createSlice({
         state.profiles = action.payload;
       })
       .addCase(getProfiles.rejected, (state, action) => {
-        state.status = "failed";
-        state.error = action.payload as string;
-      })
-
-      // Check profile completion
-      .addCase(checkProfileCompletion.pending, (state) => {
-        state.status = "loading";
-      })
-      .addCase(checkProfileCompletion.fulfilled, (state) => {
-        state.status = "succeeded";
-      })
-      .addCase(checkProfileCompletion.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload as string;
       })
