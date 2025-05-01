@@ -175,6 +175,8 @@ const Experts = () => {
         certificates: [],
         services: [],
       };
+  localStorage.setItem("expertid", expertData?.id);
+  localStorage.setItem("serviceid", expertData?.services.id);
 
   // Determine if text should be clamped
   const shouldClamp = expertData.about?.split(" ").length > 25;
@@ -347,7 +349,8 @@ const Experts = () => {
       "selectedService",
       JSON.stringify({
         expertname: expertData.name, // Add expert name
-        expertProfileImage: expertData.profileImage, // Add expert profile image
+        expertProfileImage: expertData.profileImage,
+        serviceid: service.id, // Add expert profile image
         name: service.name,
         description: service.description,
         price: service.price,

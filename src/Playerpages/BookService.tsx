@@ -15,6 +15,8 @@ import profile2 from "../assets/images/profile2.jpg"; // Import a default profil
 
 // Define interfaces for our data types
 interface Service {
+  serviceid?: string;
+  expertId?: string;
   expertname?: string;
   expertProfileImage?: string;
   name: string;
@@ -22,12 +24,16 @@ interface Service {
   price: string;
 }
 
-const AppointmentScheduler: React.FC = () => {
+const BookingCalendar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<number>(10);
   const [selectedTime, setSelectedTime] = useState<string>("12:30pm");
   const [currentMonth, setCurrentMonth] = useState<string>("April 2025");
   const [service, setService] = useState<Service | null>(null);
+  const [loading, setLoading] = useState<boolean>(false);
   const navigate = useNavigate();
+
+  // API base URL
+  const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
   // Load service and expert data from localStorage
   useEffect(() => {
@@ -67,39 +73,114 @@ const AppointmentScheduler: React.FC = () => {
     navigate(-1); // Go back to the previous page
   };
 
-  const handleConfirm = () => {
-    // Format the appointment date
-    const formattedDate = `${currentMonth.split(" ")[0]} ${selectedDate}`;
+  // Convert 12-hour time format to 24-hour format
+  const convertTo24HourFormat = (time: string): string => {
+    const [hour, minute] = time.slice(0, -2).split(":");
+    let hourNum = parseInt(hour, 10);
 
-    // Create new booking object
-    const booking = {
-      id: Math.floor(Math.random() * 1000), // Generate random ID
-      expertName: service?.expertname || "Expert",
-      expertProfileImage: service?.expertProfileImage || profile2,
-      date: `${formattedDate} at ${selectedTime}`,
-      service: {
-        name: service?.name || "",
-        description: service?.description || "",
-        price: service?.price || "",
-      },
-      amount: service?.price || "",
-      action: "Pending",
-      bookingStatus: "Not Paid",
+    if (time.toLowerCase().includes("pm") && hourNum < 12) {
+      hourNum += 12;
+    } else if (time.toLowerCase().includes("am") && hourNum === 12) {
+      hourNum = 0;
+    }
+
+    return `${hourNum.toString().padStart(2, "0")}:${minute || "00"}`;
+  };
+
+  // Calculate end time (assuming 1 hour duration)
+  const calculateEndTime = (startTime: string): string => {
+    const [hour, minute] = startTime.split(":").map((num) => parseInt(num, 10));
+    let endHour = hour + 1;
+
+    // Handle hour overflow
+    if (endHour >= 24) {
+      endHour -= 24;
+    }
+
+    return `${endHour.toString().padStart(2, "0")}:${minute
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Format date as YYYY-MM-DD
+  const formatDateForAPI = (): string => {
+    const monthMap: { [key: string]: number } = {
+      January: 0,
+      February: 1,
+      March: 2,
+      April: 3,
+      May: 4,
+      June: 5,
+      July: 6,
+      August: 7,
+      September: 8,
+      October: 9,
+      November: 10,
+      December: 11,
     };
 
-    // Get existing bookings or initialize empty array
-    const existingBookings = JSON.parse(
-      localStorage.getItem("bookings") || "[]"
-    );
+    const monthName = currentMonth.split(" ")[0];
+    const year = parseInt(currentMonth.split(" ")[1]);
+    const month = monthMap[monthName];
 
-    // Add new booking to existing bookings
-    localStorage.setItem(
-      "bookings",
-      JSON.stringify([...existingBookings, booking])
-    );
+    const date = new Date(year, month, selectedDate);
 
-    // Navigate to the bookings page
-    navigate("/player/mybooking");
+    // Format as YYYY-MM-DD
+    return date.toISOString().split("T")[0];
+  };
+
+  const handleConfirm = async () => {
+    setLoading(true);
+
+    try {
+      // Get expertId from localStorage
+      const expertId = localStorage.getItem("expertid");
+
+      // Get serviceId from service object or localStorage
+      const serviceId = service?.serviceid;
+
+      // Format time for API
+      const startTime24H = convertTo24HourFormat(selectedTime);
+      const endTime24H = calculateEndTime(startTime24H);
+      const formattedDate = formatDateForAPI();
+
+      // Prepare booking data
+      const bookingData = {
+        expertId: expertId,
+        serviceId: serviceId,
+        date: formattedDate,
+        startTime: startTime24H,
+        endTime: endTime24H,
+      };
+
+      // Get auth token
+      const token = localStorage.getItem("accessToken");
+
+      // Make API call
+      const response = await fetch(API_BASE_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(bookingData),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        console.error("Booking failed:", data);
+      } else {
+        console.log("Booking successful:", data);
+      }
+
+      // Navigate to bookings page regardless of success or failure
+      navigate("/player/mybooking");
+    } catch (error) {
+      console.error("Booking error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Format the selected date
@@ -292,12 +373,13 @@ const AppointmentScheduler: React.FC = () => {
         <Button
           className="bg-red-500 hover:bg-red-600 text-white px-8"
           onClick={handleConfirm}
+          disabled={loading}
         >
-          Confirm Booking
+          {loading ? "Processing..." : "Confirm Booking"}
         </Button>
       </div>
     </div>
   );
 };
 
-export default AppointmentScheduler;
+export default BookingCalendar;

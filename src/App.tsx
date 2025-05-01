@@ -50,7 +50,6 @@ const AppContent: React.FC = () => {
 
   // Debug logging
 
-
   useEffect(() => {
     const initApp = async () => {
       try {
@@ -195,7 +194,14 @@ const AppContent: React.FC = () => {
           </div>
         }
       />
-      <Route path="/book" element={<BookingCalendar />} />
+      <Route
+        path="/book"
+        element={
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <BookingCalendar />
+          </CheckAuth>
+        }
+      />
     </Routes>
   );
 };

@@ -32,71 +32,280 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+interface Expert {
+  id: string;
+  name: string;
+  profileImage?: string;
+}
+
+interface Service {
+  id: string;
+  name: string;
+  description: string;
+  price: string;
+}
+
 interface Booking {
-  id: number;
-  expertName: string;
-  expertProfileImage?: string;
+  id: string;
+  playerId: string;
+  expertId: string;
+  serviceId: string;
+  status: string;
   date: string;
-  service: {
-    name: string;
-    description: string;
-    price: string;
-  };
-  amount: string;
-  action: "Accepted" | "Rejected" | "Re-Scheduled" | "Pending";
-  bookingStatus: "Paid" | "Not Paid" | "Pending";
-  createdAt?: string; // Add timestamp for when booking was created
+  startTime: string;
+  endTime: string;
+  location: string | null;
+  meetLink: string | null;
+  recordedVideo: string | null;
+  meetingRecording: string | null;
+  createdAt: string;
+  updatedAt: string;
+  expert?: Expert;
+  service?: Service;
 }
 
 const MyBooking: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [experts, setExperts] = useState<{ [key: string]: Expert }>({});
+  const [services, setServices] = useState<{ [key: string]: Service }>({});
   const [bookingStatus, setBookingStatus] = useState("all");
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [selectedBookingId, setSelectedBookingId] = useState<number | null>(
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
 
-  const [visibilityMap, setVisibilityMap] = useState<{ [id: number]: boolean }>(
+  const [visibilityMap, setVisibilityMap] = useState<{ [id: string]: boolean }>(
     {}
   );
 
-  // Load bookings from localStorage on component mount
+  // API base URL
+  const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+
+  // Dummy data for demonstration when API fails
+  const dummyBookings: Booking[] = [
+    {
+      id: "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
+      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      serviceId: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      status: "WAITING_EXPERT_APPROVAL",
+      date: "2025-05-15T00:00:00.000Z",
+      startTime: "10:00",
+      endTime: "11:00",
+      location: null,
+      meetLink: null,
+      recordedVideo: null,
+      meetingRecording: null,
+      createdAt: "2025-04-29T14:30:00.000Z",
+      updatedAt: "2025-04-29T14:30:00.000Z",
+    },
+    {
+      id: "c2b3d4e5-f6g7-8901-hijk-lm2345678901",
+      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      expertId: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+      serviceId: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+      status: "CONFIRMED",
+      date: "2025-05-20T00:00:00.000Z",
+      startTime: "14:00",
+      endTime: "15:00",
+      location: null,
+      meetLink: "https://meet.google.com/abc-defg-hij",
+      recordedVideo: null,
+      meetingRecording: null,
+      createdAt: "2025-04-30T09:15:00.000Z",
+      updatedAt: "2025-05-01T10:20:00.000Z",
+    },
+    {
+      id: "d3c4e5f6-g7h8-9012-jklm-no3456789012",
+      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      expertId: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+      serviceId: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+      status: "COMPLETED",
+      date: "2025-04-25T00:00:00.000Z",
+      startTime: "09:00",
+      endTime: "10:00",
+      location: "Central Park Field #3",
+      meetLink: null,
+      recordedVideo: "https://example.com/videos/session123.mp4",
+      meetingRecording: null,
+      createdAt: "2025-04-22T11:30:00.000Z",
+      updatedAt: "2025-04-25T10:05:00.000Z",
+    },
+    {
+      id: "e4d5f6g7-h8i9-0123-klmn-op4567890123",
+      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      expertId: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+      serviceId: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+      status: "REJECTED",
+      date: "2025-05-10T00:00:00.000Z",
+      startTime: "16:00",
+      endTime: "17:00",
+      location: null,
+      meetLink: null,
+      recordedVideo: null,
+      meetingRecording: null,
+      createdAt: "2025-05-01T08:45:00.000Z",
+      updatedAt: "2025-05-01T12:30:00.000Z",
+    },
+  ];
+
+  // Dummy expert data
+  const dummyExperts: { [key: string]: Expert } = {
+    "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1": {
+      id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      name: "John Smith",
+      profileImage: "https://i.pravatar.cc/150?u=john",
+    },
+    "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2": {
+      id: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+      name: "Emma Johnson",
+      profileImage: "https://i.pravatar.cc/150?u=emma",
+    },
+    "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3": {
+      id: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+      name: "Miguel Rodriguez",
+      profileImage: "https://i.pravatar.cc/150?u=miguel",
+    },
+    "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4": {
+      id: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+      name: "Sarah Lee",
+      profileImage: "https://i.pravatar.cc/150?u=sarah",
+    },
+  };
+
+  // Dummy service data
+  const dummyServices: { [key: string]: Service } = {
+    "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1": {
+      id: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+      name: "Technical Training Session",
+      description: "One-on-one technical skills training",
+      price: "$35",
+    },
+    "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2": {
+      id: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+      name: "Strategy Session",
+      description: "Game strategy and tactical analysis",
+      price: "$40",
+    },
+    "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3": {
+      id: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+      name: "Field Training",
+      description: "On-field practice and drills",
+      price: "$45",
+    },
+    "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4": {
+      id: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+      name: "Video Analysis",
+      description: "Detailed analysis of gameplay footage",
+      price: "$50",
+    },
+  };
+
+  // Fetch bookings from API
   useEffect(() => {
-    const storedBookings = localStorage.getItem("bookings");
-    if (storedBookings) {
-      let parsedBookings: Booking[] = JSON.parse(storedBookings);
+    const fetchBookings = async () => {
+      setLoading(true);
+      try {
+        const token = localStorage.getItem("accessToken");
+        const response = await fetch(API_BASE_URL, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      // Add createdAt field if not present (for older bookings)
-      parsedBookings = parsedBookings.map((booking) => {
-        if (!booking.createdAt) {
-          return { ...booking, createdAt: new Date().toISOString() };
-        }
-        return booking;
-      });
-
-      // Sort bookings by date in ascending order (oldest first)
-      parsedBookings.sort((a, b) => {
-        // Try to parse date strings for comparison
-        const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-
-        // If we can't parse the dates properly, try to sort by ID as a fallback
-        // Lower ID typically means it was created earlier
-        if (isNaN(dateA) || isNaN(dateB)) {
-          return a.id - b.id;
+        if (!response.ok) {
+          throw new Error("Failed to fetch bookings");
         }
 
-        return dateA - dateB;
-      });
+        const data = await response.json();
+        setBookings(data.bookings);
 
-      setBookings(parsedBookings);
-    }
+        // Fetch additional data for experts and services
+        await Promise.all(data.bookings.map(fetchRelatedData));
+      } catch (err) {
+        console.error("Error fetching bookings:", err);
+        setError("Could not connect to server. Showing demo data instead.");
+
+        // Set dummy data if API fails
+        setBookings(dummyBookings);
+        setExperts(dummyExperts);
+        setServices(dummyServices);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookings();
   }, []);
 
-  const openVideoModal = (id: number) => {
+  // Fetch related data for each booking (expert and service details)
+  const fetchRelatedData = async (booking: Booking) => {
+    try {
+      // Fetch expert data if not already fetched
+      if (booking.expertId && !experts[booking.expertId]) {
+        const token = localStorage.getItem("accessToken");
+        const expertResponse = await fetch(
+          `${import.meta.env.VITE_PORT}/api/v1/experts/${booking.expertId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (expertResponse.ok) {
+          const expertData = await expertResponse.json();
+          setExperts((prev) => ({
+            ...prev,
+            [booking.expertId]: {
+              id: expertData.id,
+              name: expertData.name || "Unknown Expert",
+              profileImage: expertData.profileImage,
+            },
+          }));
+        }
+      }
+
+      // Fetch service data if not already fetched
+      if (booking.serviceId && !services[booking.serviceId]) {
+        const token = localStorage.getItem("accessToken");
+        const serviceResponse = await fetch(
+          `${import.meta.env.VITE_PORT}/api/v1/services/${booking.serviceId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (serviceResponse.ok) {
+          const serviceData = await serviceResponse.json();
+          setServices((prev) => ({
+            ...prev,
+            [booking.serviceId]: {
+              id: serviceData.id,
+              name: serviceData.name || "Unknown Service",
+              description: serviceData.description || "",
+              price: serviceData.price
+                ? `$${serviceData.price}`
+                : "Price not available",
+            },
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching related data:", error);
+    }
+  };
+
+  const openVideoModal = (id: string) => {
     setSelectedBookingId(id);
     setIsVideoOpen(true);
   };
@@ -106,7 +315,7 @@ const MyBooking: React.FC = () => {
     setSelectedBookingId(null);
   };
 
-  const openReportModal = (id: number) => {
+  const openReportModal = (id: string) => {
     setSelectedBookingId(id);
     setIsReportOpen(true);
   };
@@ -116,7 +325,7 @@ const MyBooking: React.FC = () => {
     setSelectedBookingId(null);
   };
 
-  const toggleVisibility = (id: number) => {
+  const toggleVisibility = (id: string) => {
     setVisibilityMap((prev) => ({
       ...prev,
       [id]: !prev[id],
@@ -125,46 +334,82 @@ const MyBooking: React.FC = () => {
 
   const getActionBadgeStyle = (status: string) => {
     switch (status) {
-      case "Accepted":
+      case "ACCEPTED":
+      case "CONFIRMED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
-      case "Rejected":
+      case "REJECTED":
+      case "CANCELLED":
         return "bg-red-100 text-red-800 hover:bg-red-100";
-      case "Re-Scheduled":
+      case "RESCHEDULED":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
-      case "Pending":
+      case "WAITING_EXPERT_APPROVAL":
+      case "PENDING":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case "COMPLETED":
+        return "bg-purple-100 text-purple-800 hover:bg-purple-100";
       default:
-        return "";
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
   };
 
   const getPaymentBadgeStyle = (status: string) => {
     switch (status) {
-      case "Paid":
+      case "PAID":
         return "bg-green-100 text-green-800 hover:bg-green-100";
-      case "Not Paid":
+      case "NOT_PAID":
         return "bg-red-100 text-red-800 hover:bg-red-100";
-      case "Pending":
+      case "PENDING":
+      case "WAITING_EXPERT_APPROVAL":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       default:
-        return "";
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
   };
 
-  const filteredBookings = bookings.filter(
-    (booking) =>
-      booking.expertName.toLowerCase().includes(search.toLowerCase()) &&
-      (bookingStatus === "all" || booking.bookingStatus === bookingStatus)
-  );
-
-  const formatBookingDate = (dateString: string) => {
-    // Check if the date has the redundant year pattern
-    if (dateString.includes(", 2025 at")) {
-      // Fix formatting
-      return dateString.replace(", 2025 at", " at");
-    }
-    return dateString;
+  // Format status for display
+  const formatStatus = (status: string) => {
+    return status
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
   };
+
+  // Format date for display
+  const formatDate = (dateStr: string, startTime: string) => {
+    const date = new Date(dateStr);
+    const formattedDate = date.toLocaleDateString("en-US", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    // Format time (convert 24h to 12h format)
+    const [hours, minutes] = startTime.split(":");
+    let hour = parseInt(hours, 10);
+    const ampm = hour >= 12 ? "pm" : "am";
+    hour = hour % 12;
+    hour = hour ? hour : 12; // the hour '0' should be '12'
+
+    return `${formattedDate} at ${hour}:${minutes}${ampm}`;
+  };
+
+  // Filter bookings based on search and status filter
+  const filteredBookings = bookings.filter((booking) => {
+    const expertName = experts[booking.expertId]?.name || "";
+    const matchesSearch = expertName
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesStatus =
+      bookingStatus === "all" ||
+      (bookingStatus === "PAID" && booking.status === "COMPLETED") ||
+      (bookingStatus === "NOT_PAID" &&
+        booking.status === "WAITING_EXPERT_APPROVAL") ||
+      (bookingStatus === "PENDING" &&
+        (booking.status === "CONFIRMED" || booking.status === "ACCEPTED"));
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
@@ -189,102 +434,129 @@ const MyBooking: React.FC = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            <SelectItem value="Paid">Paid</SelectItem>
-            <SelectItem value="Not Paid">Not Paid</SelectItem>
-            <SelectItem value="Pending">Pending</SelectItem>
+            <SelectItem value="PAID">Paid</SelectItem>
+            <SelectItem value="NOT_PAID">Not Paid</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[80px]">Booking ID</TableHead>
-              <TableHead>Expert</TableHead>
-              <TableHead>Date</TableHead>
-              <TableHead>Service Name</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Payment</TableHead>
-              <TableHead className="text-center">Video</TableHead>
-              <TableHead className="text-center">Report</TableHead>
-              <TableHead className="text-center">View</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredBookings.length === 0 ? (
+      {error && (
+        <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="text-center py-8">Loading bookings...</div>
+      ) : (
+        <div className="rounded-md border">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-4">
-                  No bookings found
-                </TableCell>
+                <TableHead className="w-[80px]">Booking ID</TableHead>
+                <TableHead>Expert</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead>Service Name</TableHead>
+                <TableHead>Price</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Payment</TableHead>
+                <TableHead className="text-center">Video</TableHead>
+                <TableHead className="text-center">Report</TableHead>
+                <TableHead className="text-center">View</TableHead>
               </TableRow>
-            ) : (
-              filteredBookings.map((booking) => (
-                <TableRow key={booking.id}>
-                  <TableCell className="font-medium">{booking.id}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span>{booking.expertName}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatBookingDate(booking.date)}</TableCell>
-                  <TableCell>{booking.service.name}</TableCell>
-                  <TableCell>{booking.service.price}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={getActionBadgeStyle(booking.action)}
-                    >
-                      {booking.action}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={getPaymentBadgeStyle(booking.bookingStatus)}
-                    >
-                      {booking.bookingStatus}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 cursor-pointer"
-                      onClick={() => openVideoModal(booking.id)}
-                    >
-                      <FontAwesomeIcon icon={faVideo} />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 cursor-pointer"
-                      onClick={() => openReportModal(booking.id)}
-                    >
-                      <FontAwesomeIcon icon={faFileAlt} />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      onClick={() => toggleVisibility(booking.id)}
-                    >
-                      <FontAwesomeIcon
-                        icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
-                      />
-                    </Button>
+            </TableHeader>
+            <TableBody>
+              {filteredBookings.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={10} className="text-center py-4">
+                    No bookings found
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              ) : (
+                filteredBookings.map((booking) => (
+                  <TableRow key={booking.id}>
+                    <TableCell className="font-medium">
+                      {booking.id.substring(0, 8)}...
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <span>
+                          {experts[booking.expertId]?.name || "Unknown Expert"}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(booking.date, booking.startTime)}
+                    </TableCell>
+                    <TableCell>
+                      {services[booking.serviceId]?.name || "Unknown Service"}
+                    </TableCell>
+                    <TableCell>
+                      {services[booking.serviceId]?.price || "N/A"}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={getActionBadgeStyle(booking.status)}
+                      >
+                        {formatStatus(booking.status)}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={getPaymentBadgeStyle(booking.status)}
+                      >
+                        {booking.status === "COMPLETED"
+                          ? "Paid"
+                          : booking.status === "WAITING_EXPERT_APPROVAL"
+                          ? "Not Paid"
+                          : "Pending"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 cursor-pointer"
+                        onClick={() => openVideoModal(booking.id)}
+                        disabled={
+                          !booking.recordedVideo && !booking.meetingRecording
+                        }
+                      >
+                        <FontAwesomeIcon icon={faVideo} />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 cursor-pointer"
+                        onClick={() => openReportModal(booking.id)}
+                      >
+                        <FontAwesomeIcon icon={faFileAlt} />
+                      </Button>
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => toggleVisibility(booking.id)}
+                      >
+                        <FontAwesomeIcon
+                          icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
+                        />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
       {/* Video Modal */}
       {isVideoOpen && (
@@ -296,7 +568,32 @@ const MyBooking: React.FC = () => {
             >
               ×
             </button>
-            <Video />
+            {selectedBookingId && (
+              <div className="mt-6">
+                <h2 className="text-xl font-semibold mb-4">Recorded Session</h2>
+                {bookings.find((b) => b.id === selectedBookingId)
+                  ?.recordedVideo ? (
+                  <Video
+                    url={
+                      bookings.find((b) => b.id === selectedBookingId)
+                        ?.recordedVideo || ""
+                    }
+                  />
+                ) : bookings.find((b) => b.id === selectedBookingId)
+                    ?.meetingRecording ? (
+                  <Video
+                    url={
+                      bookings.find((b) => b.id === selectedBookingId)
+                        ?.meetingRecording || ""
+                    }
+                  />
+                ) : (
+                  <p className="text-center text-gray-500">
+                    No video recording available for this session.
+                  </p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -310,7 +607,7 @@ const MyBooking: React.FC = () => {
             </button>
           </div>
           <div className="flex-1 overflow-auto">
-            <AssessmentReport />
+            <AssessmentReport bookingId={selectedBookingId} />
           </div>
         </div>
       )}
