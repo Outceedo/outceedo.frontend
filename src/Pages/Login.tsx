@@ -16,7 +16,7 @@ const Login: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-
+  console.log(localStorage.getItem("Profilecomplete"));
   useEffect(() => {
     // Clear any previous errors when component mounts
     dispatch(clearError());

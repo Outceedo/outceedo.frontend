@@ -22,16 +22,16 @@ interface ReviewItem {
   reviewer: ReviewerInfo;
 }
 
-interface PlayerReviewProps {
-  playerData: any; // The full player data object
-  isExpertView?: boolean;
+interface ExpertreviewsProps {
+  expertData?: any; // The full expert data object that player is viewing
+  isExpertView?: boolean; // False when player is viewing expert profile
   onReviewUpdated?: () => void; // Callback for when reviews are added/deleted
 }
 
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
-const PlayerReview: React.FC<PlayerReviewProps> = ({
-  playerData,
+const Expertreviews: React.FC<ExpertreviewsProps> = ({
+  expertData,
   isExpertView = false,
   onReviewUpdated,
 }) => {
@@ -50,10 +50,16 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
 
   // Initialize local reviews from props
   useEffect(() => {
-    if (playerData?.reviewsReceived) {
-      setLocalReviews(playerData.reviewsReceived);
+    console.log("Expert data received:", expertData);
+
+    if (expertData && expertData.reviewsReceived) {
+      console.log("Reviews received:", expertData.reviewsReceived);
+
+      if (Array.isArray(expertData.reviewsReceived)) {
+        setLocalReviews(expertData.reviewsReceived);
+      }
     }
-  }, [playerData]);
+  }, [expertData]);
 
   // Function to format the review date
   const formatReviewDate = (dateString: string) => {
@@ -64,9 +70,6 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
       return "date unknown";
     }
   };
-
-  // Use our local reviews state instead of directly from props
-  const reviews = localReviews;
 
   // Current user ID from localStorage
   const getCurrentUserId = () => {
@@ -85,7 +88,7 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
   // Check if the current user has already submitted a review
   const hasUserReviewed = () => {
     const currentUserId = getCurrentUserId();
-    return reviews.some(
+    return localReviews.some(
       (review: ReviewItem) => review.reviewerId === currentUserId
     );
   };
@@ -127,6 +130,11 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
       return;
     }
 
+    if (!expertData?.id) {
+      setError("Expert ID not found");
+      return;
+    }
+
     setIsSubmitting(true);
     setError("");
 
@@ -134,9 +142,9 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
       const token = localStorage.getItem("token");
       const currentUser = getCurrentUserInfo();
 
-      // API call to submit a review
+      // API call to submit a review to the expert
       const response = await axios.post(
-        `${API_BASE_URL}/user/profile/review/${playerData.id}`,
+        `${API_BASE_URL}/user/profile/review/${expertData.id}`,
         {
           rating: newRating,
           comment: newComment,
@@ -150,9 +158,9 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
 
       // Create a new review object to add to our local state
       const newReview: ReviewItem = {
-        id: response.data?.id || `temp-${Date.now()}`, // Use response ID or generate a temporary one
+        id: response.data?.id || `temp-${Date.now()}`,
         reviewerId: currentUser.id,
-        revieweeId: playerData.id,
+        revieweeId: expertData.id,
         bookingId: "",
         rating: newRating,
         comment: newComment,
@@ -280,42 +288,86 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
 
   const currentUserId = getCurrentUserId();
 
+  // Calculate average rating
+  const calculateAverageRating = () => {
+    if (!localReviews || localReviews.length === 0) return 0;
+
+    const sum = localReviews.reduce(
+      (total, review) => total + review.rating,
+      0
+    );
+    return Math.round((sum / localReviews.length) * 10) / 10; // Round to 1 decimal place
+  };
+
+  const averageRating = calculateAverageRating();
+
+  // Check if we have reviews to display
+  const hasReviews = Array.isArray(localReviews) && localReviews.length > 0;
+
   return (
-    <div className="p-4 w-full">
-      {/* Add Review Button */}
-      {isExpertView && !hasUserReviewed() && (
-        <div className="flex justify-end mb-6">
+    <div className="p-4 -mt-10 w-full">
+      {/* Header with Rating Summary */}
+      <div className="flex justify-between items-center mb-8">
+        <div className="flex items-center">
+          <div className="mr-4">
+            <div className="flex items-center">
+              <div className="text-3xl font-bold text-gray-800 dark:text-white mr-2">
+                {averageRating}
+              </div>
+              <div className="flex items-center">
+                {[...Array(5)].map((_, i) => (
+                  <svg
+                    key={i}
+                    className={`w-5 h-5 ${
+                      i < Math.round(averageRating)
+                        ? "text-yellow-500"
+                        : "text-gray-300 dark:text-gray-600"
+                    }`}
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                  </svg>
+                ))}
+              </div>
+            </div>
+            <div className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              {localReviews.length} review{localReviews.length !== 1 ? "s" : ""}
+            </div>
+          </div>
+        </div>
+
+        {/* Add Review Button - Only show for players viewing expert profile */}
+        {!isExpertView && !hasUserReviewed() && (
           <button
             onClick={openAddReviewModal}
             className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-sm transition-colors"
           >
             Add Review
           </button>
-        </div>
-      )}
+        )}
+      </div>
 
-      {reviews.length === 0 ? (
+      {/* Reviews Grid */}
+      {!hasReviews ? (
         <div className="text-center text-gray-500 dark:text-gray-400 py-10">
           <p className="text-lg">No reviews yet</p>
-          {!isExpertView && (
-            <p className="text-sm mt-2">
-              Reviews will appear here once you receive them
-            </p>
-          )}
+          <p className="text-sm mt-2">Be the first to review this expert</p>
         </div>
       ) : (
         <div className="grid md:grid-cols-3 gap-6 mt-6">
-          {reviews.map((review: ReviewItem) => (
+          {localReviews.map((review: ReviewItem, index: number) => (
             <div
-              key={review.id}
+              key={review.id || index}
               className="border dark:bg-gray-800 dark:border-gray-600 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition"
               onClick={() => handleCardClick(review)}
             >
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                   <img
-                    src={review.reviewer.photo}
-                    alt={review.reviewer.username}
+                    src={review.reviewer?.photo || ""}
+                    alt={review.reviewer?.username || "User"}
                     className="rounded-full w-full h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
@@ -326,7 +378,7 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
                 </div>
                 <div>
                   <p className="font-semibold text-gray-800 dark:text-white">
-                    {review.reviewer.username}
+                    {review.reviewer?.username || "Anonymous User"}
                   </p>
                   <p className="text-gray-500 text-sm dark:text-gray-400">
                     {formatReviewDate(review.createdAt)}
@@ -335,16 +387,16 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
               </div>
               {renderRatingStars(review.rating)}
               <p className="mt-3 text-gray-700 dark:text-gray-300">
-                {review.comment.length > 80
+                {review.comment && review.comment.length > 80
                   ? `${review.comment.substring(0, 80)}...`
-                  : review.comment}
+                  : review.comment || "No comment provided"}
               </p>
             </div>
           ))}
         </div>
       )}
 
-      {/* Review Modal */}
+      {/* Review Detail Modal */}
       {selectedReview && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm bg-opacity z-50 flex justify-center items-center px-4">
           <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
@@ -356,8 +408,8 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
             </button>
             <div className="flex flex-col items-center">
               <img
-                src={selectedReview.reviewer.photo}
-                alt={selectedReview.reviewer.username}
+                src={selectedReview.reviewer?.photo || ""}
+                alt={selectedReview.reviewer?.username || "User"}
                 className="rounded-full w-24 h-24 mb-4 object-cover"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
@@ -366,7 +418,7 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
                 }}
               />
               <h2 className="text-xl font-bold text-gray-800 dark:text-white">
-                {selectedReview.reviewer.username}
+                {selectedReview.reviewer?.username || "Anonymous User"}
               </h2>
               <p className="text-gray-500 text-sm">
                 {formatReviewDate(selectedReview.createdAt)}
@@ -374,11 +426,11 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
               {renderRatingStars(selectedReview.rating)}
             </div>
             <div className="mt-4 text-gray-700 dark:text-gray-300">
-              <p>{selectedReview.comment}</p>
+              <p>{selectedReview.comment || "No comment provided"}</p>
             </div>
 
             {/* Delete button (only visible if current user is the reviewer) */}
-            {isExpertView && selectedReview.reviewerId === currentUserId && (
+            {selectedReview.reviewerId === currentUserId && (
               <div className="mt-6 flex justify-end">
                 <button
                   onClick={() => openDeleteModal(selectedReview)}
@@ -405,7 +457,7 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
             </button>
 
             <h2 className="text-xl font-bold text-gray-800 dark:text-white text-center mb-4">
-              Add Review
+              Review {expertData?.firstName || ""} {expertData?.lastName || ""}
             </h2>
 
             <div className="flex flex-col items-center">
@@ -477,8 +529,19 @@ const PlayerReview: React.FC<PlayerReviewProps> = ({
           </div>
         </div>
       )}
+
+      {/* Debug output - Remove in production */}
+      <div className="hidden">
+        <pre>
+          {JSON.stringify(
+            { reviewsCount: localReviews?.length || 0, hasReviews },
+            null,
+            2
+          )}
+        </pre>
+      </div>
     </div>
   );
 };
 
-export default PlayerReview;
+export default Expertreviews;

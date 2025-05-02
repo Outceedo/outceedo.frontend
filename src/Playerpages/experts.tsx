@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import moment from "moment";
+
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -11,25 +11,15 @@ import {
   faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import profile2 from "../assets/images/profile2.jpg";
-import player from "../assets/images/player.jpg";
-import {
-  faStar,
-  faCamera,
-  faVideo,
-  faPen,
-} from "@fortawesome/free-solid-svg-icons";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+
+import { faStar, faCamera, faVideo } from "@fortawesome/free-solid-svg-icons";
+
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile } from "../store/profile-slice";
 import { MoveLeft } from "lucide-react";
+import Reviews from "./reviews";
+import Expertreviews from "./expertreviews";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
@@ -158,6 +148,7 @@ const Experts = () => {
           ],
         certificates: certificates,
         services: viewedProfile.services || [],
+        reviewsReceived: viewedProfile.reviewsReceived,
       }
     : {
         name: "N/A",
@@ -704,59 +695,7 @@ const Experts = () => {
 
         {/* Reviews Tab */}
         {activeTab === "reviews" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {reviews.map((review) => (
-              <Card key={review.id} className="overflow-hidden">
-                <div className="p-4">
-                  <div className="flex items-center gap-3 mb-4">
-                    <img
-                      src={player}
-                      alt={review.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
-                    <div>
-                      <h3 className="font-semibold text-gray-900 dark:text-white">
-                        {review.name}
-                      </h3>
-                      <p className="text-sm text-gray-500">
-                        {moment(review.date).fromNow()}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300">
-                    {review.comment.length > 100 ? (
-                      <>
-                        {review.comment.substring(0, 100)}...
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button
-                              variant="link"
-                              className="p-0 text-blue-600"
-                            >
-                              Read more
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent>
-                            <DialogHeader>
-                              <DialogTitle>{review.name}</DialogTitle>
-                              <DialogDescription>
-                                {moment(review.date).format("MMMM D, YYYY")}
-                              </DialogDescription>
-                            </DialogHeader>
-                            <p className="mt-4 text-gray-700 dark:text-gray-300">
-                              {review.comment}
-                            </p>
-                          </DialogContent>
-                        </Dialog>
-                      </>
-                    ) : (
-                      review.comment
-                    )}
-                  </p>
-                </div>
-              </Card>
-            ))}
-          </div>
+          <Expertreviews expertData={expertData} isExpertView={false} />
         )}
 
         {/* Services Tab */}

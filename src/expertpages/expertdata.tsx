@@ -416,7 +416,7 @@ const ExpertProfile = () => {
             )}
             {activeTab === "media" && <ExpertMedia expertData={expertData} />}
             {activeTab === "reviews" && (
-              <ExpertReviews expertId={expertData.id} />
+              <ExpertReviews expertData={expertData} />
             )}
             {activeTab === "services" && (
               <ExpertServices expertData={expertData} />
