@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faImage, faVideo } from "@fortawesome/free-solid-svg-icons";
+import { faImage, faVideo, faPlay } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import { useState, useEffect } from "react";
 
@@ -174,7 +174,7 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
                           className="text-center cursor-pointer"
                           onClick={() => setPreviewItem(video)}
                         >
-                          <div className="w-full aspect-video overflow-hidden rounded-md bg-black">
+                          <div className="w-full aspect-video overflow-hidden rounded-md bg-black relative">
                             <video
                               src={video.preview || video.url || ""}
                               className="w-full h-full object-contain rounded-md"
@@ -190,6 +190,15 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
                                 video.currentTime = 0;
                               }}
                             />
+                            {/* Play button overlay for videos */}
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-16 h-16 rounded-full bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-all">
+                                <FontAwesomeIcon
+                                  icon={faPlay}
+                                  className="text-white text-2xl ml-1"
+                                />
+                              </div>
+                            </div>
                           </div>
                           <p className="text-sm mt-2 text-gray-600 dark:text-white">
                             {video.title}

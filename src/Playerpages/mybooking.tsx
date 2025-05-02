@@ -211,9 +211,10 @@ const MyBooking: React.FC = () => {
     const fetchBookings = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem("accessToken");
+        const token = localStorage.getItem("token");
         const response = await fetch(API_BASE_URL, {
           method: "GET",
+          withCredentials: true,
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -228,7 +229,7 @@ const MyBooking: React.FC = () => {
         setBookings(data.bookings);
 
         // Fetch additional data for experts and services
-        await Promise.all(data.bookings.map(fetchRelatedData));
+        // await Promise.all(data.bookings.map(fetchRelatedData));
       } catch (err) {
         console.error("Error fetching bookings:", err);
         setError("Could not connect to server. Showing demo data instead.");
@@ -246,64 +247,36 @@ const MyBooking: React.FC = () => {
   }, []);
 
   // Fetch related data for each booking (expert and service details)
-  const fetchRelatedData = async (booking: Booking) => {
-    try {
-      // Fetch expert data if not already fetched
-      if (booking.expertId && !experts[booking.expertId]) {
-        const token = localStorage.getItem("accessToken");
-        const expertResponse = await fetch(
-          `${import.meta.env.VITE_PORT}/api/v1/experts/${booking.expertId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+  // const fetchRelatedData = async (booking: Booking) => {
+  //   try {
+  //     // Fetch expert data if not already fetched
+  //     if (booking.expertId && !experts[booking.expertId]) {
+  //       const token = localStorage.getItem("token");
+  //       const expertResponse = await fetch(
+  //         `${import.meta.env.VITE_PORT}/api/v1/experts/${booking.expertId}`,
+  //         {
+  //           headers: {
+  //             Authorization: `Bearer ${token}`,
+  //           },
+  //         }
+  //       );
 
-        if (expertResponse.ok) {
-          const expertData = await expertResponse.json();
-          setExperts((prev) => ({
-            ...prev,
-            [booking.expertId]: {
-              id: expertData.id,
-              name: expertData.name || "Unknown Expert",
-              profileImage: expertData.profileImage,
-            },
-          }));
-        }
-      }
-
-      // Fetch service data if not already fetched
-      if (booking.serviceId && !services[booking.serviceId]) {
-        const token = localStorage.getItem("accessToken");
-        const serviceResponse = await fetch(
-          `${import.meta.env.VITE_PORT}/api/v1/services/${booking.serviceId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (serviceResponse.ok) {
-          const serviceData = await serviceResponse.json();
-          setServices((prev) => ({
-            ...prev,
-            [booking.serviceId]: {
-              id: serviceData.id,
-              name: serviceData.name || "Unknown Service",
-              description: serviceData.description || "",
-              price: serviceData.price
-                ? `$${serviceData.price}`
-                : "Price not available",
-            },
-          }));
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching related data:", error);
-    }
-  };
+  //       if (expertResponse.ok) {
+  //         const expertData = await expertResponse.json();
+  //         setExperts((prev) => ({
+  //           ...prev,
+  //           [booking.expertId]: {
+  //             id: expertData.id,
+  //             name: expertData.name || "Unknown Expert",
+  //             profileImage: expertData.profileImage,
+  //           },
+  //         }));
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching related data:", error);
+  //   }
+  // };
 
   const openVideoModal = (id: string) => {
     setSelectedBookingId(id);

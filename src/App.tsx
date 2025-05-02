@@ -48,6 +48,7 @@ const AppContent: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const hasToken = !!localStorage.getItem("token");
 
+  console.log(localStorage.getItem("ProfileComplete"));
   // Debug logging
 
   useEffect(() => {
@@ -96,9 +97,7 @@ const AppContent: React.FC = () => {
           effectivelyAuthenticated ? (
             <Navigate
               to={
-                user?.role === "expert"
-                  ? "/expert/dashboard"
-                  : "/player/dashboard"
+                user?.role === "expert" ? "/expert/profile" : "/player/profile"
               }
             />
           ) : (
@@ -113,9 +112,7 @@ const AppContent: React.FC = () => {
           effectivelyAuthenticated ? (
             <Navigate
               to={
-                user?.role === "expert"
-                  ? "/expert/dashboard"
-                  : "/player/dashboard"
+                user?.role === "expert" ? "/expert/profile" : "/player/profile"
               }
             />
           ) : (

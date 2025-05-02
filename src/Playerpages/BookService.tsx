@@ -154,7 +154,7 @@ const BookingCalendar: React.FC = () => {
       };
 
       // Get auth token
-      const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("token");
 
       // Make API call
       const response = await fetch(API_BASE_URL, {

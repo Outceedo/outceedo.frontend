@@ -8,6 +8,7 @@ import {
   faExclamationTriangle,
   faCheckCircle,
   faTimesCircle,
+  faPlay,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import MediaUpload from "./MediaUpload";
@@ -487,15 +488,6 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
 export default Media;
 
 //  Reusable MediaCard Component
-interface UploadItem {
-  id: string | number;
-  title: string;
-  file: File | null;
-  preview: string | null;
-  type: "photo" | "video";
-  url?: string;
-}
-
 interface MediaCardProps {
   item: UploadItem;
   selectedMedia: (string | number)[];
@@ -554,7 +546,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
       )}
 
       {/* Preview on Click */}
-      <div onClick={onPreview} className="cursor-pointer">
+      <div onClick={onPreview} className="cursor-pointer relative">
         {item.type === "photo" ? (
           <img
             src={item.preview || item.url || ""}
@@ -562,10 +554,18 @@ const MediaCard: React.FC<MediaCardProps> = ({
             className="w-full h-40 object-cover rounded-lg mt-2"
           />
         ) : (
-          <video
-            src={item.preview || item.url || ""}
-            className="w-full h-40 rounded-lg mt-2"
-          />
+          <div className="relative">
+            <video
+              src={item.preview || item.url || ""}
+              className="w-full h-40 object-cover rounded-lg mt-2"
+            />
+            {/* Play button overlay for videos */}
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-12 h-12 rounded-full bg-black bg-opacity-60 flex items-center justify-center hover:bg-opacity-70 transition-all">
+                <FontAwesomeIcon icon={faPlay} className="text-white text-xl" />
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
