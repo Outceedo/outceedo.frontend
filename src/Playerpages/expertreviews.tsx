@@ -2,6 +2,7 @@ import "react-circular-progressbar/dist/styles.css";
 import React, { useState, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 import axios from "axios";
+import profile2 from "../assets/images/avatar.png";
 
 // Define the type for a single review from the API
 interface ReviewerInfo {
@@ -366,7 +367,7 @@ const Expertreviews: React.FC<ExpertreviewsProps> = ({
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                   <img
-                    src={review.reviewer?.photo || ""}
+                    src={review.reviewer?.photo || profile2}
                     alt={review.reviewer?.username || "User"}
                     className="rounded-full w-full h-full object-cover"
                     onError={(e) => {
