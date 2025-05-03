@@ -39,6 +39,7 @@ interface Profile {
   travelLimit: string;
   certificationLevel: string;
   skills?: string[];
+
   [key: string]: any; // For additional fields based on role
 }
 

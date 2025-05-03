@@ -60,8 +60,15 @@ const Detailsform: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [isExpert, setIsExpert] = useState(false);
 
+  // State to keep track of existing profile image
+  const [existingProfilePhoto, setExistingProfilePhoto] = useState<
+    string | null
+  >(null);
+  const [profilePhotoChanged, setProfilePhotoChanged] = useState(false);
+
   // Form data
   const [formData, setFormData] = useState({
+    photo: "",
     firstName: "",
     lastName: "",
     profession: "",
@@ -140,9 +147,15 @@ const Detailsform: React.FC = () => {
     if (profileData) {
       console.log("Prefilling form with profile data:", profileData);
 
+      // Save existing profile photo if available
+      if (profileData.photo) {
+        setExistingProfilePhoto(profileData.photo);
+      }
+
       // Map the profile data to form data structure
       setFormData((prevData) => ({
         ...prevData,
+        photo: profileData.photo || "",
         firstName: profileData.firstName || "",
         lastName: profileData.lastName || "",
         profession: profileData.profession || "",
@@ -185,9 +198,23 @@ const Detailsform: React.FC = () => {
         twitter: profileData.socialLinks?.twitter || "",
       }));
 
-      // Other code remains the same...
+      // Set search terms for country and city
+      if (profileData.country) {
+        setSearchTerm(profileData.country);
+        // Find and set the selected country object
+        const country = countries.find(
+          (c) => c.name.toLowerCase() === profileData.country?.toLowerCase()
+        );
+        if (country) {
+          setSelectedCountry(country);
+        }
+      }
+
+      if (profileData.city) {
+        setCitySearchTerm(profileData.city);
+      }
     }
-  }, [profileData, isExpert]);
+  }, [profileData, isExpert, countries]);
 
   // Helper to create axios instance with auth header
   const createAuthAxios = () => {
@@ -341,8 +368,9 @@ const Detailsform: React.FC = () => {
 
     try {
       if (type === "profile") {
-        // Just store the file locally, don't upload yet
+        // Store the file locally and mark that profile photo has changed
         setProfilePhoto(file);
+        setProfilePhotoChanged(true);
       } else if (type === "professional") {
         setProfessionalPhoto(file);
         await uploadMediaFile(file, "professional");
@@ -547,7 +575,7 @@ const Detailsform: React.FC = () => {
       const profileUpdateData = {
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
-        photo: professionalPhotoMedia?.id || null,
+        photo: professionalPhotoMedia?.id || formData.photo || null,
         gender: formData.gender || null,
         age: formData.age ? parseInt(formData.age) : null,
         birthYear: formData.birthYear ? parseInt(formData.birthYear) : null,
@@ -594,7 +622,8 @@ const Detailsform: React.FC = () => {
         console.log("Profile updated successfully:", resultAction.payload);
 
         // After profile is updated, update the profile photo using the Redux thunk
-        if (profilePhoto) {
+        // Only upload new profile photo if it was changed
+        if (profilePhoto && profilePhotoChanged) {
           try {
             // Dispatch the updateProfilePhoto action
             const photoResultAction = await dispatch(
@@ -776,7 +805,21 @@ const Detailsform: React.FC = () => {
 
           <label className="block text-grey mb-1">Profile Picture</label>
           <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-center">
-            <span className="text-gray-500">
+            {existingProfilePhoto && !profilePhoto && (
+              <div className="flex items-center">
+                <img
+                  src={existingProfilePhoto}
+                  alt="Current profile"
+                  className="h-10 w-10 object-cover rounded-full mr-2"
+                />
+                <span className="text-gray-700">Current profile photo</span>
+              </div>
+            )}
+            <span
+              className={`text-gray-500 ${
+                existingProfilePhoto && !profilePhoto ? "hidden" : ""
+              }`}
+            >
               {profilePhoto
                 ? profilePhoto.name
                 : "Upload a photo here, max size 2MB"}
@@ -982,6 +1025,7 @@ const Detailsform: React.FC = () => {
         </div>
       )}
 
+      {/* The rest of your form steps remain the same... */}
       {/* Step 2: More Details */}
       {step === 2 && (
         <div>

@@ -40,42 +40,34 @@ const Reviews: React.FC<ReviewsProps> = ({ playerData, isExpertView }) => {
   const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [isUsingStaticData, setIsUsingStaticData] = useState(false);
 
-  // Fallback static reviews
-  const staticReviews: Review[] = [
-    {
-      name: "Laura W",
-      time: "1 year ago",
-      review:
-        "An incredible, heartfelt musician and a delight to work with. Hard working cadidate and grasp things so quickly.",
-      profileImage: profile2,
-    },
-    {
-      name: "Kenny B",
-      time: "1 year ago",
-      review: "An incredible, heartfelt musician and a delight to work with.",
-      profileImage: profile2,
-    },
-    {
-      name: "Nicola B",
-      time: "1 year ago",
-      review: "An incredible, heartfelt musician and a delight to work with.",
-      profileImage: profile2,
-    },
-  ];
-
   // Initialize reviews from playerData on component mount and when playerData changes
   useEffect(() => {
     console.log("Player data:", playerData);
 
-    // Check for reviews in the correct field (note the spelling 'reviewsRecieved')
+    // Check for reviews in the player data - using the correct property name
     if (
       playerData &&
-      playerData.reviewsRecieved &&
-      Array.isArray(playerData.reviewsRecieved) &&
-      playerData.reviewsRecieved.length > 0
+      playerData.reviewsReceived && // Correct spelling of reviewsReceived
+      Array.isArray(playerData.reviewsReceived) &&
+      playerData.reviewsReceived.length > 0
     ) {
-      console.log("Using real reviews data:", playerData.reviewsRecieved);
-      setReviews(playerData.reviewsRecieved);
+      console.log("Using real reviews data:", playerData.reviewsReceived);
+      setReviews(playerData.reviewsReceived);
+      setIsUsingStaticData(false);
+    }
+    // Also check the raw profile data as a fallback
+    else if (
+      playerData &&
+      playerData.rawProfile &&
+      playerData.rawProfile.reviewsReceived &&
+      Array.isArray(playerData.rawProfile.reviewsReceived) &&
+      playerData.rawProfile.reviewsReceived.length > 0
+    ) {
+      console.log(
+        "Using raw profile reviews data:",
+        playerData.rawProfile.reviewsReceived
+      );
+      setReviews(playerData.rawProfile.reviewsReceived);
       setIsUsingStaticData(false);
     } else {
       console.log("No real reviews found, using static data");
@@ -197,36 +189,7 @@ const Reviews: React.FC<ReviewsProps> = ({ playerData, isExpertView }) => {
       <div className="grid md:grid-cols-3 gap-6 mt-6">
         {isUsingStaticData ? (
           // Fallback to static reviews
-          staticReviews.map((review, index) => (
-            <div
-              key={index}
-              className="border dark:bg-gray-800 dark:border-gray-600 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition"
-              onClick={() => handleStaticCardClick(review)}
-            >
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
-                  <img
-                    src={review.profileImage}
-                    alt={review.name}
-                    className="rounded-full w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <p className="font-semibold text-gray-800 dark:text-white">
-                    {review.name}
-                  </p>
-                  <p className="text-gray-500 text-sm dark:text-gray-400">
-                    {review.time}
-                  </p>
-                </div>
-              </div>
-              <p className="mt-3 text-gray-700 dark:text-gray-300">
-                {review.review.length > 80
-                  ? `${review.review.substring(0, 80)}...`
-                  : review.review}
-              </p>
-            </div>
-          ))
+          <>no reviews yet</>
         ) : reviews.length === 0 ? (
           // No reviews message
           <div className="col-span-3 text-center py-8 text-gray-500 dark:text-gray-400">
@@ -327,6 +290,11 @@ const Reviews: React.FC<ReviewsProps> = ({ playerData, isExpertView }) => {
                 src={selectedStaticReview.profileImage}
                 alt={selectedStaticReview.name}
                 className="rounded-full w-24 h-24 mb-4 object-cover"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.src =
+                    "https://via.placeholder.com/96/CCCCCC/666666?text=User";
+                }}
               />
               <h2 className="text-xl font-bold text-gray-800 dark:text-white">
                 {selectedStaticReview.name}
@@ -336,12 +304,6 @@ const Reviews: React.FC<ReviewsProps> = ({ playerData, isExpertView }) => {
               </p>
             </div>
             <div className="mt-4 text-gray-700 dark:text-gray-300 space-y-4">
-              <p>
-                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Illum
-                sequi voluptatum facilis suscipit exercitationem, natus vero
-                eligendi sunt similique ipsa omnis qui eum incidunt molestias
-                quod recusandae animi, accusantium porro.
-              </p>
               <p>{selectedStaticReview.review}</p>
             </div>
           </div>

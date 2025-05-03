@@ -6,6 +6,15 @@ import {
   faEye,
   faEyeSlash,
   faSearch,
+  faUser,
+  faCalendarAlt,
+  faMoneyBill,
+  faClock,
+  faMapMarkerAlt,
+  faLink,
+  faInfoCircle,
+  faCreditCard,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import Video from "./Video";
@@ -28,6 +37,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -93,10 +109,17 @@ const MyBooking: React.FC = () => {
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
-
   const [visibilityMap, setVisibilityMap] = useState<{ [id: string]: boolean }>(
     {}
   );
+
+  // Booking details modal state
+  const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  // Payment processing state
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
@@ -293,7 +316,57 @@ const MyBooking: React.FC = () => {
     fetchBookings();
   }, []);
 
-  const openVideoModal = (id: string) => {
+  // Open booking details modal
+  const openBookingDetails = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsBookingDetailsOpen(true);
+  };
+
+  // Close booking details modal
+  const closeBookingDetails = () => {
+    setIsBookingDetailsOpen(false);
+    setSelectedBooking(null);
+  };
+
+  // Process payment
+  const handlePayment = async (bookingId: string) => {
+    setIsProcessingPayment(true);
+
+    try {
+      // In a real implementation, you would call your payment API here
+      // For now, we'll simulate a payment with a timeout
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Update the booking status to reflect payment
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, status: "ACCEPTED" }
+            : booking
+        )
+      );
+
+      // If the selected booking is the one being paid for, update it too
+      if (selectedBooking?.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "ACCEPTED" });
+      }
+
+      setPaymentSuccess(true);
+
+      // Reset payment success message after a delay
+      setTimeout(() => {
+        setPaymentSuccess(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Payment processing error:", error);
+      setError("Failed to process payment. Please try again.");
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
+
+  const openVideoModal = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSelectedBookingId(id);
     setIsVideoOpen(true);
   };
@@ -303,7 +376,8 @@ const MyBooking: React.FC = () => {
     setSelectedBookingId(null);
   };
 
-  const openReportModal = (id: string) => {
+  const openReportModal = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setSelectedBookingId(id);
     setIsReportOpen(true);
   };
@@ -313,7 +387,8 @@ const MyBooking: React.FC = () => {
     setSelectedBookingId(null);
   };
 
-  const toggleVisibility = (id: string) => {
+  const toggleVisibility = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     setVisibilityMap((prev) => ({
       ...prev,
       [id]: !prev[id],
@@ -449,6 +524,12 @@ const MyBooking: React.FC = () => {
         </div>
       )}
 
+      {paymentSuccess && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md">
+          Payment processed successfully!
+        </div>
+      )}
+
       {loading ? (
         <div className="text-center py-8">Loading bookings...</div>
       ) : (
@@ -477,7 +558,11 @@ const MyBooking: React.FC = () => {
                 </TableRow>
               ) : (
                 filteredBookings.map((booking) => (
-                  <TableRow key={booking.id}>
+                  <TableRow
+                    key={booking.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => openBookingDetails(booking)}
+                  >
                     <TableCell className="font-medium">
                       {booking.id.substring(0, 8)}...
                     </TableCell>
@@ -487,6 +572,10 @@ const MyBooking: React.FC = () => {
                           src={booking.expert?.photo || profile}
                           alt={booking.expert?.username}
                           className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = profile;
+                          }}
                         />
                         <span>
                           {booking.expert?.username || "Unknown Expert"}
@@ -521,7 +610,7 @@ const MyBooking: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 cursor-pointer"
-                        onClick={() => openVideoModal(booking.id)}
+                        onClick={(e) => openVideoModal(booking.id, e)}
                         disabled={
                           !booking.recordedVideo && !booking.meetingRecording
                         }
@@ -534,7 +623,7 @@ const MyBooking: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 cursor-pointer"
-                        onClick={() => openReportModal(booking.id)}
+                        onClick={(e) => openReportModal(booking.id, e)}
                       >
                         <FontAwesomeIcon icon={faFileAlt} />
                       </Button>
@@ -544,7 +633,7 @@ const MyBooking: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => toggleVisibility(booking.id)}
+                        onClick={(e) => toggleVisibility(booking.id, e)}
                       >
                         <FontAwesomeIcon
                           icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
@@ -569,7 +658,8 @@ const MyBooking: React.FC = () => {
             .map((booking) => (
               <div
                 key={`upcoming-${booking.id}`}
-                className="bg-white border rounded-lg p-4 shadow-sm"
+                className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer"
+                onClick={() => openBookingDetails(booking)}
               >
                 <div className="flex justify-between items-start">
                   <div>
@@ -581,6 +671,10 @@ const MyBooking: React.FC = () => {
                         src={booking.expert?.photo || profile}
                         alt={booking.expert?.username}
                         className="w-6 h-6 rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = profile;
+                        }}
                       />
                       <p className="text-sm text-gray-500">
                         with {booking.expert?.username || "Expert"}
@@ -598,13 +692,16 @@ const MyBooking: React.FC = () => {
                   <span className="text-gray-600">
                     ${booking.service?.price || "N/A"}
                   </span>
-                  <Button className="bg-red-500">Pay Now</Button>
+                  <Button className="bg-red-500 hover:bg-red-600">
+                    Pay Now
+                  </Button>
                   {booking.meetLink && (
                     <a
                       href={booking.meetLink}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-sm text-blue-600 hover:text-blue-800"
+                      onClick={(e) => e.stopPropagation()}
                     >
                       Join Meeting
                     </a>
@@ -621,6 +718,309 @@ const MyBooking: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Booking Details Modal */}
+      {selectedBooking && (
+        <Dialog
+          open={isBookingDetailsOpen}
+          onOpenChange={setIsBookingDetailsOpen}
+        >
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Booking Details</DialogTitle>
+            </DialogHeader>
+
+            <div className="py-4">
+              {/* Status and Payment */}
+              <div className="flex justify-between items-center mb-4">
+                <Badge
+                  variant="outline"
+                  className={getActionBadgeStyle(selectedBooking.status)}
+                >
+                  {formatStatus(selectedBooking.status)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className={getPaymentBadgeStyle(selectedBooking.status)}
+                >
+                  {getPaymentStatus(selectedBooking.status)}
+                </Badge>
+              </div>
+
+              {/* Expert Information */}
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <FontAwesomeIcon
+                    icon={faUser}
+                    className="mr-2 text-gray-600"
+                  />
+                  Expert Information
+                </h3>
+                <div className="flex items-start gap-4">
+                  <img
+                    src={selectedBooking.expert?.photo || profile}
+                    alt="Expert"
+                    className="w-16 h-16 rounded-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = profile;
+                    }}
+                  />
+                  <div>
+                    <h4 className="font-medium text-lg mb-1">
+                      {selectedBooking.expert?.username}
+                    </h4>
+                    {/* Additional expert info - in a real application, you might fetch this from the API */}
+                    <p className="text-gray-600 text-sm mb-1">
+                      Professional Coach
+                    </p>
+                    <p className="text-gray-600 text-sm">
+                      <FontAwesomeIcon
+                        icon={faStar}
+                        className="text-yellow-500 mr-1"
+                      />
+                      <FontAwesomeIcon
+                        icon={faStar}
+                        className="text-yellow-500 mr-1"
+                      />
+                      <FontAwesomeIcon
+                        icon={faStar}
+                        className="text-yellow-500 mr-1"
+                      />
+                      <FontAwesomeIcon
+                        icon={faStar}
+                        className="text-yellow-500 mr-1"
+                      />
+                      <FontAwesomeIcon
+                        icon={faStar}
+                        className="text-gray-300 mr-1"
+                      />
+                      (4.0)
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Details */}
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <FontAwesomeIcon
+                      icon={faInfoCircle}
+                      className="mr-2 text-gray-600"
+                    />
+                    Service Details
+                  </h3>
+                  <div className="text-lg font-bold text-green-700">
+                    <FontAwesomeIcon icon={faMoneyBill} className="mr-1" />$
+                    {selectedBooking.service?.price}
+                  </div>
+                </div>
+                <h4 className="font-medium mb-2">
+                  {selectedBooking.service?.service?.name}
+                </h4>
+                <p className="text-gray-600 mb-4">
+                  {selectedBooking.service?.service?.description}
+                </p>
+
+                {/* Service features - in a real application, these would come from the API */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span>One-on-one personalized instruction</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span>Video recording for later review</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span>Detailed performance assessment</span>
+                  </div>
+                  <div className="flex items-start">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span>Follow-up recommendations</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Session Information */}
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <FontAwesomeIcon
+                    icon={faCalendarAlt}
+                    className="mr-2 text-gray-600"
+                  />
+                  Session Information
+                </h3>
+                <div className="flex items-start mb-2">
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    className="mr-2 mt-1 text-gray-600"
+                  />
+                  <div>
+                    <p className="font-medium">Date & Time:</p>
+                    <p className="text-gray-600">
+                      {formatDate(
+                        selectedBooking.date,
+                        selectedBooking.startTime
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start mb-2">
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    className="mr-2 mt-1 text-gray-600"
+                  />
+                  <div>
+                    <p className="font-medium">Duration:</p>
+                    <p className="text-gray-600">
+                      {selectedBooking.startTime} - {selectedBooking.endTime}
+                    </p>
+                  </div>
+                </div>
+                {selectedBooking.location && (
+                  <div className="flex items-start mb-2">
+                    <FontAwesomeIcon
+                      icon={faMapMarkerAlt}
+                      className="mr-2 mt-1 text-gray-600"
+                    />
+                    <div>
+                      <p className="font-medium">Location:</p>
+                      <p className="text-gray-600">
+                        {selectedBooking.location}
+                      </p>
+                    </div>
+                  </div>
+                )}
+                {selectedBooking.meetLink && (
+                  <div className="flex items-start">
+                    <FontAwesomeIcon
+                      icon={faLink}
+                      className="mr-2 mt-1 text-gray-600"
+                    />
+                    <div>
+                      <p className="font-medium">Meeting Link:</p>
+                      <a
+                        href={selectedBooking.meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        {selectedBooking.meetLink}
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Media Section */}
+              {(selectedBooking.recordedVideo ||
+                selectedBooking.meetingRecording) && (
+                <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2 flex items-center">
+                    <FontAwesomeIcon
+                      icon={faVideo}
+                      className="mr-2 text-gray-600"
+                    />
+                    Recording
+                  </h3>
+                  <div className="flex flex-col gap-2">
+                    {selectedBooking.recordedVideo && (
+                      <Button
+                        variant="outline"
+                        className="text-blue-600 hover:bg-blue-50"
+                        onClick={() => openVideoModal(selectedBooking.id)}
+                      >
+                        <FontAwesomeIcon icon={faVideo} className="mr-2" />
+                        View Recorded Video
+                      </Button>
+                    )}
+                    {selectedBooking.meetingRecording && (
+                      <Button
+                        variant="outline"
+                        className="text-blue-600 hover:bg-blue-50"
+                        onClick={() => openVideoModal(selectedBooking.id)}
+                      >
+                        <FontAwesomeIcon icon={faVideo} className="mr-2" />
+                        View Meeting Recording
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="flex gap-3 justify-end">
+              {/* Session action buttons */}
+              {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
+                <Button
+                  className="bg-red-500 hover:bg-red-600 text-white"
+                  onClick={() => handlePayment(selectedBooking.id)}
+                  disabled={isProcessingPayment}
+                >
+                  {isProcessingPayment ? (
+                    <>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                      Pay Now (${selectedBooking.service?.price})
+                    </>
+                  )}
+                </Button>
+              )}
+
+              {selectedBooking.status === "ACCEPTED" &&
+                selectedBooking.meetLink && (
+                  <Button
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() =>
+                      window.open(selectedBooking.meetLink, "_blank")
+                    }
+                  >
+                    <FontAwesomeIcon icon={faVideo} className="mr-2" />
+                    Join Meeting
+                  </Button>
+                )}
+
+              <Button
+                variant="outline"
+                onClick={() => openReportModal(selectedBooking.id)}
+              >
+                <FontAwesomeIcon icon={faFileAlt} className="mr-2" />
+                View Report
+              </Button>
+
+              <Button variant="outline" onClick={closeBookingDetails}>
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Video Modal */}
       {isVideoOpen && (

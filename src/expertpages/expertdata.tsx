@@ -86,7 +86,7 @@ const ExpertProfile = () => {
           navigate("/details-form");
         }
       }
-    }, 2000); // 2000 milliseconds = 2 seconds
+    }, 4000); // 2000 milliseconds = 2 seconds
 
     // Cleanup function to clear the timeout if component unmounts before timeout completes
     return () => clearTimeout(navigationTimer);

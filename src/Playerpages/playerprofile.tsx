@@ -257,7 +257,7 @@ const Profile: React.FC = () => {
       uploads: mediaItems,
       documents: profile.documents || [],
       rawProfile: profile,
-      reviewsRecieved: profile.reviewsReceived,
+      reviewsReceived: profile.reviewsReceived,
     };
   };
 

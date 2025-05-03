@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
-import profile2 from "../assets/images/profile2.jpg"; // Import a default profile image
+import profile from "../assets/images/avatar.png"; // Import a default profile image
 
 // Define interfaces for our data types
 interface Service {
@@ -218,7 +218,7 @@ const BookingCalendar: React.FC = () => {
                 {service?.expertname && (
                   <div className="flex flex-col items-center mb-6">
                     <img
-                      src={service.expertProfileImage || profile2}
+                      src={service.expertProfileImage || profile}
                       alt={service.expertname}
                       className="w-20 h-20 rounded-full object-cover mb-2"
                       onError={(e) => {
