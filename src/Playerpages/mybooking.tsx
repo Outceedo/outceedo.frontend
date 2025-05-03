@@ -95,6 +95,7 @@ interface Booking {
   player: Player;
   service: Service;
   review?: string;
+  isPaid?: boolean; // Added to track payment status locally
 }
 
 const MyBooking: React.FC = () => {
@@ -164,6 +165,7 @@ const MyBooking: React.FC = () => {
             updatedAt: "2025-01-01T00:00:00.000Z",
           },
         },
+        isPaid: false,
       },
       {
         id: "c2b3d4e5-f6g7-8901-hijk-lm2345678901",
@@ -202,6 +204,7 @@ const MyBooking: React.FC = () => {
             updatedAt: "2025-01-01T00:00:00.000Z",
           },
         },
+        isPaid: true,
       },
       {
         id: "d3c4e5f6-g7h8-9012-jklm-no3456789012",
@@ -240,6 +243,7 @@ const MyBooking: React.FC = () => {
             updatedAt: "2025-01-01T00:00:00.000Z",
           },
         },
+        isPaid: true,
       },
       {
         id: "e4d5f6g7-h8i9-0123-klmn-op4567890123",
@@ -278,6 +282,7 @@ const MyBooking: React.FC = () => {
             updatedAt: "2025-01-01T00:00:00.000Z",
           },
         },
+        isPaid: false,
       },
     ];
   };
@@ -301,7 +306,15 @@ const MyBooking: React.FC = () => {
         }
 
         const data = await response.json();
-        setBookings(data.bookings);
+        // Initialize isPaid based on status
+        const bookingsWithPaymentStatus = data.bookings.map(
+          (booking: Booking) => ({
+            ...booking,
+            isPaid:
+              booking.status === "COMPLETED" || booking.status === "ACCEPTED",
+          })
+        );
+        setBookings(bookingsWithPaymentStatus);
       } catch (err) {
         console.error("Error fetching bookings:", err);
         setError("Could not connect to server. Showing demo data instead.");
@@ -337,18 +350,22 @@ const MyBooking: React.FC = () => {
       // For now, we'll simulate a payment with a timeout
       await new Promise((resolve) => setTimeout(resolve, 1500));
 
-      // Update the booking status to reflect payment
+      // Update the booking status and isPaid flag
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
-            ? { ...booking, status: "ACCEPTED" }
+            ? { ...booking, status: "ACCEPTED", isPaid: true }
             : booking
         )
       );
 
       // If the selected booking is the one being paid for, update it too
       if (selectedBooking?.id === bookingId) {
-        setSelectedBooking({ ...selectedBooking, status: "ACCEPTED" });
+        setSelectedBooking({
+          ...selectedBooking,
+          status: "ACCEPTED",
+          isPaid: true,
+        });
       }
 
       setPaymentSuccess(true);
@@ -688,14 +705,22 @@ const MyBooking: React.FC = () => {
                     })}
                   </Badge>
                 </div>
-                <div className="mt-4 flex justify-between">
+                <div className="mt-4 flex justify-between items-center">
                   <span className="text-gray-600">
                     ${booking.service?.price || "N/A"}
                   </span>
-                  <Button className="bg-red-500 hover:bg-red-600">
-                    Pay Now
-                  </Button>
-                  {booking.meetLink && (
+
+                  {!booking.isPaid ? (
+                    <Button
+                      className="bg-red-500 hover:bg-red-600"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handlePayment(booking.id);
+                      }}
+                    >
+                      Pay Now
+                    </Button>
+                  ) : booking.meetLink ? (
                     <a
                       href={booking.meetLink}
                       target="_blank"
@@ -705,7 +730,7 @@ const MyBooking: React.FC = () => {
                     >
                       Join Meeting
                     </a>
-                  )}
+                  ) : null}
                 </div>
               </div>
             ))}
@@ -954,44 +979,45 @@ const MyBooking: React.FC = () => {
 
             <DialogFooter className="flex gap-3 justify-end">
               {/* Session action buttons */}
-              {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
-                <Button
-                  className="bg-red-500 hover:bg-red-600 text-white"
-                  onClick={() => handlePayment(selectedBooking.id)}
-                  disabled={isProcessingPayment}
-                >
-                  {isProcessingPayment ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                      Pay Now (${selectedBooking.service?.price})
-                    </>
-                  )}
-                </Button>
-              )}
+              {selectedBooking.status === "WAITING_EXPERT_APPROVAL" &&
+                !selectedBooking.isPaid && (
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                    onClick={() => handlePayment(selectedBooking.id)}
+                    disabled={isProcessingPayment}
+                  >
+                    {isProcessingPayment ? (
+                      <>
+                        <svg
+                          className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          ></circle>
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                        Pay Now (${selectedBooking.service?.price})
+                      </>
+                    )}
+                  </Button>
+                )}
 
               {selectedBooking.status === "ACCEPTED" &&
                 selectedBooking.meetLink && (
