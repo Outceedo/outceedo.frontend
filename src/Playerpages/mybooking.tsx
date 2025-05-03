@@ -11,7 +11,7 @@ import "react-circular-progressbar/dist/styles.css";
 import Video from "./Video";
 import AssessmentReport from "../Playerpages/AssessmentReport";
 import { X } from "lucide-react";
-import profile2 from "../assets/images/profile2.jpg"; // Import a default profile image
+import profile from "../assets/images/avatar.png"; // Import a default profile image
 
 import {
   Table,
@@ -32,17 +32,32 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+// Updated interfaces to match the new API response format
 interface Expert {
   id: string;
+  username: string;
+  photo: string;
+}
+
+interface Player {
+  id: string;
+  username: string;
+  photo: string;
+}
+
+interface ServiceDetails {
+  id: string;
   name: string;
-  profileImage?: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Service {
   id: string;
-  name: string;
-  description: string;
-  price: string;
+  serviceId: string;
+  price: number;
+  service: ServiceDetails;
 }
 
 interface Booking {
@@ -60,14 +75,14 @@ interface Booking {
   meetingRecording: string | null;
   createdAt: string;
   updatedAt: string;
-  expert?: Expert;
-  service?: Service;
+  expert: Expert;
+  player: Player;
+  service: Service;
+  review?: string;
 }
 
 const MyBooking: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [experts, setExperts] = useState<{ [key: string]: Expert }>({});
-  const [services, setServices] = useState<{ [key: string]: Service }>({});
   const [bookingStatus, setBookingStatus] = useState("all");
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -87,123 +102,161 @@ const MyBooking: React.FC = () => {
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
   // Dummy data for demonstration when API fails
-  const dummyBookings: Booking[] = [
-    {
-      id: "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
-      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      serviceId: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      status: "WAITING_EXPERT_APPROVAL",
-      date: "2025-05-15T00:00:00.000Z",
-      startTime: "10:00",
-      endTime: "11:00",
-      location: null,
-      meetLink: null,
-      recordedVideo: null,
-      meetingRecording: null,
-      createdAt: "2025-04-29T14:30:00.000Z",
-      updatedAt: "2025-04-29T14:30:00.000Z",
-    },
-    {
-      id: "c2b3d4e5-f6g7-8901-hijk-lm2345678901",
-      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      expertId: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-      serviceId: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-      status: "CONFIRMED",
-      date: "2025-05-20T00:00:00.000Z",
-      startTime: "14:00",
-      endTime: "15:00",
-      location: null,
-      meetLink: "https://meet.google.com/abc-defg-hij",
-      recordedVideo: null,
-      meetingRecording: null,
-      createdAt: "2025-04-30T09:15:00.000Z",
-      updatedAt: "2025-05-01T10:20:00.000Z",
-    },
-    {
-      id: "d3c4e5f6-g7h8-9012-jklm-no3456789012",
-      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      expertId: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-      serviceId: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-      status: "COMPLETED",
-      date: "2025-04-25T00:00:00.000Z",
-      startTime: "09:00",
-      endTime: "10:00",
-      location: "Central Park Field #3",
-      meetLink: null,
-      recordedVideo: "https://example.com/videos/session123.mp4",
-      meetingRecording: null,
-      createdAt: "2025-04-22T11:30:00.000Z",
-      updatedAt: "2025-04-25T10:05:00.000Z",
-    },
-    {
-      id: "e4d5f6g7-h8i9-0123-klmn-op4567890123",
-      playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      expertId: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-      serviceId: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-      status: "REJECTED",
-      date: "2025-05-10T00:00:00.000Z",
-      startTime: "16:00",
-      endTime: "17:00",
-      location: null,
-      meetLink: null,
-      recordedVideo: null,
-      meetingRecording: null,
-      createdAt: "2025-05-01T08:45:00.000Z",
-      updatedAt: "2025-05-01T12:30:00.000Z",
-    },
-  ];
-
-  // Dummy expert data
-  const dummyExperts: { [key: string]: Expert } = {
-    "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1": {
-      id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      name: "John Smith",
-      profileImage: "https://i.pravatar.cc/150?u=john",
-    },
-    "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2": {
-      id: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-      name: "Emma Johnson",
-      profileImage: "https://i.pravatar.cc/150?u=emma",
-    },
-    "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3": {
-      id: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-      name: "Miguel Rodriguez",
-      profileImage: "https://i.pravatar.cc/150?u=miguel",
-    },
-    "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4": {
-      id: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-      name: "Sarah Lee",
-      profileImage: "https://i.pravatar.cc/150?u=sarah",
-    },
-  };
-
-  // Dummy service data
-  const dummyServices: { [key: string]: Service } = {
-    "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1": {
-      id: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-      name: "Technical Training Session",
-      description: "One-on-one technical skills training",
-      price: "$35",
-    },
-    "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2": {
-      id: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-      name: "Strategy Session",
-      description: "Game strategy and tactical analysis",
-      price: "$40",
-    },
-    "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3": {
-      id: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-      name: "Field Training",
-      description: "On-field practice and drills",
-      price: "$45",
-    },
-    "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4": {
-      id: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-      name: "Video Analysis",
-      description: "Detailed analysis of gameplay footage",
-      price: "$50",
-    },
+  const getDummyBookings = (): Booking[] => {
+    return [
+      {
+        id: "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
+        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        serviceId: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        status: "WAITING_EXPERT_APPROVAL",
+        date: "2025-05-15T00:00:00.000Z",
+        startTime: "10:00",
+        endTime: "11:00",
+        location: null,
+        meetLink: null,
+        recordedVideo: null,
+        meetingRecording: null,
+        createdAt: "2025-04-29T14:30:00.000Z",
+        updatedAt: "2025-04-29T14:30:00.000Z",
+        expert: {
+          id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "john_coach",
+          photo: "https://i.pravatar.cc/150?u=john",
+        },
+        player: {
+          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "alex_taylor",
+          photo: "https://i.pravatar.cc/150?u=alex",
+        },
+        service: {
+          id: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          serviceId: "1",
+          price: 35,
+          service: {
+            id: "1",
+            name: "Technical Training Session",
+            description: "One-on-one technical skills training",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
+      },
+      {
+        id: "c2b3d4e5-f6g7-8901-hijk-lm2345678901",
+        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        expertId: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+        serviceId: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+        status: "ACCEPTED",
+        date: "2025-05-20T00:00:00.000Z",
+        startTime: "14:00",
+        endTime: "15:00",
+        location: null,
+        meetLink: "https://meet.google.com/abc-defg-hij",
+        recordedVideo: null,
+        meetingRecording: null,
+        createdAt: "2025-04-30T09:15:00.000Z",
+        updatedAt: "2025-05-01T10:20:00.000Z",
+        expert: {
+          id: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+          username: "emma_coach",
+          photo: "https://i.pravatar.cc/150?u=emma",
+        },
+        player: {
+          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "alex_taylor",
+          photo: "https://i.pravatar.cc/150?u=alex",
+        },
+        service: {
+          id: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+          serviceId: "2",
+          price: 40,
+          service: {
+            id: "2",
+            name: "Strategy Session",
+            description: "Game strategy and tactical analysis",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
+      },
+      {
+        id: "d3c4e5f6-g7h8-9012-jklm-no3456789012",
+        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        expertId: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+        serviceId: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+        status: "COMPLETED",
+        date: "2025-04-25T00:00:00.000Z",
+        startTime: "09:00",
+        endTime: "10:00",
+        location: "Central Park Field #3",
+        meetLink: null,
+        recordedVideo: "https://example.com/videos/session123.mp4",
+        meetingRecording: null,
+        createdAt: "2025-04-22T11:30:00.000Z",
+        updatedAt: "2025-04-25T10:05:00.000Z",
+        expert: {
+          id: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+          username: "miguel_coach",
+          photo: "https://i.pravatar.cc/150?u=miguel",
+        },
+        player: {
+          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "alex_taylor",
+          photo: "https://i.pravatar.cc/150?u=alex",
+        },
+        service: {
+          id: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+          serviceId: "3",
+          price: 45,
+          service: {
+            id: "3",
+            name: "Field Training",
+            description: "On-field practice and drills",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
+      },
+      {
+        id: "e4d5f6g7-h8i9-0123-klmn-op4567890123",
+        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        expertId: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+        serviceId: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+        status: "REJECTED",
+        date: "2025-05-10T00:00:00.000Z",
+        startTime: "16:00",
+        endTime: "17:00",
+        location: null,
+        meetLink: null,
+        recordedVideo: null,
+        meetingRecording: null,
+        createdAt: "2025-05-01T08:45:00.000Z",
+        updatedAt: "2025-05-01T12:30:00.000Z",
+        expert: {
+          id: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+          username: "sarah_coach",
+          photo: "https://i.pravatar.cc/150?u=sarah",
+        },
+        player: {
+          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "alex_taylor",
+          photo: "https://i.pravatar.cc/150?u=alex",
+        },
+        service: {
+          id: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
+          serviceId: "4",
+          price: 50,
+          service: {
+            id: "4",
+            name: "Video Analysis",
+            description: "Detailed analysis of gameplay footage",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
+      },
+    ];
   };
 
   // Fetch bookings from API
@@ -214,7 +267,6 @@ const MyBooking: React.FC = () => {
         const token = localStorage.getItem("token");
         const response = await fetch(API_BASE_URL, {
           method: "GET",
-          withCredentials: true,
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -227,17 +279,12 @@ const MyBooking: React.FC = () => {
 
         const data = await response.json();
         setBookings(data.bookings);
-
-        // Fetch additional data for experts and services
-        // await Promise.all(data.bookings.map(fetchRelatedData));
       } catch (err) {
         console.error("Error fetching bookings:", err);
         setError("Could not connect to server. Showing demo data instead.");
 
         // Set dummy data if API fails
-        setBookings(dummyBookings);
-        setExperts(dummyExperts);
-        setServices(dummyServices);
+        setBookings(getDummyBookings());
       } finally {
         setLoading(false);
       }
@@ -245,38 +292,6 @@ const MyBooking: React.FC = () => {
 
     fetchBookings();
   }, []);
-
-  // Fetch related data for each booking (expert and service details)
-  // const fetchRelatedData = async (booking: Booking) => {
-  //   try {
-  //     // Fetch expert data if not already fetched
-  //     if (booking.expertId && !experts[booking.expertId]) {
-  //       const token = localStorage.getItem("token");
-  //       const expertResponse = await fetch(
-  //         `${import.meta.env.VITE_PORT}/api/v1/experts/${booking.expertId}`,
-  //         {
-  //           headers: {
-  //             Authorization: `Bearer ${token}`,
-  //           },
-  //         }
-  //       );
-
-  //       if (expertResponse.ok) {
-  //         const expertData = await expertResponse.json();
-  //         setExperts((prev) => ({
-  //           ...prev,
-  //           [booking.expertId]: {
-  //             id: expertData.id,
-  //             name: expertData.name || "Unknown Expert",
-  //             profileImage: expertData.profileImage,
-  //           },
-  //         }));
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Error fetching related data:", error);
-  //   }
-  // };
 
   const openVideoModal = (id: string) => {
     setSelectedBookingId(id);
@@ -327,12 +342,14 @@ const MyBooking: React.FC = () => {
 
   const getPaymentBadgeStyle = (status: string) => {
     switch (status) {
-      case "PAID":
+      case "COMPLETED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
-      case "NOT_PAID":
+      case "REJECTED":
+      case "CANCELLED":
         return "bg-red-100 text-red-800 hover:bg-red-100";
-      case "PENDING":
       case "WAITING_EXPERT_APPROVAL":
+      case "ACCEPTED":
+      case "PENDING":
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
@@ -345,6 +362,19 @@ const MyBooking: React.FC = () => {
       .replace(/_/g, " ")
       .toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  // Get payment status from booking status
+  const getPaymentStatus = (status: string) => {
+    switch (status) {
+      case "COMPLETED":
+        return "Paid";
+      case "REJECTED":
+      case "CANCELLED":
+        return "Not Paid";
+      default:
+        return "Pending";
+    }
   };
 
   // Format date for display
@@ -369,7 +399,7 @@ const MyBooking: React.FC = () => {
 
   // Filter bookings based on search and status filter
   const filteredBookings = bookings.filter((booking) => {
-    const expertName = experts[booking.expertId]?.name || "";
+    const expertName = booking.expert?.username || "";
     const matchesSearch = expertName
       .toLowerCase()
       .includes(search.toLowerCase());
@@ -378,8 +408,7 @@ const MyBooking: React.FC = () => {
       (bookingStatus === "PAID" && booking.status === "COMPLETED") ||
       (bookingStatus === "NOT_PAID" &&
         booking.status === "WAITING_EXPERT_APPROVAL") ||
-      (bookingStatus === "PENDING" &&
-        (booking.status === "CONFIRMED" || booking.status === "ACCEPTED"));
+      (bookingStatus === "PENDING" && ["ACCEPTED"].includes(booking.status));
 
     return matchesSearch && matchesStatus;
   });
@@ -454,8 +483,13 @@ const MyBooking: React.FC = () => {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
+                        <img
+                          src={booking.expert?.photo || profile}
+                          alt={booking.expert?.username}
+                          className="w-8 h-8 rounded-full object-cover"
+                        />
                         <span>
-                          {experts[booking.expertId]?.name || "Unknown Expert"}
+                          {booking.expert?.username || "Unknown Expert"}
                         </span>
                       </div>
                     </TableCell>
@@ -463,11 +497,9 @@ const MyBooking: React.FC = () => {
                       {formatDate(booking.date, booking.startTime)}
                     </TableCell>
                     <TableCell>
-                      {services[booking.serviceId]?.name || "Unknown Service"}
+                      {booking.service?.service?.name || "Unknown Service"}
                     </TableCell>
-                    <TableCell>
-                      {services[booking.serviceId]?.price || "N/A"}
-                    </TableCell>
+                    <TableCell>${booking.service?.price || "N/A"}</TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -481,11 +513,7 @@ const MyBooking: React.FC = () => {
                         variant="outline"
                         className={getPaymentBadgeStyle(booking.status)}
                       >
-                        {booking.status === "COMPLETED"
-                          ? "Paid"
-                          : booking.status === "WAITING_EXPERT_APPROVAL"
-                          ? "Not Paid"
-                          : "Pending"}
+                        {getPaymentStatus(booking.status)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
@@ -530,6 +558,69 @@ const MyBooking: React.FC = () => {
           </Table>
         </div>
       )}
+
+      {/* Upcoming Sessions Section */}
+      <div className="mt-6">
+        <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {bookings
+            .filter((booking) => booking.status === "ACCEPTED")
+            .slice(0, 3)
+            .map((booking) => (
+              <div
+                key={`upcoming-${booking.id}`}
+                className="bg-white border rounded-lg p-4 shadow-sm"
+              >
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="font-medium">
+                      {booking.service?.service?.name || "Service"}
+                    </h3>
+                    <div className="flex items-center gap-2 mt-2">
+                      <img
+                        src={booking.expert?.photo || profile}
+                        alt={booking.expert?.username}
+                        className="w-6 h-6 rounded-full object-cover"
+                      />
+                      <p className="text-sm text-gray-500">
+                        with {booking.expert?.username || "Expert"}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-blue-50 text-blue-800">
+                    {new Date(booking.date).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </Badge>
+                </div>
+                <div className="mt-4 flex justify-between">
+                  <span className="text-gray-600">
+                    ${booking.service?.price || "N/A"}
+                  </span>
+                  <Button className="bg-red-500">Pay Now</Button>
+                  {booking.meetLink && (
+                    <a
+                      href={booking.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Join Meeting
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))}
+
+          {bookings.filter((booking) => booking.status === "ACCEPTED")
+            .length === 0 && (
+            <div className="col-span-3 text-center py-4 text-gray-500">
+              No upcoming sessions
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Video Modal */}
       {isVideoOpen && (

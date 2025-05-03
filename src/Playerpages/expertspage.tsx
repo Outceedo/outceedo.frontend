@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, CheckCircle } from "lucide-react";
+import avatar from "../assets/images/avatar.png";
 import {
   Select,
   SelectContent,
@@ -370,8 +371,7 @@ const Expertspage: React.FC = () => {
                   expert.reviews || Math.floor(Math.random() * 150) + 50;
 
                 // Use photo from profile or fallback to default images
-                const expertImage =
-                  expert.photo || defaultImages[index % defaultImages.length];
+                const expertImage = expert.photo || avatar;
 
                 // Use verified status if available, or generate randomly
                 const isVerified =
@@ -464,4 +464,3 @@ const Expertspage: React.FC = () => {
 };
 
 export default Expertspage;
-  

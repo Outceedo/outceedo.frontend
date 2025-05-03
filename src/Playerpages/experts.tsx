@@ -10,7 +10,7 @@ import {
   faFacebook,
   faTwitter,
 } from "@fortawesome/free-brands-svg-icons";
-import profile2 from "../assets/images/profile2.jpg";
+import profile from "../assets/images/avatar.png";
 
 import { faStar, faCamera, faVideo } from "@fortawesome/free-solid-svg-icons";
 
@@ -432,13 +432,9 @@ const Experts = () => {
         {/* Right side - Profile image */}
         <div className="w-full md:w-1/3 lg:w-1/4 rounded-lg overflow-hidden">
           <img
-            src={expertData.profileImage}
+            src={expertData.profileImage || profile}
             alt={expertData.name}
             className="w-full h-auto aspect-square object-cover rounded-lg shadow-md"
-            onError={(e) => {
-              const target = e.target as HTMLImageElement;
-              target.src = profile2;
-            }}
           />
         </div>
       </div>

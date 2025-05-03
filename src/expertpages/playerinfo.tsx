@@ -10,14 +10,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile } from "../store/profile-slice";
 
 // Import default images
-import player from "../assets/images/player.jpg";
-import player1 from "../assets/images/player1.jpg";
-import player2 from "../assets/images/player2.jpg";
-import player3 from "../assets/images/player3.jpg";
-import player4 from "../assets/images/player4.jpg";
-import player5 from "../assets/images/player5.jpg";
-
-const defaultImages = [player, player1, player2, player3, player4, player5];
+import profile from "../assets/images/avatar.png";
 
 interface Stat {
   label: string;
@@ -219,13 +212,9 @@ const PlayerInfo: React.FC = () => {
           </div>
           <div className="flex flex-col lg:flex-row gap-6 items-start mt-4">
             <img
-              src={profileData.photo || null}
+              src={profileData.photo || profile}
               alt={`${displayName}'s profile`}
               className="rounded-lg w-60 h-60 object-cover shadow-md"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = defaultImages[0];
-              }}
             />
 
             <div className="flex flex-col mt-5 w-full gap-4">

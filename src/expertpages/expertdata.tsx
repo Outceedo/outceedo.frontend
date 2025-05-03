@@ -16,6 +16,7 @@ import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
 import avatar from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
+import { profile } from "console";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
@@ -49,42 +50,47 @@ const ExpertProfile = () => {
     }
   }, [dispatch]);
   useEffect(() => {
-    // Only proceed with navigation if user is logged in and not already redirecting
+    // Set a 2-second delay before executing navigation logic
+    const navigationTimer = setTimeout(() => {
+      // Only proceed with navigation if user is logged in and not already redirecting
+      const userRole = localStorage.getItem("role");
 
-    const userRole = localStorage.getItem("role");
+      // Check if required profile fields are missing
+      const isProfileIncomplete =
+        !currentProfile?.age ||
+        !currentProfile?.gender ||
+        !currentProfile?.height ||
+        !currentProfile?.weight;
 
-    // Check if required profile fields are missing
-    const isProfileIncomplete =
-      !currentProfile?.age ||
-      !currentProfile?.gender ||
-      !currentProfile?.height ||
-      !currentProfile?.weight;
+      console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
+      console.log("Missing fields:", {
+        age: !currentProfile?.age,
+        gender: !currentProfile?.gender,
+        height: !currentProfile?.height,
+        weight: !currentProfile?.weight,
+      });
 
-    console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
-    console.log("Missing fields:", {
-      age: !currentProfile?.age,
-      gender: !currentProfile?.gender,
-      height: !currentProfile?.height,
-      weight: !currentProfile?.weight,
-    });
-
-    if (isProfileIncomplete) {
-      console.log("Profile is incomplete, redirecting to details form");
-      navigate("/details-form");
-    } else {
-      if (userRole === "player") {
-        console.log("Redirecting to player profile");
-        navigate("/player/profile");
-      } else if (userRole === "expert") {
-        console.log("Redirecting to expert profile");
-        navigate("/expert/profile");
-      } else {
-        // Fallback if role is not recognized
-        console.log("Role not recognized, redirecting to details form");
+      if (isProfileIncomplete) {
+        console.log("Profile is incomplete, redirecting to details form");
         navigate("/details-form");
+      } else {
+        if (userRole === "player") {
+          console.log("Redirecting to player profile");
+          navigate("/player/profile");
+        } else if (userRole === "expert") {
+          console.log("Redirecting to expert profile");
+          navigate("/expert/profile");
+        } else {
+          // Fallback if role is not recognized
+          console.log("Role not recognized, redirecting to details form");
+          navigate("/details-form");
+        }
       }
-    }
-  }, [dispatch, currentProfile]);
+    }, 2000); // 2000 milliseconds = 2 seconds
+
+    // Cleanup function to clear the timeout if component unmounts before timeout completes
+    return () => clearTimeout(navigationTimer);
+  }, [navigate, currentProfile]);
 
   // Format the expert data from API response
   const formatExpertData = () => {
@@ -363,9 +369,11 @@ const ExpertProfile = () => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center">
-                {avatar}
-              </div>
+              <img
+                src={avatar}
+                alt="Expert"
+                className="w-full h-full object-cover"
+              />
             )}
 
             {/* Profile photo upload overlay */}

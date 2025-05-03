@@ -21,7 +21,7 @@ import {
   updateProfilePhoto,
 } from "../store/profile-slice";
 import Swal from "sweetalert2";
-import Avatar from "../assets/images/avatar.png";
+import profile from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 
 interface Stat {
@@ -80,43 +80,7 @@ const Profile: React.FC = () => {
     (state) => state.profile
   );
   const navigate = useNavigate();
-  useEffect(() => {
-    // Only proceed with navigation if user is logged in and not already redirecting
 
-    const userRole = localStorage.getItem("role")
-
-    // Check if required profile fields are missing
-    const isProfileIncomplete =
-      !currentProfile?.age ||
-      !currentProfile?.gender ||
-      !currentProfile?.height ||
-      !currentProfile?.weight;
-
-    console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
-    console.log("Missing fields:", {
-      age: !currentProfile?.age,
-      gender: !currentProfile?.gender,
-      height: !currentProfile?.height,
-      weight: !currentProfile?.weight,
-    });
-
-    if (isProfileIncomplete) {
-      console.log("Profile is incomplete, redirecting to details form");
-      navigate("/details-form");
-    } else {
-      if (userRole === "player") {
-        console.log("Redirecting to player profile");
-        navigate("/player/profile");
-      } else if (userRole === "expert") {
-        console.log("Redirecting to expert profile");
-        navigate("/expert/profile");
-      } else {
-        // Fallback if role is not recognized
-        console.log("Role not recognized, redirecting to details form");
-        navigate("/details-form");
-      }
-    }
-  }, [dispatch, currentProfile]);
   // Local state for player stats which might not be directly part of the API response
   const [playerStats, setPlayerStats] = useState(initialStats);
 
@@ -299,6 +263,48 @@ const Profile: React.FC = () => {
 
   // Get the formatted player data
   const playerData = formatProfileData();
+  useEffect(() => {
+    // Set a 2-second delay before executing navigation logic
+    const navigationTimer = setTimeout(() => {
+      // Only proceed with navigation if user is logged in and not already redirecting
+      const userRole = localStorage.getItem("role");
+
+      // Check if required profile fields are missing
+      const isProfileIncomplete =
+        !currentProfile?.age ||
+        !currentProfile?.gender ||
+        !currentProfile?.height ||
+        !currentProfile?.weight;
+
+      console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
+      console.log("Missing fields:", {
+        age: !currentProfile?.age,
+        gender: !currentProfile?.gender,
+        height: !currentProfile?.height,
+        weight: !currentProfile?.weight,
+      });
+
+      if (isProfileIncomplete) {
+        console.log("Profile is incomplete, redirecting to details form");
+        navigate("/details-form");
+      } else {
+        if (userRole === "player") {
+          console.log("Redirecting to player profile");
+          navigate("/player/profile");
+        } else if (userRole === "expert") {
+          console.log("Redirecting to expert profile");
+          navigate("/expert/profile");
+        } else {
+          // Fallback if role is not recognized
+          console.log("Role not recognized, redirecting to details form");
+          navigate("/details-form");
+        }
+      }
+    }, 2000); // 2000 milliseconds = 2 seconds
+
+    // Cleanup function to clear the timeout if component unmounts before timeout completes
+    return () => clearTimeout(navigationTimer);
+  }, [navigate, currentProfile]);
 
   // Handle changes to edit fields
   const handleInputChange = (
@@ -526,7 +532,7 @@ const Profile: React.FC = () => {
             <div className="relative group">
               {playerData.profileImage ? (
                 <img
-                  src={playerData.profileImage}
+                  src={playerData.profileImage || profile}
                   alt={`${playerData.name || "Player"}'s profile`}
                   className="rounded-lg w-60 h-60 object-cover shadow-md"
                 />

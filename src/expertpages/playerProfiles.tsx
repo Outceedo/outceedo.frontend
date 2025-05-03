@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfiles } from "../store/profile-slice";
-
+import avatar from "../assets/images/avatar.png";
 // Default images for fallback
 import player from "../assets/images/player.jpg";
 import player1 from "../assets/images/player1.jpg";
@@ -181,8 +181,6 @@ const PlayersProfile: React.FC = () => {
   useEffect(() => {
     fetchProfiles();
   }, [currentPage, limit, dispatch, profileType]);
-
-  
 
   // Function to fetch profiles
   const fetchProfiles = () => {
@@ -447,7 +445,7 @@ const PlayersProfile: React.FC = () => {
                     <div className="relative">
                       <img
                         className="w-full h-50 p-2 rounded-lg object-cover"
-                        src={profileImage}
+                        src={profileImage || avatar}
                         alt={displayName}
                         onError={(e) => {
                           // If image fails to load, use default image

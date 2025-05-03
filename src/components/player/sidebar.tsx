@@ -1,8 +1,8 @@
-import { Fragment, MouseEvent, useEffect } from "react";
+import { Fragment, MouseEvent, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Sheet, SheetContent } from "../ui/sheet";
 import "@fortawesome/fontawesome-free/css/all.min.css";
-import profile from "../../assets/images/profile.jpg";
+import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
 
@@ -58,6 +58,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useAppDispatch();
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Fetch profile data from Redux store
   const { currentProfile, status } = useAppSelector((state) => state.profile);
@@ -76,6 +77,9 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
   // Function to handle logout
   function handleLogout() {
+    // Close dialog
+    setShowLogoutDialog(false);
+
     // Clear the token from localStorage
     localStorage.removeItem("token");
 
@@ -94,7 +98,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   // Handle menu item click
   const handleMenuItemClick = (menuItem: MenuItem) => {
     if (menuItem.isLogout) {
-      handleLogout();
+      setShowLogoutDialog(true);
     } else {
       navigate(menuItem.path);
       if (setOpen) setOpen(false);
@@ -113,6 +117,42 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
   return (
     <nav className="flex flex-col gap-6 p-4 w-full h-full overflow-y-auto">
+      {/* Logout Confirmation Dialog */}
+      {showLogoutDialog && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop with blur effect */}
+          <div
+            className="fixed inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setShowLogoutDialog(false)}
+          ></div>
+
+          {/* Dialog */}
+          <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-80 z-10">
+            <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
+              Confirm Logout
+            </h3>
+            <p className="text-gray-600 dark:text-gray-300 mb-6">
+              Are you sure you want to log out of your account?
+            </p>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowLogoutDialog(false)}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-md text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Logo */}
       <h1 className="font-bold text-center text-gray-800 dark:text-white">
         LOGO
@@ -121,10 +161,14 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       {/* Profile Section */}
       <div className="flex flex-col items-center gap-2 mb-6">
         <img
-          src={currentProfile?.photo}
+          src={currentProfile?.photo || profile}
           alt="Profile"
           className="rounded-full w-20 h-20 cursor-pointer object-cover"
           onClick={() => navigate("/details-form")}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = profile; // Fallback to default profile image
+          }}
         />
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {playerName}

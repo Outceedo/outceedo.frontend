@@ -160,13 +160,23 @@ const Detailsform: React.FC = () => {
         footballClub: profileData.company || "",
         bio: profileData.bio || "",
 
-        // Handle expert-specific fields
-        responseTime: profileData.responseTime || "",
-        travelLimit: profileData.travelLimit?.toString() || "",
+        // Handle expert-specific fields only if user is an expert
+        responseTime: isExpert ? profileData.responseTime || "" : "",
+        travelLimit: isExpert ? profileData.travelLimit?.toString() || "" : "",
+        certificationLevel: isExpert
+          ? profileData.certificationLevel || ""
+          : "",
 
-        // New fields
-        certificationLevel: profileData.certificationLevel || "",
-        skills: profileData.skills?.map((skill: any) => skill.skills) || [],
+        // Fix for skills data
+        skills: isExpert
+          ? Array.isArray(profileData.skills)
+            ? profileData.skills.map((skill: any) =>
+                typeof skill === "string"
+                  ? skill
+                  : skill.name || skill.skill || skill
+              )
+            : []
+          : [],
 
         // Handle social links
         linkedin: profileData.socialLinks?.linkedin || "",
@@ -177,7 +187,7 @@ const Detailsform: React.FC = () => {
 
       // Other code remains the same...
     }
-  }, [profileData, countries]);
+  }, [profileData, isExpert]);
 
   // Helper to create axios instance with auth header
   const createAuthAxios = () => {
@@ -560,14 +570,19 @@ const Detailsform: React.FC = () => {
         company: formData.footballClub || null,
         role: localStorage.getItem("role") || "player",
 
-        // Add the new fields
-        certificationLevel: formData.certificationLevel || null,
-        skills: formData.skills, // Pass the skills array directly
-
-        // Include expert-specific fields if user is an expert
-        responseTime: isExpert ? formData.responseTime || null : null,
-        travelLimit:
-          isExpert && formData.travelLimit ? formData.travelLimit : null,
+        // Include expert-specific fields only if user is an expert
+        ...(isExpert && {
+          certificationLevel: formData.certificationLevel || null,
+          skills: Array.isArray(formData.skills)
+            ? formData.skills.map((skill: any) =>
+                typeof skill === "string"
+                  ? skill
+                  : skill.name || skill.skill || skill
+              )
+            : [],
+          responseTime: formData.responseTime || null,
+          travelLimit: formData.travelLimit ? formData.travelLimit : null,
+        }),
       };
 
       console.log("Submitting profile data:", profileUpdateData);
@@ -995,69 +1010,75 @@ const Detailsform: React.FC = () => {
             </button>
           </div>
 
-          {/* Certification Level - New Addition */}
-          <div className="w-full mb-4">
-            <label className="block text-black mb-1">Certification Level</label>
-            <select
-              name="certificationLevel"
-              value={formData.certificationLevel}
-              onChange={handleInputChange}
-              className="border p-2 w-full rounded"
-            >
-              <option value="">Select Certification Level</option>
-              <option value="beginner">Beginner</option>
-              <option value="intermediate">Intermediate</option>
-              <option value="advanced">Advanced</option>
-              <option value="expert">Expert</option>
-              <option value="professional">Professional</option>
-            </select>
-          </div>
-
-          {/* Skills Section - New Addition */}
-          <div className="w-full mb-4">
-            <label className="block text-black mb-1">Skills</label>
-            <div className="flex">
-              <input
-                type="text"
-                placeholder="Add a skill"
-                value={skillInput}
-                onChange={(e) => setSkillInput(e.target.value)}
-                className="border p-2 flex-grow rounded-l"
-                onKeyPress={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    addSkill();
-                  }
-                }}
-              />
-              <button
-                type="button"
-                onClick={addSkill}
-                className="bg-lightYellow text-black px-4 py-2 rounded-r"
+          {/* Certification Level - Only for Experts */}
+          {isExpert && (
+            <div className="w-full mb-4">
+              <label className="block text-black mb-1">
+                Certification Level
+              </label>
+              <select
+                name="certificationLevel"
+                value={formData.certificationLevel}
+                onChange={handleInputChange}
+                className="border p-2 w-full rounded"
               >
-                Add
-              </button>
+                <option value="">Select Certification Level</option>
+                <option value="beginner">Beginner</option>
+                <option value="intermediate">Intermediate</option>
+                <option value="advanced">Advanced</option>
+                <option value="expert">Expert</option>
+                <option value="professional">Professional</option>
+              </select>
             </div>
+          )}
 
-            {/* Display added skills */}
-            <div className="flex flex-wrap gap-2 mt-2">
-              {formData.skills.map((skill, index) => (
-                <div
-                  key={index}
-                  className="bg-gray-100 px-3 py-1 rounded-full flex items-center"
+          {/* Skills Section - Only for Experts */}
+          {isExpert && (
+            <div className="w-full mb-4">
+              <label className="block text-black mb-1">Skills</label>
+              <div className="flex">
+                <input
+                  type="text"
+                  placeholder="Add a skill"
+                  value={skillInput}
+                  onChange={(e) => setSkillInput(e.target.value)}
+                  className="border p-2 flex-grow rounded-l"
+                  onKeyPress={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      addSkill();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={addSkill}
+                  className="bg-lightYellow text-white px-4 py-2 rounded-r bg-red-500"
                 >
-                  <span>{skill}</span>
-                  <button
-                    type="button"
-                    className="ml-2 text-red-500"
-                    onClick={() => removeSkill(skill)}
+                  Add
+                </button>
+              </div>
+
+              {/* Display added skills */}
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.skills.map((skill, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 px-3 py-1 rounded-full flex items-center"
                   >
-                    ×
-                  </button>
-                </div>
-              ))}
+                    <span>{skill}</span>
+                    <button
+                      type="button"
+                      className="ml-2 text-red-500"
+                      onClick={() => removeSkill(skill)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex space-x-4 mb-2">
             <div className="w-1/2 relative">

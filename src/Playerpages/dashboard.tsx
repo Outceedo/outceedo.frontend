@@ -1,6 +1,6 @@
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import "react-circular-progressbar/dist/styles.css";
-import profile from "../assets/images/profile.jpg";
+import profile from "../assets/images/avatar.png";
 import { faArrowUpRightFromSquare } from "@fortawesome/free-solid-svg-icons";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -77,7 +77,7 @@ const Dashboard: React.FC = () => {
               {/* Player image on right */}
               <div className="flex-shrink-0 relative h-full flex items-center">
                 <img
-                  src={currentProfile?.photo} // Replace with your player image path
+                  src={currentProfile?.photo || profile} // Replace with your player image path
                   alt="player"
                   className="w-96 h-auto object-cover -mr-6"
                 />

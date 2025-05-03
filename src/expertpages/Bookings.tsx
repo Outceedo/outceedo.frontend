@@ -35,19 +35,40 @@ import {
   faVideo,
   faFileAlt,
   faStar,
+  faCheckCircle,
+  faUser,
+  faMoneyBill,
+  faClock,
+  faMapMarkerAlt,
+  faLink,
 } from "@fortawesome/free-solid-svg-icons";
+
+// Updated interfaces to match the new API response format
+interface Expert {
+  id: string;
+  username: string;
+  photo: string;
+}
 
 interface Player {
   id: string;
+  username: string;
+  photo: string;
+}
+
+interface ServiceDetails {
+  id: string;
   name: string;
-  profileImage?: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface Service {
   id: string;
-  name: string;
-  description: string;
-  price: string;
+  serviceId: string;
+  price: number;
+  service: ServiceDetails;
 }
 
 interface Booking {
@@ -65,15 +86,14 @@ interface Booking {
   meetingRecording: string | null;
   createdAt: string;
   updatedAt: string;
-  player?: Player;
-  service?: Service;
+  expert: Expert;
+  player: Player;
+  service: Service;
   review?: string;
 }
 
 const BookingExpertside: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
-  const [players, setPlayers] = useState<{ [key: string]: Player }>({});
-  const [services, setServices] = useState<{ [key: string]: Service }>({});
   const [bookingStatus, setBookingStatus] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [search, setSearch] = useState("");
@@ -87,6 +107,14 @@ const BookingExpertside: React.FC = () => {
   );
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Booking details modal state
+  const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  // Reject confirmation modal state
+  const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
+  const [bookingToReject, setBookingToReject] = useState<string | null>(null);
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
@@ -111,9 +139,6 @@ const BookingExpertside: React.FC = () => {
 
         const data = await response.json();
         setBookings(data.bookings);
-
-        // Fetch player and service data for each booking
-        await Promise.all(data.bookings.map(fetchRelatedData));
       } catch (err) {
         console.error("Error fetching bookings:", err);
         setError("Could not load bookings. Using demo data instead.");
@@ -128,74 +153,14 @@ const BookingExpertside: React.FC = () => {
     fetchBookings();
   }, []);
 
-  // Fetch related data for each booking (player and service details)
-  const fetchRelatedData = async (booking: Booking) => {
-    try {
-      // Fetch player data if not already fetched
-      if (booking.playerId && !players[booking.playerId]) {
-        const token = localStorage.getItem("accessToken");
-        const playerResponse = await fetch(
-          `${API_BASE_URL}/players/${booking.playerId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (playerResponse.ok) {
-          const playerData = await playerResponse.json();
-          setPlayers((prev) => ({
-            ...prev,
-            [booking.playerId]: {
-              id: playerData.id,
-              name: playerData.name || "Unknown Player",
-              profileImage: playerData.profileImage,
-            },
-          }));
-        }
-      }
-
-      // Fetch service data if not already fetched
-      if (booking.serviceId && !services[booking.serviceId]) {
-        const token = localStorage.getItem("accessToken");
-        const serviceResponse = await fetch(
-          `${API_BASE_URL}/services/${booking.serviceId}`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-
-        if (serviceResponse.ok) {
-          const serviceData = await serviceResponse.json();
-          setServices((prev) => ({
-            ...prev,
-            [booking.serviceId]: {
-              id: serviceData.id,
-              name: serviceData.name || "Unknown Service",
-              description: serviceData.description || "",
-              price: serviceData.price
-                ? `$${serviceData.price}`
-                : "Price not available",
-            },
-          }));
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching related data:", error);
-    }
-  };
-
   // Generate demo bookings if API fails
   const getDemoBookings = (): Booking[] => {
-    const demoBookings: Booking[] = [
+    return [
       {
         id: "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
-        playerId: "p1a2b3c4",
-        expertId: "e1a2b3c4",
-        serviceId: "s1a2b3c4",
+        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        serviceId: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
         status: "WAITING_EXPERT_APPROVAL",
         date: "2025-05-15T00:00:00.000Z",
         startTime: "10:00",
@@ -206,13 +171,35 @@ const BookingExpertside: React.FC = () => {
         meetingRecording: null,
         createdAt: "2025-04-29T14:30:00.000Z",
         updatedAt: "2025-04-29T14:30:00.000Z",
+        player: {
+          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "alex_taylor",
+          photo: "https://i.pravatar.cc/150?u=alex",
+        },
+        expert: {
+          id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "john_coach",
+          photo: "https://i.pravatar.cc/150?u=john",
+        },
+        service: {
+          id: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          serviceId: "1",
+          price: 35,
+          service: {
+            id: "1",
+            name: "Technical Training Session",
+            description: "One-on-one technical skills training",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
       },
       {
         id: "c2b3d4e5-f6g7-8901-hijk-lm2345678901",
-        playerId: "p2b3c4d5",
-        expertId: "e1a2b3c4",
-        serviceId: "s2b3c4d5",
-        status: "CONFIRMED",
+        playerId: "p2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+        expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        serviceId: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+        status: "ACCEPTED",
         date: "2025-05-20T00:00:00.000Z",
         startTime: "14:00",
         endTime: "15:00",
@@ -222,12 +209,34 @@ const BookingExpertside: React.FC = () => {
         meetingRecording: null,
         createdAt: "2025-04-30T09:15:00.000Z",
         updatedAt: "2025-05-01T10:20:00.000Z",
+        player: {
+          id: "p2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+          username: "michael_brown",
+          photo: "https://i.pravatar.cc/150?u=michael",
+        },
+        expert: {
+          id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "john_coach",
+          photo: "https://i.pravatar.cc/150?u=john",
+        },
+        service: {
+          id: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
+          serviceId: "2",
+          price: 40,
+          service: {
+            id: "2",
+            name: "Strategy Session",
+            description: "Game strategy and tactical analysis",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
       },
       {
         id: "d3c4e5f6-g7h8-9012-jklm-no3456789012",
-        playerId: "p3c4d5e6",
-        expertId: "e1a2b3c4",
-        serviceId: "s3c4d5e6",
+        playerId: "p3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+        expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+        serviceId: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
         status: "COMPLETED",
         date: "2025-04-25T00:00:00.000Z",
         startTime: "09:00",
@@ -240,41 +249,60 @@ const BookingExpertside: React.FC = () => {
         updatedAt: "2025-04-25T10:05:00.000Z",
         review:
           "Player showed strong fundamentals but needs to work on positioning. Overall good progress.",
+        player: {
+          id: "p3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+          username: "sophia_williams",
+          photo: "https://i.pravatar.cc/150?u=sophia",
+        },
+        expert: {
+          id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
+          username: "john_coach",
+          photo: "https://i.pravatar.cc/150?u=john",
+        },
+        service: {
+          id: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
+          serviceId: "3",
+          price: 45,
+          service: {
+            id: "3",
+            name: "Field Training",
+            description: "On-field practice and drills",
+            createdAt: "2025-01-01T00:00:00.000Z",
+            updatedAt: "2025-01-01T00:00:00.000Z",
+          },
+        },
       },
     ];
+  };
 
-    // Also populate demo players and services
-    const demoPlayers: { [key: string]: Player } = {
-      p1a2b3c4: { id: "p1a2b3c4", name: "Alex Taylor" },
-      p2b3c4d5: { id: "p2b3c4d5", name: "Michael Brown" },
-      p3c4d5e6: { id: "p3c4d5e6", name: "Sophia Williams" },
-    };
+  // Open booking details modal
+  const openBookingDetails = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setIsBookingDetailsOpen(true);
+  };
 
-    const demoServices: { [key: string]: Service } = {
-      s1a2b3c4: {
-        id: "s1a2b3c4",
-        name: "Technical Training Session",
-        description: "One-on-one technical skills training",
-        price: "$35",
-      },
-      s2b3c4d5: {
-        id: "s2b3c4d5",
-        name: "Strategy Session",
-        description: "Game strategy and tactical analysis",
-        price: "$40",
-      },
-      s3c4d5e6: {
-        id: "s3c4d5e6",
-        name: "Field Training",
-        description: "On-field practice and drills",
-        price: "$45",
-      },
-    };
+  // Close booking details modal
+  const closeBookingDetails = () => {
+    setIsBookingDetailsOpen(false);
+    setSelectedBooking(null);
+  };
 
-    setPlayers(demoPlayers);
-    setServices(demoServices);
+  // Open reject confirmation dialog
+  const openRejectConfirmDialog = (bookingId: string) => {
+    setBookingToReject(bookingId);
+    setIsRejectConfirmOpen(true);
 
-    return demoBookings;
+    // If reject was triggered from booking details modal, keep it open
+    // Otherwise close the booking details modal
+    if (selectedBooking?.id !== bookingId) {
+      setIsBookingDetailsOpen(false);
+    }
+  };
+
+  // Close reject confirmation dialog
+  const closeRejectConfirmDialog = () => {
+    setIsRejectConfirmOpen(false);
+    setBookingToReject(null);
   };
 
   // Handle accepting a booking
@@ -283,13 +311,16 @@ const BookingExpertside: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(`${API_BASE_URL}/booking/${bookingId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/booking/${bookingId}/accept`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
       if (!response.ok) {
         throw new Error("Failed to accept booking");
@@ -299,10 +330,18 @@ const BookingExpertside: React.FC = () => {
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
-            ? { ...booking, status: "CONFIRMED" }
+            ? { ...booking, status: "ACCEPTED" }
             : booking
         )
       );
+
+      // Update the selected booking if it's the one being accepted
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "ACCEPTED" });
+      }
+
+      // Close the booking details modal
+      closeBookingDetails();
     } catch (error) {
       console.error("Error accepting booking:", error);
       setError("Failed to accept booking. Please try again.");
@@ -320,7 +359,7 @@ const BookingExpertside: React.FC = () => {
       const response = await fetch(
         `${API_BASE_URL}/booking/${bookingId}/reject`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -340,9 +379,23 @@ const BookingExpertside: React.FC = () => {
             : booking
         )
       );
+
+      // Update the selected booking if it's the one being rejected
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "REJECTED" });
+      }
+
+      // Close the reject confirmation dialog
+      closeRejectConfirmDialog();
+
+      // Close the booking details modal
+      closeBookingDetails();
     } catch (error) {
       console.error("Error rejecting booking:", error);
       setError("Failed to reject booking. Please try again.");
+
+      // Close the reject confirmation dialog even if there's an error
+      closeRejectConfirmDialog();
     } finally {
       setLoading(false);
     }
@@ -354,12 +407,10 @@ const BookingExpertside: React.FC = () => {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      // In a real implementation, you'd open a modal to get new date/time
-      // For now, we'll just update the status
       const response = await fetch(
         `${API_BASE_URL}/booking/${bookingId}/reschedule`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -384,18 +435,17 @@ const BookingExpertside: React.FC = () => {
             : booking
         )
       );
+
+      // Update the selected booking if it's the one being rescheduled
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "RESCHEDULED" });
+      }
+
+      // Close the booking details modal
+      closeBookingDetails();
     } catch (error) {
       console.error("Error rescheduling booking:", error);
       setError("Failed to reschedule booking. Please try again.");
-
-      // For demo purposes, still update the UI
-      setBookings((prevBookings) =>
-        prevBookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "RESCHEDULED" }
-            : booking
-        )
-      );
     } finally {
       setLoading(false);
     }
@@ -410,7 +460,7 @@ const BookingExpertside: React.FC = () => {
       const response = await fetch(
         `${API_BASE_URL}/booking/${bookingId}/complete`,
         {
-          method: "PUT",
+          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -430,18 +480,17 @@ const BookingExpertside: React.FC = () => {
             : booking
         )
       );
+
+      // Update the selected booking if it's the one being completed
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "COMPLETED" });
+      }
+
+      // Close the booking details modal
+      closeBookingDetails();
     } catch (error) {
       console.error("Error completing booking:", error);
       setError("Failed to complete booking. Please try again.");
-
-      // For demo purposes, still update the UI
-      setBookings((prevBookings) =>
-        prevBookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "COMPLETED" }
-            : booking
-        )
-      );
     } finally {
       setLoading(false);
     }
@@ -453,6 +502,9 @@ const BookingExpertside: React.FC = () => {
     setSelectedBookingId(bookingId);
     setReviewText(booking?.review || "");
     setIsReviewModalOpen(true);
+
+    // Close the booking details modal if it's open
+    setIsBookingDetailsOpen(false);
   };
 
   // Handle closing review modal
@@ -495,6 +547,11 @@ const BookingExpertside: React.FC = () => {
             : booking
         )
       );
+
+      // Update the selected booking if it's the one being reviewed
+      if (selectedBooking && selectedBooking.id === selectedBookingId) {
+        setSelectedBooking({ ...selectedBooking, review: reviewText });
+      }
 
       closeReviewModal();
     } catch (error) {
@@ -597,7 +654,7 @@ const BookingExpertside: React.FC = () => {
 
   // Filter bookings based on search, action, and status filters
   const filteredBookings = bookings.filter((booking) => {
-    const playerName = players[booking.playerId]?.name || "";
+    const playerName = booking.player?.username || "";
     const matchesSearch = playerName
       .toLowerCase()
       .includes(search.toLowerCase());
@@ -703,22 +760,24 @@ const BookingExpertside: React.FC = () => {
                 </TableRow>
               ) : (
                 filteredBookings.map((booking) => (
-                  <TableRow key={booking.id}>
+                  <TableRow
+                    key={booking.id}
+                    className="cursor-pointer hover:bg-gray-50"
+                    onClick={() => openBookingDetails(booking)}
+                  >
                     <TableCell className="font-medium">
                       {booking.id.substring(0, 8)}...
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <img
-                          src={
-                            players[booking.playerId]?.profileImage ||
-                            `https://i.pravatar.cc/40?u=${booking.playerId}`
-                          }
+                        {/* <img
+                          src={booking.player?.photo}
                           alt="avatar"
-                          className="w-8 h-8 rounded-full"
-                        />
+                          className="w-8 h-8 rounded-full object-cover"
+                          
+                        /> */}
                         <span>
-                          {players[booking.playerId]?.name || "Unknown Player"}
+                          {booking.player?.username || "Unknown Player"}
                         </span>
                       </div>
                     </TableCell>
@@ -726,11 +785,9 @@ const BookingExpertside: React.FC = () => {
                       {formatDate(booking.date, booking.startTime)}
                     </TableCell>
                     <TableCell>
-                      {services[booking.serviceId]?.name || "Unknown Service"}
+                      {booking.service?.service?.name || "Unknown Service"}
                     </TableCell>
-                    <TableCell>
-                      {services[booking.serviceId]?.price || "N/A"}
-                    </TableCell>
+                    <TableCell>${booking.service?.price || "N/A"}</TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -748,12 +805,18 @@ const BookingExpertside: React.FC = () => {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-center space-x-1">
+                      <div
+                        className="flex justify-center space-x-1"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-green-600 hover:bg-green-100 hover:text-green-700"
-                          onClick={() => handleAcceptBooking(booking.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleAcceptBooking(booking.id);
+                          }}
                           title="Accept Booking"
                           disabled={
                             booking.status !== "WAITING_EXPERT_APPROVAL"
@@ -765,7 +828,10 @@ const BookingExpertside: React.FC = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-red-600 hover:bg-red-100 hover:text-red-700"
-                          onClick={() => handleRejectBooking(booking.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openRejectConfirmDialog(booking.id);
+                          }}
                           title="Reject Booking"
                           disabled={
                             booking.status !== "WAITING_EXPERT_APPROVAL"
@@ -777,10 +843,13 @@ const BookingExpertside: React.FC = () => {
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 text-yellow-600 hover:bg-yellow-100 hover:text-yellow-700"
-                          onClick={() => handleRescheduleBooking(booking.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleRescheduleBooking(booking.id);
+                          }}
                           title="Reschedule Booking"
                           disabled={
-                            !["WAITING_EXPERT_APPROVAL", "CONFIRMED"].includes(
+                            !["WAITING_EXPERT_APPROVAL", "ACCEPTED"].includes(
                               booking.status
                             )
                           }
@@ -795,9 +864,13 @@ const BookingExpertside: React.FC = () => {
                         size="icon"
                         className="h-8 w-8"
                         title="Start Video Session"
-                        disabled={
-                          !["CONFIRMED", "ACCEPTED"].includes(booking.status)
-                        }
+                        disabled={!["ACCEPTED"].includes(booking.status)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (booking.meetLink) {
+                            window.open(booking.meetLink, "_blank");
+                          }
+                        }}
                       >
                         <FontAwesomeIcon icon={faVideo} />
                       </Button>
@@ -808,6 +881,7 @@ const BookingExpertside: React.FC = () => {
                         size="icon"
                         className="h-8 w-8"
                         title="Create/View Report"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <FontAwesomeIcon icon={faFileAlt} />
                       </Button>
@@ -820,7 +894,10 @@ const BookingExpertside: React.FC = () => {
                           booking.review ? "text-yellow-500" : ""
                         }`}
                         title={booking.review ? "Edit Review" : "Add Review"}
-                        onClick={() => openReviewModal(booking.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openReviewModal(booking.id);
+                        }}
                       >
                         <FontAwesomeIcon icon={faStar} />
                       </Button>
@@ -832,6 +909,55 @@ const BookingExpertside: React.FC = () => {
           </Table>
         </div>
       )}
+
+      {/* Complete Button for Accepted Bookings */}
+      <div className="mt-4">
+        <h3 className="font-medium mb-2">Active Sessions</h3>
+        <div className="space-y-2">
+          {bookings
+            .filter((booking) => booking.status === "ACCEPTED")
+            .map((booking) => (
+              <div
+                key={`complete-${booking.id}`}
+                className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                onClick={() => openBookingDetails(booking)}
+              >
+                <div className="flex items-center gap-3">
+                  <img
+                    src={booking.player?.photo}
+                    alt="Player"
+                    className="w-8 h-8 rounded-full object-cover"
+                  />
+                  <div>
+                    <p className="font-medium">
+                      {booking.player?.username || "Unknown Player"}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {booking.service?.service?.name} -{" "}
+                      {formatDate(booking.date, booking.startTime)}
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  className="bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCompleteBooking(booking.id);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                  Mark as Completed
+                </Button>
+              </div>
+            ))}
+          {bookings.filter((b) => b.status === "ACCEPTED").length === 0 && (
+            <p className="text-gray-500 text-center py-2">
+              No active sessions to complete
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Statistics Section */}
       <div className="mt-6 grid grid-cols-4 gap-4">
@@ -868,22 +994,21 @@ const BookingExpertside: React.FC = () => {
         <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {bookings
-            .filter((booking) =>
-              ["CONFIRMED", "ACCEPTED"].includes(booking.status)
-            )
+            .filter((booking) => booking.status === "ACCEPTED")
             .slice(0, 3)
             .map((booking) => (
               <div
                 key={`upcoming-${booking.id}`}
-                className="bg-white border rounded-lg p-4 shadow-sm"
+                className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer"
+                onClick={() => openBookingDetails(booking)}
               >
                 <div className="flex justify-between items-start">
                   <div>
                     <h3 className="font-medium">
-                      {services[booking.serviceId]?.name || "Service"}
+                      {booking.service?.service?.name || "Service"}
                     </h3>
                     <p className="text-sm text-gray-500">
-                      with {players[booking.playerId]?.name || "Player"}
+                      with {booking.player?.username || "Player"}
                     </p>
                   </div>
                   <Badge variant="outline" className="bg-blue-50 text-blue-800">
@@ -895,21 +1020,309 @@ const BookingExpertside: React.FC = () => {
                 </div>
                 <div className="mt-4 flex justify-between">
                   <span className="text-gray-600">
-                    {services[booking.serviceId]?.price || "N/A"}
+                    ${booking.service?.price || "N/A"}
                   </span>
                 </div>
               </div>
             ))}
 
-          {bookings.filter((booking) =>
-            ["CONFIRMED", "ACCEPTED"].includes(booking.status)
-          ).length === 0 && (
+          {bookings.filter((booking) => booking.status === "ACCEPTED")
+            .length === 0 && (
             <div className="col-span-3 text-center py-4 text-gray-500">
               No upcoming sessions
             </div>
           )}
         </div>
       </div>
+
+      {/* Booking Details Modal */}
+      {selectedBooking && (
+        <Dialog
+          open={isBookingDetailsOpen}
+          onOpenChange={setIsBookingDetailsOpen}
+        >
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="text-xl">Booking Details</DialogTitle>
+            </DialogHeader>
+
+            <div className="py-4">
+              {/* Status and Payment */}
+              <div className="flex justify-between items-center mb-4">
+                <Badge
+                  variant="outline"
+                  className={getActionBadgeStyle(selectedBooking.status)}
+                >
+                  {formatStatus(selectedBooking.status)}
+                </Badge>
+                <Badge
+                  variant="outline"
+                  className={getPaymentBadgeStyle(selectedBooking.status)}
+                >
+                  {getPaymentStatus(selectedBooking.status)}
+                </Badge>
+              </div>
+
+              {/* Player Information */}
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <FontAwesomeIcon
+                    icon={faUser}
+                    className="mr-2 text-gray-600"
+                  />
+                  Player Information
+                </h3>
+                <div className="flex items-center gap-3 mb-2">
+                  <img
+                    src={
+                      selectedBooking.player?.photo ||
+                      `https://i.pravatar.cc/60?u=${selectedBooking.playerId}`
+                    }
+                    alt="Player"
+                    className="w-12 h-12 rounded-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://i.pravatar.cc/60?u=${selectedBooking.playerId}`;
+                    }}
+                  />
+                  <div>
+                    <h4 className="font-medium">
+                      {selectedBooking.player?.username}
+                    </h4>
+                    <p className="text-sm text-gray-600">
+                      Player ID: {selectedBooking.playerId.substring(0, 8)}...
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Service Details */}
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-lg font-semibold flex items-center">
+                    <FontAwesomeIcon
+                      icon={faFileAlt}
+                      className="mr-2 text-gray-600"
+                    />
+                    Service Details
+                  </h3>
+                  <div className="text-lg font-bold text-green-700">
+                    <FontAwesomeIcon icon={faMoneyBill} className="mr-1" />$
+                    {selectedBooking.service?.price || "N/A"}
+                  </div>
+                </div>
+                <p className="font-medium">
+                  {selectedBooking.service?.service?.name}
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  {selectedBooking.service?.service?.description}
+                </p>
+              </div>
+
+              {/* Session Information */}
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    className="mr-2 text-gray-600"
+                  />
+                  Session Information
+                </h3>
+                <p className="mb-1">
+                  <span className="font-medium">Date & Time:</span>{" "}
+                  {formatDate(selectedBooking.date, selectedBooking.startTime)}
+                </p>
+                <p className="mb-1">
+                  <span className="font-medium">Duration:</span>{" "}
+                  {selectedBooking.startTime} - {selectedBooking.endTime}
+                </p>
+                {selectedBooking.location && (
+                  <p className="mb-1 flex items-start">
+                    <FontAwesomeIcon
+                      icon={faMapMarkerAlt}
+                      className="mr-2 mt-1 text-gray-600"
+                    />
+                    <span>{selectedBooking.location}</span>
+                  </p>
+                )}
+                {selectedBooking.meetLink && (
+                  <p className="mb-1 flex items-start">
+                    <FontAwesomeIcon
+                      icon={faLink}
+                      className="mr-2 mt-1 text-gray-600"
+                    />
+                    <a
+                      href={selectedBooking.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline"
+                    >
+                      {selectedBooking.meetLink}
+                    </a>
+                  </p>
+                )}
+              </div>
+
+              {/* Media Section */}
+              {(selectedBooking.recordedVideo ||
+                selectedBooking.meetingRecording) && (
+                <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2 flex items-center">
+                    <FontAwesomeIcon
+                      icon={faVideo}
+                      className="mr-2 text-gray-600"
+                    />
+                    Media
+                  </h3>
+                  {selectedBooking.recordedVideo && (
+                    <div className="mb-2">
+                      <p className="font-medium">Recorded Video:</p>
+                      <a
+                        href={selectedBooking.recordedVideo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Video
+                      </a>
+                    </div>
+                  )}
+                  {selectedBooking.meetingRecording && (
+                    <div>
+                      <p className="font-medium">Meeting Recording:</p>
+                      <a
+                        href={selectedBooking.meetingRecording}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline"
+                      >
+                        View Recording
+                      </a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Review Section */}
+              {selectedBooking.review && (
+                <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                  <h3 className="text-lg font-semibold mb-2 flex items-center">
+                    <FontAwesomeIcon
+                      icon={faStar}
+                      className="mr-2 text-yellow-500"
+                    />
+                    Your Review
+                  </h3>
+                  <p className="text-gray-700 italic">
+                    "{selectedBooking.review}"
+                  </p>
+                  <button
+                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                    onClick={() => openReviewModal(selectedBooking.id)}
+                  >
+                    Edit Review
+                  </button>
+                </div>
+              )}
+
+              {/* Timestamps */}
+              <div className="mt-4 text-xs text-gray-500">
+                <p>Booking ID: {selectedBooking.id}</p>
+                <p>
+                  Created:{" "}
+                  {new Date(selectedBooking.createdAt).toLocaleString()}
+                </p>
+                <p>
+                  Last Updated:{" "}
+                  {new Date(selectedBooking.updatedAt).toLocaleString()}
+                </p>
+              </div>
+            </div>
+
+            <DialogFooter className="flex flex-wrap gap-2 justify-end">
+              {/* Action buttons based on status */}
+              {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="border-red-500 text-red-500 hover:bg-red-50"
+                    onClick={() => openRejectConfirmDialog(selectedBooking.id)}
+                  >
+                    <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                    Reject
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                    onClick={() => handleRescheduleBooking(selectedBooking.id)}
+                  >
+                    <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                    Reschedule
+                  </Button>
+                  <Button
+                    className="bg-green-500 text-white hover:bg-green-600"
+                    onClick={() => handleAcceptBooking(selectedBooking.id)}
+                  >
+                    <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                    Accept
+                  </Button>
+                </>
+              )}
+
+              {selectedBooking.status === "ACCEPTED" && (
+                <>
+                  <Button
+                    variant="outline"
+                    className="border-yellow-500 text-yellow-500 hover:bg-yellow-50"
+                    onClick={() => handleRescheduleBooking(selectedBooking.id)}
+                  >
+                    <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                    Reschedule
+                  </Button>
+                  {selectedBooking.meetLink && (
+                    <Button
+                      variant="outline"
+                      className="border-blue-500 text-blue-500 hover:bg-blue-50"
+                      onClick={() =>
+                        window.open(selectedBooking.meetLink, "_blank")
+                      }
+                    >
+                      <FontAwesomeIcon icon={faVideo} className="mr-2" />
+                      Join Session
+                    </Button>
+                  )}
+                  <Button
+                    className="bg-purple-500 text-white hover:bg-purple-600"
+                    onClick={() => handleCompleteBooking(selectedBooking.id)}
+                  >
+                    <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                    Mark Completed
+                  </Button>
+                </>
+              )}
+
+              {selectedBooking.status === "COMPLETED" &&
+                !selectedBooking.review && (
+                  <Button
+                    className="bg-yellow-500 text-white hover:bg-yellow-600"
+                    onClick={() => openReviewModal(selectedBooking.id)}
+                  >
+                    <FontAwesomeIcon icon={faStar} className="mr-2" />
+                    Add Review
+                  </Button>
+                )}
+
+              <Button
+                variant="outline"
+                onClick={closeBookingDetails}
+                className="ml-2"
+              >
+                Close
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* Review Modal */}
       <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
@@ -931,15 +1344,11 @@ const BookingExpertside: React.FC = () => {
               <p className="text-sm font-medium mb-1">Session Details:</p>
               {selectedBookingId && (
                 <p className="text-sm text-gray-500">
-                  {services[
-                    bookings.find((b) => b.id === selectedBookingId)
-                      ?.serviceId || ""
-                  ]?.name || "Service"}{" "}
+                  {bookings.find((b) => b.id === selectedBookingId)?.service
+                    ?.service?.name || "Service"}{" "}
                   with{" "}
-                  {players[
-                    bookings.find((b) => b.id === selectedBookingId)
-                      ?.playerId || ""
-                  ]?.name || "Player"}{" "}
+                  {bookings.find((b) => b.id === selectedBookingId)?.player
+                    ?.username || "Player"}{" "}
                   on{" "}
                   {bookings.find((b) => b.id === selectedBookingId)
                     ? formatDate(
@@ -970,6 +1379,65 @@ const BookingExpertside: React.FC = () => {
               disabled={submittingReview || !reviewText.trim()}
             >
               {submittingReview ? "Submitting..." : "Submit Review"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reject Confirmation Modal */}
+      <Dialog open={isRejectConfirmOpen} onOpenChange={setIsRejectConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">
+              Confirm Rejection
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to reject this booking? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {bookingToReject && (
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-sm">
+                  <span className="font-semibold">Player:</span>{" "}
+                  {
+                    bookings.find((b) => b.id === bookingToReject)?.player
+                      ?.username
+                  }
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Service:</span>{" "}
+                  {
+                    bookings.find((b) => b.id === bookingToReject)?.service
+                      ?.service?.name
+                  }
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Date:</span>{" "}
+                  {formatDate(
+                    bookings.find((b) => b.id === bookingToReject)?.date || "",
+                    bookings.find((b) => b.id === bookingToReject)?.startTime ||
+                      ""
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeRejectConfirmDialog}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() =>
+                bookingToReject && handleRejectBooking(bookingToReject)
+              }
+            >
+              Reject Booking
             </Button>
           </DialogFooter>
         </DialogContent>
