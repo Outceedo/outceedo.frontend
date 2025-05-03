@@ -67,7 +67,7 @@ type TabType = "details" | "media" | "reviews" | "services";
 
 const Experts = () => {
   const [activeTab, setActiveTab] = useState<TabType>("details");
-  const tabs: TabType[] = ["details", "media", "reviews", "services"];
+  const tabs: TabType[] = ["details", "media", "reviews"];
   const [readMore, setReadMore] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
@@ -466,6 +466,40 @@ const Experts = () => {
           </div>
         </div>
       </div>
+      <div className="border-b py-6 mb-8">
+        <h2 className="text-xl font-bold">Services Offered</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 mb-8">
+          {services.length > 0 ? (
+            services.map((service) => (
+              <Card key={service.id} className="overflow-hidden">
+                <div className="p-5">
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                      {service.name}
+                    </h3>
+                    <span className="text-red-600 font-bold">
+                      {service.price}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 dark:text-gray-300 mb-4">
+                    {service.description}
+                  </p>
+                  <Button
+                    onClick={() => handlebook(service)}
+                    className="bg-red-600 hover:bg-red-700 text-white"
+                  >
+                    Book Now
+                  </Button>
+                </div>
+              </Card>
+            ))
+          ) : (
+            <p className="col-span-2 text-center text-gray-500 text-xl">
+              No services available.
+            </p>
+          )}
+        </div>
+      </div>
 
       {/* Tabs navigation */}
       <div className="mb-8 border-b">
@@ -695,39 +729,6 @@ const Experts = () => {
         )}
 
         {/* Services Tab */}
-        {activeTab === "services" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {services.length > 0 ? (
-              services.map((service) => (
-                <Card key={service.id} className="overflow-hidden">
-                  <div className="p-5">
-                    <div className="flex justify-between items-start mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        {service.name}
-                      </h3>
-                      <span className="text-red-600 font-bold">
-                        {service.price}
-                      </span>
-                    </div>
-                    <p className="text-gray-700 dark:text-gray-300 mb-4">
-                      {service.description}
-                    </p>
-                    <Button
-                      onClick={() => handlebook(service)}
-                      className="bg-red-600 hover:bg-red-700 text-white"
-                    >
-                      Book Now
-                    </Button>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <p className="col-span-2 text-center text-gray-500">
-                No services available.
-              </p>
-            )}
-          </div>
-        )}
       </div>
 
       {/* Media Preview Modal */}

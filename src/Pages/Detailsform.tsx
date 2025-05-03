@@ -805,7 +805,7 @@ const Detailsform: React.FC = () => {
   }, [selectedCountry]);
 
   return (
-    <div className="max-w-6xl mx-auto p-6 bg-white shadow-md rounded-lg mt-10">
+    <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg">
       {/* Status messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
@@ -1101,7 +1101,7 @@ const Detailsform: React.FC = () => {
 
       {/* Step 2: More Details */}
       {step === 2 && (
-        <div>
+        <div className="w-5xl">
           <h2 className="text-xl font-semibold mb-2">More Details</h2>
           <label className="block text-grey mb-1">Professional Picture</label>
           <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-center">
@@ -1356,7 +1356,7 @@ const Detailsform: React.FC = () => {
 
       {/* Step 3: Certificates and Awards */}
       {step === 3 && (
-        <div>
+        <div className="w-5xl">
           <h2 className="text-xl font-semibold mb-4">Certification</h2>
           {certificates.map((cert) => (
             <div
@@ -1372,7 +1372,7 @@ const Detailsform: React.FC = () => {
                   ×
                 </button>
               )}
-              <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-center">
+              <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center flex-col justify-center">
                 <span className="text-gray-500">
                   {cert.file ? cert.file.name : "Upload certificate here"}
                 </span>
@@ -1505,7 +1505,7 @@ const Detailsform: React.FC = () => {
 
       {/* Step 4: Social Media Links */}
       {step === 4 && (
-        <div>
+        <div className="w-5xl">
           <h2 className="text-xl font-semibold mb-4">Social Media Links</h2>
 
           <div className="flex items-center w-1/2 mb-2">

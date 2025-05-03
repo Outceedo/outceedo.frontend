@@ -164,7 +164,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           src={currentProfile?.photo || profile}
           alt="Profile"
           className="rounded-full w-20 h-20 cursor-pointer object-cover"
-          onClick={() => navigate("/details-form")}
+          onClick={() => navigate("/player/details-form")}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = profile; // Fallback to default profile image
@@ -188,8 +188,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
         {/* Edit Profile Button */}
         <button
-          onClick={() => navigate("/details-form")}
-          className="bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors"
+          onClick={() => navigate("/player/details-form")}
+          className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors"
         >
           Edit Profile
         </button>

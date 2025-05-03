@@ -18,13 +18,8 @@ import {
 } from "@/components/ui/select";
 
 // Import fallback profile images
-import profile2 from "../assets/images/profile2.jpg";
-import profile3 from "../assets/images/profile3.jpg";
-import profile4 from "../assets/images/profile4.jpg";
-import profile5 from "../assets/images/profile5.jpg";
 
 // Default image mapping for fallbacks
-const defaultImages = [profile2, profile3, profile4, profile5];
 
 interface Expert {
   id: string;

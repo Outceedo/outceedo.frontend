@@ -129,20 +129,9 @@ const AppContent: React.FC = () => {
           )
         }
       />
-      <Route
-        path="/df37a6d56f5230c1a07f97fa0cb6f8bf1e6530214a0f5ad288dc7c20580ff08cc6948710"
-        element={<ResetPassword />}
-      />
+      <Route path="/reset-password/:id" element={<ResetPassword />} />
 
       {/* Protected routes */}
-      <Route
-        path="/details-form"
-        element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <Detailsform />
-          </CheckAuth>
-        }
-      />
 
       {/* Player pages */}
       <Route
@@ -160,6 +149,7 @@ const AppContent: React.FC = () => {
         <Route path="viewexperts" element={<Expertspage />} />
         <Route path="exdetails" element={<Experts />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="details-form" element={<Detailsform />} />
       </Route>
 
       {/* Expert Outlet */}
@@ -177,6 +167,7 @@ const AppContent: React.FC = () => {
         <Route path="viewplayers" element={<PlayersProfile />} />
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
+        <Route path="details-form" element={<Detailsform />} />
       </Route>
 
       <Route
