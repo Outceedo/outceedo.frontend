@@ -150,6 +150,7 @@ const AppContent: React.FC = () => {
         <Route path="exdetails" element={<Experts />} />
         <Route path="profile" element={<Profile />} />
         <Route path="details-form" element={<Detailsform />} />
+        <Route path="book" element={<BookingCalendar />} />
       </Route>
 
       {/* Expert Outlet */}

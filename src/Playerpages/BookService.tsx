@@ -198,7 +198,7 @@ const BookingCalendar: React.FC = () => {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-amber-50">
+    <div className="flex flex-col justify-center items-center">
       <Card className="w-full max-w-4xl shadow-lg">
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
@@ -369,7 +369,7 @@ const BookingCalendar: React.FC = () => {
       </Card>
 
       {/* Confirm button */}
-      <div className="absolute bottom-8 right-8">
+      <div className="flex justify-end items-end mt-6 w-4xl mb-4">
         <Button
           className="bg-red-500 hover:bg-red-600 text-white px-8"
           onClick={handleConfirm}

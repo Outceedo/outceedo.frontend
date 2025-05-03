@@ -349,7 +349,7 @@ const Experts = () => {
     );
 
     // Navigate to the BookService page
-    navigate("/book");
+    navigate("/player/book");
   };
 
   return (
