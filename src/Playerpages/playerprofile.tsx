@@ -21,6 +21,8 @@ import {
   updateProfilePhoto,
 } from "../store/profile-slice";
 import Swal from "sweetalert2";
+import Avatar from "../assets/images/avatar.png";
+import { useNavigate } from "react-router-dom";
 
 interface Stat {
   label: string;
@@ -77,7 +79,44 @@ const Profile: React.FC = () => {
   const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
+  const navigate = useNavigate();
+  useEffect(() => {
+    // Only proceed with navigation if user is logged in and not already redirecting
 
+    const userRole = localStorage.getItem("role")
+
+    // Check if required profile fields are missing
+    const isProfileIncomplete =
+      !currentProfile?.age ||
+      !currentProfile?.gender ||
+      !currentProfile?.height ||
+      !currentProfile?.weight;
+
+    console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
+    console.log("Missing fields:", {
+      age: !currentProfile?.age,
+      gender: !currentProfile?.gender,
+      height: !currentProfile?.height,
+      weight: !currentProfile?.weight,
+    });
+
+    if (isProfileIncomplete) {
+      console.log("Profile is incomplete, redirecting to details form");
+      navigate("/details-form");
+    } else {
+      if (userRole === "player") {
+        console.log("Redirecting to player profile");
+        navigate("/player/profile");
+      } else if (userRole === "expert") {
+        console.log("Redirecting to expert profile");
+        navigate("/expert/profile");
+      } else {
+        // Fallback if role is not recognized
+        console.log("Role not recognized, redirecting to details form");
+        navigate("/details-form");
+      }
+    }
+  }, [dispatch, currentProfile]);
   // Local state for player stats which might not be directly part of the API response
   const [playerStats, setPlayerStats] = useState(initialStats);
 
@@ -254,6 +293,7 @@ const Profile: React.FC = () => {
       uploads: mediaItems,
       documents: profile.documents || [],
       rawProfile: profile,
+      reviewsRecieved: profile.reviewsReceived,
     };
   };
 
@@ -492,7 +532,7 @@ const Profile: React.FC = () => {
                 />
               ) : (
                 <div className="rounded-lg w-60 h-60 bg-gray-200 flex items-center justify-center shadow-md">
-                  <span className="text-gray-500">No profile image</span>
+                  {/* <Avatar /> */}
                 </div>
               )}
 
@@ -869,7 +909,7 @@ const Profile: React.FC = () => {
                     />
                   )}
                   {activeTab === "reviews" && (
-                    <Reviews playerId={playerData.id} isExpertView={false} />
+                    <Reviews playerData={playerData} isExpertView={false} />
                   )}
                 </>
               )}

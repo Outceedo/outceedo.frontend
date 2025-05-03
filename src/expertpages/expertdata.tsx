@@ -14,6 +14,8 @@ import ExpertMedia from "./expertmedia";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
+import avatar from "../assets/images/avatar.png";
+import { useNavigate } from "react-router-dom";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
@@ -34,6 +36,7 @@ const ExpertProfile = () => {
   const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
+  const navigate = useNavigate();
 
   // Fetch profile data on component mount
   useEffect(() => {
@@ -45,6 +48,43 @@ const ExpertProfile = () => {
       dispatch(getProfile(username));
     }
   }, [dispatch]);
+  useEffect(() => {
+    // Only proceed with navigation if user is logged in and not already redirecting
+
+    const userRole = localStorage.getItem("role");
+
+    // Check if required profile fields are missing
+    const isProfileIncomplete =
+      !currentProfile?.age ||
+      !currentProfile?.gender ||
+      !currentProfile?.height ||
+      !currentProfile?.weight;
+
+    console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
+    console.log("Missing fields:", {
+      age: !currentProfile?.age,
+      gender: !currentProfile?.gender,
+      height: !currentProfile?.height,
+      weight: !currentProfile?.weight,
+    });
+
+    if (isProfileIncomplete) {
+      console.log("Profile is incomplete, redirecting to details form");
+      navigate("/details-form");
+    } else {
+      if (userRole === "player") {
+        console.log("Redirecting to player profile");
+        navigate("/player/profile");
+      } else if (userRole === "expert") {
+        console.log("Redirecting to expert profile");
+        navigate("/expert/profile");
+      } else {
+        // Fallback if role is not recognized
+        console.log("Role not recognized, redirecting to details form");
+        navigate("/details-form");
+      }
+    }
+  }, [dispatch, currentProfile]);
 
   // Format the expert data from API response
   const formatExpertData = () => {
@@ -68,6 +108,7 @@ const ExpertProfile = () => {
         documents: [],
         id: "",
         rawProfile: {},
+        reviewsReceived: {},
       };
 
     const profile = currentProfile;
@@ -125,7 +166,10 @@ const ExpertProfile = () => {
       socials: socials,
       uploads: mediaItems,
       documents: profile.documents || [],
-      rawProfile: profile, // Include raw profile for passing to child components
+      rawProfile: profile,
+      reviewsReceived: profile.reviewsReceived,
+
+      // Include raw profile for passing to child components
     };
   };
 
@@ -197,6 +241,8 @@ const ExpertProfile = () => {
   };
   // Get the formatted expert data
   const expertData = formatExpertData();
+  console.log("expert data im sending to review is");
+  console.log(expertData);
 
   // Show loading state
   if (status === "loading" && !currentProfile) {
@@ -317,8 +363,8 @@ const ExpertProfile = () => {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gray-300 text-gray-500">
-                No profile image
+              <div className="w-full h-full flex items-center justify-center">
+                {avatar}
               </div>
             )}
 

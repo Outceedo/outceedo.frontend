@@ -16,7 +16,7 @@ const Login: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  console.log(localStorage.getItem("Profilecomplete"));
+
   useEffect(() => {
     // Clear any previous errors when component mounts
     dispatch(clearError());
@@ -55,29 +55,6 @@ const Login: React.FC = () => {
 
       setLoginSuccess(true);
       setIsRedirecting(true);
-
-      // Get profile completion status from localStorage
-      const profileComplete = localStorage.getItem("Profilecomplete");
-      const userRole = user.role?.toLowerCase() || "";
-
-      console.log("Profile complete status:", profileComplete);
-
-      // Redirect based on profile completion status and role
-      if (profileComplete === "false") {
-        console.log("Redirecting to details form");
-        navigate("/details-form");
-      } else {
-        if (userRole === "player") {
-          console.log("Redirecting to player profile");
-          navigate("/player/profile");
-        } else if (userRole === "expert") {
-          console.log("Redirecting to expert profile");
-          navigate("/expert/profile");
-        } else {
-          // Fallback if role is not recognized
-          navigate("/details-form");
-        }
-      }
     }
   }, [user, navigate, dispatch, isRedirecting]);
 

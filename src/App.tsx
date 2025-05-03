@@ -49,7 +49,7 @@ const AppContent: React.FC = () => {
   const hasToken = !!localStorage.getItem("token");
 
   console.log(localStorage.getItem("ProfileComplete"));
-  // Debug logging
+  const navigate = useNavigate(); // Debug logging
 
   useEffect(() => {
     const initApp = async () => {
@@ -84,6 +84,15 @@ const AppContent: React.FC = () => {
 
   // Effective authentication check (use token presence as backup)
   const effectivelyAuthenticated = isAuthenticated || hasToken;
+
+  function handleNav() {
+    const role = localStorage.getItem("role");
+    if (role == "player") {
+      navigate("/player/dashboard");
+    } else {
+      navigate("/expert/dashboard");
+    }
+  }
 
   return (
     <Routes>
@@ -182,8 +191,8 @@ const AppContent: React.FC = () => {
                 You don't have permission to access this page.
               </p>
               <button
-                onClick={() => window.history.back()}
-                className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                onClick={handleNav}
+                className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
               >
                 Go Back
               </button>
