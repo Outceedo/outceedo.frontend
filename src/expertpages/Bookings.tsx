@@ -116,6 +116,10 @@ const BookingExpertside: React.FC = () => {
   const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
   const [bookingToReject, setBookingToReject] = useState<string | null>(null);
 
+  // Accept confirmation modal state
+  const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
+  const [bookingToAccept, setBookingToAccept] = useState<string | null>(null);
+
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
@@ -305,6 +309,24 @@ const BookingExpertside: React.FC = () => {
     setBookingToReject(null);
   };
 
+  // Open accept confirmation dialog
+  const openAcceptConfirmDialog = (bookingId: string) => {
+    setBookingToAccept(bookingId);
+    setIsAcceptConfirmOpen(true);
+
+    // If accept was triggered from booking details modal, keep it open
+    // Otherwise close the booking details modal
+    if (selectedBooking?.id !== bookingId) {
+      setIsBookingDetailsOpen(false);
+    }
+  };
+
+  // Close accept confirmation dialog
+  const closeAcceptConfirmDialog = () => {
+    setIsAcceptConfirmOpen(false);
+    setBookingToAccept(null);
+  };
+
   // Handle accepting a booking
   const handleAcceptBooking = async (bookingId: string) => {
     try {
@@ -340,8 +362,13 @@ const BookingExpertside: React.FC = () => {
         setSelectedBooking({ ...selectedBooking, status: "ACCEPTED" });
       }
 
-      // Close the booking details modal
-      closeBookingDetails();
+      // Close the accept confirmation dialog
+      closeAcceptConfirmDialog();
+
+      // Close the booking details modal if it's open
+      if (isBookingDetailsOpen) {
+        closeBookingDetails();
+      }
     } catch (error) {
       console.error("Error accepting booking:", error);
       setError("Failed to accept booking. Please try again.");
@@ -676,9 +703,7 @@ const BookingExpertside: React.FC = () => {
 
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
-      <h1 className="text-2xl font-bold mb-6">
-        Expert Dashboard - Player Bookings
-      </h1>
+      <h1 className="text-2xl font-bold mb-6">Your Bookings</h1>
 
       <div className="flex items-center space-x-4 mb-6">
         {/* Search Input with Icon */}
@@ -815,7 +840,7 @@ const BookingExpertside: React.FC = () => {
                           className="h-8 w-8 text-green-600 hover:bg-green-100 hover:text-green-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleAcceptBooking(booking.id);
+                            openAcceptConfirmDialog(booking.id);
                           }}
                           title="Accept Booking"
                           disabled={
@@ -1261,7 +1286,7 @@ const BookingExpertside: React.FC = () => {
                   </Button>
                   <Button
                     className="bg-green-500 text-white hover:bg-green-600"
-                    onClick={() => handleAcceptBooking(selectedBooking.id)}
+                    onClick={() => openAcceptConfirmDialog(selectedBooking.id)}
                   >
                     <FontAwesomeIcon icon={faCheck} className="mr-2" />
                     Accept
@@ -1438,6 +1463,69 @@ const BookingExpertside: React.FC = () => {
               }
             >
               Reject Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Accept Confirmation Modal */}
+      <Dialog open={isAcceptConfirmOpen} onOpenChange={setIsAcceptConfirmOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="text-green-600">
+              Confirm Acceptance
+            </DialogTitle>
+            <DialogDescription>
+              Are you sure you want to accept this booking? You'll be committed
+              to providing this service at the scheduled time.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            {bookingToAccept && (
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-sm">
+                  <span className="font-semibold">Player:</span>{" "}
+                  {
+                    bookings.find((b) => b.id === bookingToAccept)?.player
+                      ?.username
+                  }
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Service:</span>{" "}
+                  {
+                    bookings.find((b) => b.id === bookingToAccept)?.service
+                      ?.service?.name
+                  }
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Date:</span>{" "}
+                  {formatDate(
+                    bookings.find((b) => b.id === bookingToAccept)?.date || "",
+                    bookings.find((b) => b.id === bookingToAccept)?.startTime ||
+                      ""
+                  )}
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Price:</span> $
+                  {bookings.find((b) => b.id === bookingToAccept)?.service
+                    ?.price || "N/A"}
+                </p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeAcceptConfirmDialog}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-green-600 hover:bg-green-700 text-white"
+              onClick={() =>
+                bookingToAccept && handleAcceptBooking(bookingToAccept)
+              }
+            >
+              Accept Booking
             </Button>
           </DialogFooter>
         </DialogContent>

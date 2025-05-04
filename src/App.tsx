@@ -150,6 +150,7 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<Profile />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="book" element={<BookingCalendar />} />
+        <Route path="sponsors" element={<>Player sponsers</>} />
       </Route>
 
       {/* Expert Outlet */}
@@ -168,6 +169,7 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
+        <Route path="sponsors" element={<>Expert sponsers</>} />
       </Route>
 
       <Route

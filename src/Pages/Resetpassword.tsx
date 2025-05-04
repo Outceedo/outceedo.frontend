@@ -111,7 +111,7 @@ const ResetPassword: React.FC = () => {
 
         {/* Success Message with Countdown */}
         {success && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
             <p className="text-green-600 font-medium">{success}</p>
             {countdown !== null && (
               <p className="text-green-500 mt-2">
@@ -120,7 +120,7 @@ const ResetPassword: React.FC = () => {
             )}
             <button
               onClick={handleLoginRedirect}
-              className="mt-3 w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg transition duration-300"
+              className="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition duration-300"
             >
               Go to Login Now
             </button>
