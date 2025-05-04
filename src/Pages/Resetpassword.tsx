@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { resetPassword } from "../store/auth-slice";
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-  const token = queryParams.get("token") || ""; // Extract token from URL
+
+  const { id } = useParams();
+  const token = id || ""; // Only use route params
+  console.log(token);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -76,10 +77,9 @@ const ResetPassword: React.FC = () => {
       } else if (resetPassword.rejected.match(resultAction)) {
         setError(
           (resultAction as any).payload?.error ||
-          (resultAction as any).error?.message ||
-          "Failed to reset password."
+            (resultAction as any).error?.message ||
+            "Failed to reset password."
         );
-        
       }
     } catch (err: any) {
       console.error("Reset Password Error:", err);

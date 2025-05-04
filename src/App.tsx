@@ -48,7 +48,6 @@ const AppContent: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const hasToken = !!localStorage.getItem("token");
 
-  console.log(localStorage.getItem("ProfileComplete"));
   const navigate = useNavigate(); // Debug logging
 
   useEffect(() => {
