@@ -83,7 +83,7 @@ const ExpertProfile = () => {
         } else {
           // Fallback if role is not recognized
           console.log("Role not recognized, redirecting to details form");
-          navigate("/details-form");
+          navigate("/expert/details-form");
         }
       }
     }, 4000); // 2000 milliseconds = 2 seconds

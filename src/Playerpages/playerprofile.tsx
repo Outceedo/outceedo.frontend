@@ -297,7 +297,7 @@ const Profile: React.FC = () => {
         } else {
           // Fallback if role is not recognized
           console.log("Role not recognized, redirecting to details form");
-          navigate("/details-form");
+          navigate("/player/details-form");
         }
       }
     }, 2000); // 2000 milliseconds = 2 seconds
