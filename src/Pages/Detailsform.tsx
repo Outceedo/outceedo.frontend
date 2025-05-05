@@ -308,6 +308,22 @@ const Detailsform: React.FC = () => {
           errors.travelLimit = "Travel limit is required for experts";
         }
       }
+    } else if (step === 3) {
+      // Validate certificates
+      for (let i = 0; i < certificates.length; i++) {
+        const cert = certificates[i];
+        if (cert.file && !cert.name) {
+          errors[`certificate_${i}_name`] = "Certificate title is required";
+        }
+      }
+
+      // Validate awards
+      for (let i = 0; i < awards.length; i++) {
+        const award = awards[i];
+        if (award.file && !award.name) {
+          errors[`award_${i}_name`] = "Award title is required";
+        }
+      }
     }
 
     setValidationErrors(errors);
@@ -411,45 +427,11 @@ const Detailsform: React.FC = () => {
         setCertificates((prev) =>
           prev.map((cert) => (cert.id === id ? { ...cert, file } : cert))
         );
-
-        // Upload the document and save the document ID
-        const docId = await uploadDocument(
-          file,
-          certificates.find((c) => c.id === id)?.name || `Certificate ${id}`,
-          certificates.find((c) => c.id === id)?.organization || "",
-          "certificate",
-          id
-        );
-
-        if (docId) {
-          setCertificates((prev) =>
-            prev.map((cert) =>
-              cert.id === id ? { ...cert, uploadedDocId: docId } : cert
-            )
-          );
-        }
       } else if (type === "award" && id !== undefined) {
         // Update award with file
         setAwards((prev) =>
           prev.map((award) => (award.id === id ? { ...award, file } : award))
         );
-
-        // Upload the document and save the document ID
-        const docId = await uploadDocument(
-          file,
-          awards.find((a) => a.id === id)?.name || `Award ${id}`,
-          "", // No organization for awards
-          "award",
-          id
-        );
-
-        if (docId) {
-          setAwards((prev) =>
-            prev.map((award) =>
-              award.id === id ? { ...award, uploadedDocId: docId } : award
-            )
-          );
-        }
       }
 
       setError(null);
@@ -463,22 +445,32 @@ const Detailsform: React.FC = () => {
   const uploadDocument = async (
     file: File,
     title: string,
-    issuedBy: string,
+    issuedBy: string = "",
     type: "certificate" | "award",
-    id?: number
+    description: string = ""
   ): Promise<string | null> => {
     try {
+      // Validate required fields
+      if (!file) {
+        throw new Error(`File is required for ${type} upload`);
+      }
+
+      if (!title || title.trim() === "") {
+        throw new Error(`Title is required for ${type} upload`);
+      }
+
       const formData = new FormData();
       formData.append("image", file);
-      formData.append("title", title);
+      formData.append("title", title.trim());
       formData.append("type", type);
-      formData.append("issuedBy", issuedBy);
+      formData.append("issuedBy", issuedBy.trim());
 
-      // Add current date as issue date if not specified
+      // Add current date as issue date
       const today = new Date().toISOString().split("T")[0];
       formData.append("issuedDate", today);
-      // Optional description
-      formData.append("description", "");
+
+      // Add description field
+      formData.append("description", description || "");
 
       const token = getAuthToken();
       const response = await axios.post(
@@ -496,7 +488,66 @@ const Detailsform: React.FC = () => {
       return response.data.id || null;
     } catch (error) {
       console.error(`Error uploading ${type} document:`, error);
+      setError(
+        `Failed to upload ${type}: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
       throw error;
+    }
+  };
+
+  // Upload all certificates and awards
+  const uploadAllDocuments = async (): Promise<boolean> => {
+    try {
+      // Upload certificates
+      for (const cert of certificates) {
+        if (cert.file && cert.name) {
+          // Only upload if we have both a file and a name
+          const docId = await uploadDocument(
+            cert.file,
+            cert.name,
+            cert.organization || "",
+            "certificate"
+          );
+
+          if (docId) {
+            // Update certificate with uploaded ID
+            setCertificates((prev) =>
+              prev.map((c) =>
+                c.id === cert.id ? { ...c, uploadedDocId: docId } : c
+              )
+            );
+          }
+        }
+      }
+
+      // Upload awards
+      for (const award of awards) {
+        if (award.file && award.name) {
+          // Only upload if we have both a file and a name
+          const docId = await uploadDocument(
+            award.file,
+            award.name,
+            "", // No organization for awards
+            "award"
+          );
+
+          if (docId) {
+            // Update award with uploaded ID
+            setAwards((prev) =>
+              prev.map((a) =>
+                a.id === award.id ? { ...a, uploadedDocId: docId } : a
+              )
+            );
+          }
+        }
+      }
+
+      return true;
+    } catch (error) {
+      console.error("Error uploading documents:", error);
+      return false;
     }
   };
 
@@ -563,6 +614,15 @@ const Detailsform: React.FC = () => {
         cert.id === id ? { ...cert, [field]: value } : cert
       )
     );
+
+    // Clear validation error for this certificate
+    if (field === "name" && validationErrors[`certificate_${id}_name`]) {
+      setValidationErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[`certificate_${id}_name`];
+        return updated;
+      });
+    }
   };
 
   // Award functions
@@ -602,6 +662,15 @@ const Detailsform: React.FC = () => {
         award.id === id ? { ...award, name: value } : award
       )
     );
+
+    // Clear validation error for this award
+    if (validationErrors[`award_${id}_name`]) {
+      setValidationErrors((prev) => {
+        const updated = { ...prev };
+        delete updated[`award_${id}_name`];
+        return updated;
+      });
+    }
   };
 
   // Handle country selection
@@ -631,6 +700,13 @@ const Detailsform: React.FC = () => {
     setError(null);
 
     try {
+      // First upload all certificates and awards
+      const documentsUploaded = await uploadAllDocuments();
+
+      if (!documentsUploaded) {
+        throw new Error("Failed to upload some documents");
+      }
+
       // Find professional photo ID
       const professionalPhotoMedia = uploadedMedia.find(
         (m) => m.type === "professional"
@@ -745,7 +821,9 @@ const Detailsform: React.FC = () => {
       }
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      setError("An unexpected error occurred. Please try again.");
+      setError(
+        error.message || "An unexpected error occurred. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
       localStorage.setItem("Profilecomplete", "true");
@@ -1358,7 +1436,7 @@ const Detailsform: React.FC = () => {
       {step === 3 && (
         <div className="w-5xl">
           <h2 className="text-xl font-semibold mb-4">Certification</h2>
-          {certificates.map((cert) => (
+          {certificates.map((cert, index) => (
             <div
               key={cert.id}
               className="relative mb-4 border p-4 rounded shadow"
@@ -1403,8 +1481,17 @@ const Detailsform: React.FC = () => {
                 onChange={(e) =>
                   handleCertificateChange(cert.id, "name", e.target.value)
                 }
-                className="border p-2 w-full rounded mb-2"
+                className={`border p-2 w-full rounded mb-2 ${
+                  validationErrors[`certificate_${cert.id}_name`]
+                    ? "border-red-500"
+                    : ""
+                }`}
               />
+              {validationErrors[`certificate_${cert.id}_name`] && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors[`certificate_${cert.id}_name`]}
+                </p>
+              )}
               <label className="block text-black mb-1">Issued By</label>
               <input
                 type="text"
@@ -1481,8 +1568,17 @@ const Detailsform: React.FC = () => {
                   placeholder="Award Title"
                   value={award.name || ""}
                   onChange={(e) => handleAwardChange(award.id, e.target.value)}
-                  className="border p-2 w-full rounded mb-2"
+                  className={`border p-2 w-full rounded mb-2 ${
+                    validationErrors[`award_${award.id}_name`]
+                      ? "border-red-500"
+                      : ""
+                  }`}
                 />
+                {validationErrors[`award_${award.id}_name`] && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {validationErrors[`award_${award.id}_name`]}
+                  </p>
+                )}
                 {award.uploadedDocId && (
                   <div className="text-green-600 text-sm mt-2">
                     ✓ Award uploaded successfully

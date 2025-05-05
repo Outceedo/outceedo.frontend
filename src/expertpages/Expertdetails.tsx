@@ -86,7 +86,9 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     ) {
       // Filter for certificates only
       const docCertificates = expertData.rawProfile.documents
-        .filter((doc: any) => doc.type === "certificate")
+        .filter(
+          (doc: any) => doc.type === "certificate" || doc.type === "award"
+        )
         .map((doc: any) => ({
           id: doc.id,
           title: doc.title,
