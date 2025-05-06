@@ -286,7 +286,7 @@ const Profile: React.FC = () => {
 
       if (isProfileIncomplete) {
         console.log("Profile is incomplete, redirecting to details form");
-        navigate("/details-form");
+        navigate("/player/details-form");
       } else {
         if (userRole === "player") {
           console.log("Redirecting to player profile");
