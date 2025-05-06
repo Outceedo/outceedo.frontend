@@ -13,7 +13,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2 } from "lucide-react";
 
-
 interface Match {
   id: number;
   date: string;
@@ -90,13 +89,23 @@ const Matches: React.FC = () => {
 
     if (editingId !== null) {
       setMatches(
-        matches.map((match) =>
-          match.id === editingId ? { ...formData, id: editingId } : match
-        )
+        (prevMatches) =>
+          prevMatches
+            .map((match) =>
+              match.id === editingId ? { ...formData, id: editingId } : match
+            )
+            .sort(
+              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+            ) // Sort matches by date
       );
       setEditingId(null);
     } else {
-      setMatches([...matches, { ...formData, id: matches.length + 1 }]);
+      setMatches(
+        (prevMatches) =>
+          [...prevMatches, { ...formData, id: prevMatches.length + 1 }].sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          ) // Sort matches by date
+      );
     }
 
     setFormData({
