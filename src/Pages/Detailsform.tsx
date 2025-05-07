@@ -37,6 +37,7 @@ interface Certificate {
 interface Award {
   id: number;
   name?: string;
+  organization?: string; // Added organization field to match Certificate interface
   file?: File;
   uploadedDocId?: string; // To track uploaded document ID
 }
@@ -238,6 +239,7 @@ const Detailsform: React.FC = () => {
           .map((award: any, index: number) => ({
             id: index + 1,
             name: award.title || "",
+            organization: award.issuedBy || "", // Added organization mapping for awards
             uploadedDocId: award.id || "",
           }));
 
@@ -529,7 +531,7 @@ const Detailsform: React.FC = () => {
           const docId = await uploadDocument(
             award.file,
             award.name,
-            "", // No organization for awards
+            award.organization || "", // Use organization field for awards now
             "award"
           );
 
@@ -656,15 +658,20 @@ const Detailsform: React.FC = () => {
     setAwards(awards.filter((award) => award.id !== id));
   };
 
-  const handleAwardChange = (id: number, value: string) => {
+  // Updated handleAwardChange to match handleCertificateChange
+  const handleAwardChange = (
+    id: number,
+    field: "name" | "organization",
+    value: string
+  ) => {
     setAwards(
       awards.map((award) =>
-        award.id === id ? { ...award, name: value } : award
+        award.id === id ? { ...award, [field]: value } : award
       )
     );
 
     // Clear validation error for this award
-    if (validationErrors[`award_${id}_name`]) {
+    if (field === "name" && validationErrors[`award_${id}_name`]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
         delete updated[`award_${id}_name`];
@@ -1567,7 +1574,9 @@ const Detailsform: React.FC = () => {
                   type="text"
                   placeholder="Award Title"
                   value={award.name || ""}
-                  onChange={(e) => handleAwardChange(award.id, e.target.value)}
+                  onChange={(e) =>
+                    handleAwardChange(award.id, "name", e.target.value)
+                  }
                   className={`border p-2 w-full rounded mb-2 ${
                     validationErrors[`award_${award.id}_name`]
                       ? "border-red-500"
@@ -1579,6 +1588,17 @@ const Detailsform: React.FC = () => {
                     {validationErrors[`award_${award.id}_name`]}
                   </p>
                 )}
+                {/* Added Issued By field for awards to match certificates */}
+                <label className="block text-black mb-1">Issued By</label>
+                <input
+                  type="text"
+                  placeholder="Organization Name"
+                  value={award.organization || ""}
+                  onChange={(e) =>
+                    handleAwardChange(award.id, "organization", e.target.value)
+                  }
+                  className="border p-2 w-full rounded mb-2"
+                />
                 {award.uploadedDocId && (
                   <div className="text-green-600 text-sm mt-2">
                     ✓ Award uploaded successfully
