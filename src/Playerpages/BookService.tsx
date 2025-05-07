@@ -24,13 +24,53 @@ interface Service {
   price: string;
 }
 
+interface CalendarMonth {
+  name: string;
+  year: number;
+  numberOfDays: number;
+  firstDayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+}
+
 const BookingCalendar: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<number>(10);
+  const navigate = useNavigate();
+
+  // Current date for comparison
+  const today = new Date();
+  const currentYear = today.getFullYear();
+  const currentMonth = today.getMonth(); // 0-indexed (0 = January)
+  const currentDay = today.getDate();
+
+  // Calculate initial month and year (current month)
+  const initialMonthIndex = today.getMonth();
+  const monthNames = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const [selectedMonthIndex, setSelectedMonthIndex] =
+    useState<number>(initialMonthIndex);
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
   const [selectedTime, setSelectedTime] = useState<string>("12:30pm");
-  const [currentMonth, setCurrentMonth] = useState<string>("April 2025");
+  const [displayedMonth, setDisplayedMonth] = useState<CalendarMonth>({
+    name: monthNames[initialMonthIndex],
+    year: currentYear,
+    numberOfDays: new Date(currentYear, initialMonthIndex + 1, 0).getDate(),
+    firstDayOfWeek: new Date(currentYear, initialMonthIndex, 1).getDay(),
+  });
+
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const navigate = useNavigate();
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
@@ -43,9 +83,28 @@ const BookingCalendar: React.FC = () => {
     }
   }, []);
 
+  // Update displayed month when month or year changes
+  useEffect(() => {
+    const numberOfDays = new Date(
+      selectedYear,
+      selectedMonthIndex + 1,
+      0
+    ).getDate();
+    // Get day of week for the first day of month (0 = Sunday, 1 = Monday, etc.)
+    // Adjusted to make Monday = 0
+    let firstDay = new Date(selectedYear, selectedMonthIndex, 1).getDay() - 1;
+    if (firstDay === -1) firstDay = 6; // Convert Sunday from -1 to 6
+
+    setDisplayedMonth({
+      name: monthNames[selectedMonthIndex],
+      year: selectedYear,
+      numberOfDays,
+      firstDayOfWeek: firstDay,
+    });
+  }, [selectedMonthIndex, selectedYear]);
+
   // Calendar data
   const daysOfWeek = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-  const daysInMonth = Array.from({ length: 31 }, (_, i) => i + 1);
 
   // Time slots
   const timeSlots = [
@@ -54,15 +113,43 @@ const BookingCalendar: React.FC = () => {
   ];
 
   const handlePrevMonth = () => {
-    setCurrentMonth("March 2025");
+    // Check if we're already at the current month (to disable going back to past months)
+    if (selectedYear === currentYear && selectedMonthIndex <= currentMonth) {
+      return; // Don't allow going to past months
+    }
+
+    if (selectedMonthIndex === 0) {
+      // If January, go to December of previous year
+      setSelectedMonthIndex(11);
+      setSelectedYear((prev) => prev - 1);
+    } else {
+      // Otherwise just go to previous month
+      setSelectedMonthIndex((prev) => prev - 1);
+    }
   };
 
   const handleNextMonth = () => {
-    setCurrentMonth("May 2025");
+    if (selectedMonthIndex === 11) {
+      // If December, go to January of next year
+      setSelectedMonthIndex(0);
+      setSelectedYear((prev) => prev + 1);
+    } else {
+      // Otherwise just go to next month
+      setSelectedMonthIndex((prev) => prev + 1);
+    }
   };
 
   const handleDateSelect = (day: number) => {
-    setSelectedDate(day);
+    // Only allow selecting dates if they're not in the past
+    if (
+      selectedYear > currentYear ||
+      (selectedYear === currentYear && selectedMonthIndex > currentMonth) ||
+      (selectedYear === currentYear &&
+        selectedMonthIndex === currentMonth &&
+        day >= currentDay)
+    ) {
+      setSelectedDate(day);
+    }
   };
 
   const handleTimeSelect = (time: string) => {
@@ -75,12 +162,15 @@ const BookingCalendar: React.FC = () => {
 
   // Convert 12-hour time format to 24-hour format
   const convertTo24HourFormat = (time: string): string => {
-    const [hour, minute] = time.slice(0, -2).split(":");
+    const [hour, minuteWithSuffix] = time.split(":");
+    const minute = minuteWithSuffix.substring(0, 2);
+    const isPM = minuteWithSuffix.toLowerCase().includes("pm");
+
     let hourNum = parseInt(hour, 10);
 
-    if (time.toLowerCase().includes("pm") && hourNum < 12) {
+    if (isPM && hourNum !== 12) {
       hourNum += 12;
-    } else if (time.toLowerCase().includes("am") && hourNum === 12) {
+    } else if (!isPM && hourNum === 12) {
       hourNum = 0;
     }
 
@@ -104,29 +194,16 @@ const BookingCalendar: React.FC = () => {
 
   // Format date as YYYY-MM-DD
   const formatDateForAPI = (): string => {
-    const monthMap: { [key: string]: number } = {
-      January: 0,
-      February: 1,
-      March: 2,
-      April: 3,
-      May: 4,
-      June: 5,
-      July: 6,
-      August: 7,
-      September: 8,
-      October: 9,
-      November: 10,
-      December: 11,
-    };
+    // Create date using the selected date components
+    // Ensure we're using the correct month by adding the selectedMonthIndex
+    const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
 
-    const monthName = currentMonth.split(" ")[0];
-    const year = parseInt(currentMonth.split(" ")[1]);
-    const month = monthMap[monthName];
+    // Format as YYYY-MM-DD - we use local timezone to avoid date shifts
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
 
-    const date = new Date(year, month, selectedDate);
-
-    // Format as YYYY-MM-DD
-    return date.toISOString().split("T")[0];
+    return `${year}-${month}-${day}`;
   };
 
   const handleConfirm = async () => {
@@ -143,6 +220,8 @@ const BookingCalendar: React.FC = () => {
       const startTime24H = convertTo24HourFormat(selectedTime);
       const endTime24H = calculateEndTime(startTime24H);
       const formattedDate = formatDateForAPI();
+
+      console.log("Booking date being sent:", formattedDate);
 
       // Prepare booking data
       const bookingData = {
@@ -185,17 +264,39 @@ const BookingCalendar: React.FC = () => {
 
   // Format the selected date
   const getFormattedDate = () => {
-    const date = new Date(
-      2025,
-      currentMonth === "April 2025" ? 3 : currentMonth === "March 2025" ? 2 : 4,
-      selectedDate
-    );
+    const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
       day: "numeric",
       month: "long",
+      year: "numeric",
     });
   };
+
+  // Check if a date is in the past
+  const isDateInPast = (day: number): boolean => {
+    if (selectedYear < currentYear) return true;
+    if (selectedYear > currentYear) return false;
+    if (selectedMonthIndex < currentMonth) return true;
+    if (selectedMonthIndex > currentMonth) return false;
+    return day < currentDay;
+  };
+
+  // Generate array of days for the current month view
+  const generateCalendarDays = () => {
+    // Calculate empty cells for alignment
+    const emptyCells = Array(displayedMonth.firstDayOfWeek).fill(null);
+
+    // Create array with actual days
+    const daysInMonth = Array.from(
+      { length: displayedMonth.numberOfDays },
+      (_, i) => i + 1
+    );
+
+    return [...emptyCells, ...daysInMonth];
+  };
+
+  const calendarDays = generateCalendarDays();
 
   return (
     <div className="flex flex-col justify-center items-center">
@@ -223,7 +324,7 @@ const BookingCalendar: React.FC = () => {
                       className="w-20 h-20 rounded-full object-cover mb-2"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = profile2; // Default image on error
+                        target.src = profile; // Default image on error
                       }}
                     />
                     <h3 className="text-lg font-semibold text-center">
@@ -277,12 +378,23 @@ const BookingCalendar: React.FC = () => {
               <div className="flex justify-between items-center mb-6">
                 <button
                   onClick={handlePrevMonth}
-                  className="p-2 rounded-full hover:bg-gray-100"
+                  disabled={
+                    selectedYear === currentYear &&
+                    selectedMonthIndex <= currentMonth
+                  }
+                  className={`p-2 rounded-full ${
+                    selectedYear === currentYear &&
+                    selectedMonthIndex <= currentMonth
+                      ? "text-gray-300 cursor-not-allowed"
+                      : "hover:bg-gray-100"
+                  }`}
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
 
-                <h3 className="text-lg font-medium">{currentMonth}</h3>
+                <h3 className="text-lg font-medium">
+                  {displayedMonth.name} {displayedMonth.year}
+                </h3>
 
                 <button
                   onClick={handleNextMonth}
@@ -308,29 +420,35 @@ const BookingCalendar: React.FC = () => {
 
                 {/* Calendar days */}
                 <div className="grid grid-cols-7 gap-2">
-                  {/* Empty cells for alignment (if month doesn't start on Monday) */}
-                  {currentMonth === "April 2025" &&
-                    Array(0)
-                      .fill(null)
-                      .map((_, index) => (
-                        <div key={`empty-${index}`} className="h-10 w-10"></div>
-                      ))}
-
-                  {daysInMonth.map((day) => (
-                    <button
-                      key={day}
-                      onClick={() => handleDateSelect(day)}
-                      className={`
-                        h-10 w-10 rounded-full flex items-center justify-center text-sm
-                        ${
-                          selectedDate === day
-                            ? "bg-red-500 text-white"
-                            : "hover:bg-gray-100"
-                        }
-                      `}
+                  {calendarDays.map((day, index) => (
+                    <div
+                      key={index}
+                      className="h-10 w-10 flex items-center justify-center"
                     >
-                      {day}
-                    </button>
+                      {day !== null ? (
+                        <button
+                          onClick={() => handleDateSelect(day)}
+                          disabled={isDateInPast(day)}
+                          className={`
+                            h-10 w-10 rounded-full flex items-center justify-center text-sm
+                            ${
+                              selectedDate === day &&
+                              selectedMonthIndex ===
+                                displayedMonth.name.indexOf(
+                                  displayedMonth.name
+                                ) &&
+                              selectedYear === displayedMonth.year
+                                ? "bg-red-500 text-white"
+                                : isDateInPast(day)
+                                ? "text-gray-300 cursor-not-allowed"
+                                : "hover:bg-gray-100"
+                            }
+                          `}
+                        >
+                          {day}
+                        </button>
+                      ) : null}
+                    </div>
                   ))}
                 </div>
               </div>
