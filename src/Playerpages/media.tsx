@@ -15,6 +15,7 @@ import MediaUpload from "./MediaUpload";
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { CrossIcon, DeleteIcon } from "lucide-react";
 
 interface UploadItem {
   id: string | number;
@@ -518,15 +519,15 @@ const MediaCard: React.FC<MediaCardProps> = ({
   }, []);
 
   return (
-    <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 ">
+    <div className="relative bg-white p-4 dark:bg-gray-700 shadow-md rounded-lg">
       {/* Three-dot delete menu - Only show if not in expert view */}
       {!isExpertView && (
-        <div className="absolute top-2 right-2 z-10" ref={menuRef}>
+        <div className="absolute top-1 right-1 z-10" ref={menuRef}>
           <Button
-            className="text-gray-100 dark:text-white text-lg"
+            className="text-black dark:text-white text-2xl bg-yellow-200 hover:bg-white"
             onClick={() => setMenuOpen((prev) => !prev)}
           >
-            ⋮
+            &times;
           </Button>
           {menuOpen && (
             <div className="absolute right-0 mt-1 bg-white dark:bg-gray-800 shadow-md rounded-md">
@@ -535,7 +536,7 @@ const MediaCard: React.FC<MediaCardProps> = ({
                   onDelete(item.id);
                   setMenuOpen(false);
                 }}
-                className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100 dark:hover:bg-gray-700 w-full text-left"
+                className="block px-4 py-2 text-sm text-red-600  hover:bg-red-100 dark:hover:bg-gray-700 bg-white w-full text-left"
               >
                 <FontAwesomeIcon icon={faTrash} className="mr-2" />
                 Delete

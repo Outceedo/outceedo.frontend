@@ -5,6 +5,7 @@ import {
   faInstagram,
   faFacebook,
   faTwitter,
+  faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { faStar, faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import ExpertDetails from "./Expertdetails";
@@ -22,7 +23,7 @@ const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
   { icon: faFacebook, color: "#3b5998", link: "" },
   { icon: faInstagram, color: "#E1306C", link: "" },
-  { icon: faTwitter, color: "#1DA1F2", link: "" },
+  { icon: faXTwitter, color: "#1DA1F2", link: "" },
 ];
 
 const ExpertProfile = () => {

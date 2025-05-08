@@ -109,6 +109,7 @@ const Expertspage: React.FC = () => {
 
   // Extract experts array from the profiles response
   const expertsArray = profiles?.users || [];
+  console.log(expertsArray);
 
   // Determine total pages from response
   const totalPages = profiles?.totalPages || 1;
@@ -408,6 +409,7 @@ const Expertspage: React.FC = () => {
                           ? ` • ${expert.city}, ${expert.country}`
                           : ""}
                       </p>
+                      {expert.subProfession}
 
                       <div className="flex items-center justify-between mt-4">
                         <div className="flex items-center">

@@ -372,12 +372,12 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview }) => {
   return (
     <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 ">
       {/* Three-dot delete menu */}
-      <div className="absolute top-2 right-2 z-10" ref={menuRef}>
+      <div className="absolute top-1 right-1 z-10" ref={menuRef}>
         <Button
-          className="text-black bg-transparent dark:text-white text-lg"
+          className="text-black bg-yellow-200 dark:text-black text-3xl hover:bg-yellow-200"
           onClick={() => setMenuOpen((prev) => !prev)}
         >
-          ⋮
+          &times;
         </Button>
         {menuOpen && (
           <div className="absolute right-0 mt-1 bg-white shadow-md rounded-md">
@@ -386,7 +386,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview }) => {
                 onDelete(item.id);
                 setMenuOpen(false);
               }}
-              className="block px-4 py-2 text-sm text-red-600 hover:bg-red-100 w-full text-left"
+              className="block px-4 py-2 text-sm text-red-600 bg-white w-full text-left"
             >
               <FontAwesomeIcon icon={faTrash} className="mr-2" />
               Delete

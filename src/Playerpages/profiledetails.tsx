@@ -25,6 +25,7 @@ import {
   faInstagram,
   faFacebook,
   faTwitter,
+  faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -1247,7 +1248,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             {/* Twitter */}
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
-                <FaTwitter size={20} />
+                <FontAwesomeIcon icon={faXTwitter} />
               </div>
               <Input
                 placeholder="Twitter URL (e.g. twitter.com/username)"

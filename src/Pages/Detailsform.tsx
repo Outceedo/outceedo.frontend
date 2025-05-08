@@ -12,8 +12,10 @@ import {
   faInstagram,
   faFacebook,
   faTwitter,
+  faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faX } from "@fortawesome/free-solid-svg-icons";
 
 interface Country {
   name: string;
@@ -32,6 +34,7 @@ interface Certificate {
   organization?: string;
   file?: File;
   uploadedDocId?: string; // To track uploaded document ID
+  imageUrl?: string; // To display certificate image
 }
 
 interface Award {
@@ -40,6 +43,7 @@ interface Award {
   organization?: string; // Added organization field to match Certificate interface
   file?: File;
   uploadedDocId?: string; // To track uploaded document ID
+  imageUrl?: string; // To display award image
 }
 
 interface Media {
@@ -227,6 +231,7 @@ const Detailsform: React.FC = () => {
             name: cert.title || "",
             organization: cert.issuedBy || "",
             uploadedDocId: cert.id || "",
+            imageUrl: cert.imageUrl || "", // Add image URL
           }));
 
         if (existingCertificates.length > 0) {
@@ -241,6 +246,7 @@ const Detailsform: React.FC = () => {
             name: award.title || "",
             organization: award.issuedBy || "", // Added organization mapping for awards
             uploadedDocId: award.id || "",
+            imageUrl: award.imageUrl || "", // Add image URL
           }));
 
         if (existingAwards.length > 0) {
@@ -425,14 +431,24 @@ const Detailsform: React.FC = () => {
         setProfessionalPhoto(file);
         await uploadMediaFile(file, "professional");
       } else if (type === "certificate" && id !== undefined) {
-        // Update certificate with file
+        // Create a temporary object URL for previewing the file
+        const imageUrl = URL.createObjectURL(file);
+
+        // Update certificate with file and preview URL
         setCertificates((prev) =>
-          prev.map((cert) => (cert.id === id ? { ...cert, file } : cert))
+          prev.map((cert) =>
+            cert.id === id ? { ...cert, file, imageUrl } : cert
+          )
         );
       } else if (type === "award" && id !== undefined) {
-        // Update award with file
+        // Create a temporary object URL for previewing the file
+        const imageUrl = URL.createObjectURL(file);
+
+        // Update award with file and preview URL
         setAwards((prev) =>
-          prev.map((award) => (award.id === id ? { ...award, file } : award))
+          prev.map((award) =>
+            award.id === id ? { ...award, file, imageUrl } : award
+          )
         );
       }
 
@@ -504,8 +520,8 @@ const Detailsform: React.FC = () => {
     try {
       // Upload certificates
       for (const cert of certificates) {
-        if (cert.file && cert.name) {
-          // Only upload if we have both a file and a name
+        if (cert.file && cert.name && !cert.uploadedDocId) {
+          // Only upload if we have both a file and a name, and it's not already uploaded
           const docId = await uploadDocument(
             cert.file,
             cert.name,
@@ -526,8 +542,8 @@ const Detailsform: React.FC = () => {
 
       // Upload awards
       for (const award of awards) {
-        if (award.file && award.name) {
-          // Only upload if we have both a file and a name
+        if (award.file && award.name && !award.uploadedDocId) {
+          // Only upload if we have both a file and a name, and it's not already uploaded
           const docId = await uploadDocument(
             award.file,
             award.name,
@@ -581,12 +597,17 @@ const Detailsform: React.FC = () => {
   };
 
   const removeCertificate = async (id: number) => {
-    if (certificates.length <= 1) return;
+    // Don't allow removing the last certificate
+    if (certificates.length <= 1) {
+      return;
+    }
 
+    // Find the certificate
     const cert = certificates.find((c) => c.id === id);
+    if (!cert) return;
 
     // If the certificate was uploaded, delete it from the server
-    if (cert?.uploadedDocId) {
+    if (cert.uploadedDocId) {
       try {
         const token = getAuthToken();
         await axios.delete(
@@ -600,9 +621,12 @@ const Detailsform: React.FC = () => {
         console.log(`Deleted certificate ${id} from server`);
       } catch (error) {
         console.error(`Error deleting certificate ${id}:`, error);
+        setError("Failed to delete certificate. Please try again.");
+        return; // Don't proceed if server deletion failed
       }
     }
 
+    // Remove from local state
     setCertificates(certificates.filter((cert) => cert.id !== id));
   };
 
@@ -611,6 +635,14 @@ const Detailsform: React.FC = () => {
     field: "name" | "organization",
     value: string
   ) => {
+    // Find the certificate
+    const cert = certificates.find((c) => c.id === id);
+
+    // Don't update if it's already uploaded
+    if (cert && cert.uploadedDocId) {
+      return;
+    }
+
     setCertificates(
       certificates.map((cert) =>
         cert.id === id ? { ...cert, [field]: value } : cert
@@ -633,12 +665,17 @@ const Detailsform: React.FC = () => {
   };
 
   const removeAward = async (id: number) => {
-    if (awards.length <= 1) return;
+    // Don't allow removing the last award
+    if (awards.length <= 1) {
+      return;
+    }
 
+    // Find the award
     const award = awards.find((a) => a.id === id);
+    if (!award) return;
 
     // If the award was uploaded, delete it from the server
-    if (award?.uploadedDocId) {
+    if (award.uploadedDocId) {
       try {
         const token = getAuthToken();
         await axios.delete(
@@ -652,9 +689,12 @@ const Detailsform: React.FC = () => {
         console.log(`Deleted award ${id} from server`);
       } catch (error) {
         console.error(`Error deleting award ${id}:`, error);
+        setError("Failed to delete award. Please try again.");
+        return; // Don't proceed if server deletion failed
       }
     }
 
+    // Remove from local state
     setAwards(awards.filter((award) => award.id !== id));
   };
 
@@ -664,6 +704,14 @@ const Detailsform: React.FC = () => {
     field: "name" | "organization",
     value: string
   ) => {
+    // Find the award
+    const award = awards.find((a) => a.id === id);
+
+    // Don't update if it's already uploaded
+    if (award && award.uploadedDocId) {
+      return;
+    }
+
     setAwards(
       awards.map((award) =>
         award.id === id ? { ...award, [field]: value } : award
@@ -991,7 +1039,7 @@ const Detailsform: React.FC = () => {
               onChange={(e) => handleFileUpload(e, "profile")}
             />
             <button
-              className="absolute right-2 bg-lightYellow text-black-500 px-3 py-1 rounded text-sm font-semibold"
+              className="absolute right-2 bg-lightYellow text-black-500 px-3 py-1 rounded text-sm font-semibold bg-yellow-300"
               onClick={() =>
                 document.getElementById("profilePhotoUpload")?.click()
               }
@@ -1054,11 +1102,14 @@ const Detailsform: React.FC = () => {
                 required
               >
                 <option value="">Select</option>
-                <option value="football">Football</option>
-                <option value="cricket">Cricket</option>
-                <option value="basketball">Basketball</option>
-                <option value="tennis">Tennis</option>
-                <option value="hockey">Hockey</option>
+                <option value="coach">Coach</option>
+                <option value="manager">Manager</option>
+                <option value="player">Player</option>
+                <option value="scout">Scout</option>
+                <option value="exmanager">Ex-Manager</option>
+                <option value="explayer">Ex-Player</option>
+                <option value="excoach">Ex-Coach</option>
+                <option value="exscout">Ex-Scout</option>
               </select>
               {validationErrors.profession && (
                 <p className="text-red-500 text-xs mt-1">
@@ -1075,10 +1126,10 @@ const Detailsform: React.FC = () => {
                 className="border p-2 w-full rounded"
               >
                 <option value="">Select</option>
-                <option value="player">Player</option>
-                <option value="coach">Coach</option>
-                <option value="referee">Referee</option>
-                <option value="analyst">Analyst</option>
+                <option value="blank">Blank</option>
+                <option value="defender">Defender</option>
+                <option value="striker">Striker</option>
+                <option value="goalkeeper">GoalKeeper</option>
               </select>
             </div>
           </div>
@@ -1203,7 +1254,7 @@ const Detailsform: React.FC = () => {
               onChange={(e) => handleFileUpload(e, "professional")}
             />
             <button
-              className="absolute right-2 bg-lightYellow text-black-500 px-3 py-1 rounded text-sm font-semibold"
+              className="absolute right-2 bg-lightYellow text-black-500 px-3 py-1 rounded text-sm font-semibold bg-yellow-300"
               onClick={() =>
                 document.getElementById("professionalPhotoUpload")?.click()
               }
@@ -1457,27 +1508,49 @@ const Detailsform: React.FC = () => {
                   ×
                 </button>
               )}
-              <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center flex-col justify-center">
-                <span className="text-gray-500">
-                  {cert.file ? cert.file.name : "Upload certificate here"}
-                </span>
-                <input
-                  type="file"
-                  id={`fileUpload-${cert.id}`}
-                  className="hidden"
-                  accept="image/*"
-                  onChange={(e) => handleFileUpload(e, "certificate", cert.id)}
-                />
-                <button
-                  className="absolute right-2 bg-lightYellow text-black px-3 py-1 rounded text-sm font-semibold"
-                  onClick={() =>
-                    document.getElementById(`fileUpload-${cert.id}`)?.click()
-                  }
-                  type="button"
-                >
-                  Browse
-                </button>
-              </div>
+
+              {/* Display certificate image in circular format if it exists */}
+              {(cert.uploadedDocId || cert.imageUrl) && (
+                <div className="mb-4 flex items-center">
+                  <div className="w-12 h-12 rounded-full overflow-hidden mr-3 border-2 border-gray-200">
+                    <img
+                      src={cert.imageUrl}
+                      alt={cert.name || "Certificate"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="font-semibold">
+                    {cert.name || "Certificate"}
+                  </span>
+                </div>
+              )}
+
+              {!cert.uploadedDocId && (
+                <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center flex-col justify-center">
+                  <span className="text-gray-500">
+                    {cert.file ? cert.file.name : "Upload certificate here"}
+                  </span>
+                  <input
+                    type="file"
+                    id={`fileUpload-${cert.id}`}
+                    className="hidden"
+                    accept="image/*"
+                    onChange={(e) =>
+                      handleFileUpload(e, "certificate", cert.id)
+                    }
+                  />
+                  <button
+                    className="absolute right-2 bg-lightYellow text-black px-3 py-1 rounded text-sm font-semibold bg-yellow-300"
+                    onClick={() =>
+                      document.getElementById(`fileUpload-${cert.id}`)?.click()
+                    }
+                    type="button"
+                  >
+                    Browse
+                  </button>
+                </div>
+              )}
+
               <label className="block text-black mb-1">
                 Certificate Title*
               </label>
@@ -1492,7 +1565,9 @@ const Detailsform: React.FC = () => {
                   validationErrors[`certificate_${cert.id}_name`]
                     ? "border-red-500"
                     : ""
-                }`}
+                } ${cert.uploadedDocId ? "bg-gray-100" : ""}`}
+                disabled={!!cert.uploadedDocId}
+                readOnly={!!cert.uploadedDocId}
               />
               {validationErrors[`certificate_${cert.id}_name`] && (
                 <p className="text-red-500 text-xs mt-1">
@@ -1511,7 +1586,11 @@ const Detailsform: React.FC = () => {
                     e.target.value
                   )
                 }
-                className="border p-2 w-full rounded mb-2"
+                className={`border p-2 w-full rounded mb-2 ${
+                  cert.uploadedDocId ? "bg-gray-100" : ""
+                }`}
+                disabled={!!cert.uploadedDocId}
+                readOnly={!!cert.uploadedDocId}
               />
               {cert.uploadedDocId && (
                 <div className="text-green-600 text-sm mt-2">
@@ -1523,7 +1602,7 @@ const Detailsform: React.FC = () => {
           <div className="flex justify-end">
             <button
               onClick={addCertificate}
-              className="bg-lightYellow text-black px-3 py-1 rounded font-semibold"
+              className="bg-lightYellow text-black px-3 py-1 rounded font-semibold bg-yellow-300"
               type="button"
             >
               + Add Certificate
@@ -1545,7 +1624,29 @@ const Detailsform: React.FC = () => {
                   ×
                 </button>
               )}
-              <div className="flex flex-col">
+
+              {/* Display award image in circular format if it exists */}
+              {(award.uploadedDocId || award.imageUrl) && (
+                <div className="mb-4 flex items-center">
+                  <div className="w-12 h-12 rounded-full overflow-hidden mr-3 border-2 border-gray-200">
+                    <img
+                      src={
+                        award.imageUrl ||
+                        (award.uploadedDocId && profileData?.documents
+                          ? profileData.documents.find(
+                              (doc) => doc.id === award.uploadedDocId
+                            )?.url || ""
+                          : "")
+                      }
+                      alt={award.name || "Award"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <span className="font-semibold">{award.name || "Award"}</span>
+                </div>
+              )}
+
+              {!award.uploadedDocId && (
                 <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-center">
                   <span className="text-gray-500">
                     {award.file ? award.file.name : "Upload award image here"}
@@ -1558,7 +1659,7 @@ const Detailsform: React.FC = () => {
                     onChange={(e) => handleFileUpload(e, "award", award.id)}
                   />
                   <button
-                    className="absolute right-2 bg-lightYellow text-black px-3 py-1 rounded text-sm font-semibold"
+                    className="absolute right-2 bg-lightYellow text-black px-3 py-1 rounded text-sm font-semibold bg-yellow-300"
                     onClick={() =>
                       document
                         .getElementById(`awardFileUpload-${award.id}`)
@@ -1569,48 +1670,55 @@ const Detailsform: React.FC = () => {
                     Browse
                   </button>
                 </div>
-                <label className="block text-black mb-1">Award Title*</label>
-                <input
-                  type="text"
-                  placeholder="Award Title"
-                  value={award.name || ""}
-                  onChange={(e) =>
-                    handleAwardChange(award.id, "name", e.target.value)
-                  }
-                  className={`border p-2 w-full rounded mb-2 ${
-                    validationErrors[`award_${award.id}_name`]
-                      ? "border-red-500"
-                      : ""
-                  }`}
-                />
-                {validationErrors[`award_${award.id}_name`] && (
-                  <p className="text-red-500 text-xs mt-1">
-                    {validationErrors[`award_${award.id}_name`]}
-                  </p>
-                )}
-                {/* Added Issued By field for awards to match certificates */}
-                <label className="block text-black mb-1">Issued By</label>
-                <input
-                  type="text"
-                  placeholder="Organization Name"
-                  value={award.organization || ""}
-                  onChange={(e) =>
-                    handleAwardChange(award.id, "organization", e.target.value)
-                  }
-                  className="border p-2 w-full rounded mb-2"
-                />
-                {award.uploadedDocId && (
-                  <div className="text-green-600 text-sm mt-2">
-                    ✓ Award uploaded successfully
-                  </div>
-                )}
-              </div>
+              )}
+
+              <label className="block text-black mb-1">Award Title*</label>
+              <input
+                type="text"
+                placeholder="Award Title"
+                value={award.name || ""}
+                onChange={(e) =>
+                  handleAwardChange(award.id, "name", e.target.value)
+                }
+                className={`border p-2 w-full rounded mb-2 ${
+                  validationErrors[`award_${award.id}_name`]
+                    ? "border-red-500"
+                    : ""
+                } ${award.uploadedDocId ? "bg-gray-100" : ""}`}
+                disabled={!!award.uploadedDocId}
+                readOnly={!!award.uploadedDocId}
+              />
+              {validationErrors[`award_${award.id}_name`] && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors[`award_${award.id}_name`]}
+                </p>
+              )}
+              {/* Added Issued By field for awards to match certificates */}
+              <label className="block text-black mb-1">Issued By</label>
+              <input
+                type="text"
+                placeholder="Organization Name"
+                value={award.organization || ""}
+                onChange={(e) =>
+                  handleAwardChange(award.id, "organization", e.target.value)
+                }
+                className={`border p-2 w-full rounded mb-2 ${
+                  award.uploadedDocId ? "bg-gray-100" : ""
+                }`}
+                disabled={!!award.uploadedDocId}
+                readOnly={!!award.uploadedDocId}
+              />
+              {award.uploadedDocId && (
+                <div className="text-green-600 text-sm mt-2">
+                  ✓ Award uploaded successfully
+                </div>
+              )}
             </div>
           ))}
           <div className="flex justify-end">
             <button
               onClick={addAward}
-              className="bg-lightYellow text-black px-3 py-1 rounded font-semibold"
+              className="bg-lightYellow text-black px-3 py-1 rounded font-semibold bg-yellow-300"
               type="button"
             >
               + Add Award
@@ -1671,7 +1779,7 @@ const Detailsform: React.FC = () => {
 
           <div className="flex items-center w-1/2 mb-2">
             <FontAwesomeIcon
-              icon={faTwitter}
+              icon={faXTwitter}
               className="text-blue-600 text-3xl mr-3 cursor-pointer"
             />
             <input

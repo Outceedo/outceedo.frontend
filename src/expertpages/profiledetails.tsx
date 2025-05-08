@@ -5,6 +5,7 @@ import {
   faInstagram,
   faFacebook,
   faTwitter,
+  faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { Card } from "@/components/ui/card";
 import { Profile, DocumentItem } from "../types/Profile";
@@ -98,7 +99,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       name: "Instagram",
     },
     {
-      icon: faTwitter,
+      icon: faXTwitter,
       color: "#1DA1F2",
       link: socialLinks.twitter || "",
       name: "Twitter",

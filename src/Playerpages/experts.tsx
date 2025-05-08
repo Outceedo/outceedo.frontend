@@ -9,6 +9,7 @@ import {
   faInstagram,
   faFacebook,
   faTwitter,
+  faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import profile from "../assets/images/avatar.png";
 
@@ -25,7 +26,7 @@ const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
   { icon: faFacebook, color: "#3b5998", link: "https://www.facebook.com" },
   { icon: faInstagram, color: "#E1306C", link: "https://www.instagram.com" },
-  { icon: faTwitter, color: "#1DA1F2", link: "https://www.twitter.com" },
+  { icon: faXTwitter, color: "#1DA1F2", link: "https://www.twitter.com" },
 ];
 
 interface MediaItem {
