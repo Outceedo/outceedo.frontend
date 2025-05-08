@@ -41,6 +41,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       return <Navigate to="/login" />;
     }
   } else {
+    // Redirect from login/signup pages based on user role
     if (location.pathname === "/login" || location.pathname === "/signup") {
       if (effectiveRole === "expert") {
         return <Navigate to="/expert/dashboard" />;
@@ -48,13 +49,35 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       if (effectiveRole === "player") {
         return <Navigate to="/player/dashboard" />;
       }
+      if (effectiveRole === "sponser") {
+        return <Navigate to="/sponser/dashboard" />;
+      }
     }
 
-    if (effectiveRole === "expert" && location.pathname.startsWith("/player")) {
-      return <Navigate to="/unauthorized" />;
+    // Role-based route restrictions
+    if (effectiveRole === "expert") {
+      if (
+        location.pathname.startsWith("/player") ||
+        location.pathname.startsWith("/sponser")
+      ) {
+        return <Navigate to="/unauthorized" />;
+      }
     }
-    if (effectiveRole === "player" && location.pathname.startsWith("/expert")) {
-      return <Navigate to="/unauthorized" />;
+    if (effectiveRole === "player") {
+      if (
+        location.pathname.startsWith("/expert") ||
+        location.pathname.startsWith("/sponser")
+      ) {
+        return <Navigate to="/unauthorized" />;
+      }
+    }
+    if (effectiveRole === "sponser") {
+      if (
+        location.pathname.startsWith("/player") ||
+        location.pathname.startsWith("/expert")
+      ) {
+        return <Navigate to="/unauthorized" />;
+      }
     }
   }
 

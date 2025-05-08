@@ -1,5 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useNavigate,
+  Navigate,
+} from "react-router-dom";
 //pages
 import HomePage from "./Pages/HomePage";
 import EmailVerification from "./Pages/EmailVerification";
@@ -25,6 +31,7 @@ import CheckAuth from "./common/Checkauth";
 //components
 import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
+import SponserLayout from "./components/sponser/layout";
 //expertpage
 import PlayersProfile from "./expertpages/playerProfiles";
 import ExpertviewProfile from "./expertpages/playerinfo";
@@ -33,6 +40,9 @@ import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import { authService } from "./store/apiConfig";
+//sponser pages
+
+import Sponserdashboard from "./SponserPages/Sponserdashboard";
 
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
@@ -86,10 +96,12 @@ const AppContent: React.FC = () => {
 
   function handleNav() {
     const role = localStorage.getItem("role");
-    if (role == "player") {
+    if (role === "player") {
       navigate("/player/dashboard");
-    } else {
+    } else if (role === "expert") {
       navigate("/expert/dashboard");
+    } else if (role === "sponser") {
+      navigate("/sponser/dashboard");
     }
   }
 
@@ -105,7 +117,11 @@ const AppContent: React.FC = () => {
           effectivelyAuthenticated ? (
             <Navigate
               to={
-                user?.role === "expert" ? "/expert/profile" : "/player/profile"
+                user?.role === "player"
+                  ? "/player/dashboard"
+                  : user?.role === "expert"
+                  ? "/expert/dashboard"
+                  : "/sponser/dashboard"
               }
             />
           ) : (
@@ -120,7 +136,11 @@ const AppContent: React.FC = () => {
           effectivelyAuthenticated ? (
             <Navigate
               to={
-                user?.role === "expert" ? "/expert/profile" : "/player/profile"
+                user?.role === "player"
+                  ? "/player/dashboard"
+                  : user?.role === "expert"
+                  ? "/expert/dashboard"
+                  : "/sponser/dashboard"
               }
             />
           ) : (
@@ -172,6 +192,22 @@ const AppContent: React.FC = () => {
         <Route path="sponsors" element={<>Expert sponsers</>} />
       </Route>
 
+      {/* Sponser routes */}
+      <Route
+        path="/sponser"
+        element={
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <SponserLayout />
+          </CheckAuth>
+        }
+      >
+        <Route path="dashboard" element={<Sponserdashboard />} />
+        <Route path="players" element={<>sponser players</>} />
+        <Route path="experts" element={<>sponser experts</>} />
+        <Route path="application" element={<>sponser application</>} />
+        <Route path="profile" element={<>Sponser profile</>} />
+      </Route>
+
       <Route
         path="/unauthorized"
         element={
@@ -203,17 +239,6 @@ const AppContent: React.FC = () => {
       />
     </Routes>
   );
-};
-
-// Navigate component for redirects
-const Navigate = ({ to }: { to: string }) => {
-  const navigate = useNavigate();
-
-  useEffect(() => {
-    navigate(to);
-  }, [navigate, to]);
-
-  return null;
 };
 
 // Main App component
