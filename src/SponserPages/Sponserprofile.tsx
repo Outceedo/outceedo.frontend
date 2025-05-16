@@ -4,14 +4,11 @@ import {
   faLinkedin,
   faInstagram,
   faFacebook,
-  faTwitter,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
-import { faStar, faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
-import ExpertDetails from "./Expertdetails";
-import ExpertReviews from "./Expertreviews";
-import ExpertServices from "./Expertservices";
-import ExpertMedia from "./expertmedia";
+import {  faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import Sponserdetails from "./Sponserdetails"
+import Sponsermedia from "./Sponsermedia"
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
@@ -23,12 +20,12 @@ const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
   { icon: faFacebook, color: "#3b5998", link: "" },
   { icon: faInstagram, color: "#E1306C", link: "" },
-  { icon: faXTwitter, color: "#0C0B0B", link: "" },
+  { icon: faXTwitter, color: "#1DA1F2", link: "" },
 ];
 
-const ExpertProfile = () => {
+const Sponserprofile = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "services"
+    "details" | "media" 
   >("details");
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -295,6 +292,7 @@ const ExpertProfile = () => {
           {/* Left - Expert Name */}
           <div>
             <div className="flex gap-10">
+              <h1 className="text-4xl font-bold ">Company/ Individual Name</h1>
               <h1 className="text-4xl font-bold dark:text-white">
                 {expertData.name}
               </h1>
@@ -321,17 +319,17 @@ const ExpertProfile = () => {
                 )}
               </div>
             </div>
-
+            
             {/* Expert Info */}
             <div className="flex justify-start gap-40 text-center mt-8">
               <div className="text-left">
-                <p className="text-gray-500 dark:text-white">Profession</p>
+                <p className="text-gray-500 dark:text-white">Sports Interest</p>
                 <p className="font-semibold dark:text-white">
                   {expertData.profession || "Not specified"}
                 </p>
               </div>
               <div className="text-left">
-                <p className="text-gray-500 dark:text-white ">Location</p>
+                <p className="text-gray-500 dark:text-white ">Country</p>
                 <p className="font-semibold dark:text-white">
                   {expertData.location || "Not specified"}
                 </p>
@@ -340,27 +338,23 @@ const ExpertProfile = () => {
             {/* Additional Information */}
             <div className="flex justify-start gap-40 mt-6 text-center">
               <div className="text-left">
-                <p className="text-gray-500 dark:text-white">Response Time</p>
+                <p className="text-gray-500 dark:text-white">City</p>
                 <p className="font-semibold dark:text-white">
                   {expertData.responseTime}
                 </p>
               </div>
               <div className="text-left">
-                <p className="text-gray-500 dark:text-white">Travel Limit</p>
+                <p className="text-gray-500 dark:text-white">Sponsor Type</p>
                 <p className="font-semibold dark:text-white">
                   {expertData.travelLimit}
                 </p>
               </div>
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white">
-                  Certification Level
-                </p>
-                <p className="font-semibold dark:text-white">
-                  {expertData.certificationLevel}
-                </p>
-              </div>
+            
             </div>
           </div>
+
+
+          
           {/* Right - Profile Picture in a Rectangle with Update Functionality */}
           <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md relative group">
             {expertData.profileImage ? (
@@ -415,40 +409,11 @@ const ExpertProfile = () => {
             )}
           </div>
         </div>
-        {/* Stats */}
-        <div className="border-t border-b py-6 mt-6 text-center">
-          <div className="flex justify-around">
-            <div className="flex items-center gap-x-2">
-              <p className="text-yellow-300 text-3xl">
-                {/* Render 5 stars */}
-                {[...Array(5)].map((_, i) => (
-                  <FontAwesomeIcon key={i} icon={faStar} />
-                ))}
-              </p>
-              <p className="text-gray-500 dark:text-white">
-                {expertData.reviews} reviews
-              </p>
-            </div>
-            <div>
-              <p className="text-red-500 text-3xl font-bold">
-                {expertData.followers}
-              </p>
-              <p className="text-gray-500 dark:text-white">Followers</p>
-            </div>
-            <div>
-              <p className="text-red-500 text-3xl font-bold">
-                {expertData.assessments}
-              </p>
-              <p className="text-gray-500 dark:text-white">
-                Assessments Evaluated
-              </p>
-            </div>
-          </div>
-        </div>
+      
         {/* Tabs Section */}
         <div className="mt-8">
           <div className="flex gap-4 border-b ">
-            {(["details", "media", "reviews", "services"] as const).map(
+            {(["details", "media"] as const).map(
               (tab) => (
                 <button
                   key={tab}
@@ -467,15 +432,10 @@ const ExpertProfile = () => {
 
           <div className="mt-4">
             {activeTab === "details" && (
-              <ExpertDetails expertData={expertData} />
+              <Sponserdetails expertData={expertData} />
             )}
-            {activeTab === "media" && <ExpertMedia expertData={expertData} />}
-            {activeTab === "reviews" && (
-              <ExpertReviews expertData={expertData} />
-            )}
-            {activeTab === "services" && (
-              <ExpertServices expertData={expertData} />
-            )}
+            {activeTab === "media" && <Sponsermedia expertData={expertData} />}
+           
           </div>
         </div>
       </main>
@@ -483,4 +443,4 @@ const ExpertProfile = () => {
   );
 };
 
-export default ExpertProfile;
+export default Sponserprofile;

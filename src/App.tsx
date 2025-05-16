@@ -39,10 +39,19 @@ import ExpertProfile from "./expertpages/expertdata";
 import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
+import Expertsponsers from "./expertpages/Expertsponsers"
 import { authService } from "./store/apiConfig";
 //sponser pages
 
 import Sponserdashboard from "./SponserPages/Sponserdashboard";
+import Sponserprofile from "./SponserPages/Sponserprofile";
+import SponserApplication from "./SponserPages/SponserApplication"
+import SponserForm from "./SponserPages/SponserForm";
+import Sponserplayer from "./SponserPages/Sponserplayer";
+import Sponserexperts from "./SponserPages/Sponserexperts";
+import SponserDetailsForm from "./SponserPages/SponserDetailsForm"
+
+
 
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
@@ -156,9 +165,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <PlayerLayout />
-          </CheckAuth>
+         // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
@@ -177,9 +186,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/expert"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <ExpertLayout />
-          </CheckAuth>
+         // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<ExpertDashboard />} />
@@ -189,23 +198,27 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
-        <Route path="sponsors" element={<>Expert sponsers</>} />
+        <Route path="sponsors" element={<Expertsponsers />} />
+        
       </Route>
 
       {/* Sponser routes */}
       <Route
         path="/sponser"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <SponserLayout />
-          </CheckAuth>
+         // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Sponserdashboard />} />
-        <Route path="players" element={<>sponser players</>} />
-        <Route path="experts" element={<>sponser experts</>} />
-        <Route path="application" element={<>sponser application</>} />
-        <Route path="profile" element={<>Sponser profile</>} />
+        <Route path="players" element={<Sponserplayer />} />
+        <Route path="experts" element={<Sponserexperts />} />
+        <Route path="application" element={<SponserApplication />} />
+        <Route path="profile" element={<Sponserprofile />} />
+         <Route path="SponserDetailsForm" element={<SponserDetailsForm />} />
+        <Route path="SponserForm" element={<SponserForm />} />
+        
       </Route>
 
       <Route
@@ -232,9 +245,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/book"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <BookingCalendar />
-          </CheckAuth>
+         // </CheckAuth>
         }
       />
     </Routes>

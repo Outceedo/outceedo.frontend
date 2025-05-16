@@ -4,7 +4,6 @@ import {
   faLinkedin,
   faInstagram,
   faFacebook,
-  faTwitter,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { Card } from "@/components/ui/card";
