@@ -14,41 +14,36 @@ interface MenuItem {
   isLogout?: boolean;
 }
 
-const sponserSidebarMenuItems: MenuItem[] = [
+const sponsorSidebarMenuItems: MenuItem[] = [
+  
   {
     id: 0,
-    name: "Dashboard",
-    icon: "fas fa-table-columns",
-    path: "/sponser/dashboard",
+    name: "Players",
+    icon: "fas fa-user-tie",
+    path: "/sponsor/players",
   },
   {
     id: 1,
-    name: "Players",
-    icon: "fas fa-table-columns",
-    path: "/sponser/players",
-  },
-  {
-    id: 2,
     name: "Experts",
     icon: "fas fa-user-tie",
-    path: "/sponser/experts",
+    path: "/sponsor/experts",
+  },
+
+  {
+    id: 2,
+    name: "SponsorApplication",
+    icon: "fas fa-handshake",
+    path: "/sponsor/application",
+  },
+  {
+    id: 3,
+    name: "Profile",
+    icon: "fas fa-user",
+    path: "/sponsor/profile",
   },
 
   {
     id: 4,
-    name: "Sponsor Application",
-    icon: "fas fa-calendar-check",
-    path: "/sponser/application",
-  },
-  {
-    id: 5,
-    name: "Profile",
-    icon: "fas fa-handshake",
-    path: "/sponser/profile",
-  },
-
-  {
-    id: 6,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",
@@ -194,7 +189,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
         {/* Edit Profile Button */}
         <button
-          onClick={() => navigate("/sponser/SponserDetailsForm")}
+          onClick={() => navigate("/sponsor/SponsorDetailsForm")}
           className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors cursor-pointer"
         >
           Edit Profile
@@ -203,7 +198,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
       {/* Navigation Items */}
       <div className="flex flex-col gap-3 w-full px-4">
-        {sponserSidebarMenuItems.map((menuItem) => {
+        {sponsorSidebarMenuItems.map((menuItem) => {
           const isActive =
             !menuItem.isLogout && location.pathname === menuItem.path;
 

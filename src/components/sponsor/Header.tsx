@@ -15,11 +15,9 @@ interface SponserHeaderProps {
 }
 const menuItems = [
   { path: "/sponsor/details-form", name: "Edit Profile" },
-  { path: "/sponsor/dashboard", name: "Dashboard" },
   { path: "/sponsor/experts", name: "Experts" },
   { path: "/sponsor/players", name: "Players" },
   { path: "/sponsor/application", name: "Application Form" },
-
   { path: "/sponsor/profile", name: "Profile" },
 ];
 function SponsorHeader({ setOpen }: SponserHeaderProps) {
