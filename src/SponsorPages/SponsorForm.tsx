@@ -3,13 +3,13 @@ import { Textarea } from "@/components/ui/textarea";
  import { Button } from "@/components/ui/button"; 
  import { Checkbox } from "@/components/ui/checkbox"; 
  import { Label } from "@/components/ui/label";
- import { Download ,X } from "lucide-react";
+ import { Download  } from "lucide-react";
 
-const SponserForm = () => { 
+const SponsorForm = () => { 
    return ( 
    <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md dark:bg-gray-900">
      <div className="flex gap-10 justify-end items-end">
-    <X className="w-7 h-7 cursor-pointer" />
+    
     </div>
    <div className=" mb-6 text-center"> 
        <h1 className=" text-3xl mt-6 mb-6 font-bold">Sports App</h1>
@@ -21,7 +21,7 @@ const SponserForm = () => {
         </div>
         
 
-<form className="space-y-6 mt-8 bg-amber-100 p-10 rounded-lg dark:bg-gray-800">
+<form className="space-y-6 mt-8 bg-amber-50 p-10 rounded-lg dark:bg-gray-800">
    {/* Full Name */}
    <div className="grid md:grid-cols-2 gap-4">
      <div>
@@ -136,4 +136,4 @@ const SponserForm = () => {
 
 ); };
 
-export default SponserForm;
+export default SponsorForm;

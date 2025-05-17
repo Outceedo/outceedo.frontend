@@ -6,6 +6,7 @@ import {
   useNavigate,
   Navigate,
 } from "react-router-dom";
+
 //pages
 import HomePage from "./Pages/HomePage";
 import EmailVerification from "./Pages/EmailVerification";
@@ -23,6 +24,7 @@ import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
 import AssessmentReport from "./Playerpages/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
+import PlayerSponsors from "./Playerpages/PlayerSponsors"
 //store
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken, initializeFromLocalStorage } from "./store/auth-slice";
@@ -31,7 +33,8 @@ import CheckAuth from "./common/Checkauth";
 //components
 import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
-import SponserLayout from "./components/sponser/layout";
+import SponserLayout from "./components/sponsor/layout";
+import TeamLayout from "./components/team/layout";
 //expertpage
 import PlayersProfile from "./expertpages/playerProfiles";
 import ExpertviewProfile from "./expertpages/playerinfo";
@@ -40,19 +43,22 @@ import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import Expertsponsers from "./expertpages/Expertsponsers"
+import ApplicationForm from "./expertpages/ApplicationForm"
 import { authService } from "./store/apiConfig";
 //sponser pages
-
-import Sponserdashboard from "./SponserPages/Sponserdashboard";
-import Sponserprofile from "./SponserPages/Sponserprofile";
-import SponserApplication from "./SponserPages/SponserApplication"
-import SponserForm from "./SponserPages/SponserForm";
-import Sponserplayer from "./SponserPages/Sponserplayer";
-import Sponserexperts from "./SponserPages/Sponserexperts";
-import SponserDetailsForm from "./SponserPages/SponserDetailsForm"
-
-
-
+import Sponsordashboard from "./SponsorPages/Sponsordashboard";
+import Sponsorprofile from "./SponsorPages/Sponsorprofile";
+import SponsorApplication from "./SponsorPages/SponsorApplication"
+import SponsorForm from "./SponsorPages/SponsorForm";
+import Sponsorplayer from "./SponsorPages/Sponsorplayer";
+import Sponsorexperts from "./SponsorPages/Sponsorexperts";
+import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm"
+//Team pages
+import TeamDetailsForm from "./teampages/teamdetailsform";
+import TeamProfile from "./teampages/teamprofile";
+import TeamExpert from "./teampages/experts";
+import TeamPlayer from "./teampages/player";
+import Sponsors from "./teampages/sponser"
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -179,7 +185,7 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<Profile />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="book" element={<BookingCalendar />} />
-        <Route path="sponsors" element={<>Player sponsers</>} />
+        <Route path="sponsors" element={<PlayerSponsors />} />
       </Route>
 
       {/* Expert Outlet */}
@@ -199,6 +205,8 @@ const AppContent: React.FC = () => {
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="sponsors" element={<Expertsponsers />} />
+        <Route path="ApplicationForm" element={<ApplicationForm />} />
+
         
       </Route>
 
@@ -211,15 +219,33 @@ const AppContent: React.FC = () => {
          // </CheckAuth>
         }
       >
-        <Route path="dashboard" element={<Sponserdashboard />} />
-        <Route path="players" element={<Sponserplayer />} />
-        <Route path="experts" element={<Sponserexperts />} />
-        <Route path="application" element={<SponserApplication />} />
-        <Route path="profile" element={<Sponserprofile />} />
-         <Route path="SponserDetailsForm" element={<SponserDetailsForm />} />
-        <Route path="SponserForm" element={<SponserForm />} />
+        <Route path="dashboard" element={<Sponsordashboard />} />
+        <Route path="players" element={<Sponsorplayer />} />
+        <Route path="experts" element={<Sponsorexperts />} />
+        <Route path="application" element={<SponsorApplication />} />
+        <Route path="profile" element={<Sponsorprofile />} />
+         <Route path="SponserDetailsForm" element={<SponsorDetailsForm />} />
+        <Route path="SponserForm" element={<SponsorForm />} />
+         
         
       </Route>
+
+       {/* Team Outlet */}
+            <Route
+        path="/team"
+        element={
+          //<CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <TeamLayout />
+          //</CheckAuth>
+        }>
+        <Route path="players" element={<TeamPlayer/>} />
+        <Route path="experts" element={<TeamExpert/>} />
+        <Route path="sponsors" element={<Sponsors/>} />
+        <Route path="sponsorsapplication" element={<SponsorApplication />} />
+        <Route path="profile" element={<TeamProfile/>} />
+        <Route path="details-form" element={<TeamDetailsForm />} />
+        </Route>
+
 
       <Route
         path="/unauthorized"

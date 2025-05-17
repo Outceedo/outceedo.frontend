@@ -88,7 +88,7 @@ const Pagination: React.FC<{
   );
 };
 
-const Sponserexperts: React.FC = () => {
+const Sponsorexperts: React.FC = () => {
   // State for search, filters, and pagination
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -460,4 +460,4 @@ const Sponserexperts: React.FC = () => {
   );
 };
 
-export default  Sponserexperts;
+export default  Sponsorexperts;

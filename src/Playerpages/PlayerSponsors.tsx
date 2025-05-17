@@ -8,7 +8,7 @@
  import ApplicationForm from "../expertpages/ApplicationForm"
  import  { useState } from 'react';
  import { X } from "lucide-react";
-const Expertsponsers = () => { 
+const PlayerSponsors = () => { 
     const [isReportOpen, setIsReportOpen] = useState(false);
    
      const openReportModal = () => setIsReportOpen(true);
@@ -91,4 +91,4 @@ const Expertsponsers = () => {
 
 ); };
 
-export default Expertsponsers;
+export default  PlayerSponsors;

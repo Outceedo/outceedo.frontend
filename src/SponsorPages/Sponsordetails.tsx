@@ -37,7 +37,7 @@ interface ExpertDetailProps {
   expertData?: any;
 }
 
-const Sponserdetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
+const Sponsordetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   const dispatch = useAppDispatch();
 
   // About Me state
@@ -567,4 +567,4 @@ const Sponserdetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   );
 };
 
-export default  Sponserdetails;
+export default  Sponsordetails;

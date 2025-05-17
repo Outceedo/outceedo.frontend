@@ -3,7 +3,7 @@
   import { Button } from "@/components/ui/button"; 
   import { Checkbox } from "@/components/ui/checkbox"; 
   import { Label } from "@/components/ui/label";
-import SponserForm from "./SponserForm";
+
 
 const ApplicationForm = () => { 
     return ( 
@@ -127,4 +127,4 @@ const ApplicationForm = () => {
 
 ); };
 
-export default SponserForm;
+export default ApplicationForm;

@@ -7,7 +7,9 @@ import { Circle } from "lucide-react";
 import profile3 from "../assets/images/profile3.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
-
+import  { useState } from 'react';
+import SponserForm from "./SponsorForm"
+import { X } from "lucide-react";
 
 const data = [
   { id: 145, name: "Cody Fisher", date: "2 Jan 2025", type: "Product", budget: "-", action: "Accepted", status: "Sponsored", link: "CodyFisher.application", image: profile3 },
@@ -46,9 +48,15 @@ const getStatusDot = (status: string) => {
   }
 };
 
-const SponserApplication = () => {
+const SponsorApplication = () => {
+  
+  const [isReportOpen, setIsReportOpen] = useState(false);
+
+  const openReportModal = () => setIsReportOpen(true);
+  const closeReportModal = () => setIsReportOpen(false);
+
   return (
-    <div className="p-6">
+    <div className="p-6 ">
       <div className="flex gap-4 mb-4">
        <div className="relative w-1/3">
   <FontAwesomeIcon
@@ -75,7 +83,7 @@ const SponserApplication = () => {
           </SelectContent>
         </Select>
       </div>
-
+<div className="dark:bg-gray-800">
       <Table>
         <TableHeader>
           <TableRow>
@@ -112,15 +120,38 @@ const SponserApplication = () => {
                 <Circle size={10} className={getStatusDot(app.status)} />
                 <span>{app.status}</span>
               </TableCell>
-              <TableCell className="text-blue-500 hover:underline cursor-pointer">
-                {app.link}
-              </TableCell>
+             
+               
+      <TableCell
+        className="text-blue-500 hover:underline cursor-pointer"
+        onClick={openReportModal}
+      >
+        {app.link}
+      </TableCell>
+
+      {isReportOpen && (
+        
+          
+          
+             <div className="fixed inset-0 z-50 bg-white flex flex-col dark:bg-gray-800">
+          <div className="flex justify-end p-4">
+            <button onClick={closeReportModal}>
+              <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black dark:text-white" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto">
+            < SponserForm />
+          </div>
+        </div>
+      )}
+    
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
 };
 
-export default SponserApplication;
+export default SponsorApplication;

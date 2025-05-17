@@ -1,11 +1,10 @@
-import { Fragment, MouseEvent, useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Sheet, SheetContent } from "../ui/sheet";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
-
 interface MenuItem {
   id: number;
   name: string;
@@ -13,40 +12,32 @@ interface MenuItem {
   path: string;
   isLogout?: boolean;
 }
-
-const sponserSidebarMenuItems: MenuItem[] = [
-  {
-    id: 0,
-    name: "Dashboard",
-    icon: "fas fa-table-columns",
-    path: "/sponser/dashboard",
-  },
+const adminSidebarMenuItems: MenuItem[] = [
   {
     id: 1,
-    name: "Players",
+    name: "Player",
     icon: "fas fa-table-columns",
-    path: "/sponser/players",
+    path: "/team/players",
   },
   {
     id: 2,
     name: "Experts",
     icon: "fas fa-user-tie",
-    path: "/sponser/experts",
+    path: "/team/experts",
   },
-
+  {
+    id: 3,
+    name: "Sponsors",
+    icon: "fas fa-calendar-check",
+    path: "/team/sponsors",
+  },
   {
     id: 4,
-    name: "Sponser Application",
-    icon: "fas fa-calendar-check",
-    path: "/sponser/application",
-  },
-  {
-    id: 5,
-    name: "Profile",
+    name: "Sponsors Application",
     icon: "fas fa-handshake",
-    path: "/sponser/profile",
+    path: "/team/sponsorsapplication",
   },
-
+  { id: 5, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
   {
     id: 6,
     name: "Logout",
@@ -55,11 +46,9 @@ const sponserSidebarMenuItems: MenuItem[] = [
     isLogout: true,
   },
 ];
-
 interface MenuItemsProps {
   setOpen?: (open: boolean) => void;
 }
-
 function MenuItems({ setOpen }: MenuItemsProps) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -70,16 +59,11 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const { currentProfile, status } = useAppSelector((state) => state.profile);
 
   // Format name from profile data
-  const playerName = currentProfile
+  const teamName = currentProfile
     ? `${currentProfile.firstName || ""} ${
         currentProfile.lastName || ""
       }`.trim()
     : "Loading...";
-
-  // Get age and profession from profile data
-  const playerAge = currentProfile?.age ? `Age ${currentProfile.age}` : "";
-  const playerProfession = currentProfile?.profession || "";
-  const playerSubProfession = currentProfile?.subProfession || "";
 
   // Function to handle logout
   function handleLogout() {
@@ -122,7 +106,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   }, [dispatch]);
 
   return (
-    <nav className="flex flex-col gap-6 p-4 w-full h-full overflow-y-auto">
+    <nav className="flex flex-col gap-6 mt-4 w-full h-full overflow-y-auto">
       {/* Logout Confirmation Dialog */}
       {showLogoutDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -170,43 +154,32 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           src={currentProfile?.photo || profile}
           alt="Profile"
           className="rounded-full w-20 h-20 cursor-pointer object-cover"
-          onClick={() => navigate("/sponser/SponserDetailsForm")}
+          onClick={() => navigate("/player/details-form")}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = profile; // Fallback to default profile image
           }}
         />
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
-          {playerName}
+          {teamName}
         </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">
-          {playerAge}
-        </p>
-        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {playerProfession}
-          {playerSubProfession ? ` - ${playerSubProfession}` : ""}
-        </p>
-
         {/* Show loading indicator if profile is still loading */}
         {status === "loading" && (
           <div className="text-sm text-gray-500">Loading profile...</div>
         )}
-
         {/* Edit Profile Button */}
         <button
-          onClick={() => navigate("/sponser/SponserDetailsForm")}
-          className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors"
+          onClick={() => navigate("/team/details-form")}
+          className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors cursor-pointer"
         >
           Edit Profile
         </button>
       </div>
-
       {/* Navigation Items */}
       <div className="flex flex-col gap-3 w-full px-4">
-        {sponserSidebarMenuItems.map((menuItem) => {
+        {adminSidebarMenuItems.map((menuItem) => {
           const isActive =
             !menuItem.isLogout && location.pathname === menuItem.path;
-
           return (
             <div
               key={menuItem.id}
@@ -240,13 +213,11 @@ function MenuItems({ setOpen }: MenuItemsProps) {
     </nav>
   );
 }
-
-interface SponserSideBarProps {
+interface PlayerSideBarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
-
-function SponserSideBar({ open, setOpen }: SponserSideBarProps) {
+function TeamSideBar({ open, setOpen }: PlayerSideBarProps) {
   return (
     <Fragment>
       {/* Mobile sidebar */}
@@ -257,7 +228,6 @@ function SponserSideBar({ open, setOpen }: SponserSideBarProps) {
           </div>
         </SheetContent>
       </Sheet>
-
       {/* Desktop sidebar - fixed position */}
       <aside className="hidden lg:flex fixed top-0 left-0 h-full w-64 flex-col border-r bg-background dark:bg-slate-950 z-40">
         <MenuItems />
@@ -268,5 +238,4 @@ function SponserSideBar({ open, setOpen }: SponserSideBarProps) {
     </Fragment>
   );
 }
-
-export default SponserSideBar;
+export default TeamSideBar;

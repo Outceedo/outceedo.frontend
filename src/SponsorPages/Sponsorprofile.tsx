@@ -7,8 +7,8 @@ import {
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import {  faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
-import Sponserdetails from "./Sponserdetails"
-import Sponsermedia from "./Sponsermedia"
+import Sponserdetails from "./Sponsordetails"
+import Sponsermedia from "./Sponsormedia"
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
@@ -23,7 +23,7 @@ const icons = [
   { icon: faXTwitter, color: "#1DA1F2", link: "" },
 ];
 
-const Sponserprofile = () => {
+const Sponsorprofile = () => {
   const [activeTab, setActiveTab] = useState<
     "details" | "media" 
   >("details");
@@ -443,4 +443,4 @@ const Sponserprofile = () => {
   );
 };
 
-export default Sponserprofile;
+export default Sponsorprofile;

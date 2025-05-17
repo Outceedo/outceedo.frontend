@@ -148,7 +148,7 @@ const Pagination: React.FC<{
   );
 };
 
-const Sponserplayer: React.FC = () => {
+const Sponsorplayer: React.FC = () => {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -520,4 +520,4 @@ const Sponserplayer: React.FC = () => {
   );
 };
 
-export default Sponserplayer;
+export default Sponsorplayer;

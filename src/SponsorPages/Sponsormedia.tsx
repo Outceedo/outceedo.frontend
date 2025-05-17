@@ -27,7 +27,7 @@ interface ExpertMediaProps {
 
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
-const Sponsermedia: React.FC<ExpertMediaProps> = ({ expertData }) => {
+const Sponsormedia: React.FC<ExpertMediaProps> = ({ expertData }) => {
   const [activeTab, setActiveTab] = useState<string>("All");
   const [previewItem, setPreviewItem] = useState<UploadItem | null>(null);
   const [media, setMedia] = useState<UploadItem[]>([]);
@@ -334,7 +334,7 @@ const Sponsermedia: React.FC<ExpertMediaProps> = ({ expertData }) => {
   );
 };
 
-export default  Sponsermedia;
+export default  Sponsormedia;
 
 //  Reusable MediaCard Component
 interface UploadItem {
