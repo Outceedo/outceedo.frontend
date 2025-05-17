@@ -23,6 +23,8 @@ import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
 import AssessmentReport from "./Playerpages/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
+import Sponsors from "./Playerpages/sponsors";
+import SponsorshipForm from "./Playerpages/sponsorApplication";
 //store
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken, initializeFromLocalStorage } from "./store/auth-slice";
@@ -32,6 +34,7 @@ import CheckAuth from "./common/Checkauth";
 import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
 import SponserLayout from "./components/sponser/layout";
+import TeamLayout from "./components/team/layout";
 //expertpage
 import PlayersProfile from "./expertpages/playerProfiles";
 import ExpertviewProfile from "./expertpages/playerinfo";
@@ -44,6 +47,12 @@ import { authService } from "./store/apiConfig";
 
 import Sponserdashboard from "./SponserPages/Sponserdashboard";
 
+//Team pages
+import TeamDetailsForm from "./teampages/teamdetailsform";
+import TeamProfile from "./teampages/teamprofile";
+import TeamExpert from "./teampages/experts";
+import TeamPlayer from "./teampages/player";
+import SponsorApplication from "./teampages/SponserApplication";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -156,9 +165,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <PlayerLayout />
-          </CheckAuth>
+         // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
@@ -170,7 +179,8 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<Profile />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="book" element={<BookingCalendar />} />
-        <Route path="sponsors" element={<>Player sponsers</>} />
+        <Route path="sponsors" element={<Sponsors />} />
+        <Route path="/player/sponsor_application" element={<SponsorshipForm />}/>
       </Route>
 
       {/* Expert Outlet */}
@@ -207,6 +217,22 @@ const AppContent: React.FC = () => {
         <Route path="application" element={<>sponser application</>} />
         <Route path="profile" element={<>Sponser profile</>} />
       </Route>
+
+            {/* Team Outlet */}
+            <Route
+        path="/team"
+        element={
+          //<CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <TeamLayout />
+          //</CheckAuth>
+        }>
+        <Route path="players" element={<TeamPlayer/>} />
+        <Route path="experts" element={<TeamExpert/>} />
+        <Route path="sponsors" element={<Sponsors/>} />
+        <Route path="sponsorsapplication" element={<SponsorApplication />} />
+        <Route path="profile" element={<TeamProfile/>} />
+        <Route path="details-form" element={<TeamDetailsForm />} />
+        </Route>
 
       <Route
         path="/unauthorized"

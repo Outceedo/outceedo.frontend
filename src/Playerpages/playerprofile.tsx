@@ -212,13 +212,6 @@ const Profile: React.FC = () => {
         rawProfile: {},
       };
     }
-
-    // Filter certificates and awards from documents
-    const certificates =
-      profile.documents?.filter((doc) => doc.type === "certificate") || [];
-    const awards =
-      profile.documents?.filter((doc) => doc.type === "award") || [];
-
     // Get media items (photos/videos)
     const mediaItems = profile.uploads || [];
 
@@ -251,8 +244,6 @@ const Profile: React.FC = () => {
       profileImage: profileImage,
       stats: playerStats, // Use local stats
       aboutMe: profile.bio || "",
-      certificates: certificates,
-      awards: awards,
       socials: profile.socialLinks || {},
       uploads: mediaItems,
       documents: profile.documents || [],
@@ -483,9 +474,6 @@ const Profile: React.FC = () => {
       });
     }
   };
-
-  // Calculate OVR score
-  const ovrScore = calculateOVR(playerData.stats);
 
   // Show loading state
   if (status === "loading" && !currentProfile) {
