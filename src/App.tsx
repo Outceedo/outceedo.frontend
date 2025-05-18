@@ -46,7 +46,6 @@ import Expertsponsers from "./expertpages/Expertsponsers"
 import ApplicationForm from "./expertpages/ApplicationForm"
 import { authService } from "./store/apiConfig";
 //sponser pages
-import Sponsordashboard from "./SponsorPages/Sponsordashboard";
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
 import SponsorApplication from "./SponsorPages/SponsorApplication"
 import SponsorForm from "./SponsorPages/SponsorForm";
@@ -219,7 +218,7 @@ const AppContent: React.FC = () => {
          // </CheckAuth>
         }
       >
-        <Route path="dashboard" element={<Sponsordashboard />} />
+        
         <Route path="players" element={<Sponsorplayer />} />
         <Route path="experts" element={<Sponsorexperts />} />
         <Route path="application" element={<SponsorApplication />} />

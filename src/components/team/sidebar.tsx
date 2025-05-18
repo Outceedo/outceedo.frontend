@@ -16,7 +16,7 @@ const adminSidebarMenuItems: MenuItem[] = [
   {
     id: 1,
     name: "Player",
-    icon: "fas fa-table-columns",
+    icon: "fas fa-user-tie",
     path: "/team/players",
   },
   {
