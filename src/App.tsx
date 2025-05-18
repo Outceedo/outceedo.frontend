@@ -165,9 +165,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <PlayerLayout />
-         // </CheckAuth>
+          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <PlayerLayout />
+          // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
@@ -180,7 +180,10 @@ const AppContent: React.FC = () => {
         <Route path="details-form" element={<Detailsform />} />
         <Route path="book" element={<BookingCalendar />} />
         <Route path="sponsors" element={<Sponsors />} />
-        <Route path="/player/sponsor_application" element={<SponsorshipForm />}/>
+        <Route
+          path="/player/sponsor_application"
+          element={<SponsorshipForm />}
+        />
       </Route>
 
       {/* Expert Outlet */}
@@ -218,21 +221,22 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<>Sponser profile</>} />
       </Route>
 
-            {/* Team Outlet */}
-            <Route
+      {/* Team Outlet */}
+      <Route
         path="/team"
         element={
           //<CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <TeamLayout />
+          <TeamLayout />
           //</CheckAuth>
-        }>
-        <Route path="players" element={<TeamPlayer/>} />
-        <Route path="experts" element={<TeamExpert/>} />
-        <Route path="sponsors" element={<Sponsors/>} />
+        }
+      >
+        <Route path="players" element={<TeamPlayer />} />
+        <Route path="experts" element={<TeamExpert />} />
+        <Route path="sponsors" element={<Sponsors />} />
         <Route path="sponsorsapplication" element={<SponsorApplication />} />
-        <Route path="profile" element={<TeamProfile/>} />
+        <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
-        </Route>
+      </Route>
 
       <Route
         path="/unauthorized"
