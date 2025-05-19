@@ -1,17 +1,17 @@
 import { Outlet } from "react-router-dom";
 
 import { useState } from "react";
-import SponserHeader from "./Header";
-import SponserSideBar from "./sidebar";
+import SponsorHeader from "./Header";
+import SponsorSideBar from "./sidebar";
 
-function SponserLayout() {
+function SponsorLayout() {
   const [openSidebar, setOpenSidebar] = useState(false);
 
   return (
     <div className="flex min-h-screen w-full dark:bg-gray-900">
-      <SponserSideBar open={openSidebar} setOpen={setOpenSidebar} />
+      <SponsorSideBar open={openSidebar} setOpen={setOpenSidebar} />
       <div className="flex flex-1 flex-col ">
-        <SponserHeader setOpen={setOpenSidebar} />
+        <SponsorHeader setOpen={setOpenSidebar} />
         <main className="flex-1 flex-col flex bg-muted/40 p-4 md:p-6">
           <Outlet />
         </main>
@@ -20,4 +20,4 @@ function SponserLayout() {
   );
 }
 
-export default SponserLayout;
+export default SponsorLayout;

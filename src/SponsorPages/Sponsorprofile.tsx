@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import TeamDetails from "./teamdetails";
-import TeamMedia from "./teammedia";
+import Sponsordetails from "./Sponsordetails"
+import Sponsormedia from "./Sponsormedia"
 import { Pencil } from "lucide-react";
-import { faInstagram, faLinkedinIn, faFacebookF, faXTwitter } from '@fortawesome/free-brands-svg-icons';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import teamImage from "../assets/images/team.jpg";
 
-const TeamProfile = () => {
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import Sponsor2 from "../assets/images/sponsor2.jpg";
+import { faInstagram, faLinkedinIn, faFacebookF, faXTwitter } from '@fortawesome/free-brands-svg-icons';
+import { Link } from "react-router-dom";
+
+
+const Sponsorprofile = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media">("details");
 
   const icons = [
@@ -39,13 +42,13 @@ const TeamProfile = () => {
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-5 ">
         <div>
-          <h1 className="text-2xl font-bold">Team Name</h1>
+          <h1 className="text-2xl font-bold">Company/Individual Name</h1>
           <div className="mt-10  grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
             <div>
             <label className="block text-sm text-gray-500 dark:text-white mb-1">
-             Type
+             Sports Interest
              </label>
-              <span className="font-semibold dark:text-white">Club</span>
+              <span className="font-semibold dark:text-white">Foodball</span>
             </div>
             <div>
             <label className=" block text-sm text-gray-500 dark:text-white mb-1">
@@ -61,12 +64,12 @@ const TeamProfile = () => {
             </div>
             <div>
             <label className="block text-sm text-gray-500 dark:text-white mb-1">
-             Language
+             Sponsor Type
              </label>
-              <span className="font-semibold dark:text-white">English,spanish</span>
+              <span className="font-semibold dark:text-white">CompanyName</span>
             </div>
           </div>
-           <div className="mt-10 mb-5 flex gap-6">
+          <div className="mt-10 flex gap-6">
   {icons.map(({ icon, link, bg }, index) => (
     <a
       key={index}
@@ -77,16 +80,23 @@ const TeamProfile = () => {
       <div
         className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
       >
-        <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+        <FontAwesomeIcon icon={icon} className="w-8 h-8 text-white" />
       </div>
     </a>
   ))}
 </div>
+ <div className="mt-10">
+            <label className="block text-sm text-gray-500 dark:text-white mb-1">
+             Company Site
+             </label>
+              <Link className="font-light text-blue-500 dark:text-white"> www.company_site.com</Link>
+            </div>
+
         </div>
 
         <div className="rounded-md overflow-hidden">
           <img
-            src={teamImage}
+            src={Sponsor2}
             alt="Team Photo"
             width={350}
             height={350}
@@ -114,12 +124,12 @@ const TeamProfile = () => {
         </div>
 
         <div className="mt-4">
-          {activeTab === "details" && <TeamDetails />}
-          {activeTab === "media" && <TeamMedia />}
+          {activeTab === "details" && <Sponsordetails />}
+          {activeTab === "media" && <Sponsormedia />}
         </div>
       </div>
     </div>
   );
 };
 
-export default TeamProfile;
+export default Sponsorprofile;

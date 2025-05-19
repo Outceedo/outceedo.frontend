@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
-import { FaStar } from 'react-icons/fa';
 import { IoIosRefresh } from "react-icons/io";
-import { useNavigate } from 'react-router-dom';
-
+import sponsorImage from '../assets/images/sponsor.jpg';
+import { Card, CardContent } from "@/components/ui/card"; 
+import { X } from "lucide-react";
+import { Star } from "lucide-react";
+ import { Button } from "@/components/ui/button"; 
+ import ApplicationForm from "../expertpages/ApplicationForm"
 interface SponsorCardProps {
   name: string;
   company: string;
@@ -22,29 +25,6 @@ interface Country {
   cca2: string;
 }
 
-const SponsorCard = ({ name, company, description, rating, sponsoredCount, imageUrl }: SponsorCardProps) => {
-    const navigate = useNavigate();
-     return (
-    <div className="flex gap-4 p-4 border rounded-lg shadow-sm bg-white">
-      <img src={imageUrl} alt="Sponsor" className="w-24 h-24 object-cover rounded-md" />
-      <div className="flex-1">
-        <h2 className="font-semibold text-lg">{name}</h2>
-        <p className="text-sm text-gray-500">{company}</p>
-        <p className="text-sm mt-2 text-gray-700">{description}</p>
-        <div className="flex items-center mt-2">
-          <FaStar className="text-yellow-500 mr-1" />
-          <span className="text-sm font-medium">{rating}</span>
-          <span className="text-xs text-gray-500 ml-2">(Sponsored-{sponsoredCount} players)</span>
-        </div>
-      </div>
-      <div className="flex flex-row justify-between items-start gap-5">
-        <button className="bg-red-500 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 transition" onClick={() => navigate("/player/sponsor_application")}>View More</button>
-        <button className="text-gray-500 text-xl font-bold px-2">...</button>
-      </div>
-    </div>
-  );
-};
-
 export default function Sponsors() {
   const [sponsors, setSponsors] = useState<SponsorCardProps[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,6 +32,9 @@ export default function Sponsors() {
   const [selectedFundingType, setSelectedFundingType] = useState("");
   const [selectedFundingRange, setSelectedFundingRange] = useState("");
   const [countries, setCountries] = useState<Country[]>([]);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const openReportModal = () => setIsReportOpen(true);
+  const closeReportModal = () => setIsReportOpen(false);
 
   useEffect(() => {
     const data = Array(4).fill({
@@ -61,7 +44,7 @@ export default function Sponsors() {
         'I, William, a British citizen residing in London, am sponsoring my cousin Riya Sharma for her UK visit and will provide full financial and accommodation support.',
       rating: 4.5,
       sponsoredCount: 10,
-      imageUrl: 'https://via.placeholder.com/100x100',
+     imageUrl: sponsorImage, 
       country: 'Canada',
       fundingType: 'Type A',
       fundingRange: '10K-50K',
@@ -98,6 +81,7 @@ export default function Sponsors() {
 
   return (
     <div className="p-6 w-full mx-auto">
+          
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6 items-center">
         <input
@@ -130,11 +114,45 @@ export default function Sponsors() {
       </div>
 
       {/* Sponsor List */}
-      <div className="space-y-4">
-        {filteredSponsors.map((sponsor, index) => (
-          <SponsorCard key={index} {...sponsor} />
-        ))}
+{filteredSponsors.map((sponsor, idx) => (
+  <Card key={idx} className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4 dark:bg-gray-800">
+    <img
+      src={sponsor.imageUrl}
+      alt={sponsor.name}
+      className="w-58 h-28 object-cover rounded-md"
+    />
+    <CardContent className="flex-1 p-0">
+      <h2 className="text-lg font-semibold">{sponsor.name}</h2>
+      <p className="text-sm text-gray-600 dark:text-white">{sponsor.company}</p>
+      <p className="text-sm mt-1">{sponsor.description}</p>
+      <div className="flex items-center mt-2 text-sm text-gray-700">
+        <div className="flex items-center text-yellow-400 mr-2">
+          {Array.from({ length: Math.floor(sponsor.rating) }).map((_, i) => (
+            <Star key={i} className="w-4 h-4 fill-yellow-400" />
+          ))}
+        </div>
+        <span className="text-yellow-400 text-lg">{sponsor.rating}</span>
+        <span className="ml-2 text-gray-500 dark:text-white">(Sponsored - {sponsor.sponsoredCount} players)</span>
       </div>
+    </CardContent>
+    <div className="flex flex-row justify-start items-start gap-5">
+      <Button className="bg-red-500 hover:bg-red-600 text-white cursor-pointer">View More</Button>
+      <Button variant="ghost" className="text-2xl font-bold bg-gray-100 text-gray-800 flex items-center justify-center" onClick={openReportModal}>...</Button>
+      {isReportOpen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col dark:bg-gray-800">
+          <div className="flex justify-end p-4">
+            <button onClick={closeReportModal}>
+              <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black dark:text-white" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-md mx-8 my-6 p-6">
+            <ApplicationForm />
+          </div>
+        </div>
+      )}
     </div>
+  </Card>
+))}
+</div>
   );
 }

@@ -16,7 +16,7 @@ const adminSidebarMenuItems: MenuItem[] = [
   {
     id: 1,
     name: "Player",
-    icon: "fas fa-table-columns",
+    icon: "fas fa-user-tie",
     path: "/team/players",
   },
   {
@@ -170,7 +170,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         {/* Edit Profile Button */}
         <button
           onClick={() => navigate("/team/details-form")}
-          className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors"
+          className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors cursor-pointer"
         >
           Edit Profile
         </button>

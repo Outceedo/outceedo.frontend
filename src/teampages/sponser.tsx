@@ -1,7 +1,8 @@
-import Sponsors from "@/Playerpages/sponsors";
+
+import Expertsponsers from "@/expertpages/Expertsponsors";
 const TeamSponsor = ()  =>{
     return (
-<Sponsors />
-    )
+<Expertsponsers />
+   )
 }
  export default TeamSponsor; 

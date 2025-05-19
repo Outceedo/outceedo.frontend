@@ -14,15 +14,13 @@ interface SponserHeaderProps {
   setOpen: (open: boolean) => void;
 }
 const menuItems = [
-  { path: "/sponser/details-form", name: "Edit Profile" },
-  { path: "/sponser/dashboard", name: "Dashboard" },
-  { path: "/sponser/experts", name: "Experts" },
-  { path: "/sponser/players", name: "Players" },
-  { path: "/sponser/application", name: "Application Form" },
-
-  { path: "/sponser/profile", name: "Profile" },
+  { path: "/sponsor/details-form", name: "Edit Profile" },
+  { path: "/sponsor/experts", name: "Experts" },
+  { path: "/sponsor/players", name: "Players" },
+  { path: "/sponsor/application", name: "Application Form" },
+  { path: "/sponsor/profile", name: "Profile" },
 ];
-function SponserHeader({ setOpen }: SponserHeaderProps) {
+function SponsorHeader({ setOpen }: SponserHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const location = useLocation();
@@ -100,4 +98,4 @@ function SponserHeader({ setOpen }: SponserHeaderProps) {
   );
 }
 
-export default SponserHeader;
+export default SponsorHeader;

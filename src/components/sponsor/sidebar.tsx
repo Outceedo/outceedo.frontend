@@ -14,41 +14,36 @@ interface MenuItem {
   isLogout?: boolean;
 }
 
-const sponserSidebarMenuItems: MenuItem[] = [
+const sponsorSidebarMenuItems: MenuItem[] = [
+  
   {
     id: 0,
-    name: "Dashboard",
-    icon: "fas fa-table-columns",
-    path: "/sponser/dashboard",
+    name: "Players",
+    icon: "fas fa-user-tie",
+    path: "/sponsor/players",
   },
   {
     id: 1,
-    name: "Players",
-    icon: "fas fa-table-columns",
-    path: "/sponser/players",
-  },
-  {
-    id: 2,
     name: "Experts",
     icon: "fas fa-user-tie",
-    path: "/sponser/experts",
+    path: "/sponsor/experts",
   },
 
   {
-    id: 4,
-    name: "Sponser Application",
-    icon: "fas fa-calendar-check",
-    path: "/sponser/application",
+    id: 2,
+    name: "SponsorApplication",
+    icon: "fas fa-handshake",
+    path: "/sponsor/application",
   },
   {
-    id: 5,
+    id: 3,
     name: "Profile",
-    icon: "fas fa-handshake",
+    icon: "fas fa-user",
     path: "/sponsor/profile",
   },
 
   {
-    id: 6,
+    id: 4,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",
@@ -170,7 +165,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           src={currentProfile?.photo || profile}
           alt="Profile"
           className="rounded-full w-20 h-20 cursor-pointer object-cover"
-          onClick={() => navigate("/player/details-form")}
+          onClick={() => navigate("/sponser/SponserDetailsForm")}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = profile; // Fallback to default profile image
@@ -194,8 +189,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
         {/* Edit Profile Button */}
         <button
-          onClick={() => navigate("/player/details-form")}
-          className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors"
+          onClick={() => navigate("/sponsor/SponsorDetailsForm")}
+          className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors cursor-pointer"
         >
           Edit Profile
         </button>
@@ -203,7 +198,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
       {/* Navigation Items */}
       <div className="flex flex-col gap-3 w-full px-4">
-        {sponserSidebarMenuItems.map((menuItem) => {
+        {sponsorSidebarMenuItems.map((menuItem) => {
           const isActive =
             !menuItem.isLogout && location.pathname === menuItem.path;
 
@@ -241,12 +236,12 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   );
 }
 
-interface SponserSideBarProps {
+interface SponsorSideBarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
 }
 
-function SponserSideBar({ open, setOpen }: SponserSideBarProps) {
+function SponsorSideBar({ open, setOpen }: SponsorSideBarProps) {
   return (
     <Fragment>
       {/* Mobile sidebar */}
@@ -269,4 +264,4 @@ function SponserSideBar({ open, setOpen }: SponserSideBarProps) {
   );
 }
 
-export default SponserSideBar;
+export default SponsorSideBar;

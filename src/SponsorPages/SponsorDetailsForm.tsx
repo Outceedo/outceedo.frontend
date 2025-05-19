@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState,useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
@@ -9,18 +9,31 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faLinkedinIn, faFacebookF, faXTwitter } from '@fortawesome/free-brands-svg-icons';
+interface CountryData {
+  name: string;
+  code: string;
+  dialCode: string;
+  cities: string[];
+}
+
 interface FormData {
-  teamName: string;
-  type: string;
+  sponsorType:string;
+  sportInterest: string;
+  type:string;
   firstName: string;
   lastName: string;
-  clubName: string;
+  companyName: string;
+   companyLink: string;
   city: string;
   country: string;
   address: string;
   countryCode: string;
   phone: string;
   email: string;
+  CompanyLink:string;
+  BudegetRange:string;
+  SponsorshipType:string;
+  SponsorshipCountryPreferred:string;
   bio: string;
   socialLinks: {
     instagram: string;
@@ -29,35 +42,37 @@ interface FormData {
     twitter: string;
   };
 }
-interface CountryData {
-  name: string;
-  code: string;
-  dialCode: string;
-  cities: string[];
-}
-export default function TeamDetailsForm() {
+
+export default function SponsorDetailsForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [countries, setCountries] = useState<CountryData[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 2));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
   const navigate = useNavigate();
-  const [countries, setCountries] = useState<CountryData[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
   const goBack = () => {
   navigate(-1); // goes to previous page
 };
-    const [form, setForm] = useState<FormData>({
-  teamName: '',
-    type: '',
-    firstName: '',
-    lastName: '',
-    clubName: '',
-    city: '',
-    country: '',
-    address: '',
-    countryCode: '',
-    phone: '',
-    email: '',
+  
+  const [form, setForm] = useState<FormData>({
+  sponsorType: '',
+  sportInterest: '',
+    type:"",
+  firstName: "" ,
+  lastName:"",
+  companyName: "",
+   companyLink: '',
+  city: "",
+  country:"",
+  address: "",
+  countryCode: "",
+  phone: "",
+  email: "",
+  CompanyLink:"",
+  BudegetRange:"",
+  SponsorshipType:"",
+  SponsorshipCountryPreferred:"",
     bio: '',
     socialLinks: {
       instagram: '',
@@ -66,7 +81,7 @@ export default function TeamDetailsForm() {
       twitter: '',
     },
   });
-  const handleSocialMedia = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+ const handleSocialMedia = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     // Handling nested socialLinks
     if (name.startsWith('socialLinks.')) {
@@ -132,17 +147,20 @@ export default function TeamDetailsForm() {
   const submitForm = () => {
     setIsSubmitting(true);
     console.log('Form Submitted:', form);
+
     setTimeout(() => {
       setIsSubmitting(false);
       alert('Form submitted successfully!');
       navigate('/thank-you'); // redirect if needed
     }, 1000);
   };
+
   return (
     <div className="w-full p-20 mx-auto dark:bg-gray-900">
     <button
   onClick={goBack}
-  className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer">
+  className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
+>
   <ArrowLeft className="w-5 h-5 mr-1" />
  </button>
       {/* Step Indicator */}
@@ -154,7 +172,8 @@ export default function TeamDetailsForm() {
                 <div
                   className={`w-8 h-8 ${
                     step >= stepNum ? 'bg-red-500' : 'bg-gray-300'
-                  } rounded-full flex items-center justify-center text-white font-bold text-sm`}     >
+                  } rounded-full flex items-center justify-center text-white font-bold text-sm`}
+                >
                   {stepNum}
                 </div>
               </div>
@@ -170,11 +189,13 @@ export default function TeamDetailsForm() {
             </React.Fragment>
           ))}
         </div>
+
         <div className="flex w-full max-w-lg justify-between mt-2 ">
           <div className="w-1/4 text-center text-sm font-medium">Profile Details</div>
           <div className="w-1/4 text-center text-sm font-medium">More Details</div>
         </div>
       </div>
+
       {/* Step 1: Profile Details */}
       {step === 1 && (
         <>
@@ -206,41 +227,52 @@ export default function TeamDetailsForm() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-     <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">Team Name</label>
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Sponsor Type</label>
     <select
       name="sponsorType"
-      value={form.teamName}
+      value={form.sponsorType}
       onChange={handleChange}
-      className="border p-2 rounded text-sm text-gray-700 w-full"    >
-      <option value="">option 1</option>
+      className="border p-2 rounded text-sm text-gray-700 w-full"
+    >
+      <option value="">Select a Sponsor</option>
       <option value="option2">Option 2</option>
       <option value="option3">Option 3</option>
     </select>
   </div>
+
   <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">Type</label>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Sport Interest</label>
     <select
       name="sportInterest"
-      value={form.type}
+      value={form.sportInterest}
       onChange={handleChange}
-      className="border p-2 rounded text-sm text-gray-700 w-full"   >
-      <option value="">Dropdown</option>
-      <option value="football">option 1</option>
-      <option value="tennis">option 2</option>
+      className="border p-2 rounded text-sm text-gray-700 w-full"
+    >
+      <option value="">Select a sport</option>
+      <option value="football">Football</option>
+      <option value="tennis">Tennis</option>
     </select>
   </div>
+
   <div>
     <label className="text-sm font-medium text-gray-900 dark:text-white">First Name</label>
     <Input name="firstName" value={form.firstName} onChange={handleChange} />
   </div>
+
   <div>
     <label className="text-sm font-medium text-gray-900 dark:text-white">Last Name</label>
     <Input name="lastName" value={form.lastName} onChange={handleChange} />
   </div>
+
   <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">Club Name</label>
-    <Input name="companyName" value={form.clubName} onChange={handleChange} />
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Company Name</label>
+    <Input name="companyName" value={form.companyName} onChange={handleChange} />
+  </div>
+
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Company Link</label>
+    <Input name="companyLink" value={form.companyLink} onChange={handleChange} />
   </div>
   <div>
    <label className="text-sm font-medium text-gray-900 dark:text-white">Country</label>
@@ -309,6 +341,8 @@ export default function TeamDetailsForm() {
     <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
   </div>
 </div>
+
+
           <div className="text-right mt-6">
             <Button onClick={nextStep} className="bg-yellow-400 text-white hover:bg-amber-500 cursor-pointer">
               Save & Next
@@ -316,11 +350,51 @@ export default function TeamDetailsForm() {
           </div>
         </>
       )}
+
       {/* Step 2: More Details */}
       {step === 2 && (
         <>
-          <h2 className="text-xl font-semibold mb-4 dark:text-white">More Details</h2>     
-<label className="text-sm font-medium text-gray-900 dark:text-white">Bio Data</label>
+          <h2 className="text-xl font-semibold mb-4 dark:text-white">More Details</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+  <div className="w-full">
+    <label className="text-sm font-medium text-gray-900 mb-1 block dark:text-white">Budget Range</label>
+    <Input
+      name="BudegetRange"
+      placeholder="$"
+      value={form.BudegetRange}
+      onChange={handleChange}
+      className="w-full md:w-60"
+    />
+  </div>
+
+  <div className="w-full">
+    <label className="text-sm font-medium text-gray-900 mb-1 block dark:text-white">Sponsorship Type</label>
+    <select
+      name="SponsorshipType"
+      value={form.SponsorshipType}
+      onChange={handleChange}
+      className="border p-2 rounded text-sm text-gray-700 w-full md:w-60"
+    >
+      <option value="Cash">Cash</option>
+      <option value="Card">Card</option>
+      <option value="Gift">Gift</option>
+      <option value="Professional Fee dark:text-white">Professional Fee</option>
+    </select>
+  </div>
+
+  <div className="w-full">
+    <label className="text-sm font-medium text-gray-900 mb-1 block dark:text-white">Sponsorship Country Preferred</label>
+    <Input
+      name="SponsorshipCountryPreferred"
+      value={form.SponsorshipCountryPreferred}
+      onChange={handleChange}
+      className="w-full md:w-60"
+    />
+  </div>
+</div>
+
+<div className='mt-4'>
+<label className="text-sm font-medium  text-gray-900 dark:text-white">Bio Data</label>
           <Textarea
             name="bio"
             value={form.bio}
@@ -329,8 +403,10 @@ export default function TeamDetailsForm() {
             placeholder="Bio data"
             maxLength={500}
           />
+</div>
           <Label className="text-md font-semibold mb-2 dark:text-white">Social Media Links</Label>
-          <div className="space-y-4 mt-4 w-1/3">       
+          <div className="space-y-4 mt-4 w-1/3">
+          
          {[
   {
     icon: faInstagram,
@@ -366,20 +442,26 @@ export default function TeamDetailsForm() {
     />
   </div>
 ))}
+
+
           </div>
+
           {/* Navigation Buttons */}
           <div className="flex  justify-end  mt-6 ">
             <Button
               onClick={prevStep}
               className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-50 rounded mr-9 cursor-pointer"
               disabled={isSubmitting}
-              type="button" >
+              type="button"
+            >
               Back
             </Button>
+
             <Button
               onClick={submitForm}
               className="bg-yellow-400 text-white hover:bg-yellow-500 cursor-pointer"
-              disabled={isSubmitting} >
+              disabled={isSubmitting}
+            >
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
