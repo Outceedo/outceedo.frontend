@@ -1,7 +1,15 @@
+<<<<<<< HEAD
 import { useState,useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
+=======
+import { useState } from 'react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
+
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,12 +17,17 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faLinkedinIn, faFacebookF, faXTwitter } from '@fortawesome/free-brands-svg-icons';
+<<<<<<< HEAD
 interface CountryData {
   name: string;
   code: string;
   dialCode: string;
   cities: string[];
 }
+=======
+
+
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
 
 interface FormData {
   sponsorType:string;
@@ -46,15 +59,27 @@ interface FormData {
 export default function SponsorDetailsForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+<<<<<<< HEAD
   const [countries, setCountries] = useState<CountryData[]>([]);
   const [cities, setCities] = useState<string[]>([]);
   const nextStep = () => setStep((prev) => Math.min(prev + 1, 2));
   const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
   const navigate = useNavigate();
+=======
+  const navigate = useNavigate();
+
+  const nextStep = () => setStep((prev) => Math.min(prev + 1, 2));
+  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
   const goBack = () => {
   navigate(-1); // goes to previous page
 };
   
+<<<<<<< HEAD
+=======
+
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
   const [form, setForm] = useState<FormData>({
   sponsorType: '',
   sportInterest: '',
@@ -81,8 +106,15 @@ export default function SponsorDetailsForm() {
       twitter: '',
     },
   });
+<<<<<<< HEAD
  const handleSocialMedia = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+=======
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
     // Handling nested socialLinks
     if (name.startsWith('socialLinks.')) {
       const socialKey = name.split('.')[1];
@@ -97,6 +129,7 @@ export default function SponsorDetailsForm() {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
+<<<<<<< HEAD
   useEffect(() => {
     const fetchCountries = async () => {
       const countryRes = await fetch("https://restcountries.com/v3.1/all");
@@ -143,6 +176,8 @@ export default function SponsorDetailsForm() {
       }),
     }));
   };
+=======
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
 
   const submitForm = () => {
     setIsSubmitting(true);
@@ -162,7 +197,13 @@ export default function SponsorDetailsForm() {
   className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
 >
   <ArrowLeft className="w-5 h-5 mr-1" />
+<<<<<<< HEAD
  </button>
+=======
+  
+</button>
+
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
       {/* Step Indicator */}
       <div className="flex flex-col items-center mb-12">
         <div className="flex w-full max-w-lg items-center relative">
@@ -274,6 +315,7 @@ export default function SponsorDetailsForm() {
     <label className="text-sm font-medium text-gray-900 dark:text-white">Company Link</label>
     <Input name="companyLink" value={form.companyLink} onChange={handleChange} />
   </div>
+<<<<<<< HEAD
   <div>
    <label className="text-sm font-medium text-gray-900 dark:text-white">Country</label>
         <select
@@ -311,6 +353,43 @@ export default function SponsorDetailsForm() {
     <div className="flex gap-4 items-end">
   {/* Country Code (smaller width) */}
   <div className="w-1/3 sm:w-1/4">
+=======
+
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Country</label>
+    <select
+      name="country"
+      value={form.country}
+      onChange={handleChange}
+      className="border p-2 rounded text-sm text-gray-700 w-full"
+    >
+      <option value="">Select Country</option>
+      <option value="India">India</option>
+      <option value="UK">UK</option>
+    </select>
+  </div>
+
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">City</label>
+    <select
+      name="city"
+      value={form.city}
+      onChange={handleChange}
+      className="border p-2 rounded text-sm text-gray-700 w-full"
+    >
+      <option value="">Select City</option>
+      <option value="Delhi">Delhi</option>
+      <option value="London">London</option>
+    </select>
+  </div>
+
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Address</label>
+    <Input name="address" placeholder="Street no." value={form.address} onChange={handleChange} />
+  </div>
+
+  <div>
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
     <label className="text-sm font-medium text-gray-900 dark:text-white">Country Code</label>
     <select
       name="countryCode"
@@ -318,6 +397,7 @@ export default function SponsorDetailsForm() {
       onChange={handleChange}
       className="border p-2 rounded text-sm text-gray-700 w-full"
     >
+<<<<<<< HEAD
       <option value="">Select Code</option>
       {countries.map((country) => (
         <option key={country.code} value={country.dialCode}>
@@ -336,6 +416,18 @@ export default function SponsorDetailsForm() {
         />
       </div>  
       </div>
+=======
+      <option value="+91">+91</option>
+      <option value="+1">+1</option>
+    </select>
+  </div>
+
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Phone Number</label>
+    <Input name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} />
+  </div>
+
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
   <div>
     <label className="text-sm font-medium text-gray-900 dark:text-white">Email</label>
     <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
@@ -393,12 +485,18 @@ export default function SponsorDetailsForm() {
   </div>
 </div>
 
+<<<<<<< HEAD
 <div className='mt-4'>
 <label className="text-sm font-medium  text-gray-900 dark:text-white">Bio Data</label>
+=======
+
+<label className="text-sm font-medium text-gray-900 dark:text-white">Bio Data</label>
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
           <Textarea
             name="bio"
             value={form.bio}
             onChange={handleChange}
+<<<<<<< HEAD
             className="mb-6 mt-2"
             placeholder="Bio data"
             maxLength={500}
@@ -406,6 +504,15 @@ export default function SponsorDetailsForm() {
 </div>
           <Label className="text-md font-semibold mb-2 dark:text-white">Social Media Links</Label>
           <div className="space-y-4 mt-4 w-1/3">
+=======
+            className="mb-6"
+            placeholder="Bio data"
+            maxLength={500}
+          />
+
+          <Label className="text-md font-semibold mb-2 dark:text-white">Social Media Links</Label>
+          <div className="space-y-4 mt-4">
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
           
          {[
   {
@@ -436,7 +543,11 @@ export default function SponsorDetailsForm() {
     <Input
       name={`socialLinks.${social.name}`}
       value={form.socialLinks[social.name as keyof typeof form.socialLinks]}
+<<<<<<< HEAD
       onChange={handleSocialMedia}
+=======
+      onChange={handleChange}
+>>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
       className=" w-full px-4 py-2 "
       placeholder={`Your ${social.name} link`}
     />
