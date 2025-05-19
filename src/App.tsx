@@ -170,9 +170,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <PlayerLayout />
-         // </CheckAuth>
+          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <PlayerLayout />
+          // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
@@ -234,16 +234,16 @@ const AppContent: React.FC = () => {
         path="/team"
         element={
           //<CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <TeamLayout />
+          <TeamLayout />
           //</CheckAuth>
         }>
         <Route path="players" element={<TeamPlayer/>} />
         <Route path="experts" element={<TeamExpert/>} />
         <Route path="sponsors" element={<TeamSponsor/>} />
         <Route path="sponsorsapplication" element={<SponsorApplication />} />
-        <Route path="profile" element={<TeamProfile/>} />
+        <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
-        </Route>
+      </Route>
 
 
       <Route

@@ -5,6 +5,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
+
 interface MenuItem {
   id: number;
   name: string;
@@ -15,8 +16,8 @@ interface MenuItem {
 const adminSidebarMenuItems: MenuItem[] = [
   {
     id: 1,
-    name: "Player",
-    icon: "fas fa-user-tie",
+    name: "Players",
+    icon: "fas fa-table-columns",
     path: "/team/players",
   },
   {
@@ -33,7 +34,7 @@ const adminSidebarMenuItems: MenuItem[] = [
   },
   {
     id: 4,
-    name: "Sponsors Application",
+    name: "Application form",
     icon: "fas fa-handshake",
     path: "/team/sponsorsapplication",
   },
@@ -106,7 +107,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   }, [dispatch]);
 
   return (
-    <nav className="flex flex-col gap-6 mt-4 w-full h-full overflow-y-auto">
+    <nav className="flex flex-col gap-6 p-4 w-full h-full overflow-y-auto">
       {/* Logout Confirmation Dialog */}
       {showLogoutDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
