@@ -57,7 +57,8 @@ import TeamDetailsForm from "./teampages/teamdetailsform";
 import TeamProfile from "./teampages/teamprofile";
 import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
-import TeamSponsor from "./teampages/sponser";
+import TeamSponsor from "./teampages/TeamSponser";
+import SponsorApplicationPage from "./teampages/SponsorApplicationpage";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -240,7 +241,7 @@ const AppContent: React.FC = () => {
         <Route path="players" element={<TeamPlayer/>} />
         <Route path="experts" element={<TeamExpert/>} />
         <Route path="sponsors" element={<TeamSponsor/>} />
-        <Route path="sponsorsapplication" element={<SponsorApplication />} />
+        <Route path="sponsorsapplicationpage" element={<SponsorApplicationPage />} />
         <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
       </Route>

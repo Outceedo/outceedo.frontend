@@ -1,12 +1,8 @@
-<<<<<<< HEAD
-import Expertsponsers from "@/expertpages/Expertsponsors";
-=======
-import Expertsponsers from "@/expertpages/Expertsponsers";
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
+import Sponsers from "@/SponsorPages/Sponsors";
 
 const PlayerSponsors =() =>{
     return(
-        <Expertsponsers />
+        <Sponsers />
     )
 }
 export default PlayerSponsors;

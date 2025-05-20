@@ -1,15 +1,7 @@
-<<<<<<< HEAD
 import { useState, useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-=======
-import { useState } from 'react';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -17,17 +9,12 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faInstagram, faLinkedinIn, faFacebookF, faXTwitter } from '@fortawesome/free-brands-svg-icons';
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
 interface FormData {
-  teamName: string;
+  
   type: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  lastName:string;
+  teamName: string;
   clubName: string;
   city: string;
   country: string;
@@ -42,7 +29,6 @@ interface FormData {
     facebook: string;
     twitter: string;
   };
-<<<<<<< HEAD
 }
 interface CountryData {
   name: string;
@@ -62,38 +48,16 @@ export default function TeamDetailsForm() {
   navigate(-1); // goes to previous page
 };
     const [form, setForm] = useState<FormData>({
-=======
-
-}
-
-export default function TeamDetailsForm() {
-  const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const navigate = useNavigate();
-
-  const nextStep = () => setStep((prev) => Math.min(prev + 1, 2));
-  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
-
-  const goBack = () => {
-  navigate(-1); // goes to previous page
-};
   
-
-  const [form, setForm] = useState<FormData>({
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
-  teamName: '',
     type: '',
-    firstName: '',
-    lastName: '',
+    fullName: '',
+    lastName:"",
+    teamName: '',
     clubName: '',
     city: '',
     country: '',
     address: '',
-<<<<<<< HEAD
     countryCode: '',
-=======
-    countryCode: '+91',
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
     phone: '',
     email: '',
     bio: '',
@@ -104,15 +68,8 @@ export default function TeamDetailsForm() {
       twitter: '',
     },
   });
-<<<<<<< HEAD
   const handleSocialMedia = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-=======
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
     // Handling nested socialLinks
     if (name.startsWith('socialLinks.')) {
       const socialKey = name.split('.')[1];
@@ -127,7 +84,6 @@ export default function TeamDetailsForm() {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
   };
-<<<<<<< HEAD
   useEffect(() => {
     const fetchCountries = async () => {
       const countryRes = await fetch("https://restcountries.com/v3.1/all");
@@ -174,42 +130,23 @@ export default function TeamDetailsForm() {
       }),
     }));
   };
-=======
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
 
   const submitForm = () => {
     setIsSubmitting(true);
     console.log('Form Submitted:', form);
-<<<<<<< HEAD
-=======
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
     setTimeout(() => {
       setIsSubmitting(false);
       alert('Form submitted successfully!');
       navigate('/thank-you'); // redirect if needed
     }, 1000);
   };
-<<<<<<< HEAD
-=======
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
   return (
     <div className="w-full p-20 mx-auto dark:bg-gray-900">
     <button
   onClick={goBack}
-<<<<<<< HEAD
   className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer">
   <ArrowLeft className="w-5 h-5 mr-1" />
  </button>
-=======
-  className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
->
-  <ArrowLeft className="w-5 h-5 mr-1" />
-  
-</button>
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
       {/* Step Indicator */}
       <div className="flex flex-col items-center mb-12">
         <div className="flex w-full max-w-lg items-center relative">
@@ -219,12 +156,7 @@ export default function TeamDetailsForm() {
                 <div
                   className={`w-8 h-8 ${
                     step >= stepNum ? 'bg-red-500' : 'bg-gray-300'
-<<<<<<< HEAD
                   } rounded-full flex items-center justify-center text-white font-bold text-sm`}     >
-=======
-                  } rounded-full flex items-center justify-center text-white font-bold text-sm`}
-                >
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
                   {stepNum}
                 </div>
               </div>
@@ -240,19 +172,11 @@ export default function TeamDetailsForm() {
             </React.Fragment>
           ))}
         </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
         <div className="flex w-full max-w-lg justify-between mt-2 ">
           <div className="w-1/4 text-center text-sm font-medium">Profile Details</div>
           <div className="w-1/4 text-center text-sm font-medium">More Details</div>
         </div>
       </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
       {/* Step 1: Profile Details */}
       {step === 1 && (
         <>
@@ -284,73 +208,54 @@ export default function TeamDetailsForm() {
           </Card>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-<<<<<<< HEAD
      <div>
-=======
-  <div>
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
     <label className="text-sm font-medium text-gray-900 dark:text-white">Team Name</label>
     <select
       name="sponsorType"
       value={form.teamName}
       onChange={handleChange}
-<<<<<<< HEAD
       className="border p-2 rounded text-sm text-gray-700 w-full"    >
-=======
-      className="border p-2 rounded text-sm text-gray-700 w-full"
-    >
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
       <option value="">option 1</option>
       <option value="option2">Option 2</option>
       <option value="option3">Option 3</option>
     </select>
   </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
   <div>
     <label className="text-sm font-medium text-gray-900 dark:text-white">Type</label>
     <select
       name="sportInterest"
       value={form.type}
       onChange={handleChange}
-<<<<<<< HEAD
       className="border p-2 rounded text-sm text-gray-700 w-full"   >
-=======
-      className="border p-2 rounded text-sm text-gray-700 w-full"
-    >
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
       <option value="">Dropdown</option>
       <option value="football">option 1</option>
       <option value="tennis">option 2</option>
     </select>
   </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
   <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">First Name</label>
-    <Input name="firstName" value={form.firstName} onChange={handleChange} />
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Full Name</label>
+    <Input name="fullName" value={form.fullName} onChange={handleChange} />
   </div>
-<<<<<<< HEAD
-=======
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
   <div>
     <label className="text-sm font-medium text-gray-900 dark:text-white">Last Name</label>
     <Input name="lastName" value={form.lastName} onChange={handleChange} />
   </div>
-<<<<<<< HEAD
-=======
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Email</label>
+    <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
+  </div>
 
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
+  <div>
+    <label className="text-sm font-medium text-gray-900 dark:text-white">Team Name</label>
+    <Input name="lastName" value={form.teamName} onChange={handleChange} />
+  </div>
+
+
+
   <div>
     <label className="text-sm font-medium text-gray-900 dark:text-white">Club Name</label>
     <Input name="companyName" value={form.clubName} onChange={handleChange} />
   </div>
-<<<<<<< HEAD
   <div>
    <label className="text-sm font-medium text-gray-900 dark:text-white">Country</label>
         <select
@@ -388,45 +293,6 @@ export default function TeamDetailsForm() {
     <div className="flex gap-4 items-end">
   {/* Country Code (smaller width) */}
   <div className="w-1/3 sm:w-1/4">
-=======
-
-  
-
-  <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">Country</label>
-    <select
-      name="country"
-      value={form.country}
-      onChange={handleChange}
-      className="border p-2 rounded text-sm text-gray-700 w-full"
-    >
-      <option value="">Select Country</option>
-      <option value="India">India</option>
-      <option value="UK">UK</option>
-    </select>
-  </div>
-
-  <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">City</label>
-    <select
-      name="city"
-      value={form.city}
-      onChange={handleChange}
-      className="border p-2 rounded text-sm text-gray-700 w-full"
-    >
-      <option value="">Select City</option>
-      <option value="Delhi">Delhi</option>
-      <option value="London">London</option>
-    </select>
-  </div>
-
-  <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">Address</label>
-    <Input name="address" placeholder="Street no." value={form.address} onChange={handleChange} />
-  </div>
-
-  <div>
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
     <label className="text-sm font-medium text-gray-900 dark:text-white">Country Code</label>
     <select
       name="countryCode"
@@ -434,7 +300,6 @@ export default function TeamDetailsForm() {
       onChange={handleChange}
       className="border p-2 rounded text-sm text-gray-700 w-full"
     >
-<<<<<<< HEAD
       <option value="">Select Code</option>
       {countries.map((country) => (
         <option key={country.code} value={country.dialCode}>
@@ -453,28 +318,8 @@ export default function TeamDetailsForm() {
         />
       </div>  
       </div>
-=======
-      <option value="+91">+91</option>
-      <option value="+1">+1</option>
-    </select>
-  </div>
-
-  <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">Phone Number</label>
-    <Input name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} />
-  </div>
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
-  <div>
-    <label className="text-sm font-medium text-gray-900 dark:text-white">Email</label>
-    <Input name="email" placeholder="Email" value={form.email} onChange={handleChange} />
-  </div>
+  
 </div>
-<<<<<<< HEAD
-=======
-
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
           <div className="text-right mt-6">
             <Button onClick={nextStep} className="bg-yellow-400 text-white hover:bg-amber-500 cursor-pointer">
               Save & Next
@@ -482,42 +327,21 @@ export default function TeamDetailsForm() {
           </div>
         </>
       )}
-<<<<<<< HEAD
       {/* Step 2: More Details */}
       {step === 2 && (
         <>
           <h2 className="text-xl font-semibold mb-4 dark:text-white">More Details</h2>     
-=======
-
-      {/* Step 2: More Details */}
-      {step === 2 && (
-        <>
-          <h2 className="text-xl font-semibold mb-4 dark:text-white">More Details</h2>
-         
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
 <label className="text-sm font-medium text-gray-900 dark:text-white">Bio Data</label>
           <Textarea
             name="bio"
             value={form.bio}
             onChange={handleChange}
-<<<<<<< HEAD
             className="mb-6 mt-2"
             placeholder="Bio data"
             maxLength={500}
           />
           <Label className="text-md font-semibold mb-2 dark:text-white">Social Media Links</Label>
           <div className="space-y-4 mt-4 w-1/3">       
-=======
-            className="mb-6"
-            placeholder="Bio data"
-            maxLength={500}
-          />
-
-          <Label className="text-md font-semibold mb-2 dark:text-white">Social Media Links</Label>
-          <div className="space-y-4 mt-4">
-          
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
          {[
   {
     icon: faInstagram,
@@ -547,31 +371,19 @@ export default function TeamDetailsForm() {
     <Input
       name={`socialLinks.${social.name}`}
       value={form.socialLinks[social.name as keyof typeof form.socialLinks]}
-<<<<<<< HEAD
       onChange={handleSocialMedia}
-=======
-      onChange={handleChange}
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
       className=" w-full px-4 py-2 "
       placeholder={`Your ${social.name} link`}
     />
   </div>
 ))}
-<<<<<<< HEAD
           </div>
-=======
-
-
-          </div>
-
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
           {/* Navigation Buttons */}
           <div className="flex  justify-end  mt-6 ">
             <Button
               onClick={prevStep}
               className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-50 rounded mr-9 cursor-pointer"
               disabled={isSubmitting}
-<<<<<<< HEAD
               type="button" >
               Back
             </Button>
@@ -579,18 +391,6 @@ export default function TeamDetailsForm() {
               onClick={submitForm}
               className="bg-yellow-400 text-white hover:bg-yellow-500 cursor-pointer"
               disabled={isSubmitting} >
-=======
-              type="button"
-            >
-              Back
-            </Button>
-
-            <Button
-              onClick={submitForm}
-              className="bg-yellow-400 text-white hover:bg-yellow-500 cursor-pointer"
-              disabled={isSubmitting}
-            >
->>>>>>> f08735132300ddd3f1785182b0f1fdc66cefe93b
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           </div>
