@@ -89,6 +89,8 @@ const Detailsform: React.FC = () => {
     country: "",
     city: "",
     footballClub: "",
+    sport: "", // New field for sport
+    club: "", // New field for club
     countryCode: "",
     phoneNumber: "",
     bio: "",
@@ -167,6 +169,8 @@ const Detailsform: React.FC = () => {
         lastName: profileData.lastName || "",
         profession: profileData.profession || "",
         subProfession: profileData.subProfession || "",
+        sport: profileData.sport || "", // Add sport field
+        club: profileData.club || "", // Add club field
         age: profileData.age?.toString() || "",
         birthYear: profileData.birthYear?.toString() || "",
         gender: (profileData.gender as GenderType) || ("" as GenderType),
@@ -306,6 +310,10 @@ const Detailsform: React.FC = () => {
       if (!formData.city) {
         errors.city = "City is required";
       }
+      // You can add validation for sport field if needed
+      // if (!formData.sport) {
+      //   errors.sport = "Sport is required";
+      // }
 
       // Validate expert-specific fields if user is an expert
       if (isExpert) {
@@ -799,8 +807,10 @@ const Detailsform: React.FC = () => {
         },
         interests: [], // Not collected in the form
         profession: formData.profession || null,
-        subProfession: formData.subProfession || null,
-        company: formData.footballClub || null,
+        subProfession: formData.subProfession || null, // Ensure subProfession is sent correctly
+        sport: formData.sport || null, // Add sport field
+        club: formData.club || null, // Add club field
+        company: formData.footballClub || null, // Keep existing footballClub field for backward compatibility
         role: localStorage.getItem("role") || "player",
 
         // Include expert-specific fields only if user is an expert
@@ -1130,6 +1140,8 @@ const Detailsform: React.FC = () => {
                 <option value="defender">Defender</option>
                 <option value="striker">Striker</option>
                 <option value="goalkeeper">GoalKeeper</option>
+                <option value="coach">Coach</option>
+                <option value="midfielder">Midfielder</option>
               </select>
             </div>
           </div>
@@ -1261,6 +1273,42 @@ const Detailsform: React.FC = () => {
             >
               Browse
             </button>
+          </div>
+
+          {/* Add Sport Field */}
+          <div className="flex space-x-4 mb-2">
+            <div className="w-1/2">
+              <label className="block text-black mb-1">Sport</label>
+              <select
+                name="sport"
+                value={formData.sport}
+                onChange={handleInputChange}
+                className="border p-2 w-full rounded"
+              >
+                <option value="">Select Sport</option>
+                <option value="football">Football</option>
+                <option value="basketball">Basketball</option>
+                <option value="tennis">Tennis</option>
+                <option value="cricket">Cricket</option>
+                <option value="volleyball">Volleyball</option>
+                <option value="rugby">Rugby</option>
+                <option value="hockey">Hockey</option>
+                <option value="baseball">Baseball</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div className="w-1/2">
+              <label className="block text-black mb-1">Club</label>
+              <input
+                type="text"
+                name="club"
+                placeholder="Enter your club"
+                value={formData.club}
+                onChange={handleInputChange}
+                className="border p-2 w-full rounded"
+              />
+            </div>
           </div>
 
           {/* Certification Level - Only for Experts */}

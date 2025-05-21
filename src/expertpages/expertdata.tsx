@@ -55,6 +55,7 @@ const ExpertProfile = () => {
     const navigationTimer = setTimeout(() => {
       // Only proceed with navigation if user is logged in and not already redirecting
       const userRole = localStorage.getItem("role");
+      console.log(userRole);
 
       // Check if required profile fields are missing
       const isProfileIncomplete =
@@ -73,7 +74,7 @@ const ExpertProfile = () => {
 
       if (isProfileIncomplete) {
         console.log("Profile is incomplete, redirecting to details form");
-        navigate("/details-form");
+        navigate("/expert/details-form");
       } else {
         if (userRole === "player") {
           console.log("Redirecting to player profile");

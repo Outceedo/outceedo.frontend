@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -13,7 +16,7 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import profile from "../assets/images/avatar.png";
 
-import { faStar, faCamera, faVideo } from "@fortawesome/free-solid-svg-icons";
+import { faStar, faCamera, faVideo, faUpload, faMapMarkerAlt, faFileUpload } from "@fortawesome/free-solid-svg-icons";
 
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -75,11 +78,23 @@ const Experts = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">(
     "all"
   );
+  
   // Certificate preview state
   const [selectedCertificate, setSelectedCertificate] =
     useState<Certificate | null>(null);
   const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] =
     useState(false);
+    
+  // Online Assessment Modal state
+  const [isVideoUploadModalOpen, setIsVideoUploadModalOpen] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoDescription, setVideoDescription] = useState("");
+  const [currentService, setCurrentService] = useState<Service | null>(null);
+  
+  // On Ground Assessment Modal state
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [location, setLocation] = useState("");
+  const [locationDescription, setLocationDescription] = useState("");
 
   // Redux state
   const dispatch = useAppDispatch();
@@ -277,6 +292,7 @@ const Experts = () => {
 
       return {
         id: service.id || service.serviceId,
+        serviceId: service.serviceId,
         name: serviceName,
         description: displayDescription,
         price:
@@ -336,21 +352,107 @@ const Experts = () => {
   }
 
   const handlebook = (service: Service) => {
-    // Save service details to localStorage
-    localStorage.setItem(
-      "selectedService",
-      JSON.stringify({
-        expertname: expertData.name, // Add expert name
-        expertProfileImage: expertData.profileImage,
-        serviceid: service.id, // Add expert profile image
-        name: service.name,
-        description: service.description,
-        price: service.price,
-      })
-    );
-
-    // Navigate to the BookService page
-    navigate("/player/book");
+    // Set current service for modals
+    setCurrentService(service);
+    
+    // Handle different service types
+    if (service.serviceId === "1") {
+      // ONLINE ASSESSMENT - open video upload modal
+      setIsVideoUploadModalOpen(true);
+      setVideoDescription("");
+      setSelectedVideo(null);
+    } else if (service.serviceId === "2") {
+      // ONLINE TRAINING - navigate to booking page
+      localStorage.setItem(
+        "selectedService",
+        JSON.stringify({
+          expertname: expertData.name,
+          expertProfileImage: expertData.profileImage,
+          serviceid: service.id,
+          name: service.name,
+          description: service.description,
+          price: service.price,
+        })
+      );
+      navigate("/player/book");
+    } else if (service.serviceId === "3") {
+      // ON GROUND ASSESSMENT - open location modal
+      setIsLocationModalOpen(true);
+      setLocation("");
+      setLocationDescription("");
+    } else {
+      // Default behavior for unknown service types
+      localStorage.setItem(
+        "selectedService",
+        JSON.stringify({
+          expertname: expertData.name,
+          expertProfileImage: expertData.profileImage,
+          serviceid: service.id,
+          name: service.name,
+          description: service.description,
+          price: service.price,
+        })
+      );
+      navigate("/player/book");
+    }
+  };
+  
+  // Handle video file selection
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedVideo(e.target.files[0]);
+    }
+  };
+  
+  // Handle video upload submission
+  const handleVideoUploadSubmit = () => {
+    // Here you would normally upload the video to your server
+    // For now, we'll just create the data structure and show a success message
+    
+    if (!selectedVideo) {
+      alert("Please select a video to upload");
+      return;
+    }
+    
+    const assessmentData = {
+      expertId: expertData.id,
+      serviceName: currentService?.name,
+      serviceId: currentService?.id,
+      video: selectedVideo,
+      description: videoDescription,
+      timestamp: new Date().toISOString(),
+    };
+    
+    // Log the data for now (replace with actual API call)
+    console.log("Assessment submission:", assessmentData);
+    
+    // Close the modal and show success message
+    setIsVideoUploadModalOpen(false);
+    alert("Video uploaded successfully! Your assessment request has been submitted.");
+  };
+  
+  // Handle location submission
+  const handleLocationSubmit = () => {
+    if (!location.trim()) {
+      alert("Please enter a location");
+      return;
+    }
+    
+    const locationData = {
+      expertId: expertData.id,
+      serviceName: currentService?.name,
+      serviceId: currentService?.id,
+      location: location,
+      description: locationDescription,
+      timestamp: new Date().toISOString(),
+    };
+    
+    // Log the data for now (replace with actual API call)
+    console.log("On-ground assessment request:", locationData);
+    
+    // Close the modal and show success message
+    setIsLocationModalOpen(false);
+    alert("Your on-ground assessment request has been submitted successfully!");
   };
 
   return (
@@ -809,6 +911,150 @@ const Experts = () => {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      
+      {/* Online Assessment Video Upload Modal */}
+      {isVideoUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-lg p-6 relative">
+            <button
+              onClick={() => setIsVideoUploadModalOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-4 text-center">
+              Upload Video for Assessment
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Upload Video <span className="text-red-500">*</span>
+                </Label>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoChange}
+                    className="hidden"
+                    id="videoUpload"
+                  />
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      onClick={() => document.getElementById('videoUpload')?.click()}
+                      className="w-full h-32 border-dashed border-2 flex flex-col items-center justify-center gap-2"
+                    >
+                      <FontAwesomeIcon icon={faUpload} className="text-2xl text-gray-400" />
+                      <span className="text-gray-500">
+                        {selectedVideo ? selectedVideo.name : "Click to upload video"}
+                      </span>
+                    </Button>
+                    {selectedVideo && (
+                      <div className="mt-2 text-sm text-green-600">
+                        Selected: {selectedVideo.name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Description
+                </Label>
+                <Textarea
+                  value={videoDescription}
+                  onChange={(e) => setVideoDescription(e.target.value)}
+                  placeholder="Describe what you'd like the expert to assess in your video..."
+                  className="w-full h-32 dark:bg-gray-700"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsVideoUploadModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleVideoUploadSubmit}
+                >
+                  <FontAwesomeIcon icon={faFileUpload} className="mr-2" />
+                  Submit for Assessment
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* On Ground Assessment Location Modal */}
+      {isLocationModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-lg p-6 relative">
+            <button
+              onClick={() => setIsLocationModalOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-4 text-center">
+              Schedule On-Ground Assessment
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Location <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative">
+                  <FontAwesomeIcon 
+                    icon={faMapMarkerAlt} 
+                    className="absolute left-3 top-3 text-gray-400"
+                  />
+                  <Input
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    placeholder="Enter location for assessment"
+                    className="w-full pl-10 dark:bg-gray-700"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Additional Details
+                </Label>
+                <Textarea
+                  value={locationDescription}
+                  onChange={(e) => setLocationDescription(e.target.value)}
+                  placeholder="Any specific details about the venue or assessment requirements..."
+                  className="w-full h-32 dark:bg-gray-700"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsLocationModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleLocationSubmit}
+                >
+                  Submit Request
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

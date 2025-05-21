@@ -112,7 +112,7 @@ const Profile: React.FC = () => {
         weight: currentProfile.weight?.toString() || "",
         city: currentProfile.city || "",
         country: currentProfile.country || "",
-        club: currentProfile.company || "",
+        club: currentProfile.club || "",
         languages: Array.isArray(currentProfile.language)
           ? [...currentProfile.language]
           : [],
@@ -243,7 +243,7 @@ const Profile: React.FC = () => {
         profile.city && profile.country
           ? `${profile.city}, ${profile.country}`
           : "",
-      club: profile.company || "",
+      club: profile.club || "",
       languages:
         Array.isArray(profile.language) && profile.language.length > 0
           ? profile.language
@@ -408,7 +408,7 @@ const Profile: React.FC = () => {
         weight: parseInt(editData.weight),
         city: editData.city,
         country: editData.country,
-        company: editData.club,
+        club: editData.club,
         language: editData.languages,
         socialLinks: playerData.rawProfile.socialLinks || {},
       };
@@ -456,7 +456,7 @@ const Profile: React.FC = () => {
         weight: currentProfile.weight?.toString() || "",
         city: currentProfile.city || "",
         country: currentProfile.country || "",
-        club: currentProfile.company || "",
+        club: currentProfile.club || "",
         languages: Array.isArray(currentProfile.language)
           ? [...currentProfile.language]
           : [],
@@ -476,7 +476,7 @@ const Profile: React.FC = () => {
         weight: currentProfile.weight?.toString() || "",
         city: currentProfile.city || "",
         country: currentProfile.country || "",
-        club: currentProfile.company || "",
+        club: currentProfile.club || "",
         languages: Array.isArray(currentProfile.language)
           ? [...currentProfile.language]
           : [],

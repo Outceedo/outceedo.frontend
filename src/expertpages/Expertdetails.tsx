@@ -47,6 +47,11 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   );
   const [isEditingAbout, setIsEditingAbout] = useState(false);
 
+  // State for See More functionality in About Me section
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+  const aboutTextRef = useRef<HTMLParagraphElement>(null);
+  const [showSeeMore, setShowSeeMore] = useState(false);
+
   // Skills state
   const [skills, setSkills] = useState<string[]>(
     expertData.skills && Array.isArray(expertData.skills)
@@ -76,6 +81,26 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   const getAuthToken = (): string | null => {
     return localStorage.getItem("token");
   };
+
+  // Check if about text is more than 3 lines
+  useEffect(() => {
+    if (aboutTextRef.current) {
+      const lineHeight = parseInt(
+        window.getComputedStyle(aboutTextRef.current).lineHeight
+      );
+      const height = aboutTextRef.current.scrollHeight;
+
+      // Approximately check if the content is more than 3 lines
+      // We compare the scrollHeight against 3 times the lineHeight plus some margin
+      const isTall = height > lineHeight * 3 + 5;
+      setShowSeeMore(isTall);
+
+      // If we've determined it doesn't need "see more", always keep it expanded
+      if (!isTall) {
+        setIsAboutExpanded(true);
+      }
+    }
+  }, [aboutMe]);
 
   // Initialize certificates from documents
   useEffect(() => {
@@ -132,6 +157,9 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
         setAboutMe(expertData.about);
       }
 
+      // Reset the expanded state when data changes
+      setIsAboutExpanded(false);
+
       // Properly handle skills update from expertData
       if (expertData.skills) {
         // Make sure we have an array of strings
@@ -164,6 +192,11 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     certificateFileRefs.current = tempCertificates.map(() => null);
   }, [tempCertificates.length]);
 
+  // Toggle See More in About section
+  const toggleAboutExpanded = () => {
+    setIsAboutExpanded(!isAboutExpanded);
+  };
+
   // Save about me
   const handleSaveAboutMe = async () => {
     setIsSubmitting(true);
@@ -186,6 +219,9 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
       });
 
       setIsEditingAbout(false);
+
+      // Reset the expanded state when saving new content
+      setIsAboutExpanded(false);
     } catch (error: any) {
       Swal.fire({
         icon: "error",
@@ -536,7 +572,28 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
           </>
         ) : (
           <>
-            <p className="text-gray-700 dark:text-gray-300">{aboutMe}</p>
+            <div className="relative">
+              <p
+                ref={aboutTextRef}
+                className={`text-gray-700 dark:text-gray-300 ${
+                  showSeeMore && !isAboutExpanded
+                    ? "line-clamp-3 overflow-hidden"
+                    : ""
+                }`}
+              >
+                {aboutMe}
+              </p>
+
+              {showSeeMore && (
+                <button
+                  onClick={toggleAboutExpanded}
+                  className="text-blue-500 hover:text-blue-700 font-medium mt-1 focus:outline-none flex justify-center w-full"
+                >
+                  {isAboutExpanded ? "See less" : "read more"}
+                </button>
+              )}
+            </div>
+
             <Button
               variant="ghost"
               size="sm"
