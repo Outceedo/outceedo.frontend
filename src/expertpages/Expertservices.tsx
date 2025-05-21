@@ -53,15 +53,16 @@ const getAuthToken = (): string | null => {
 };
 
 // Constants for service ID logic
-const PLATFORM_SERVICE_IDS = ["1", "2", "3"]; // Platform service IDs
+const PLATFORM_SERVICE_IDS = ["1", "2", "3", "4"]; // Platform service IDs - ENSURES ALL 4 ARE COVERED
 const CUSTOM_SERVICE_PREFIX = "custom-";
-const CUSTOM_SERVICE_START_ID = 4; // Custom services start from ID 4
+const CUSTOM_SERVICE_START_ID = 5; // Custom services start from ID 5 (after the 4 platform services)
 
 // Service name mapping
 const SERVICE_NAME_MAP: Record<string, string> = {
   "1": "ONLINE ASSESSMENT",
   "2": "ONLINE TRAINING",
   "3": "ON GROUND ASSESSMENT",
+  "4": "RECORDED VIDEO ASSESSMENT",
 };
 
 // Helper function to get service name from ID
@@ -287,6 +288,14 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
               price: 80,
               isActive: true,
             },
+            {
+              id: "service-4",
+              serviceId: "4",
+              name: "RECORDED VIDEO ASSESSMENT",
+              description: "1 on 1 advise. doubts",
+              price: 80,
+              isActive: true,
+            },
           ])
       );
       setServices(localServices);
@@ -327,6 +336,14 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
     value: string | number | boolean
   ) => {
     const updatedServices = [...tempServices];
+
+    // Don't allow name updates for platform services
+    if (
+      field === "name" &&
+      isPlatformService(updatedServices[index].serviceId)
+    ) {
+      return; // Skip updating name for platform services
+    }
 
     updatedServices[index] = {
       ...updatedServices[index],
@@ -722,7 +739,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
     return `$${numericPrice}`;
   };
 
-  // Check if a service is a platform service
+  // Check if a service is a platform service (IDs 1-4)
   const isPlatformService = (serviceId: string | undefined): boolean => {
     return !!serviceId && PLATFORM_SERVICE_IDS.includes(serviceId);
   };
@@ -749,7 +766,6 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
           </Button>
         ) : (
           <div className="flex gap-2">
-            
             <Button
               variant="outline"
               onClick={handleCancel}
@@ -908,8 +924,6 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
         </>
       )}
 
-      
-
       {/* Current Services Grid */}
       <div>
         <h3 className="text-lg font-semibold mb-4 text-gray-800 dark:text-white">
@@ -937,24 +951,33 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Service Name
+                        Service Name{" "}
+                        {isPlatformService(service.serviceId) && (
+                          <span className="text-gray-500 text-xs">
+                            (Not Editable)
+                          </span>
+                        )}
                       </label>
-                      <Input
-                        type="text"
-                        value={service.name}
-                        onChange={(e) =>
-                          handleUpdateService(index, "name", e.target.value)
-                        }
-                        className="w-full"
-                        disabled={
-                          isSubmitting || isPlatformService(service.serviceId)
-                        }
-                        placeholder="Service name"
-                      />
-                      {isPlatformService(service.serviceId) && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Platform service names cannot be edited
-                        </p>
+                      {isPlatformService(service.serviceId) ? (
+                        // For platform services, show name as disabled input
+                        <Input
+                          type="text"
+                          value={service.name}
+                          className="w-full bg-gray-100 dark:bg-gray-600 cursor-not-allowed"
+                          disabled={true}
+                        />
+                      ) : (
+                        // For custom services, allow name editing
+                        <Input
+                          type="text"
+                          value={service.name}
+                          onChange={(e) =>
+                            handleUpdateService(index, "name", e.target.value)
+                          }
+                          className="w-full"
+                          disabled={isSubmitting}
+                          placeholder="Service name"
+                        />
                       )}
                     </div>
 
@@ -1040,8 +1063,6 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                       service.description || service.additionalDetails
                     )}
                   </p>
-
-                  
                 </div>
               </Card>
             ))

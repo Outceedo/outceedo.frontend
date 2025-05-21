@@ -16,7 +16,14 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import profile from "../assets/images/avatar.png";
 
-import { faStar, faCamera, faVideo, faUpload, faMapMarkerAlt, faFileUpload } from "@fortawesome/free-solid-svg-icons";
+import {
+  faStar,
+  faCamera,
+  faVideo,
+  faUpload,
+  faMapMarkerAlt,
+  faFileUpload,
+} from "@fortawesome/free-solid-svg-icons";
 
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -78,19 +85,19 @@ const Experts = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">(
     "all"
   );
-  
+
   // Certificate preview state
   const [selectedCertificate, setSelectedCertificate] =
     useState<Certificate | null>(null);
   const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] =
     useState(false);
-    
+
   // Online Assessment Modal state
   const [isVideoUploadModalOpen, setIsVideoUploadModalOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoDescription, setVideoDescription] = useState("");
   const [currentService, setCurrentService] = useState<Service | null>(null);
-  
+
   // On Ground Assessment Modal state
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
   const [location, setLocation] = useState("");
@@ -222,6 +229,7 @@ const Experts = () => {
     "1": "ONLINE ASSESSMENT",
     "2": "ONLINE TRAINING",
     "3": "ON GROUND ASSESSMENT",
+    "4": "RECORDED VIDEO ASSESSMENT",
   };
 
   // Helper function to get service name from ID
@@ -354,7 +362,7 @@ const Experts = () => {
   const handlebook = (service: Service) => {
     // Set current service for modals
     setCurrentService(service);
-    
+
     // Handle different service types
     if (service.serviceId === "1") {
       // ONLINE ASSESSMENT - open video upload modal
@@ -396,24 +404,24 @@ const Experts = () => {
       navigate("/player/book");
     }
   };
-  
+
   // Handle video file selection
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedVideo(e.target.files[0]);
     }
   };
-  
+
   // Handle video upload submission
   const handleVideoUploadSubmit = () => {
     // Here you would normally upload the video to your server
     // For now, we'll just create the data structure and show a success message
-    
+
     if (!selectedVideo) {
       alert("Please select a video to upload");
       return;
     }
-    
+
     const assessmentData = {
       expertId: expertData.id,
       serviceName: currentService?.name,
@@ -422,22 +430,24 @@ const Experts = () => {
       description: videoDescription,
       timestamp: new Date().toISOString(),
     };
-    
+
     // Log the data for now (replace with actual API call)
     console.log("Assessment submission:", assessmentData);
-    
+
     // Close the modal and show success message
     setIsVideoUploadModalOpen(false);
-    alert("Video uploaded successfully! Your assessment request has been submitted.");
+    alert(
+      "Video uploaded successfully! Your assessment request has been submitted."
+    );
   };
-  
+
   // Handle location submission
   const handleLocationSubmit = () => {
     if (!location.trim()) {
       alert("Please enter a location");
       return;
     }
-    
+
     const locationData = {
       expertId: expertData.id,
       serviceName: currentService?.name,
@@ -446,10 +456,10 @@ const Experts = () => {
       description: locationDescription,
       timestamp: new Date().toISOString(),
     };
-    
+
     // Log the data for now (replace with actual API call)
     console.log("On-ground assessment request:", locationData);
-    
+
     // Close the modal and show success message
     setIsLocationModalOpen(false);
     alert("Your on-ground assessment request has been submitted successfully!");
@@ -914,7 +924,7 @@ const Experts = () => {
           </div>
         </div>
       )}
-      
+
       {/* Online Assessment Video Upload Modal */}
       {isVideoUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -928,7 +938,7 @@ const Experts = () => {
             <h3 className="text-xl font-semibold mb-4 text-center">
               Upload Video for Assessment
             </h3>
-            
+
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
@@ -945,12 +955,19 @@ const Experts = () => {
                   <div className="relative">
                     <Button
                       variant="outline"
-                      onClick={() => document.getElementById('videoUpload')?.click()}
+                      onClick={() =>
+                        document.getElementById("videoUpload")?.click()
+                      }
                       className="w-full h-32 border-dashed border-2 flex flex-col items-center justify-center gap-2"
                     >
-                      <FontAwesomeIcon icon={faUpload} className="text-2xl text-gray-400" />
+                      <FontAwesomeIcon
+                        icon={faUpload}
+                        className="text-2xl text-gray-400"
+                      />
                       <span className="text-gray-500">
-                        {selectedVideo ? selectedVideo.name : "Click to upload video"}
+                        {selectedVideo
+                          ? selectedVideo.name
+                          : "Click to upload video"}
                       </span>
                     </Button>
                     {selectedVideo && (
@@ -961,7 +978,7 @@ const Experts = () => {
                   </div>
                 </div>
               </div>
-              
+
               <div>
                 <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Description
@@ -973,7 +990,7 @@ const Experts = () => {
                   className="w-full h-32 dark:bg-gray-700"
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-2 mt-6">
                 <Button
                   variant="outline"
@@ -993,7 +1010,7 @@ const Experts = () => {
           </div>
         </div>
       )}
-      
+
       {/* On Ground Assessment Location Modal */}
       {isLocationModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -1007,15 +1024,15 @@ const Experts = () => {
             <h3 className="text-xl font-semibold mb-4 text-center">
               Schedule On-Ground Assessment
             </h3>
-            
+
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Location <span className="text-red-500">*</span>
                 </Label>
                 <div className="relative">
-                  <FontAwesomeIcon 
-                    icon={faMapMarkerAlt} 
+                  <FontAwesomeIcon
+                    icon={faMapMarkerAlt}
                     className="absolute left-3 top-3 text-gray-400"
                   />
                   <Input
@@ -1027,7 +1044,7 @@ const Experts = () => {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Additional Details
@@ -1039,7 +1056,7 @@ const Experts = () => {
                   className="w-full h-32 dark:bg-gray-700"
                 />
               </div>
-              
+
               <div className="flex justify-end space-x-2 mt-6">
                 <Button
                   variant="outline"
