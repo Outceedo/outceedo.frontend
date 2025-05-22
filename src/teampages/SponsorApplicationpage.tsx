@@ -8,7 +8,7 @@ import profile3 from "../assets/images/profile3.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import  { useState } from 'react';
-import SponserForm from "../SponsorPages/SponsorForm"
+import ApplicationForm from "./ApplicationForm"
 import { X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 
@@ -148,7 +148,7 @@ const SponsorApplicationpage = () => {
             </button>
           </div>
           <div className="flex-1 overflow-auto">
-            < SponserForm />
+            <ApplicationForm />
           </div>
         </div>
       )}

@@ -20,6 +20,7 @@ interface FormData {
   country: string;
   address: string;
   countryCode: string;
+  Language:string;
   phone: string;
   email: string;
   bio: string;
@@ -58,6 +59,7 @@ export default function TeamDetailsForm() {
     country: '',
     address: '',
     countryCode: '',
+    language:'',
     phone: '',
     email: '',
     bio: '',
@@ -256,6 +258,7 @@ export default function TeamDetailsForm() {
     <label className="text-sm font-medium text-gray-900 dark:text-white">Club Name</label>
     <Input name="companyName" value={form.clubName} onChange={handleChange} />
   </div>
+
   <div>
    <label className="text-sm font-medium text-gray-900 dark:text-white">Country</label>
         <select
@@ -290,6 +293,10 @@ export default function TeamDetailsForm() {
         <label className="text-sm font-medium text-gray-900 dark:text-white">Address</label>
         <Input name="address" placeholder="Street no." value={form.address} onChange={handleChange} />
       </div>
+      <div>
+        <label className="text-sm font-medium text-gray-900 dark:text-white">Language</label>
+    <Input name="lastName" value={form.Language} onChange={handleChange} />
+  </div>
     <div className="flex gap-4 items-end">
   {/* Country Code (smaller width) */}
   <div className="w-1/3 sm:w-1/4">
@@ -308,6 +315,7 @@ export default function TeamDetailsForm() {
       ))}
     </select>
   </div>
+ 
  <div className="flex-1">
     <label className="text-sm font-medium text-gray-900 dark:text-white">Phone Number</label>
     <Input
