@@ -7,6 +7,8 @@ import {
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { Card } from "@/components/ui/card";
+import { ArrowLeft } from 'lucide-react';
+
 import {
   faCamera,
   faVideo,
@@ -18,6 +20,8 @@ import { Button } from "@/components/ui/button";
 import axios from "axios";
 import Swal from "sweetalert2";
 import Sponsor2 from "../assets/images/sponsor2.jpg";
+import { useNavigate } from 'react-router-dom';
+
 
 interface UploadItem {
   id: string | number;
@@ -37,6 +41,10 @@ const SponsorInfo: React.FC = () => {
   const [media, setMedia] = useState<UploadItem[]>([]);
   const [selectedMedia, setSelectedMedia] = useState<(string | number)[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+   const navigate = useNavigate(); 
+   const goBack = () => {
+  navigate(-1); // goes to previous page
+   };
 
   const sponsordata = {
     name: "Company/Individual Name",
@@ -174,6 +182,12 @@ const SponsorInfo: React.FC = () => {
 
   return (
     <div className="w-full min-h-screen dark:bg-gray-900 p-10">
+         <button
+          onClick={goBack}
+          className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
+        >
+          <ArrowLeft className="w-5 h-5 mr-1" />
+         </button>
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-5">
         <div>
           <h1 className="text-2xl font-bold">{sponsordata.name}</h1>

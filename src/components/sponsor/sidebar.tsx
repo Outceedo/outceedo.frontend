@@ -42,6 +42,8 @@ const sponsorSidebarMenuItems: MenuItem[] = [
     path: "/sponsor/profile",
   },
 
+ 
+
   {
     id: 4,
     name: "Logout",

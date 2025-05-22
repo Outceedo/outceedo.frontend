@@ -40,11 +40,12 @@ export default function Sponsors() {
   const openReportModal = () => setIsReportOpen(true);
   const closeReportModal = () => setIsReportOpen(false);
 
-  const handleClick = () => {
-    navigate('/sponsor/Sponsorinfo');
+  const handleViewProfile = (sponsor: SponsorCardProps) => {
+    navigate('/sponsor/Sponsorinfo', {
+      state: { sponsor },
+    });
   };
 
-  // Initialize sponsors data
   useEffect(() => {
     const data = Array(4).fill({
       name: 'William',
@@ -61,7 +62,6 @@ export default function Sponsors() {
     setSponsors(data);
   }, []);
 
-  // Fetch list of countries
   useEffect(() => {
     fetch('https://restcountries.com/v3.1/all')
       .then((res) => res.json())
@@ -73,7 +73,6 @@ export default function Sponsors() {
       });
   }, []);
 
-  // Clear filters
   const handleClear = () => {
     setSearchTerm('');
     setSelectedCountry('');
@@ -81,7 +80,6 @@ export default function Sponsors() {
     setSelectedFundingRange('');
   };
 
-  // Filter sponsors based on inputs
   const filteredSponsors = sponsors.filter((s) => {
     return (
       (!searchTerm ||
@@ -156,20 +154,13 @@ export default function Sponsors() {
           />
           <CardContent className="flex-1 p-0">
             <h2 className="text-lg font-semibold">{sponsor.name}</h2>
-            <p className="text-sm text-gray-600 dark:text-white">
-              {sponsor.company}
-            </p>
+            <p className="text-sm text-gray-600 dark:text-white">{sponsor.company}</p>
             <p className="text-sm mt-1">{sponsor.description}</p>
             <div className="flex items-center mt-2 text-sm text-gray-700">
               <div className="flex items-center text-yellow-400 mr-2">
-                {Array.from({ length: Math.floor(sponsor.rating) }).map(
-                  (_, i) => (
-                    <Star
-                      key={i}
-                      className="w-4 h-4 fill-yellow-400"
-                    />
-                  )
-                )}
+                {Array.from({ length: Math.floor(sponsor.rating) }).map((_, i) => (
+                  <Star key={i} className="w-4 h-4 fill-yellow-400" />
+                ))}
               </div>
               <span className="text-yellow-400 text-lg">{sponsor.rating}</span>
               <span className="ml-2 text-gray-500 dark:text-white">
@@ -179,10 +170,10 @@ export default function Sponsors() {
           </CardContent>
           <div className="flex flex-row justify-start items-start gap-5">
             <Button
-              onClick={handleClick}
               className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+              onClick={() => handleViewProfile(sponsor)}
             >
-              View More
+              View Profile
             </Button>
             <Button
               variant="ghost"
@@ -209,4 +200,3 @@ export default function Sponsors() {
     </div>
   );
 }
-
