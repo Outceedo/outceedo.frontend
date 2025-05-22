@@ -243,10 +243,10 @@ const Experts = () => {
     },
   ];
   const SERVICE_NAME_MAP: Record<string, string> = {
-    "1": "ONLINE ASSESSMENT",
+    "1": "RECORDED VIDEO ASSESSMENT",
     "2": "ONLINE TRAINING",
     "3": "ON GROUND ASSESSMENT",
-    "4": "RECORDED VIDEO ASSESSMENT",
+    "4": "ONLINE ASSESSMENT",
   };
 
   // Helper function to get service name from ID
@@ -403,9 +403,11 @@ const Experts = () => {
 
     // Handle different service types based on serviceId
     switch (service.serviceId) {
-      case "1": // ONLINE ASSESSMENT - navigate to booking page
-        localStorage.setItem("selectedService", JSON.stringify(serviceData));
-        navigate("/player/book");
+      case "1": // RECORDED VIDEO ASSESSMENT - open video upload modal
+        setIsVideoUploadModalOpen(true);
+        setVideoDescription("");
+        // setSelectedVideo(null);
+        setUploadProgress(0);
         break;
 
       case "2": // ONLINE TRAINING - navigate to booking page
@@ -417,12 +419,9 @@ const Experts = () => {
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
         break;
-
-      case "4": // RECORDED VIDEO ASSESSMENT - open video upload modal
-        setIsVideoUploadModalOpen(true);
-        setVideoDescription("");
-        setSelectedVideo(null);
-        setUploadProgress(0);
+      case "4": // ONLINE ASSESSMENT - navigate to booking page
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/player/book");
         break;
 
       default:
@@ -446,9 +445,10 @@ const Experts = () => {
       alert("Please select a video to upload");
       return;
     }
+
     try {
       setIsUploading(true);
-      setUploadProgress(10);
+      setUploadProgress(20);
 
       // Get auth token from localStorage
       const token = localStorage.getItem("token");
@@ -458,76 +458,72 @@ const Experts = () => {
         return;
       }
 
-      // Step 1: Upload the video file
-      const formData = new FormData();
-      formData.append("media", selectedVideo);
-      formData.append("title", selectedVideo.name);
-      formData.append("type", "video");
-
-      setUploadProgress(20);
-
-      // Upload video using axios
-      const uploadResponse = await axios.post(API_MEDIA_URL, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-        onUploadProgress: (progressEvent) => {
-          const progress = Math.round(
-            (progressEvent.loaded * 60) / progressEvent.total!
-          );
-          setUploadProgress(20 + progress);
-        },
-      });
-
-      setUploadProgress(85);
-
-      const mediaData: MediaUploadResponse = uploadResponse.data;
-      console.log("Video uploaded successfully:", mediaData);
-
-      // Step 2: Create booking with video URL
+      // Get required IDs
       const expertId = localStorage.getItem("expertid");
+      const userId = localStorage.getItem("userId");
 
       if (!expertId) {
-        alert("User or expert information missing. Please try again.");
+        alert("Expert information missing. Please try again.");
         setIsUploading(false);
         return;
       }
 
+      // Create FormData to send both video file and booking data in one request
+      const formData = new FormData();
+
+      // Add the video file
+      formData.append("video", selectedVideo);
+
+      // Add other booking data as JSON string
       const bookingData = {
         expertId: expertId,
+        playerId: userId,
         serviceId: currentService?.id,
-        recordedVideo: mediaData.url, // Use the video URL from the upload response
-        description: videoDescription || null,
         date: getTodaysDate(),
         startTime: "00:00",
         endTime: "00:00",
+        description: videoDescription || "",
+        status: "WAITING_EXPERT_APPROVAL",
       };
 
-      setUploadProgress(90);
+      // Append each field individually
+      Object.entries(bookingData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, value);
+        }
+      });
 
-      // Create booking using axios
-      const bookingResponse = await axios.post(API_BOOKING_URL, bookingData, {
+      setUploadProgress(50);
+
+      console.log("Sending booking request with video...");
+
+      // Make the API call with the FormData
+      const bookingResponse = await axios.post(API_BOOKING_URL, formData, {
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "multipart/form-data", // Important for file uploads
           Authorization: `Bearer ${token}`,
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            50 + (progressEvent.loaded * 40) / progressEvent.total!
+          );
+          setUploadProgress(progress);
         },
       });
 
       setUploadProgress(100);
-
       console.log("Booking created successfully:", bookingResponse.data);
 
       // Close modal and show success message
       setIsVideoUploadModalOpen(false);
       alert(
-        "Video uploaded and assessment request submitted successfully! You'll be notified when the expert reviews your recording."
+        "Video assessment request submitted successfully! You'll be notified when the expert reviews your recording."
       );
 
       // Navigate to bookings page
       navigate("/player/mybooking");
     } catch (error: any) {
-      console.error("Error during video upload or booking creation:", error);
+      console.error("Error during video booking submission:", error);
 
       const errorMessage =
         error.response?.data?.message ||

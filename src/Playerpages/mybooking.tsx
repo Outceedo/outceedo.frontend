@@ -927,6 +927,10 @@ const MyBooking: React.FC = () => {
                     <p className="text-gray-600">
                       {selectedBooking.startTime} - {selectedBooking.endTime}
                     </p>
+                    <p className="font-medium">Description:</p>
+                    <p className="text-gray-600 mb-4">
+                      {selectedBooking.description}
+                    </p>
                   </div>
                 </div>
                 {selectedBooking.location && (
