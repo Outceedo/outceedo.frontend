@@ -145,7 +145,7 @@ export default function Sponsors() {
       {filteredSponsors.map((sponsor, idx) => (
         <Card
           key={idx}
-          className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4 dark:bg-gray-800"
+          className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4 mb-3 dark:bg-gray-800"
         >
           <img
             src={sponsor.imageUrl}

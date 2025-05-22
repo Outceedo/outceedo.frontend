@@ -25,6 +25,7 @@ import Expertspage from "./Playerpages/expertspage";
 import AssessmentReport from "./Playerpages/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
 import PlayerSponsors from "./Playerpages/PlayerSponsors"
+
 //store
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken, initializeFromLocalStorage } from "./store/auth-slice";
@@ -44,6 +45,7 @@ import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import Expertsponsers from "./expertpages/Expertsponsors"
 import ApplicationForm from "./expertpages/ApplicationForm"
+import Expertsponsors from "./expertpages/Expertsponsors"
 import { authService } from "./store/apiConfig";
 //sponser pages
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
@@ -187,6 +189,8 @@ const AppContent: React.FC = () => {
         <Route path="details-form" element={<Detailsform />} />
         <Route path="book" element={<BookingCalendar />} />
         <Route path="sponsors" element={<PlayerSponsors />} />
+        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+
       </Route>
 
       {/* Expert Outlet */}
@@ -202,11 +206,13 @@ const AppContent: React.FC = () => {
         <Route path="matches" element={<ExpertMatches />} />
         <Route path="mybooking" element={<BookingExpertside />} />
         <Route path="viewplayers" element={<PlayersProfile />} />
+         <Route path="sponsors" element={<Expertsponsors />} />
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="sponsors" element={<Expertsponsers />} />
         <Route path="ApplicationForm" element={<ApplicationForm />} />
+        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
 
         
       </Route>
@@ -230,6 +236,8 @@ const AppContent: React.FC = () => {
          <Route path="SponsorDetailsForm" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
          <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+         
+
 
          
         
@@ -249,6 +257,7 @@ const AppContent: React.FC = () => {
         <Route path="sponsorsapplicationpage" element={<SponsorApplicationPage />} />
         <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
+        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
       </Route>
 
 
