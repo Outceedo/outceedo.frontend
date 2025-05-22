@@ -52,6 +52,7 @@ import SponsorForm from "./SponsorPages/SponsorForm";
 import Sponsorplayer from "./SponsorPages/Sponsorplayer";
 import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm"
+import Sponsorinfo from "./SponsorPages/Sponsorinfo";
 //Team pages
 import TeamDetailsForm from "./teampages/teamdetailsform";
 import TeamProfile from "./teampages/teamprofile";
@@ -226,6 +227,8 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<Sponsorprofile />} />
          <Route path="SponsorDetailsForm" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
+         <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+
          
         
       </Route>
