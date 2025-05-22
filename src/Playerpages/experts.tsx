@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import axios from "axios"; // Import axios
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -74,6 +75,16 @@ interface Certificate {
   description?: string;
 }
 
+interface MediaUploadResponse {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 type TabType = "details" | "media" | "reviews" | "services";
 
 const Experts = () => {
@@ -97,6 +108,8 @@ const Experts = () => {
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoDescription, setVideoDescription] = useState("");
   const [currentService, setCurrentService] = useState<Service | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // On Ground Assessment Modal state
   const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
@@ -109,6 +122,10 @@ const Experts = () => {
     (state) => state.profile
   );
   const navigate = useNavigate();
+
+  // API endpoints
+  const API_MEDIA_URL = `${import.meta.env.VITE_PORT}/api/v1/user/media`;
+  const API_BOOKING_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
   // Fetch expert profile on component mount
   useEffect(() => {
@@ -358,6 +375,17 @@ const Experts = () => {
       </div>
     );
   }
+  function getTodaysDate() {
+    const today = new Date();
+
+    const year = today.getFullYear();
+
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
 
   const handlebook = (service: Service) => {
     // Set current service for modals
@@ -385,7 +413,7 @@ const Experts = () => {
         navigate("/player/book");
         break;
 
-      case "3": // ON GROUND ASSESSMENT
+      case "3": // ON GROUND ASSESSMENT - navigate to booking page
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
         break;
@@ -394,6 +422,7 @@ const Experts = () => {
         setIsVideoUploadModalOpen(true);
         setVideoDescription("");
         setSelectedVideo(null);
+        setUploadProgress(0);
         break;
 
       default:
@@ -411,56 +440,106 @@ const Experts = () => {
   };
 
   // Handle video upload submission
-  const handleVideoUploadSubmit = () => {
-    // Here you would normally upload the video to your server
-    // For now, we'll just create the data structure and show a success message
-
+  const handleVideoUploadSubmit = async () => {
+    // Validate required fields
     if (!selectedVideo) {
       alert("Please select a video to upload");
       return;
     }
+    try {
+      setIsUploading(true);
+      setUploadProgress(10);
 
-    const assessmentData = {
-      expertId: expertData.id,
-      serviceName: currentService?.name,
-      serviceId: currentService?.id,
-      video: selectedVideo,
-      description: videoDescription,
-      timestamp: new Date().toISOString(),
-    };
+      // Get auth token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Authentication token not found. Please log in again.");
+        setIsUploading(false);
+        return;
+      }
 
-    // Log the data for now (replace with actual API call)
-    console.log("Video assessment submission:", assessmentData);
+      // Step 1: Upload the video file
+      const formData = new FormData();
+      formData.append("media", selectedVideo);
+      formData.append("title", selectedVideo.name);
+      formData.append("type", "video");
 
-    // Close the modal and show success message
-    setIsVideoUploadModalOpen(false);
-    alert(
-      "Video uploaded successfully! Your assessment request has been submitted."
-    );
-  };
+      setUploadProgress(20);
 
-  // Handle location submission
-  const handleLocationSubmit = () => {
-    if (!location.trim()) {
-      alert("Please enter a location");
-      return;
+      // Upload video using axios
+      const uploadResponse = await axios.post(API_MEDIA_URL, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${token}`,
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 60) / progressEvent.total!
+          );
+          setUploadProgress(20 + progress);
+        },
+      });
+
+      setUploadProgress(85);
+
+      const mediaData: MediaUploadResponse = uploadResponse.data;
+      console.log("Video uploaded successfully:", mediaData);
+
+      // Step 2: Create booking with video URL
+      const expertId = localStorage.getItem("expertid");
+
+      if (!expertId) {
+        alert("User or expert information missing. Please try again.");
+        setIsUploading(false);
+        return;
+      }
+
+      const bookingData = {
+        expertId: expertId,
+        serviceId: currentService?.id,
+        recordedVideo: mediaData.url, // Use the video URL from the upload response
+        description: videoDescription || null,
+        date: getTodaysDate(),
+        startTime: "00:00",
+        endTime: "00:00",
+      };
+
+      setUploadProgress(90);
+
+      // Create booking using axios
+      const bookingResponse = await axios.post(API_BOOKING_URL, bookingData, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setUploadProgress(100);
+
+      console.log("Booking created successfully:", bookingResponse.data);
+
+      // Close modal and show success message
+      setIsVideoUploadModalOpen(false);
+      alert(
+        "Video uploaded and assessment request submitted successfully! You'll be notified when the expert reviews your recording."
+      );
+
+      // Navigate to bookings page
+      navigate("/player/mybooking");
+    } catch (error: any) {
+      console.error("Error during video upload or booking creation:", error);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "An unknown error occurred";
+
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
     }
-
-    const locationData = {
-      expertId: expertData.id,
-      serviceName: currentService?.name,
-      serviceId: currentService?.id,
-      location: location,
-      description: locationDescription,
-      timestamp: new Date().toISOString(),
-    };
-
-    // Log the data for now (replace with actual API call)
-    console.log("On-ground assessment request:", locationData);
-
-    // Close the modal and show success message
-    setIsLocationModalOpen(false);
-    alert("Your on-ground assessment request has been submitted successfully!");
   };
 
   return (
@@ -838,8 +917,6 @@ const Experts = () => {
         {activeTab === "reviews" && (
           <Expertreviews expertData={expertData} isExpertView={false} />
         )}
-
-        {/* Services Tab */}
       </div>
 
       {/* Media Preview Modal */}
@@ -929,6 +1006,7 @@ const Experts = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-lg p-6 relative">
             <button
               onClick={() => setIsVideoUploadModalOpen(false)}
+              disabled={isUploading}
               className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
             >
               ✕
@@ -949,6 +1027,7 @@ const Experts = () => {
                     onChange={handleVideoChange}
                     className="hidden"
                     id="videoUpload"
+                    disabled={isUploading}
                   />
                   <div className="relative">
                     <Button
@@ -957,6 +1036,7 @@ const Experts = () => {
                         document.getElementById("videoUpload")?.click()
                       }
                       className="w-full h-32 border-dashed border-2 flex flex-col items-center justify-center gap-2"
+                      disabled={isUploading}
                     >
                       <FontAwesomeIcon
                         icon={faUpload}
@@ -986,87 +1066,50 @@ const Experts = () => {
                   onChange={(e) => setVideoDescription(e.target.value)}
                   placeholder="Describe what you'd like the expert to assess in your video..."
                   className="w-full h-32 dark:bg-gray-700"
+                  disabled={isUploading}
                 />
               </div>
+
+              {isUploading && (
+                <div className="w-full">
+                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-red-500"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-center text-sm text-gray-600 mt-2">
+                    {uploadProgress < 100
+                      ? "Uploading video..."
+                      : "Processing..."}
+                  </p>
+                </div>
+              )}
 
               <div className="flex justify-end space-x-2 mt-6">
                 <Button
                   variant="outline"
                   onClick={() => setIsVideoUploadModalOpen(false)}
+                  disabled={isUploading}
                 >
                   Cancel
                 </Button>
                 <Button
                   className="bg-red-600 hover:bg-red-700 text-white"
                   onClick={handleVideoUploadSubmit}
+                  disabled={isUploading || !selectedVideo}
                 >
-                  <FontAwesomeIcon icon={faFileUpload} className="mr-2" />
-                  Submit for Assessment
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* On Ground Assessment Location Modal */}
-      {isLocationModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-lg p-6 relative">
-            <button
-              onClick={() => setIsLocationModalOpen(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              Schedule On-Ground Assessment
-            </h3>
-
-            <div className="space-y-4">
-              <div>
-                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  Location <span className="text-red-500">*</span>
-                </Label>
-                <div className="relative">
-                  <FontAwesomeIcon
-                    icon={faMapMarkerAlt}
-                    className="absolute left-3 top-3 text-gray-400"
-                  />
-                  <Input
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder="Enter location for assessment"
-                    className="w-full pl-10 dark:bg-gray-700"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  Additional Details
-                </Label>
-                <Textarea
-                  value={locationDescription}
-                  onChange={(e) => setLocationDescription(e.target.value)}
-                  placeholder="Any specific details about the venue or assessment requirements..."
-                  className="w-full h-32 dark:bg-gray-700"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-2 mt-6">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsLocationModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="bg-red-600 hover:bg-red-700 text-white"
-                  onClick={handleLocationSubmit}
-                >
-                  Submit Request
+                  {isUploading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      <span>Uploading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faFileUpload} className="mr-2" />
+                      Submit for Assessment
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
