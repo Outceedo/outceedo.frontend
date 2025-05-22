@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   Clock,
@@ -7,11 +7,15 @@ import {
   DollarSign,
   ChevronLeft,
   ChevronRight,
+  MapPin,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
-import profile from "../assets/images/avatar.png"; // Import a default profile image
+import profile from "../assets/images/avatar.png";
 
 // Define interfaces for our data types
 interface Service {
@@ -31,8 +35,35 @@ interface CalendarMonth {
   firstDayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
 }
 
+interface LocationSuggestion {
+  id: string;
+  description: string;
+  place_id: string;
+  structured_formatting?: {
+    main_text: string;
+    secondary_text?: string;
+  };
+}
+
+declare global {
+  interface Window {
+    google: any;
+    initAutocomplete: () => void;
+  }
+}
+
 const BookingCalendar: React.FC = () => {
   const navigate = useNavigate();
+  const autocompleteInputRef = useRef<HTMLInputElement>(null);
+  const autocompleteServiceRef = useRef<any>(null);
+  const placesServiceRef = useRef<any>(null);
+  const sessionTokenRef = useRef<any>(null);
+
+  const [locationSuggestions, setLocationSuggestions] = useState<
+    LocationSuggestion[]
+  >([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   // Current date for comparison
   const today = new Date();
@@ -62,6 +93,8 @@ const BookingCalendar: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
   const [selectedTime, setSelectedTime] = useState<string>("12:30pm");
+  const [bookingDescription, setBookingDescription] = useState<string>("");
+  const [bookingLocation, setBookingLocation] = useState<string>("");
   const [displayedMonth, setDisplayedMonth] = useState<CalendarMonth>({
     name: monthNames[initialMonthIndex],
     year: currentYear,
@@ -71,9 +104,13 @@ const BookingCalendar: React.FC = () => {
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [debouncedLocation, setDebouncedLocation] = useState("");
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+
+  // Check if service is ON GROUND ASSESSMENT
+  const isOnGroundAssessment = service?.name?.includes("ON GROUND ASSESSMENT");
 
   // Load service and expert data from localStorage
   useEffect(() => {
@@ -83,6 +120,212 @@ const BookingCalendar: React.FC = () => {
     }
   }, []);
 
+  // Load Google Maps API
+  useEffect(() => {
+    // Check if Google Maps API is already loaded
+    if (window.google && window.google.maps) {
+      setIsGoogleMapsLoaded(true);
+      initializeGoogleMapsAutocomplete();
+      return;
+    }
+
+    // Define the callback function
+    window.initAutocomplete = () => {
+      setIsGoogleMapsLoaded(true);
+      initializeGoogleMapsAutocomplete();
+    };
+
+    // Create and add the script
+    const googleMapsScript = document.createElement("script");
+    // In production, replace YOUR_API_KEY with an actual key
+    googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${
+      import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_API_KEY"
+    }&libraries=places&callback=initAutocomplete`;
+    googleMapsScript.async = true;
+    googleMapsScript.defer = true;
+
+    // If API key is not available, use a fallback approach
+    if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
+      console.warn("Google Maps API key not available. Using mock data.");
+      setIsGoogleMapsLoaded(true); // Pretend it's loaded
+      return; // Skip loading the script
+    }
+
+    document.body.appendChild(googleMapsScript);
+
+    return () => {
+      // Clean up
+      document.body.removeChild(googleMapsScript);
+      delete window.initAutocomplete;
+    };
+  }, []);
+
+  // Initialize Google Maps Autocomplete
+  const initializeGoogleMapsAutocomplete = () => {
+    if (window.google && window.google.maps) {
+      autocompleteServiceRef.current =
+        new window.google.maps.places.AutocompleteService();
+      placesServiceRef.current = new window.google.maps.places.PlacesService(
+        document.createElement("div")
+      );
+      sessionTokenRef.current =
+        new window.google.maps.places.AutocompleteSessionToken();
+
+      console.log("Google Maps Autocomplete initialized");
+    }
+  };
+
+  // Debounce the location input
+  useEffect(() => {
+    const timerId = setTimeout(() => {
+      setDebouncedLocation(bookingLocation);
+    }, 300);
+
+    return () => {
+      clearTimeout(timerId);
+    };
+  }, [bookingLocation]);
+
+  // Get location suggestions
+  useEffect(() => {
+    if (!debouncedLocation || debouncedLocation.length < 2) {
+      setLocationSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    // If Google Maps API is loaded, use it
+    if (isGoogleMapsLoaded && autocompleteServiceRef.current) {
+      autocompleteServiceRef.current.getPlacePredictions(
+        {
+          input: debouncedLocation,
+          types: [], // Empty array to get all types of places
+          componentRestrictions: { country: "us" }, // Limit to US - change or remove as needed
+          sessionToken: sessionTokenRef.current,
+        },
+        (predictions: LocationSuggestion[], status: string) => {
+          if (status === "OK" && predictions && predictions.length > 0) {
+            setLocationSuggestions(predictions);
+            setShowSuggestions(true);
+          } else {
+            // Fallback to mock data if no results or error
+            provideMockSuggestions(debouncedLocation);
+          }
+        }
+      );
+    } else {
+      // Use mock data if Google Maps API is not available
+      provideMockSuggestions(debouncedLocation);
+    }
+  }, [debouncedLocation, isGoogleMapsLoaded]);
+
+  // Provide mock suggestions for demonstration
+  const provideMockSuggestions = (input: string) => {
+    // More diverse location types
+    const locationTypes = [
+      ""
+    ];
+
+    // City names for diversity
+    const cities = [
+      ""
+    ];
+
+    // Generate mock suggestions
+    const mockResults: LocationSuggestion[] = [];
+
+    // First, exact match
+    mockResults.push({
+      place_id: `place-${Math.random().toString(36).substr(2, 9)}`,
+      description: `${input}, Main Street, Downtown`,
+      id: `id-${Math.random().toString(36).substr(2, 9)}`,
+      structured_formatting: {
+        main_text: input,
+       
+      },
+    });
+
+    // Then, add variations
+    for (let i = 0; i < 4; i++) {
+      const locationType =
+        locationTypes[Math.floor(Math.random() * locationTypes.length)];
+      const city = cities[Math.floor(Math.random() * cities.length)];
+
+      mockResults.push({
+        place_id: `place-${Math.random().toString(36).substr(2, 9)}`,
+        description: `${input} ${locationType}, ${city}`,
+        id: `id-${Math.random().toString(36).substr(2, 9)}`,
+        structured_formatting: {
+          main_text: `${input} ${locationType}`,
+          secondary_text: city,
+        },
+      });
+    }
+
+    setLocationSuggestions(mockResults);
+    setShowSuggestions(true);
+  };
+
+  // Handle location input change
+  const handleLocationInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const { value } = e.target;
+    setBookingLocation(value);
+
+    if (value.length < 2) {
+      setShowSuggestions(false);
+    }
+  };
+
+  // Handle suggestion select
+  const handleSuggestionSelect = (suggestion: LocationSuggestion) => {
+    setBookingLocation(suggestion.description);
+    setShowSuggestions(false);
+
+    // If using real Google API, get place details
+    if (
+      isGoogleMapsLoaded &&
+      placesServiceRef.current &&
+      !suggestion.id.startsWith("id-")
+    ) {
+      placesServiceRef.current.getDetails(
+        {
+          placeId: suggestion.place_id,
+          fields: ["formatted_address", "name", "geometry"],
+          sessionToken: sessionTokenRef.current,
+        },
+        (place: any, status: string) => {
+          if (status === "OK") {
+            // Update with the full formatted address
+            setBookingLocation(place.formatted_address);
+
+            // Generate new session token for next search
+            sessionTokenRef.current =
+              new window.google.maps.places.AutocompleteSessionToken();
+          }
+        }
+      );
+    }
+  };
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        autocompleteInputRef.current &&
+        !autocompleteInputRef.current.contains(event.target as Node)
+      ) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // Update displayed month when month or year changes
   useEffect(() => {
     const numberOfDays = new Date(
@@ -90,8 +333,6 @@ const BookingCalendar: React.FC = () => {
       selectedMonthIndex + 1,
       0
     ).getDate();
-    // Get day of week for the first day of month (0 = Sunday, 1 = Monday, etc.)
-    // Adjusted to make Monday = 0
     let firstDay = new Date(selectedYear, selectedMonthIndex, 1).getDay() - 1;
     if (firstDay === -1) firstDay = 6; // Convert Sunday from -1 to 6
 
@@ -113,7 +354,6 @@ const BookingCalendar: React.FC = () => {
   ];
 
   const handlePrevMonth = () => {
-    // Check if we're already at the current month (to disable going back to past months)
     if (selectedYear === currentYear && selectedMonthIndex <= currentMonth) {
       return; // Don't allow going to past months
     }
@@ -160,6 +400,13 @@ const BookingCalendar: React.FC = () => {
     navigate(-1); // Go back to the previous page
   };
 
+  // Handle description change
+  const handleDescriptionChange = (
+    e: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    setBookingDescription(e.target.value);
+  };
+
   // Convert 12-hour time format to 24-hour format
   const convertTo24HourFormat = (time: string): string => {
     const [hour, minuteWithSuffix] = time.split(":");
@@ -194,11 +441,8 @@ const BookingCalendar: React.FC = () => {
 
   // Format date as YYYY-MM-DD
   const formatDateForAPI = (): string => {
-    // Create date using the selected date components
-    // Ensure we're using the correct month by adding the selectedMonthIndex
     const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
 
-    // Format as YYYY-MM-DD - we use local timezone to avoid date shifts
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -207,6 +451,12 @@ const BookingCalendar: React.FC = () => {
   };
 
   const handleConfirm = async () => {
+    // For ON GROUND ASSESSMENT, validate location first
+    if (isOnGroundAssessment && !bookingLocation.trim()) {
+      alert("Please enter a location for the on-ground assessment");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -230,6 +480,8 @@ const BookingCalendar: React.FC = () => {
         date: formattedDate,
         startTime: startTime24H,
         endTime: endTime24H,
+        location: bookingLocation,
+        description: bookingDescription,
       };
 
       // Get auth token
@@ -249,14 +501,16 @@ const BookingCalendar: React.FC = () => {
 
       if (!response.ok) {
         console.error("Booking failed:", data);
+        alert(`Booking failed: ${data.message || "Unknown error"}`);
       } else {
         console.log("Booking successful:", data);
+        alert("Booking confirmed successfully!");
+        // Navigate to bookings page
+        navigate("/player/mybooking");
       }
-
-      // Navigate to bookings page regardless of success or failure
-      navigate("/player/mybooking");
     } catch (error) {
       console.error("Booking error:", error);
+      alert("An error occurred during booking. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -284,10 +538,8 @@ const BookingCalendar: React.FC = () => {
 
   // Generate array of days for the current month view
   const generateCalendarDays = () => {
-    // Calculate empty cells for alignment
     const emptyCells = Array(displayedMonth.firstDayOfWeek).fill(null);
 
-    // Create array with actual days
     const daysInMonth = Array.from(
       { length: displayedMonth.numberOfDays },
       (_, i) => i + 1
@@ -353,7 +605,7 @@ const BookingCalendar: React.FC = () => {
                   <span className="text-gray-600">
                     {service?.name?.includes("Video")
                       ? "Video call details provided upon confirmation"
-                      : service?.name?.includes("Field")
+                      : service?.name?.includes("GROUND")
                       ? "Address details will be shared after booking"
                       : "Session details provided upon booking confirmation"}
                   </span>
@@ -434,11 +686,9 @@ const BookingCalendar: React.FC = () => {
                             ${
                               selectedDate === day &&
                               selectedMonthIndex ===
-                                displayedMonth.name.indexOf(
-                                  displayedMonth.name
-                                ) &&
+                                monthNames.indexOf(displayedMonth.name) &&
                               selectedYear === displayedMonth.year
-                                ? "bg-red-500 text-white"
+                                ? "bg-red-500 text-white font-medium shadow-md" // Updated styling for selected date
                                 : isDateInPast(day)
                                 ? "text-gray-300 cursor-not-allowed"
                                 : "hover:bg-gray-100"
@@ -455,11 +705,13 @@ const BookingCalendar: React.FC = () => {
 
               {/* Selected date */}
               <div className="mb-6">
-                <p className="text-gray-700">{getFormattedDate()}</p>
+                <p className="text-gray-700 font-medium">
+                  {getFormattedDate()}
+                </p>
               </div>
 
               {/* Time slots */}
-              <div className="space-y-3">
+              <div className="space-y-3 mb-6">
                 {timeSlots.map((row, rowIndex) => (
                   <div key={rowIndex} className="grid grid-cols-4 gap-2">
                     {row.map((time) => (
@@ -480,6 +732,81 @@ const BookingCalendar: React.FC = () => {
                     ))}
                   </div>
                 ))}
+              </div>
+
+              {/* Location field with autocomplete - Only for ON GROUND ASSESSMENT */}
+              {isOnGroundAssessment && (
+                <div className="mt-6 mb-4">
+                  <Label
+                    htmlFor="booking-location"
+                    className="text-sm font-medium text-gray-700 mb-2 block flex items-center"
+                  >
+                    <MapPin className="h-4 w-4 mr-1 text-red-500" />
+                    Location <span className="text-red-500 ml-1">*</span>
+                  </Label>
+                  <div className="relative" ref={autocompleteInputRef}>
+                    <Input
+                      id="booking-location"
+                      placeholder="Search for any location (stadiums, schools, parks, etc.)"
+                      value={bookingLocation}
+                      onChange={handleLocationInputChange}
+                      className="w-full border-gray-200 rounded-md focus:border-red-500 focus:ring focus:ring-red-200"
+                      required
+                      autoComplete="off"
+                    />
+                    {showSuggestions && locationSuggestions.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-y-auto">
+                        {locationSuggestions.map((suggestion) => (
+                          <div
+                            key={suggestion.id || suggestion.place_id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
+                            onClick={() => handleSuggestionSelect(suggestion)}
+                          >
+                            {suggestion.structured_formatting ? (
+                              <>
+                                <div className="font-medium">
+                                  {suggestion.structured_formatting.main_text}
+                                </div>
+                                {suggestion.structured_formatting
+                                  .secondary_text && (
+                                  <div className="text-xs text-gray-500">
+                                    {
+                                      suggestion.structured_formatting
+                                        .secondary_text
+                                    }
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <div>{suggestion.description}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Enter any location including stadiums, fields, schools,
+                    parks, community centers, etc.
+                  </p>
+                </div>
+              )}
+
+              {/* Description field - Added below the calendar and time slots */}
+              <div className="mt-6">
+                <Label
+                  htmlFor="booking-description"
+                  className="text-sm font-medium text-gray-700 mb-2 block"
+                >
+                  Additional Information
+                </Label>
+                <Textarea
+                  id="booking-description"
+                  placeholder="Add any special requests or details about your booking..."
+                  value={bookingDescription}
+                  onChange={handleDescriptionChange}
+                  className="w-full min-h-[120px] border-gray-200 rounded-md resize-none focus:border-red-500 focus:ring focus:ring-red-200"
+                />
               </div>
             </div>
           </div>

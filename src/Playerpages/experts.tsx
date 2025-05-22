@@ -92,7 +92,7 @@ const Experts = () => {
   const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] =
     useState(false);
 
-  // Online Assessment Modal state
+  // Video Upload Modal state (for RECORDED VIDEO ASSESSMENT)
   const [isVideoUploadModalOpen, setIsVideoUploadModalOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoDescription, setVideoDescription] = useState("");
@@ -363,45 +363,43 @@ const Experts = () => {
     // Set current service for modals
     setCurrentService(service);
 
-    // Handle different service types
-    if (service.serviceId === "1") {
-      // ONLINE ASSESSMENT - open video upload modal
-      setIsVideoUploadModalOpen(true);
-      setVideoDescription("");
-      setSelectedVideo(null);
-    } else if (service.serviceId === "2") {
-      // ONLINE TRAINING - navigate to booking page
-      localStorage.setItem(
-        "selectedService",
-        JSON.stringify({
-          expertname: expertData.name,
-          expertProfileImage: expertData.profileImage,
-          serviceid: service.id,
-          name: service.name,
-          description: service.description,
-          price: service.price,
-        })
-      );
-      navigate("/player/book");
-    } else if (service.serviceId === "3") {
-      // ON GROUND ASSESSMENT - open location modal
-      setIsLocationModalOpen(true);
-      setLocation("");
-      setLocationDescription("");
-    } else {
-      // Default behavior for unknown service types
-      localStorage.setItem(
-        "selectedService",
-        JSON.stringify({
-          expertname: expertData.name,
-          expertProfileImage: expertData.profileImage,
-          serviceid: service.id,
-          name: service.name,
-          description: service.description,
-          price: service.price,
-        })
-      );
-      navigate("/player/book");
+    // Store common data for booking
+    const serviceData = {
+      expertname: expertData.name,
+      expertProfileImage: expertData.profileImage,
+      serviceid: service.id,
+      name: service.name,
+      description: service.description,
+      price: service.price,
+    };
+
+    // Handle different service types based on serviceId
+    switch (service.serviceId) {
+      case "1": // ONLINE ASSESSMENT - navigate to booking page
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/player/book");
+        break;
+
+      case "2": // ONLINE TRAINING - navigate to booking page
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/player/book");
+        break;
+
+      case "3": // ON GROUND ASSESSMENT
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/player/book");
+        break;
+
+      case "4": // RECORDED VIDEO ASSESSMENT - open video upload modal
+        setIsVideoUploadModalOpen(true);
+        setVideoDescription("");
+        setSelectedVideo(null);
+        break;
+
+      default:
+        // Default behavior for unknown service types
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/player/book");
     }
   };
 
@@ -432,7 +430,7 @@ const Experts = () => {
     };
 
     // Log the data for now (replace with actual API call)
-    console.log("Assessment submission:", assessmentData);
+    console.log("Video assessment submission:", assessmentData);
 
     // Close the modal and show success message
     setIsVideoUploadModalOpen(false);
@@ -925,7 +923,7 @@ const Experts = () => {
         </div>
       )}
 
-      {/* Online Assessment Video Upload Modal */}
+      {/* Video Upload Modal (for RECORDED VIDEO ASSESSMENT) */}
       {isVideoUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-lg p-6 relative">
