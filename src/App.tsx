@@ -223,11 +223,12 @@ const AppContent: React.FC = () => {
         path="/sponsor"
         element={
 
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <SponserLayout />
-          </CheckAuth>
+          // {/* </CheckAuth> */}
         }
       >
+        <Route path="dashboard" element={<>Sponser Dashboard</>} />
         
         <Route path="players" element={<Sponsorplayer />} />
         <Route path="experts" element={<Sponsorexperts />} />

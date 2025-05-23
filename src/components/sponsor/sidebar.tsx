@@ -15,11 +15,16 @@ interface MenuItem {
 }
 
 const sponsorSidebarMenuItems: MenuItem[] = [
-  
+  {
+    id: 0,
+    name: "Dashboard",
+    icon: "fas fa-table-columns",
+    path: "/sponsor/dashboard",
+  },
   {
     id: 0,
     name: "Players",
-    icon: "fas fa-user-tie",
+    icon: " fas  fa-user",
     path: "/sponsor/players",
   },
   {
@@ -31,7 +36,7 @@ const sponsorSidebarMenuItems: MenuItem[] = [
 
   {
     id: 2,
-    name: "SponsorApplication",
+    name: "Sponsor Application",
     icon: "fas fa-handshake",
     path: "/sponsor/application",
   },
@@ -41,8 +46,6 @@ const sponsorSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-user",
     path: "/sponsor/profile",
   },
-
- 
 
   {
     id: 4,
