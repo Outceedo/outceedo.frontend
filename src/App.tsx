@@ -24,7 +24,7 @@ import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
 import AssessmentReport from "./Playerpages/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
-import PlayerSponsors from "./Playerpages/PlayerSponsors"
+import PlayerSponsors from "./Playerpages/PlayerSponsors";
 //store
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken, initializeFromLocalStorage } from "./store/auth-slice";
@@ -42,16 +42,16 @@ import ExpertProfile from "./expertpages/expertdata";
 import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
-import Expertsponsers from "./expertpages/Expertsponsors"
-import ApplicationForm from "./expertpages/ApplicationForm"
+import Expertsponsers from "./expertpages/Expertsponsors";
+import ApplicationForm from "./expertpages/ApplicationForm";
 import { authService } from "./store/apiConfig";
 //sponser pages
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
-import SponsorApplication from "./SponsorPages/SponsorApplication"
+import SponsorApplication from "./SponsorPages/SponsorApplication";
 import SponsorForm from "./SponsorPages/SponsorForm";
 import Sponsorplayer from "./SponsorPages/Sponsorplayer";
 import Sponsorexperts from "./SponsorPages/Sponsorexperts";
-import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm"
+import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
 //Team pages
 import TeamDetailsForm from "./teampages/teamdetailsform";
 import TeamProfile from "./teampages/teamprofile";
@@ -116,6 +116,8 @@ const AppContent: React.FC = () => {
       navigate("/expert/dashboard");
     } else if (role === "sponser") {
       navigate("/sponser/dashboard");
+    } else if (role === "team") {
+      navigate("/team/dashboard");
     }
   }
 
@@ -135,7 +137,9 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : "/sponser/dashboard"
+                  : user?.role === "sponser"
+                  ? "/sponser/dashboard"
+                  : "/team/dashboard"
               }
             />
           ) : (
@@ -154,7 +158,9 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : "/sponser/dashboard"
+                  : user?.role === "sponser"
+                  ? "/sponser/dashboard"
+                  : "/team/dashboard"
               }
             />
           ) : (
@@ -191,9 +197,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/expert"
         element={
-         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <ExpertLayout />
-         // </CheckAuth>
+          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <ExpertLayout />
+          // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<ExpertDashboard />} />
@@ -205,46 +211,42 @@ const AppContent: React.FC = () => {
         <Route path="details-form" element={<Detailsform />} />
         <Route path="sponsors" element={<Expertsponsers />} />
         <Route path="ApplicationForm" element={<ApplicationForm />} />
-
-        
       </Route>
 
       {/* Sponser routes */}
       <Route
         path="/sponsor"
         element={
-         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <SponserLayout />
-         // </CheckAuth>
+          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <SponserLayout />
+          // </CheckAuth>
         }
       >
-        
         <Route path="players" element={<Sponsorplayer />} />
         <Route path="experts" element={<Sponsorexperts />} />
         <Route path="application" element={<SponsorApplication />} />
         <Route path="profile" element={<Sponsorprofile />} />
-         <Route path="SponsorDetailsForm" element={<SponsorDetailsForm />} />
+        <Route path="SponsorDetailsForm" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
-         
-        
       </Route>
 
-       {/* Team Outlet */}
-            <Route
+      {/* Team Outlet */}
+      <Route
         path="/team"
         element={
           //<CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
           <TeamLayout />
           //</CheckAuth>
-        }>
-        <Route path="players" element={<TeamPlayer/>} />
-        <Route path="experts" element={<TeamExpert/>} />
-        <Route path="sponsors" element={<TeamSponsor/>} />
+        }
+      >
+        <Route path="dashboard" element={<>Team Dashboard</>} />
+        <Route path="players" element={<TeamPlayer />} />
+        <Route path="experts" element={<TeamExpert />} />
+        <Route path="sponsors" element={<TeamSponsor />} />
         <Route path="sponsorsapplication" element={<SponsorApplication />} />
         <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
       </Route>
-
 
       <Route
         path="/unauthorized"
@@ -270,9 +272,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/book"
         element={
-         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <BookingCalendar />
-         // </CheckAuth>
+          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <BookingCalendar />
+          // </CheckAuth>
         }
       />
     </Routes>

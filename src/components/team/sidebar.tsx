@@ -16,31 +16,37 @@ interface MenuItem {
 const adminSidebarMenuItems: MenuItem[] = [
   {
     id: 1,
-    name: "Players",
+    name: "Dashboard",
     icon: "fas fa-table-columns",
-    path: "/team/players",
+    path: "/team/dashboard",
   },
   {
     id: 2,
+    name: "Players",
+    icon: "fas fa-user",
+    path: "/team/players",
+  },
+  {
+    id: 3,
     name: "Experts",
     icon: "fas fa-user-tie",
     path: "/team/experts",
   },
   {
-    id: 3,
+    id: 4,
     name: "Sponsors",
     icon: "fas fa-calendar-check",
     path: "/team/sponsors",
   },
   {
-    id: 4,
+    id: 5,
     name: "Application form",
     icon: "fas fa-handshake",
     path: "/team/sponsorsapplication",
   },
-  { id: 5, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
+  { id: 6, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
   {
-    id: 6,
+    id: 7,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",
