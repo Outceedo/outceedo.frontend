@@ -15,6 +15,7 @@ import {
   faInfoCircle,
   faCreditCard,
   faStar,
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import Video from "./Video";
@@ -105,6 +106,7 @@ const MyBooking: React.FC = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -143,6 +145,13 @@ const MyBooking: React.FC = () => {
     if (!text) return "";
     if (text.length <= maxLength) return text;
     return `${text.substring(0, maxLength)}...`;
+  };
+
+  // Handle video error
+  const handleVideoError = () => {
+    setVideoError(
+      "Failed to load video. The URL might be invalid or the video may no longer be available."
+    );
   };
 
   // Dummy data for demonstration when API fails
@@ -352,6 +361,7 @@ const MyBooking: React.FC = () => {
   // Open booking details modal
   const openBookingDetails = (booking: Booking) => {
     setSelectedBooking(booking);
+    setVideoError(null); // Reset video error when opening new booking
     setIsBookingDetailsOpen(true);
   };
 
@@ -359,6 +369,7 @@ const MyBooking: React.FC = () => {
   const closeBookingDetails = () => {
     setIsBookingDetailsOpen(false);
     setSelectedBooking(null);
+    setVideoError(null); // Reset video error when closing
   };
 
   // Process payment
@@ -1011,7 +1022,7 @@ const MyBooking: React.FC = () => {
                 )}
               </div>
 
-              {/* Media Section */}
+              {/* Media Section - Updated to display video player for RECORDED VIDEO ASSESSMENT */}
               {(selectedBooking.recordedVideo ||
                 selectedBooking.meetingRecording) && (
                 <div className="mb-5 bg-gray-50 p-4 rounded-lg">
@@ -1022,18 +1033,85 @@ const MyBooking: React.FC = () => {
                     />
                     Recording
                   </h3>
-                  <div className="flex flex-col gap-2">
-                    {selectedBooking.recordedVideo && (
-                      <Button
-                        variant="outline"
-                        className="text-blue-600 hover:bg-blue-50"
-                        onClick={() => openVideoModal(selectedBooking.id)}
-                      >
-                        <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                        View Recorded Video
-                      </Button>
-                    )}
-                    {selectedBooking.meetingRecording && (
+
+                  {selectedBooking.recordedVideo && (
+                    <div className="mb-2">
+                      <p className="font-medium mb-2">Recorded Video:</p>
+
+                      {/* Check if this is a RECORDED VIDEO ASSESSMENT service type */}
+                      {selectedBooking.service?.serviceId === "1" ? (
+                        // Display embedded video player for RECORDED VIDEO ASSESSMENT
+                        <div className="w-full rounded-lg overflow-hidden border border-gray-200">
+                          {videoError ? (
+                            <div className="bg-red-50 p-4 rounded border border-red-200 text-red-700 flex items-center">
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                                className="mr-2"
+                              />
+                              <span>{videoError}</span>
+                            </div>
+                          ) : (
+                            <video
+                              src={selectedBooking.recordedVideo}
+                              controls
+                              className="w-full h-auto"
+                              preload="metadata"
+                              onError={handleVideoError}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )}
+
+                          <div className="mt-2 text-sm text-gray-500">
+                            <p>
+                              If the video doesn't play, you can also{" "}
+                              <a
+                                href={selectedBooking.recordedVideo}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                open it directly
+                              </a>
+                              .
+                            </p>
+                          </div>
+
+                          {/* Video information */}
+                          <div className="mt-3 text-sm text-gray-600">
+                            <p>
+                              Uploaded:{" "}
+                              {new Date(
+                                selectedBooking.createdAt
+                              ).toLocaleDateString()}
+                            </p>
+                            {selectedBooking.description && (
+                              <div className="mt-2">
+                                <p className="font-medium">Description:</p>
+                                <p className="italic break-words">
+                                  {selectedBooking.description}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        // For other service types, use a button to open the video
+                        <Button
+                          variant="outline"
+                          className="text-blue-600 hover:bg-blue-50"
+                          onClick={() => openVideoModal(selectedBooking.id)}
+                        >
+                          <FontAwesomeIcon icon={faVideo} className="mr-2" />
+                          View Recorded Video
+                        </Button>
+                      )}
+                    </div>
+                  )}
+
+                  {selectedBooking.meetingRecording && (
+                    <div>
+                      <p className="font-medium mb-2">Meeting Recording:</p>
                       <Button
                         variant="outline"
                         className="text-blue-600 hover:bg-blue-50"
@@ -1042,8 +1120,8 @@ const MyBooking: React.FC = () => {
                         <FontAwesomeIcon icon={faVideo} className="mr-2" />
                         View Meeting Recording
                       </Button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -1134,24 +1212,55 @@ const MyBooking: React.FC = () => {
                 </h2>
                 {bookings.find((b) => b.id === selectedBookingId)
                   ?.recordedVideo ? (
-                  <Video
-                    url={
-                      bookings.find((b) => b.id === selectedBookingId)
-                        ?.recordedVideo || ""
-                    }
-                  />
+                  <div className="w-full rounded-lg overflow-hidden">
+                    <video
+                      src={
+                        bookings.find((b) => b.id === selectedBookingId)
+                          ?.recordedVideo || ""
+                      }
+                      controls
+                      className="w-full h-auto"
+                      preload="metadata"
+                      autoPlay
+                      onError={() => {
+                        setError(
+                          "Failed to load video. Please try again later."
+                        );
+                      }}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
                 ) : bookings.find((b) => b.id === selectedBookingId)
                     ?.meetingRecording ? (
-                  <Video
-                    url={
-                      bookings.find((b) => b.id === selectedBookingId)
-                        ?.meetingRecording || ""
-                    }
-                  />
+                  <div className="w-full rounded-lg overflow-hidden">
+                    <video
+                      src={
+                        bookings.find((b) => b.id === selectedBookingId)
+                          ?.meetingRecording || ""
+                      }
+                      controls
+                      className="w-full h-auto"
+                      preload="metadata"
+                      autoPlay
+                      onError={() => {
+                        setError(
+                          "Failed to load video. Please try again later."
+                        );
+                      }}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
                 ) : (
                   <p className="text-center text-gray-500">
                     No video recording available for this session.
                   </p>
+                )}
+                {error && (
+                  <div className="mt-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md">
+                    {error}
+                  </div>
                 )}
               </div>
             )}
