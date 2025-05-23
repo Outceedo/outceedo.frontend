@@ -335,8 +335,10 @@ const PlayersProfile: React.FC = () => {
     localStorage.setItem("viewplayerusername", profile.username);
     if (localStorage.getItem("role") === "player") {
       navigate(`/player/playerinfo`);
-    } else {
+    } else if (localStorage.getItem("role") === "expert") {
       navigate(`/expert/playerinfo`);
+    } else {
+      navigate("/team/playerinfo");
     }
   };
 

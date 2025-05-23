@@ -58,6 +58,8 @@ import TeamProfile from "./teampages/teamprofile";
 import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
 import TeamSponsor from "./teampages/sponser";
+import TeamExperts from "./teampages/expertprofile";
+import TeamPlayerInfo from "./teampages/playerspage";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -176,9 +178,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-          <PlayerLayout />
-          // </CheckAuth>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <PlayerLayout />
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
@@ -197,9 +199,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/expert"
         element={
-          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-          <ExpertLayout />
-          // </CheckAuth>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <ExpertLayout />
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<ExpertDashboard />} />
@@ -217,9 +219,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/sponsor"
         element={
-          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-          <SponserLayout />
-          // </CheckAuth>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <SponserLayout />
+          </CheckAuth>
         }
       >
         <Route path="players" element={<Sponsorplayer />} />
@@ -234,9 +236,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/team"
         element={
-          //<CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-          <TeamLayout />
-          //</CheckAuth>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <TeamLayout />
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<>Team Dashboard</>} />
@@ -246,6 +248,8 @@ const AppContent: React.FC = () => {
         <Route path="sponsorsapplication" element={<SponsorApplication />} />
         <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
+        <Route path="exdetails" element={<TeamExperts />} />
+        <Route path="playerinfo" element={<TeamPlayerInfo />} />
       </Route>
 
       <Route

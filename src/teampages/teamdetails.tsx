@@ -136,7 +136,7 @@ const TeamDetails = () => {
         </CardContent>
       </Card>
 
-      {/* Team Members Card */}
+      {/* Team Members Card
       <Card className="w-full md:w-1/3">
         <CardContent className="p-4">
           <div className="flex items-start mb-2">
@@ -185,7 +185,7 @@ const TeamDetails = () => {
             </ul>
           )}
         </CardContent>
-      </Card>
+      </Card> */}
     </div>
   );
 };

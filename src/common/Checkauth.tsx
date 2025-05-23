@@ -52,13 +52,17 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       if (effectiveRole === "sponser") {
         return <Navigate to="/sponser/dashboard" />;
       }
+      if (effectiveRole === "team") {
+        return <Navigate to="/team/dashboard" />;
+      }
     }
 
     // Role-based route restrictions
     if (effectiveRole === "expert") {
       if (
         location.pathname.startsWith("/player") ||
-        location.pathname.startsWith("/sponser")
+        location.pathname.startsWith("/sponser") ||
+        location.pathname.startsWith("/team")
       ) {
         return <Navigate to="/unauthorized" />;
       }
@@ -66,7 +70,8 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     if (effectiveRole === "player") {
       if (
         location.pathname.startsWith("/expert") ||
-        location.pathname.startsWith("/sponser")
+        location.pathname.startsWith("/sponser") ||
+        location.pathname.startsWith("/team")
       ) {
         return <Navigate to="/unauthorized" />;
       }
@@ -74,7 +79,17 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     if (effectiveRole === "sponser") {
       if (
         location.pathname.startsWith("/player") ||
-        location.pathname.startsWith("/expert")
+        location.pathname.startsWith("/expert") ||
+        location.pathname.startsWith("/team")
+      ) {
+        return <Navigate to="/unauthorized" />;
+      }
+    }
+    if (effectiveRole === "team") {
+      if (
+        location.pathname.startsWith("/player") ||
+        location.pathname.startsWith("/expert") ||
+        location.pathname.startsWith("/sponser")
       ) {
         return <Navigate to="/unauthorized" />;
       }

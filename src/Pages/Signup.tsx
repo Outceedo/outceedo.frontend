@@ -127,7 +127,7 @@ const Signup: React.FC = () => {
     const selectedRole = localStorage.getItem("selectedRole") as Role | null;
     if (
       !selectedRole ||
-      !["expert", "player", "team", "sponser", "fan"].includes(selectedRole)
+      !["expert", "player", "team", "sponsor", "fan"].includes(selectedRole)
     ) {
       setFieldErrors((prev) => ({
         ...prev,
