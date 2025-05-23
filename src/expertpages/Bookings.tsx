@@ -41,6 +41,7 @@ import {
   faClock,
   faMapMarkerAlt,
   faLink,
+  faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 
 // Updated interfaces to match the new API response format
@@ -84,6 +85,7 @@ interface Booking {
   meetLink: string | null;
   recordedVideo: string | null;
   meetingRecording: string | null;
+  description?: string | null;
   createdAt: string;
   updatedAt: string;
   expert: Expert;
@@ -99,6 +101,7 @@ const BookingExpertside: React.FC = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
 
   // Review modal state
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -156,6 +159,13 @@ const BookingExpertside: React.FC = () => {
 
     fetchBookings();
   }, []);
+
+  // Handle video error
+  const handleVideoError = () => {
+    setVideoError(
+      "Failed to load video. The URL might be invalid or the video may no longer be available."
+    );
+  };
 
   // Generate demo bookings if API fails
   const getDemoBookings = (): Booking[] => {
@@ -282,6 +292,7 @@ const BookingExpertside: React.FC = () => {
   // Open booking details modal
   const openBookingDetails = (booking: Booking) => {
     setSelectedBooking(booking);
+    setVideoError(null); // Reset video error when opening new booking details
     setIsBookingDetailsOpen(true);
   };
 
@@ -289,6 +300,7 @@ const BookingExpertside: React.FC = () => {
   const closeBookingDetails = () => {
     setIsBookingDetailsOpen(false);
     setSelectedBooking(null);
+    setVideoError(null); // Reset video error when closing
   };
 
   // Open reject confirmation dialog
@@ -679,6 +691,12 @@ const BookingExpertside: React.FC = () => {
     return `${formattedDate} at ${hour}:${minutes}${ampm}`;
   };
 
+  // Truncate username if it's too long
+  const truncateUsername = (username: string, maxLength: number = 15) => {
+    if (username.length <= maxLength) return username;
+    return `${username.substring(0, maxLength)}...`;
+  };
+
   // Filter bookings based on search, action, and status filters
   const filteredBookings = bookings.filter((booking) => {
     const playerName = booking.player?.username || "";
@@ -705,9 +723,9 @@ const BookingExpertside: React.FC = () => {
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
       <h1 className="text-2xl font-bold mb-6">Your Bookings</h1>
 
-      <div className="flex items-center space-x-4 mb-6">
+      <div className="flex flex-wrap items-center gap-4 mb-6">
         {/* Search Input with Icon */}
-        <div className="relative w-1/3">
+        <div className="relative w-full sm:w-1/3">
           <FontAwesomeIcon
             icon={faSearch}
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -723,7 +741,7 @@ const BookingExpertside: React.FC = () => {
 
         {/* Booking Status Dropdown */}
         <Select value={bookingStatus} onValueChange={setBookingStatus}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Booking Status" />
           </SelectTrigger>
           <SelectContent>
@@ -736,7 +754,7 @@ const BookingExpertside: React.FC = () => {
 
         {/* Action Filter Dropdown */}
         <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Action Status" />
           </SelectTrigger>
           <SelectContent>
@@ -759,21 +777,21 @@ const BookingExpertside: React.FC = () => {
       {loading ? (
         <div className="text-center py-8">Loading bookings...</div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">Booking ID</TableHead>
-                <TableHead>Player Name</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Service</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead className="text-center">Actions</TableHead>
-                <TableHead className="text-center">Session</TableHead>
-                <TableHead className="text-center">Report</TableHead>
-                <TableHead className="text-center">Review</TableHead>
+                <TableHead className="w-[80px]">ID</TableHead>
+                <TableHead className="w-[140px]">Player</TableHead>
+                <TableHead className="w-[160px]">Date</TableHead>
+                <TableHead className="w-[140px]">Service</TableHead>
+                <TableHead className="w-[80px]">Price</TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="w-[100px]">Payment</TableHead>
+                <TableHead className="text-center w-[120px]">Actions</TableHead>
+                <TableHead className="text-center w-[70px]">Session</TableHead>
+                <TableHead className="text-center w-[70px]">Report</TableHead>
+                <TableHead className="text-center w-[70px]">Review</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -791,25 +809,27 @@ const BookingExpertside: React.FC = () => {
                     onClick={() => openBookingDetails(booking)}
                   >
                     <TableCell className="font-medium">
-                      {booking.id.substring(0, 8)}...
+                      {booking.id.substring(0, 6)}...
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {/* <img
-                          src={booking.player?.photo}
-                          alt="avatar"
-                          className="w-8 h-8 rounded-full object-cover"
-                          
-                        /> */}
-                        <span>
-                          {booking.player?.username || "Unknown Player"}
+                        <span
+                          className="truncate max-w-[100px]"
+                          title={booking.player?.username}
+                        >
+                          {truncateUsername(
+                            booking.player?.username || "Unknown Player"
+                          )}
                         </span>
                       </div>
                     </TableCell>
                     <TableCell>
                       {formatDate(booking.date, booking.startTime)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell
+                      className="truncate max-w-[140px]"
+                      title={booking.service?.service?.name}
+                    >
                       {booking.service?.service?.name || "Unknown Service"}
                     </TableCell>
                     <TableCell>${booking.service?.price || "N/A"}</TableCell>
@@ -944,14 +964,21 @@ const BookingExpertside: React.FC = () => {
             .map((booking) => (
               <div
                 key={`complete-${booking.id}`}
-                className="flex items-center justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
                 onClick={() => openBookingDetails(booking)}
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 mb-2 sm:mb-0">
                   <img
-                    src={booking.player?.photo}
+                    src={
+                      booking.player?.photo ||
+                      `https://i.pravatar.cc/60?u=${booking.playerId}`
+                    }
                     alt="Player"
                     className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = `https://i.pravatar.cc/60?u=${booking.playerId}`;
+                    }}
                   />
                   <div>
                     <p className="font-medium">
@@ -985,7 +1012,7 @@ const BookingExpertside: React.FC = () => {
       </div>
 
       {/* Statistics Section */}
-      <div className="mt-6 grid grid-cols-4 gap-4">
+      <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <h3 className="font-medium text-blue-800">Total Bookings</h3>
           <p className="text-2xl font-bold">{bookings.length}</p>
@@ -1017,7 +1044,7 @@ const BookingExpertside: React.FC = () => {
       {/* Upcoming Sessions Section */}
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {bookings
             .filter((booking) => booking.status === "ACCEPTED")
             .slice(0, 3)
@@ -1028,11 +1055,17 @@ const BookingExpertside: React.FC = () => {
                 onClick={() => openBookingDetails(booking)}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">
+                  <div className="max-w-[70%]">
+                    <h3
+                      className="font-medium truncate"
+                      title={booking.service?.service?.name}
+                    >
                       {booking.service?.service?.name || "Service"}
                     </h3>
-                    <p className="text-sm text-gray-500">
+                    <p
+                      className="text-sm text-gray-500 truncate"
+                      title={`with ${booking.player?.username || "Player"}`}
+                    >
                       with {booking.player?.username || "Player"}
                     </p>
                   </div>
@@ -1053,7 +1086,7 @@ const BookingExpertside: React.FC = () => {
 
           {bookings.filter((booking) => booking.status === "ACCEPTED")
             .length === 0 && (
-            <div className="col-span-3 text-center py-4 text-gray-500">
+            <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-4 text-gray-500">
               No upcoming sessions
             </div>
           )}
@@ -1136,7 +1169,7 @@ const BookingExpertside: React.FC = () => {
                     {selectedBooking.service?.price || "N/A"}
                   </div>
                 </div>
-                <p className="font-medium">
+                <p className="font-medium break-words">
                   {selectedBooking.service?.service?.name}
                 </p>
                 <p className="text-sm text-gray-600 mt-1">
@@ -1167,7 +1200,9 @@ const BookingExpertside: React.FC = () => {
                       icon={faMapMarkerAlt}
                       className="mr-2 mt-1 text-gray-600"
                     />
-                    <span>{selectedBooking.location}</span>
+                    <span className="break-words">
+                      {selectedBooking.location}
+                    </span>
                   </p>
                 )}
                 {selectedBooking.meetLink && (
@@ -1180,7 +1215,7 @@ const BookingExpertside: React.FC = () => {
                       href={selectedBooking.meetLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline"
+                      className="text-blue-600 hover:underline break-all"
                     >
                       {selectedBooking.meetLink}
                     </a>
@@ -1188,7 +1223,7 @@ const BookingExpertside: React.FC = () => {
                 )}
               </div>
 
-              {/* Media Section */}
+              {/* Media Section - Updated to display video player for RECORDED VIDEO ASSESSMENT */}
               {(selectedBooking.recordedVideo ||
                 selectedBooking.meetingRecording) && (
                 <div className="mb-5 bg-gray-50 p-4 rounded-lg">
@@ -1199,19 +1234,85 @@ const BookingExpertside: React.FC = () => {
                     />
                     Media
                   </h3>
+
                   {selectedBooking.recordedVideo && (
                     <div className="mb-2">
-                      <p className="font-medium">Recorded Video:</p>
-                      <a
-                        href={selectedBooking.recordedVideo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
-                      >
-                        View Video
-                      </a>
+                      <p className="font-medium mb-2">Recorded Video:</p>
+
+                      {/* Check if this is a RECORDED VIDEO ASSESSMENT service type */}
+                      {selectedBooking.service?.serviceId === "1" ? (
+                        // Display embedded video player for RECORDED VIDEO ASSESSMENT
+                        <div className="w-full rounded-lg overflow-hidden border border-gray-200">
+                          {videoError ? (
+                            <div className="bg-red-50 p-4 rounded border border-red-200 text-red-700 flex items-center">
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                                className="mr-2"
+                              />
+                              <span>{videoError}</span>
+                            </div>
+                          ) : (
+                            <video
+                              src={selectedBooking.recordedVideo}
+                              controls
+                              className="w-full h-auto"
+                              preload="metadata"
+                              onError={handleVideoError}
+                            >
+                              Your browser does not support the video tag.
+                            </video>
+                          )}
+
+                          <div className="mt-2 text-sm text-gray-500">
+                            <p>
+                              If the video doesn't play, you can also{" "}
+                              <a
+                                href={selectedBooking.recordedVideo}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                open it directly
+                              </a>
+                              .
+                            </p>
+                          </div>
+
+                          {/* Video information */}
+                          <div className="mt-3 text-sm text-gray-600">
+                            <p>
+                              Uploaded by: {selectedBooking.player?.username}
+                            </p>
+                            <p>
+                              Date:{" "}
+                              {new Date(
+                                selectedBooking.createdAt
+                              ).toLocaleDateString()}
+                            </p>
+                            {selectedBooking.description && (
+                              <div className="mt-2">
+                                <p className="font-medium">Description:</p>
+                                <p className="italic">
+                                  {selectedBooking.description}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        // For other service types, just show the link
+                        <a
+                          href={selectedBooking.recordedVideo}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline break-all"
+                        >
+                          View Video
+                        </a>
+                      )}
                     </div>
                   )}
+
                   {selectedBooking.meetingRecording && (
                     <div>
                       <p className="font-medium">Meeting Recording:</p>
@@ -1219,7 +1320,7 @@ const BookingExpertside: React.FC = () => {
                         href={selectedBooking.meetingRecording}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="text-blue-600 hover:underline break-all"
                       >
                         View Recording
                       </a>

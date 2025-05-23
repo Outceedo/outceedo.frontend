@@ -95,6 +95,7 @@ interface Booking {
   player: Player;
   service: Service;
   review?: string;
+  description?: string | null;
   isPaid?: boolean; // Added to track payment status locally
 }
 
@@ -135,6 +136,13 @@ const MyBooking: React.FC = () => {
       booking.status !== "CANCELLED" &&
       booking.status !== "COMPLETED"
     );
+  };
+
+  // Function to truncate text
+  const truncateText = (text: string, maxLength: number = 15) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return `${text.substring(0, maxLength)}...`;
   };
 
   // Dummy data for demonstration when API fails
@@ -498,6 +506,15 @@ const MyBooking: React.FC = () => {
     return `${formattedDate} at ${hour}:${minutes}${ampm}`;
   };
 
+  // Format date shorter (for UI elements with less space)
+  const formatShortDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+  };
+
   // Filter bookings based on search and status filter
   const filteredBookings = bookings.filter((booking) => {
     const expertName = booking.expert?.username || "";
@@ -515,9 +532,11 @@ const MyBooking: React.FC = () => {
   });
 
   return (
-    <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
-      <div className="flex items-center space-x-4 mb-6">
-        <div className="relative w-1/3">
+    <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
+      <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
+
+      <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+        <div className="relative w-full sm:w-1/3">
           <FontAwesomeIcon
             icon={faSearch}
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -525,14 +544,14 @@ const MyBooking: React.FC = () => {
           <Input
             type="text"
             placeholder="Search by Expert Name"
-            className="pl-10"
+            className="pl-10 w-full"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
 
         <Select value={bookingStatus} onValueChange={setBookingStatus}>
-          <SelectTrigger className="w-[180px]">
+          <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Booking Status" />
           </SelectTrigger>
           <SelectContent>
@@ -559,20 +578,20 @@ const MyBooking: React.FC = () => {
       {loading ? (
         <div className="text-center py-8">Loading bookings...</div>
       ) : (
-        <div className="rounded-md border">
+        <div className="rounded-md border overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">Booking ID</TableHead>
-                <TableHead>Expert</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Service Name</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Payment</TableHead>
-                <TableHead className="text-center">Video</TableHead>
-                <TableHead className="text-center">Report</TableHead>
-                <TableHead className="text-center">View</TableHead>
+                <TableHead className="w-[80px]">ID</TableHead>
+                <TableHead className="w-[140px]">Expert</TableHead>
+                <TableHead className="w-[120px]">Date</TableHead>
+                <TableHead className="w-[140px]">Service</TableHead>
+                <TableHead className="w-[80px]">Price</TableHead>
+                <TableHead className="w-[120px]">Status</TableHead>
+                <TableHead className="w-[100px]">Payment</TableHead>
+                <TableHead className="text-center w-[70px]">Video</TableHead>
+                <TableHead className="text-center w-[70px]">Report</TableHead>
+                <TableHead className="text-center w-[70px]">View</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -590,7 +609,7 @@ const MyBooking: React.FC = () => {
                     onClick={() => openBookingDetails(booking)}
                   >
                     <TableCell className="font-medium">
-                      {booking.id.substring(0, 8)}...
+                      {booking.id.substring(0, 6)}...
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -603,16 +622,29 @@ const MyBooking: React.FC = () => {
                             target.src = profile;
                           }}
                         />
-                        <span>
-                          {booking.expert?.username || "Unknown Expert"}
+                        <span
+                          className="truncate max-w-[80px]"
+                          title={booking.expert?.username || "Unknown Expert"}
+                        >
+                          {truncateText(
+                            booking.expert?.username || "Unknown Expert",
+                            12
+                          )}
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {formatDate(booking.date, booking.startTime)}
+                    <TableCell className="whitespace-nowrap">
+                      {formatShortDate(booking.date)}
                     </TableCell>
                     <TableCell>
-                      {booking.service?.service?.name || "Unknown Service"}
+                      <span
+                        className="truncate block max-w-[120px]"
+                        title={
+                          booking.service?.service?.name || "Unknown Service"
+                        }
+                      >
+                        {booking.service?.service?.name || "Unknown Service"}
+                      </span>
                     </TableCell>
                     <TableCell>${booking.service?.price || "N/A"}</TableCell>
                     <TableCell>
@@ -630,7 +662,7 @@ const MyBooking: React.FC = () => {
                       >
                         {booking.isPaid
                           ? "Paid"
-                          : booking.status == "REJECTED"
+                          : booking.status === "REJECTED"
                           ? "Not Paid"
                           : "Pay Now"}
                       </Badge>
@@ -681,7 +713,7 @@ const MyBooking: React.FC = () => {
       {/* Upcoming Sessions Section */}
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {bookings
             .filter(
               (booking) =>
@@ -698,8 +730,11 @@ const MyBooking: React.FC = () => {
                 onClick={() => openBookingDetails(booking)}
               >
                 <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="font-medium">
+                  <div className="max-w-[70%]">
+                    <h3
+                      className="font-medium truncate"
+                      title={booking.service?.service?.name || "Service"}
+                    >
                       {booking.service?.service?.name || "Service"}
                     </h3>
                     <div className="flex items-center gap-2 mt-2">
@@ -712,16 +747,20 @@ const MyBooking: React.FC = () => {
                           target.src = profile;
                         }}
                       />
-                      <p className="text-sm text-gray-500">
-                        with {booking.expert?.username || "Expert"}
+                      <p
+                        className="text-sm text-gray-500 truncate"
+                        title={`with ${booking.expert?.username || "Expert"}`}
+                      >
+                        with{" "}
+                        {truncateText(booking.expert?.username || "Expert", 15)}
                       </p>
                     </div>
                   </div>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-800">
-                    {new Date(booking.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    })}
+                  <Badge
+                    variant="outline"
+                    className="bg-blue-50 text-blue-800 whitespace-nowrap"
+                  >
+                    {formatShortDate(booking.date)}
                   </Badge>
                 </div>
                 <div className="mt-4 flex justify-between items-center">
@@ -731,7 +770,7 @@ const MyBooking: React.FC = () => {
 
                   {!booking.isPaid && booking.status !== "REJECTED" ? (
                     <Button
-                      className="bg-red-500 hover:bg-red-600"
+                      className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto"
                       onClick={(e) => {
                         e.stopPropagation();
                         handlePayment(booking.id);
@@ -761,7 +800,7 @@ const MyBooking: React.FC = () => {
               booking.status !== "REJECTED" &&
               booking.status !== "CANCELLED"
           ).length === 0 && (
-            <div className="col-span-3 text-center py-4 text-gray-500">
+            <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-4 text-gray-500">
               No upcoming sessions
             </div>
           )}
@@ -816,7 +855,7 @@ const MyBooking: React.FC = () => {
                     }}
                   />
                   <div>
-                    <h4 className="font-medium text-lg mb-1">
+                    <h4 className="font-medium text-lg mb-1 break-words">
                       {selectedBooking.expert?.username}
                     </h4>
                     {/* Additional expert info - in a real application, you might fetch this from the API */}
@@ -865,7 +904,7 @@ const MyBooking: React.FC = () => {
                     {selectedBooking.service?.price}
                   </div>
                 </div>
-                <h4 className="font-medium mb-2">
+                <h4 className="font-medium mb-2 break-words">
                   {selectedBooking.service?.service?.name}
                 </h4>
                 <p className="text-gray-600 mb-4">
@@ -905,7 +944,7 @@ const MyBooking: React.FC = () => {
                 <div className="flex items-start mb-2">
                   <FontAwesomeIcon
                     icon={faClock}
-                    className="mr-2 mt-1 text-gray-600"
+                    className="mr-2 mt-1 text-gray-600 flex-shrink-0"
                   />
                   <div>
                     <p className="font-medium">Date & Time:</p>
@@ -920,28 +959,32 @@ const MyBooking: React.FC = () => {
                 <div className="flex items-start mb-2">
                   <FontAwesomeIcon
                     icon={faClock}
-                    className="mr-2 mt-1 text-gray-600"
+                    className="mr-2 mt-1 text-gray-600 flex-shrink-0"
                   />
-                  <div>
+                  <div className="flex-1">
                     <p className="font-medium">Duration:</p>
                     <p className="text-gray-600">
                       {selectedBooking.startTime} - {selectedBooking.endTime}
                     </p>
-                    <p className="font-medium">Description:</p>
-                    <p className="text-gray-600 mb-4">
-                      {selectedBooking.description}
-                    </p>
+                    {selectedBooking.description && (
+                      <>
+                        <p className="font-medium mt-2">Description:</p>
+                        <p className="text-gray-600 mb-4 break-words">
+                          {selectedBooking.description}
+                        </p>
+                      </>
+                    )}
                   </div>
                 </div>
                 {selectedBooking.location && (
                   <div className="flex items-start mb-2">
                     <FontAwesomeIcon
                       icon={faMapMarkerAlt}
-                      className="mr-2 mt-1 text-gray-600"
+                      className="mr-2 mt-1 text-gray-600 flex-shrink-0"
                     />
                     <div>
                       <p className="font-medium">Location:</p>
-                      <p className="text-gray-600">
+                      <p className="text-gray-600 break-words">
                         {selectedBooking.location}
                       </p>
                     </div>
@@ -951,7 +994,7 @@ const MyBooking: React.FC = () => {
                   <div className="flex items-start">
                     <FontAwesomeIcon
                       icon={faLink}
-                      className="mr-2 mt-1 text-gray-600"
+                      className="mr-2 mt-1 text-gray-600 flex-shrink-0"
                     />
                     <div>
                       <p className="font-medium">Meeting Link:</p>
@@ -959,7 +1002,7 @@ const MyBooking: React.FC = () => {
                         href={selectedBooking.meetLink}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline"
+                        className="text-blue-600 hover:underline break-all"
                       >
                         {selectedBooking.meetLink}
                       </a>
@@ -1005,7 +1048,7 @@ const MyBooking: React.FC = () => {
               )}
             </div>
 
-            <DialogFooter className="flex gap-3 justify-end">
+            <DialogFooter className="flex flex-wrap gap-3 justify-end">
               {/* Session action buttons */}
               {needsPayment(selectedBooking) && (
                 <Button
@@ -1076,17 +1119,19 @@ const MyBooking: React.FC = () => {
 
       {/* Video Modal */}
       {isVideoOpen && (
-        <div className="fixed inset-0 bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="bg-white rounded-lg shadow-lg p-6 w-[90%] max-w-3xl relative">
+        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-[95%] max-w-3xl relative">
             <button
               onClick={closeVideoModal}
-              className="absolute top-2 right-2 text-gray-500 hover:text-black text-4xl cursor-pointer"
+              className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl sm:text-4xl cursor-pointer"
             >
               ×
             </button>
             {selectedBookingId && (
               <div className="mt-6">
-                <h2 className="text-xl font-semibold mb-4">Recorded Session</h2>
+                <h2 className="text-lg sm:text-xl font-semibold mb-4">
+                  Recorded Session
+                </h2>
                 {bookings.find((b) => b.id === selectedBookingId)
                   ?.recordedVideo ? (
                   <Video
@@ -1117,12 +1162,13 @@ const MyBooking: React.FC = () => {
       {/* Assessment Report Modal */}
       {isReportOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
-          <div className="flex justify-end p-4">
+          <div className="flex justify-between items-center p-4 border-b">
+            <h2 className="text-lg font-semibold">Assessment Report</h2>
             <button onClick={closeReportModal}>
-              <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black" />
+              <X className="w-6 h-6 cursor-pointer text-gray-800 hover:text-black" />
             </button>
           </div>
-          <div className="flex-1 overflow-auto">
+          <div className="flex-1 overflow-auto p-4">
             <AssessmentReport bookingId={selectedBookingId} />
           </div>
         </div>
