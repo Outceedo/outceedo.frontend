@@ -160,8 +160,8 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : user?.role === "sponser"
-                  ? "/sponser/dashboard"
+                  : user?.role === "sponsor"
+                  ? "/sponsor/dashboard"
                   : "/team/dashboard"
               }
             />
