@@ -45,7 +45,7 @@ import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import Expertsponsers from "./expertpages/Expertsponsors";
 import ApplicationForm from "./expertpages/ApplicationForm";
-import Expertsponsors from "./expertpages/Expertsponsors";
+
 import { authService } from "./store/apiConfig";
 //sponser pages
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
@@ -55,11 +55,16 @@ import Sponsorplayer from "./SponsorPages/Sponsorplayer";
 import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
 import Sponsorinfo from "./SponsorPages/Sponsorinfo";
+
 //Team pages
 import TeamDetailsForm from "./teampages/teamdetailsform";
 import TeamProfile from "./teampages/teamprofile";
 import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
+
+import TeamSponsor from "./teampages/sponser";
+import TeamExperts from "./teampages/expertprofile";
+import TeamPlayerInfo from "./teampages/playerspage";
 import TeamSponsor from "./teampages/TeamSponser";
 import SponsorApplicationPage from "./teampages/SponsorApplicationpage";
 import TeamPlayerInfo from "./SponsorPages/playerinfo";
@@ -122,8 +127,12 @@ const AppContent: React.FC = () => {
       navigate("/player/dashboard");
     } else if (role === "expert") {
       navigate("/expert/dashboard");
-    } else if (role === "sponsor") {
-      navigate("/sponsor/dashboard");
+
+    } else if (role === "sponser") {
+      navigate("/sponser/dashboard");
+    } else if (role === "team") {
+      navigate("/team/dashboard");
+
     }
   }
 
@@ -143,7 +152,9 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : "/sponsor/dashboard"
+                  : user?.role === "sponser"
+                  ? "/sponser/dashboard"
+                  : "/team/dashboard"
               }
             />
           ) : (
@@ -162,7 +173,9 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : "/sponsor/dashboard"
+                  : user?.role === "sponsor"
+                  ? "/sponsor/dashboard"
+                  : "/team/dashboard"
               }
             />
           ) : (
@@ -216,6 +229,7 @@ const AppContent: React.FC = () => {
         <Route path="sponsors" element={<Expertsponsers />} />
         <Route path="ApplicationForm" element={<ApplicationForm />} />
         <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+
       </Route>
 
       {/* Sponser routes */}
@@ -228,6 +242,7 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
+
         <Route path="dashboard" element={<>Sponser Dashboard</>} />
 
         <Route path="players" element={<Sponsorplayer />} />
@@ -239,6 +254,7 @@ const AppContent: React.FC = () => {
         <Route path="Sponsorinfo" element={<Sponsorinfo />} />
         <Route path="playerinfo" element={<SponsorPlayerInfo />} />
         <Route path="exdetails" element={<SponsorExperts />} />
+
       </Route>
 
       {/* Team Outlet */}
@@ -250,16 +266,18 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
+
+        <Route path="dashboard" element={<>Team Dashboard</>} />
         <Route path="players" element={<TeamPlayer />} />
         <Route path="experts" element={<TeamExpert />} />
         <Route path="sponsors" element={<TeamSponsor />} />
-        <Route
-          path="sponsorsapplicationpage"
-          element={<SponsorApplicationPage />}
-        />
+        <Route path="sponsorsapplication" element={<SponsorApplication />} />
         <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
+        <Route path="exdetails" element={<TeamExperts />} />
+        <Route path="playerinfo" element={<TeamPlayerInfo />} />
         <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+
       </Route>
 
       <Route
@@ -283,6 +301,7 @@ const AppContent: React.FC = () => {
           </div>
         }
       />
+
     </Routes>
   );
 };

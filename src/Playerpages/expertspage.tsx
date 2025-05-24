@@ -273,11 +273,15 @@ const Expertspage: React.FC = () => {
 
   // Handle view expert profile
   const handleViewProfile = (expert: Expert) => {
+    const role = localStorage.getItem("role");
     localStorage.setItem("viewexpertusername", expert.username);
     if (role === "player") {
       navigate("/player/exdetails");
-    } else if (role === "sponsor") {
+    }  else if (role === "sponsor") {
       navigate("/sponsor/exdetails");
+    }else if(role==="team") {
+      navigate("/team/exdetails");
+
     }
   };
 
