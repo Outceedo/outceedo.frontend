@@ -392,7 +392,7 @@ export default function SponsorDetailsForm() {
 
         // Redirect to appropriate page after submission
         setTimeout(() => {
-          navigate("/sponsors/dashboard"); // Adjust navigation path as needed
+          navigate("/sponsor/dashboard"); // Adjust navigation path as needed
         }, 1500);
       } else if (updateProfile.rejected.match(updateProfileResult)) {
         throw new Error("Failed to update profile.");

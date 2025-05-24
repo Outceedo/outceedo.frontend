@@ -77,9 +77,9 @@ function MenuItems({ setOpen }: MenuItemsProps) {
     : "Loading...";
 
   // Get age and profession from profile data
-  const playerAge = currentProfile?.age ? `Age ${currentProfile.age}` : "";
-  const playerProfession = currentProfile?.profession || "";
-  const playerSubProfession = currentProfile?.subProfession || "";
+
+  const sponsorProfession = currentProfile?.profession || "";
+  const sponsorRole = localStorage.getItem("role");
 
   // Function to handle logout
   function handleLogout() {
@@ -179,12 +179,9 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {playerName}
         </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">
-          {playerAge}
-        </p>
+        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400"></p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {playerProfession}
-          {playerSubProfession ? ` - ${playerSubProfession}` : ""}
+          {sponsorProfession} - {sponsorRole}
         </p>
 
         {/* Show loading indicator if profile is still loading */}

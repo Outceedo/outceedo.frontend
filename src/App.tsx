@@ -62,6 +62,10 @@ import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
 import TeamSponsor from "./teampages/TeamSponser";
 import SponsorApplicationPage from "./teampages/SponsorApplicationpage";
+import TeamPlayerInfo from "./SponsorPages/playerinfo";
+import TeamExperts from "./SponsorPages/Expertssponsor";
+import SponsorPlayerInfo from "./SponsorPages/playerinfo";
+import SponsorExperts from "./SponsorPages/Expertssponsor";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -139,7 +143,7 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : "/sponser/dashboard"
+                  : "/sponsor/dashboard"
               }
             />
           ) : (
@@ -158,7 +162,7 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : "/sponser/dashboard"
+                  : "/sponsor/dashboard"
               }
             />
           ) : (
@@ -220,7 +224,7 @@ const AppContent: React.FC = () => {
         path="/sponsor"
         element={
           <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-          <SponserLayout />
+            <SponserLayout />
           </CheckAuth>
         }
       >
@@ -233,6 +237,8 @@ const AppContent: React.FC = () => {
         <Route path="SponsorDetailsForm" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
         <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+        <Route path="playerinfo" element={<SponsorPlayerInfo />} />
+        <Route path="exdetails" element={<SponsorExperts />} />
       </Route>
 
       {/* Team Outlet */}

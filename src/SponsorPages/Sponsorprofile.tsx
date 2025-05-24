@@ -88,9 +88,7 @@ const SponsorProfile = () => {
     }
   }, [dispatch, username]);
 
-  const handleEditProfile = () => {
-    navigate("/sponsors/edit"); // Navigate to edit page - adjust the path as needed
-  };
+  
 
   // Even in loading or error states, we'll show the UI with fallback values
   if (status === "loading") {
@@ -143,14 +141,7 @@ const SponsorProfile = () => {
                     ? `${data.firstName} ${data.lastName}`
                     : fallbackData.companyName)}
               </h1>
-              <Button
-                variant="outline"
-                size="sm"
-                className="flex items-center gap-1"
-                onClick={handleEditProfile}
-              >
-                <Pencil className="h-4 w-4" /> Edit
-              </Button>
+              
             </div>
 
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
@@ -189,14 +180,7 @@ const SponsorProfile = () => {
             </div>
 
             {/* Biography if available */}
-            {data?.bio && (
-              <div className="mt-5 max-w-xl">
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  Bio
-                </label>
-                <p className="text-sm dark:text-white">{data.bio}</p>
-              </div>
-            )}
+            
 
             {/* Social Links */}
             <div className="mt-10 flex gap-6">
