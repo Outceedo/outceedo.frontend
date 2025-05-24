@@ -10,25 +10,25 @@ import {
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-interface SponserHeaderProps {
+interface teamHeaderProps {
   setOpen: (open: boolean) => void;
 }
 const menuItems = [
-  { path: "/sponser/details-form", name: "Edit Profile" },
-  { path: "/sponser/dashboard", name: "Dashboard" },
-  { path: "/sponser/experts", name: "Experts" },
-  { path: "/sponser/players", name: "Players" },
-  { path: "/sponser/application", name: "Application Form" },
-
-  { path: "/sponser/profile", name: "Profile" },
+  { path: "/team/details-form", name: "Edit Profile" },
+  { path: "/team/player", name: "Players" },
+  { path: "/team/experts", name: "Experts" },
+  { path: "/team/sponsors", name: "Sponsor" },
+  { path: "/team/sponsorsapplication", name: "Sponsors Application" },
+  { path: "/team/profile", name: "Profile" },
+   { path: "/team/Sponsorinfo", name: "Profile" },
 ];
-function SponserHeader({ setOpen }: SponserHeaderProps) {
+function TeamHeader({ setOpen }: teamHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const location = useLocation();
   const currentTitle =
     menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??
-    "Dashboard";
+    "Players";
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode");
     if (savedMode === "enabled") {
@@ -100,4 +100,4 @@ function SponserHeader({ setOpen }: SponserHeaderProps) {
   );
 }
 
-export default SponserHeader;
+export default TeamHeader;

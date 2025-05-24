@@ -10,21 +10,21 @@ import {
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
 
-interface PlayerHeaderProps {
+interface SponserHeaderProps {
   setOpen: (open: boolean) => void;
 }
 const menuItems = [
-  { path: "/player/details-form", name: "Edit Profile" },
-  { path: "/player/dashboard", name: "Dashboard" },
-  { path: "/player/viewexperts", name: "Experts" },
-  { path: "/player/matches", name: "Matches" },
-  { path: "/player/mybooking", name: "My Bookings" },
-  { path: "/player/sponsors", name: "Sponsors" },
-  { path: "/player/profile", name: "Profile" },
-   { path: "/player/Sponsorinfo", name: "Profile" },
+  { path: "/sponsor/details-form", name: "Edit Profile" },
+  { path: "/sponsor/experts", name: "Experts" },
+  { path: "/sponsor/players", name: "Players" },
+  { path: "/sponsor/application", name: "Application Form" },
+  { path: "/sponsor/profile", name: "Profile" },
+  { path: "/sponsor/Sponsorinfo", name: "Profile" },
+  
+
 
 ];
-function PlayerHeader({ setOpen }: PlayerHeaderProps) {
+function SponsorHeader({ setOpen }: SponserHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
   const location = useLocation();
@@ -102,4 +102,4 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   );
 }
 
-export default PlayerHeader;
+export default SponsorHeader;

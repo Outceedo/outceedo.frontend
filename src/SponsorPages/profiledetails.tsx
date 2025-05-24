@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -20,35 +20,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 }) => {
   // Get player info
   const aboutMe = playerData.bio || "No information available";
-
-  // State for See More functionality in About Me section
-  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
-  const aboutTextRef = useRef<HTMLParagraphElement>(null);
-  const [showSeeMore, setShowSeeMore] = useState(false);
-
-  // Check if about text is more than 3 lines
-  useEffect(() => {
-    if (aboutTextRef.current) {
-      const lineHeight = parseInt(
-        window.getComputedStyle(aboutTextRef.current).lineHeight || "24"
-      );
-      const height = aboutTextRef.current.scrollHeight;
-
-      // Approximately check if the content is more than 3 lines
-      const isTall = height > lineHeight * 3 + 5;
-      setShowSeeMore(isTall);
-
-      // If we've determined it doesn't need "see more", always keep it expanded
-      if (!isTall) {
-        setIsAboutExpanded(true);
-      }
-    }
-  }, [aboutMe]);
-
-  // Toggle See More in About section
-  const toggleAboutExpanded = () => {
-    setIsAboutExpanded(!isAboutExpanded);
-  };
 
   // Extract certificates and awards from documents array with debug logging
   const documents = Array.isArray(playerData.documents)
@@ -154,27 +125,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       {/* About Me Section */}
       <Card className="p-6 shadow-sm dark:bg-gray-700 dark:text-white">
         <h3 className="text-lg font-semibold mb-3">About Me</h3>
-        <div className="relative">
-          <p
-            ref={aboutTextRef}
-            className={`text-gray-600 dark:text-gray-300 ${
-              showSeeMore && !isAboutExpanded
-                ? "line-clamp-3 overflow-hidden"
-                : ""
-            }`}
-          >
-            {aboutMe}
-          </p>
-
-          {showSeeMore && (
-            <button
-              onClick={toggleAboutExpanded}
-              className="text-blue-500 hover:text-blue-700 font-medium mt-1 focus:outline-none flex justify-center w-full"
-            >
-              {isAboutExpanded ? "See less" : "read more"}
-            </button>
-          )}
-        </div>
+        <p className="text-gray-600 dark:text-gray-300">{aboutMe}</p>
       </Card>
 
       {/* Certificates & Awards */}

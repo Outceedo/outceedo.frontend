@@ -23,7 +23,7 @@ const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
   { icon: faFacebook, color: "#3b5998", link: "" },
   { icon: faInstagram, color: "#E1306C", link: "" },
-  { icon: faXTwitter, color: "#1DA1F2", link: "" },
+  { icon: faXTwitter, color: "#0C0B0B", link: "" },
 ];
 
 const ExpertProfile = () => {
