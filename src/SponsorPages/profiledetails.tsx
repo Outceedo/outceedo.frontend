@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -6,6 +6,7 @@ import {
   faFacebook,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
+import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 import { Card } from "@/components/ui/card";
 import { Profile, DocumentItem } from "../types/Profile";
 
@@ -18,8 +19,36 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   playerData,
   isExpertView = false,
 }) => {
+  // State for expanding bio
+  const [bioExpanded, setBioExpanded] = useState(false);
+  const [isBioLong, setIsBioLong] = useState(false);
+  const bioRef = useRef<HTMLParagraphElement>(null);
+
   // Get player info
   const aboutMe = playerData.bio || "No information available";
+
+  // Check if bio is longer than 3 lines
+  useEffect(() => {
+    const checkBioLength = () => {
+      if (bioRef.current) {
+        const lineHeight = parseInt(
+          window.getComputedStyle(bioRef.current).lineHeight
+        );
+        const height = bioRef.current.scrollHeight;
+        const lines = height / (lineHeight || 24); // Use 24px as fallback line height
+        setIsBioLong(lines > 3);
+      }
+    };
+
+    // Check after the component mounts
+    setTimeout(checkBioLength, 100); // Small delay to ensure rendering is complete
+
+    window.addEventListener("resize", checkBioLength);
+
+    return () => {
+      window.removeEventListener("resize", checkBioLength);
+    };
+  }, [playerData.bio]);
 
   // Extract certificates and awards from documents array with debug logging
   const documents = Array.isArray(playerData.documents)
@@ -120,12 +149,35 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     }
   };
 
+  // Toggle bio expand/collapse
+  const toggleBioExpand = () => {
+    setBioExpanded(!bioExpanded);
+  };
+
   return (
     <div className="p-4 w-full space-y-6">
       {/* About Me Section */}
       <Card className="p-6 shadow-sm dark:bg-gray-700 dark:text-white">
         <h3 className="text-lg font-semibold mb-3">About Me</h3>
-        <p className="text-gray-600 dark:text-gray-300">{aboutMe}</p>
+        <div className="relative">
+          <p
+            ref={bioRef}
+            className={`text-gray-600 dark:text-gray-300 ${
+              !bioExpanded && isBioLong ? "line-clamp-3" : ""
+            }`}
+          >
+            {aboutMe}
+          </p>
+
+          {isBioLong && (
+            <button
+              onClick={toggleBioExpand}
+              className="mt-2 text-blue-600 dark:text-red-400 flex items-center text-sm font-medium hover:text-blue-700 dark:hover:text-red-300 justify-center w-full"
+            >
+              {bioExpanded ? <>Read Less </> : <>Read More </>}
+            </button>
+          )}
+        </div>
       </Card>
 
       {/* Certificates & Awards */}
