@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
  import { Label } from "@/components/ui/label";
  import { Download  } from "lucide-react";
 
-const SponsorForm = () => { 
+const ApplicationForm = () => { 
    return ( 
    <div className="max-w-4xl mx-auto p-6 bg-white shadow-md rounded-md dark:bg-gray-900">
      <div className="flex gap-10 justify-end items-end">
@@ -123,17 +123,10 @@ const SponsorForm = () => {
    </div>
 
  </form>
- <div className="text-center mt-10 flex gap-18 justify-center">
-     <Button className="bg-green-700 hover:bg-green-800 text-white px-6 py-2 rounded cursor-pointer w-42">
-       Apply
-     </Button>
-     <Button className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded cursor-pointer w-42">
-       Reaject
-     </Button>
-   </div>
+ 
  
 </div>
 
 ); };
 
-export default SponsorForm;
+export default ApplicationForm;

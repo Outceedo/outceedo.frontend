@@ -7,8 +7,10 @@ import { Circle } from "lucide-react";
 import profile3 from "../assets/images/profile3.jpg";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
-import SponsorApplication from "@/SponsorPages/SponsorApplication";
-
+import  { useState } from 'react';
+import ApplicationForm from "./ApplicationForm"
+import { X } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 const data = [
   { id: 145, name: "Cody Fisher", date: "2 Jan 2025", type: "Product", budget: "-", action: "Accepted", status: "Sponsored", link: "CodyFisher.application", image: profile3 },
@@ -47,9 +49,16 @@ const getStatusDot = (status: string) => {
   }
 };
 
-const SponsorApplication = () => {
+const SponsorApplicationpage = () => {
+  
+  const [isReportOpen, setIsReportOpen] = useState(false);
+
+  const openReportModal = () => setIsReportOpen(true);
+  const closeReportModal = () => setIsReportOpen(false);
+  const navigate = useNavigate();
+  
   return (
-    <div className="p-6">
+    <div className="p-6 ">
       <div className="flex gap-4 mb-4">
        <div className="relative w-1/3">
   <FontAwesomeIcon
@@ -76,7 +85,7 @@ const SponsorApplication = () => {
           </SelectContent>
         </Select>
       </div>
-
+<div className="dark:bg-gray-800">
       <Table>
         <TableHeader>
           <TableRow>
@@ -99,7 +108,13 @@ const SponsorApplication = () => {
                   <AvatarImage src={app.image} />
                   <AvatarFallback>{app.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span>{app.name}</span>
+                <span 
+  className="cursor-pointer text-blue-600 hover:underline"
+  onClick={() => navigate(`/team/Sponsorinfo`)} 
+>
+  {app.name}
+</span>
+
               </TableCell>
               <TableCell>{app.date}</TableCell>
               <TableCell>{app.type}</TableCell>
@@ -113,15 +128,38 @@ const SponsorApplication = () => {
                 <Circle size={10} className={getStatusDot(app.status)} />
                 <span>{app.status}</span>
               </TableCell>
-              <TableCell className="text-blue-500 hover:underline cursor-pointer">
-                {app.link}
-              </TableCell>
+             
+               
+      <TableCell
+        className="text-blue-500 hover:underline cursor-pointer"
+        onClick={openReportModal}
+      >
+        {app.link}
+      </TableCell>
+
+      {isReportOpen && (
+        
+          
+          
+             <div className="fixed inset-0 z-50 bg-white flex flex-col dark:bg-gray-800">
+          <div className="flex justify-end p-4">
+            <button onClick={closeReportModal}>
+              <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black dark:text-white" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto">
+            <ApplicationForm />
+          </div>
+        </div>
+      )}
+    
             </TableRow>
           ))}
         </TableBody>
       </Table>
+      </div>
     </div>
   );
-};z
+};
 
-export default SponsorApplication;
+export default SponsorApplicationpage;

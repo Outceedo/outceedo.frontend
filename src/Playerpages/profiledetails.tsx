@@ -92,6 +92,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   const [isEditingSocials, setIsEditingSocials] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // State for See More functionality in About Me section
+  const [isAboutExpanded, setIsAboutExpanded] = useState(false);
+  const aboutTextRef = useRef<HTMLParagraphElement>(null);
+  const [showSeeMore, setShowSeeMore] = useState(false);
+
   // File input refs
   const certificateFileRefs = useRef<(HTMLInputElement | null)[]>([]);
   const awardFileRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -107,6 +112,26 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     twitter: playerData.socials?.twitter || "",
   });
 
+  // Check if about text is more than 3 lines
+  useEffect(() => {
+    if (aboutTextRef.current) {
+      const lineHeight = parseInt(
+        window.getComputedStyle(aboutTextRef.current).lineHeight
+      );
+      const height = aboutTextRef.current.scrollHeight;
+
+      // Approximately check if the content is more than 3 lines
+      // We compare the scrollHeight against 3 times the lineHeight plus some margin
+      const isTall = height > lineHeight * 3 + 5;
+      setShowSeeMore(isTall);
+
+      // If we've determined it doesn't need "see more", always keep it expanded
+      if (!isTall) {
+        setIsAboutExpanded(true);
+      }
+    }
+  }, [aboutMe]);
+
   // Get auth token from localStorage
   const getAuthToken = (): string | null => {
     return localStorage.getItem("token");
@@ -115,6 +140,9 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   // Update local state when playerData changes
   useEffect(() => {
     setAboutMe(playerData.aboutMe || "");
+
+    // Reset the expanded state when data changes
+    setIsAboutExpanded(false);
 
     // Process documents array to separate certificates and awards
     if (Array.isArray(playerData.documents)) {
@@ -177,6 +205,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       aboutMe: aboutMe,
     });
     setIsEditingAbout(false);
+    // Reset the expanded state when saving new content
+    setIsAboutExpanded(false);
   };
 
   const saveCertificates = async () => {
@@ -566,6 +596,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     setSocials({ ...socials, [platform]: value });
   };
 
+  // Toggle See More in About section
+  const toggleAboutExpanded = () => {
+    setIsAboutExpanded(!isAboutExpanded);
+  };
+
   return (
     <div className="p-4 w-full space-y-6">
       {/* About Me Section */}
@@ -600,7 +635,28 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           </>
         ) : (
           <>
-            <p className="text-gray-700 dark:text-gray-300">{aboutMe}</p>
+            <div className="relative">
+              <p
+                ref={aboutTextRef}
+                className={`text-gray-700 dark:text-gray-300 ${
+                  showSeeMore && !isAboutExpanded
+                    ? "line-clamp-3 overflow-hidden"
+                    : ""
+                }`}
+              >
+                {aboutMe}
+              </p>
+
+              {showSeeMore && (
+                <button
+                  onClick={toggleAboutExpanded}
+                  className="text-blue-500 hover:text-blue-700 font-medium mt-1 focus:outline-none flex justify-center w-full"
+                >
+                  {isAboutExpanded ? "See less" : "read more"}
+                </button>
+              )}
+            </div>
+
             {!isExpertView && (
               <Button
                 variant="ghost"

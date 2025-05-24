@@ -25,6 +25,7 @@ import Expertspage from "./Playerpages/expertspage";
 import AssessmentReport from "./Playerpages/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
 import PlayerSponsors from "./Playerpages/PlayerSponsors";
+
 //store
 import { useAppDispatch, useAppSelector } from "./store/hooks";
 import { validateToken, initializeFromLocalStorage } from "./store/auth-slice";
@@ -44,6 +45,7 @@ import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import Expertsponsers from "./expertpages/Expertsponsors";
 import ApplicationForm from "./expertpages/ApplicationForm";
+
 import { authService } from "./store/apiConfig";
 //sponser pages
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
@@ -52,14 +54,23 @@ import SponsorForm from "./SponsorPages/SponsorForm";
 import Sponsorplayer from "./SponsorPages/Sponsorplayer";
 import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
+import Sponsorinfo from "./SponsorPages/Sponsorinfo";
+
 //Team pages
 import TeamDetailsForm from "./teampages/teamdetailsform";
 import TeamProfile from "./teampages/teamprofile";
 import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
+
 import TeamSponsor from "./teampages/sponser";
 import TeamExperts from "./teampages/expertprofile";
 import TeamPlayerInfo from "./teampages/playerspage";
+import TeamSponsor from "./teampages/TeamSponser";
+import SponsorApplicationPage from "./teampages/SponsorApplicationpage";
+import TeamPlayerInfo from "./SponsorPages/playerinfo";
+import TeamExperts from "./SponsorPages/Expertssponsor";
+import SponsorPlayerInfo from "./SponsorPages/playerinfo";
+import SponsorExperts from "./SponsorPages/Expertssponsor";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -116,10 +127,12 @@ const AppContent: React.FC = () => {
       navigate("/player/dashboard");
     } else if (role === "expert") {
       navigate("/expert/dashboard");
+
     } else if (role === "sponser") {
       navigate("/sponser/dashboard");
     } else if (role === "team") {
       navigate("/team/dashboard");
+
     }
   }
 
@@ -193,6 +206,7 @@ const AppContent: React.FC = () => {
         <Route path="details-form" element={<Detailsform />} />
         <Route path="book" element={<BookingCalendar />} />
         <Route path="sponsors" element={<PlayerSponsors />} />
+        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
       </Route>
 
       {/* Expert Outlet */}
@@ -208,14 +222,18 @@ const AppContent: React.FC = () => {
         <Route path="matches" element={<ExpertMatches />} />
         <Route path="mybooking" element={<BookingExpertside />} />
         <Route path="viewplayers" element={<PlayersProfile />} />
+        <Route path="sponsors" element={<Expertsponsors />} />
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="sponsors" element={<Expertsponsers />} />
         <Route path="ApplicationForm" element={<ApplicationForm />} />
+        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+
       </Route>
 
       {/* Sponser routes */}
+
       <Route
         path="/sponsor"
         element={
@@ -224,12 +242,19 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
+
+        <Route path="dashboard" element={<>Sponser Dashboard</>} />
+
         <Route path="players" element={<Sponsorplayer />} />
         <Route path="experts" element={<Sponsorexperts />} />
         <Route path="application" element={<SponsorApplication />} />
         <Route path="profile" element={<Sponsorprofile />} />
         <Route path="SponsorDetailsForm" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
+        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+        <Route path="playerinfo" element={<SponsorPlayerInfo />} />
+        <Route path="exdetails" element={<SponsorExperts />} />
+
       </Route>
 
       {/* Team Outlet */}
@@ -241,6 +266,7 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
+
         <Route path="dashboard" element={<>Team Dashboard</>} />
         <Route path="players" element={<TeamPlayer />} />
         <Route path="experts" element={<TeamExpert />} />
@@ -250,6 +276,8 @@ const AppContent: React.FC = () => {
         <Route path="details-form" element={<TeamDetailsForm />} />
         <Route path="exdetails" element={<TeamExperts />} />
         <Route path="playerinfo" element={<TeamPlayerInfo />} />
+        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+
       </Route>
 
       <Route
@@ -273,14 +301,7 @@ const AppContent: React.FC = () => {
           </div>
         }
       />
-      <Route
-        path="/book"
-        element={
-          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-          <BookingCalendar />
-          // </CheckAuth>
-        }
-      />
+
     </Routes>
   );
 };

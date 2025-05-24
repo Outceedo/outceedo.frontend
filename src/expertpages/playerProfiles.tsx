@@ -333,12 +333,17 @@ const PlayersProfile: React.FC = () => {
   // Handle profile view
   const handleViewProfile = (profile: Profile) => {
     localStorage.setItem("viewplayerusername", profile.username);
+
     if (localStorage.getItem("role") === "player") {
       navigate(`/player/playerinfo`);
     } else if (localStorage.getItem("role") === "expert") {
       navigate(`/expert/playerinfo`);
-    } else {
-      navigate("/team/playerinfo");
+    } 
+    else if (localStorage.getItem("role") === "team") {
+      navigate(`/team/playerinfo`);
+    } else if(localStorage.getItem("role") === "sponsor") {
+      navigate(`/sponsor/playerinfo`);
+
     }
   };
 

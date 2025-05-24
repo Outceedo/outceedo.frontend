@@ -17,9 +17,10 @@ const menuItems = [
   { path: "/team/details-form", name: "Edit Profile" },
   { path: "/team/player", name: "Players" },
   { path: "/team/experts", name: "Experts" },
-  { path: "/team/sponsors", name: "Sponsors" },
+  { path: "/team/sponsors", name: "Sponsor" },
   { path: "/team/sponsorsapplication", name: "Sponsors Application" },
   { path: "/team/profile", name: "Profile" },
+   { path: "/team/Sponsorinfo", name: "Profile" },
 ];
 function TeamHeader({ setOpen }: teamHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);

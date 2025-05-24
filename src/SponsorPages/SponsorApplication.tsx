@@ -10,6 +10,7 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import  { useState } from 'react';
 import SponserForm from "./SponsorForm"
 import { X } from "lucide-react";
+import { useNavigate } from 'react-router-dom';
 
 const data = [
   { id: 145, name: "Cody Fisher", date: "2 Jan 2025", type: "Product", budget: "-", action: "Accepted", status: "Sponsored", link: "CodyFisher.application", image: profile3 },
@@ -54,7 +55,8 @@ const SponsorApplication = () => {
 
   const openReportModal = () => setIsReportOpen(true);
   const closeReportModal = () => setIsReportOpen(false);
-
+  const navigate = useNavigate();
+  
   return (
     <div className="p-6 ">
       <div className="flex gap-4 mb-4">
@@ -106,7 +108,13 @@ const SponsorApplication = () => {
                   <AvatarImage src={app.image} />
                   <AvatarFallback>{app.name.charAt(0)}</AvatarFallback>
                 </Avatar>
-                <span>{app.name}</span>
+                <span 
+  className="cursor-pointer text-blue-600 hover:underline"
+  onClick={() => navigate(`/sponsor/Sponsorinfo`)} 
+>
+  {app.name}
+</span>
+
               </TableCell>
               <TableCell>{app.date}</TableCell>
               <TableCell>{app.type}</TableCell>

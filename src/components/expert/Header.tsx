@@ -20,6 +20,8 @@ import { useLocation } from "react-router-dom";
       {path: "/expert/mybooking", name: "My Bookings"},
       { path: "/expert/sponsors", name: "Sponsors"},
       { path: "/expert/profile", name: "Profile"},
+       { path: "/expert/Sponsorinfo", name: "Profile" },
+
     ];
 function ExpertHeader({ setOpen }: ExpertHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);

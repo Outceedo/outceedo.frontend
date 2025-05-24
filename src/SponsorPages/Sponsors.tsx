@@ -26,7 +26,7 @@ interface Country {
   cca2: string;
 }
 
-export default function Expertsponsors() {
+export default function Sponsors() {
   const [sponsors, setSponsors] = useState<SponsorCardProps[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCountry, setSelectedCountry] = useState('');
@@ -41,7 +41,7 @@ export default function Expertsponsors() {
   const closeReportModal = () => setIsReportOpen(false);
 
   const handleViewProfile = (sponsor: SponsorCardProps) => {
-    navigate('/expert/Sponsorinfo', {
+    navigate('/sponsor/Sponsorinfo', {
       state: { sponsor },
     });
   };

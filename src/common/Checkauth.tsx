@@ -63,6 +63,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
         location.pathname.startsWith("/player") ||
         location.pathname.startsWith("/sponsor") ||
         location.pathname.startsWith("/team")
+
       ) {
         return <Navigate to="/unauthorized" />;
       }

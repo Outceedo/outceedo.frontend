@@ -5,7 +5,6 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
-
 interface MenuItem {
   id: number;
   name: string;
@@ -19,6 +18,7 @@ const adminSidebarMenuItems: MenuItem[] = [
     name: "Dashboard",
     icon: "fas fa-table-columns",
     path: "/team/dashboard",
+
   },
   {
     id: 2,
@@ -39,10 +39,12 @@ const adminSidebarMenuItems: MenuItem[] = [
     path: "/team/sponsors",
   },
   {
-    id: 5,
-    name: "Application form",
+    
+    id: 4,
+    name: "SponsorApplication",
+
     icon: "fas fa-handshake",
-    path: "/team/sponsorsapplication",
+    path: "/team/sponsorsapplicationpage",
   },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
   {
