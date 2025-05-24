@@ -1,22 +1,47 @@
-import { useEffect, useState } from 'react';
-import { IoIosRefresh } from 'react-icons/io';
-import sponsor2 from '../assets/images/sponsor2.jpg';
-import { Card, CardContent } from '@/components/ui/card';
-import { X, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import ApplicationForm from '../expertpages/ApplicationForm';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from "react";
+import { IoIosRefresh } from "react-icons/io";
+import sponsor2 from "../assets/images/avatar.png";
+import { Card, CardContent } from "@/components/ui/card";
+import { X, Star, Search, ChevronRight, ChevronLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import ApplicationForm from "../expertpages/ApplicationForm";
+import { useNavigate } from "react-router-dom";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { getProfiles } from "@/store/profile-slice";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
-interface SponsorCardProps {
-  name: string;
-  company: string;
-  description: string;
-  rating: number;
-  sponsoredCount: number;
-  imageUrl: string;
-  country: string;
-  fundingType: string;
-  fundingRange: string;
+interface SponsorProfile {
+  id: string;
+  username: string;
+  firstName?: string;
+  lastName?: string;
+  company?: string;
+  bio?: string;
+  photo?: string;
+  country?: string;
+  city?: string;
+  sponsorshipType?: string;
+  budgetRange?: string;
+  reviewsReceived?: any[];
+  role?: string;
+  sponsorType?: string;
+  sponsorshipCountryPreferred?: string;
+  socialLinks?: {
+    twitter?: string;
+    facebook?: string;
+    instagram?: string;
+    linkedin?: string;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+  [key: string]: any;
 }
 
 interface Country {
@@ -26,114 +51,339 @@ interface Country {
   cca2: string;
 }
 
+// Pagination Component
+const Pagination: React.FC<{
+  totalPages: number;
+  currentPage: number;
+  onPageChange: (page: number) => void;
+}> = ({ totalPages, currentPage, onPageChange }) => {
+  const handlePrev = () => {
+    if (currentPage > 1) onPageChange(currentPage - 1);
+  };
+
+  const handleNext = () => {
+    if (currentPage < totalPages) onPageChange(currentPage + 1);
+  };
+
+  return (
+    <div className="flex justify-center mt-6 space-x-2">
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handlePrev}
+        disabled={currentPage === 1}
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </Button>
+
+      {[...Array(totalPages)].map((_, index) => (
+        <span
+          key={index}
+          className={`px-3 py-1 rounded-md cursor-pointer ${
+            currentPage === index + 1
+              ? "bg-red-500 text-white"
+              : "bg-gray-200 dark:bg-slate-600 dark:text-white"
+          }`}
+          onClick={() => onPageChange(index + 1)}
+        >
+          {index + 1}
+        </span>
+      ))}
+
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleNext}
+        disabled={currentPage === totalPages}
+      >
+        <ChevronRight className="h-4 w-4" />
+      </Button>
+    </div>
+  );
+};
+
 export default function PlayerSponsors() {
-  const [sponsors, setSponsors] = useState<SponsorCardProps[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedFundingType, setSelectedFundingType] = useState('');
-  const [selectedFundingRange, setSelectedFundingRange] = useState('');
+  // Redux state and dispatch
+  const dispatch = useAppDispatch();
+  const { profiles, status, error, totalPages } = useAppSelector(
+    (state) => state.profile
+  );
+
+  // Extract users array from the profiles response
+  const sponsorsArray = profiles?.users || [];
+
+  // Local state
+  const [searchTerm, setSearchTerm] = useState("");
   const [countries, setCountries] = useState<Country[]>([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(8); // Number of profiles per page
+
+  // Filter states
+  const [filters, setFilters] = useState({
+    country: "",
+    sponsorType: "",
+    sponsorshipType: "",
+    budgetRange: "",
+  });
 
   const navigate = useNavigate();
 
+  // Open/close modal handlers
   const openReportModal = () => setIsReportOpen(true);
   const closeReportModal = () => setIsReportOpen(false);
 
-  const handleViewProfile = (sponsor: SponsorCardProps) => {
-    navigate('/player/Sponsorinfo', {
-      state: { sponsor },
-    });
+  // Navigation to sponsor profile
+  const handleViewProfile = (sponsorId: string, username: string) => {
+    localStorage.setItem("viewsponsorusername", username);
+    navigate("/player/sponsorinfo");
   };
 
+  // Fetch sponsors on mount and when filters/pagination change
   useEffect(() => {
-    const data = Array(4).fill({
-      name: 'William',
-      company: 'Company Name',
-      description:
-        'I, William, a British citizen residing in London, am sponsoring my cousin Riya Sharma for her UK visit and will provide full financial and accommodation support.',
-      rating: 4.5,
-      sponsoredCount: 10,
-      imageUrl: sponsor2,
-      country: 'Canada',
-      fundingType: 'Type A',
-      fundingRange: '10K-50K',
-    });
-    setSponsors(data);
-  }, []);
+    fetchSponsors();
+  }, [currentPage, limit, dispatch]);
 
+  // Function to fetch sponsors
+  const fetchSponsors = () => {
+    dispatch(
+      getProfiles({
+        page: currentPage,
+        limit,
+        userType: "sponsor",
+      })
+    );
+  };
+
+  // Fetch countries for filtering
   useEffect(() => {
-    fetch('https://restcountries.com/v3.1/all')
+    fetch("https://restcountries.com/v3.1/all")
       .then((res) => res.json())
       .then((data: Country[]) => {
         const sorted = data.sort((a, b) =>
           a.name.common.localeCompare(b.name.common)
         );
         setCountries(sorted);
+      })
+      .catch((error) => {
+        console.error("Failed to fetch countries:", error);
       });
   }, []);
 
-  const handleClear = () => {
-    setSearchTerm('');
-    setSelectedCountry('');
-    setSelectedFundingType('');
-    setSelectedFundingRange('');
+  // Handle filter changes
+  const handleFilterChange = (value: string, filterType: string) => {
+    setFilters({
+      ...filters,
+      [filterType.toLowerCase()]: value,
+    });
+    // Reset to first page when filters change
+    setCurrentPage(1);
   };
 
-  const filteredSponsors = sponsors.filter((s) => {
-    return (
-      (!searchTerm ||
-        s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.company.toLowerCase().includes(searchTerm.toLowerCase())) &&
-      (!selectedCountry || s.country === selectedCountry) &&
-      (!selectedFundingType || s.fundingType === selectedFundingType) &&
-      (!selectedFundingRange || s.fundingRange === selectedFundingRange)
-    );
+  // Clear all filters
+  const handleClear = () => {
+    setSearchTerm("");
+    setFilters({
+      country: "",
+      sponsorType: "",
+      sponsorshipType: "",
+      budgetRange: "",
+    });
+    setCurrentPage(1);
+  };
+
+  // Extract unique filter options from sponsor data
+  const extractFilterOptions = (key: keyof SponsorProfile): string[] => {
+    const options = new Set<string>();
+
+    sponsorsArray.forEach((sponsor: SponsorProfile) => {
+      const value = sponsor[key];
+      if (value && typeof value === "string") options.add(value);
+    });
+
+    return Array.from(options);
+  };
+
+  // Get filter options
+  const countryOptions = extractFilterOptions("country");
+  const sponsorTypeOptions = extractFilterOptions("sponsorType");
+  const sponsorshipTypeOptions = extractFilterOptions("sponsorshipType");
+  const budgetRangeOptions = extractFilterOptions("budgetRange");
+
+  // Filter sponsor data
+  const filteredSponsors = sponsorsArray.filter((sponsor: SponsorProfile) => {
+    // Search query filtering
+    const fullName = `${sponsor.firstName || ""} ${
+      sponsor.lastName || ""
+    }`.toLowerCase();
+    const companyName = sponsor.company?.toLowerCase() || "";
+    const bio = sponsor.bio?.toLowerCase() || "";
+
+    if (
+      searchTerm &&
+      !fullName.includes(searchTerm.toLowerCase()) &&
+      !companyName.includes(searchTerm.toLowerCase()) &&
+      !bio.includes(searchTerm.toLowerCase())
+    ) {
+      return false;
+    }
+
+    // Apply other filters if they're set
+    if (
+      filters.country &&
+      sponsor.country &&
+      sponsor.country.toLowerCase() !== filters.country.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (
+      filters.sponsorType &&
+      sponsor.sponsorType &&
+      sponsor.sponsorType.toLowerCase() !== filters.sponsorType.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (
+      filters.sponsorshipType &&
+      sponsor.sponsorshipType &&
+      sponsor.sponsorshipType.toLowerCase() !==
+        filters.sponsorshipType.toLowerCase()
+    ) {
+      return false;
+    }
+
+    if (
+      filters.budgetRange &&
+      sponsor.budgetRange &&
+      sponsor.budgetRange.toLowerCase() !== filters.budgetRange.toLowerCase()
+    ) {
+      return false;
+    }
+
+    return true;
   });
 
+  // Calculate average rating and review count
+  const calculateRating = (reviews: any[] = []) => {
+    if (!reviews || reviews.length === 0) return 0;
+    const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
+    return (sum / reviews.length).toFixed(1);
+  };
+
   return (
-    <div className="p-6 w-full mx-auto">
+    <div className="p-6 w-full mx-auto dark:bg-gray-900">
+      <h1 className="text-2xl font-bold mb-6 dark:text-white">Sponsors</h1>
+
+      {/* Search Box */}
+      <div className="mb-6 relative">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+          <Input
+            type="text"
+            placeholder="Search sponsors by name, company or description..."
+            className="pl-9 w-full bg-white dark:bg-slate-700"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
+
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6 items-center">
-        <input
-          type="text"
-          placeholder="Search company / person"
-          className="border p-2 rounded w-full sm:w-60"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <select
-          className="border p-2 rounded w-full sm:w-52"
-          value={selectedFundingRange}
-          onChange={(e) => setSelectedFundingRange(e.target.value)}
+        <Select
+          value={filters.country}
+          onValueChange={(value) => handleFilterChange(value, "country")}
         >
-          <option value="">Funding Range</option>
-          <option value="10K-50K">10K-50K</option>
-          <option value="50K-100K">50K-100K</option>
-        </select>
-        <select
-          className="border p-2 rounded w-full sm:w-52"
-          value={selectedCountry}
-          onChange={(e) => setSelectedCountry(e.target.value)}
+          <SelectTrigger className="w-[180px] bg-white dark:bg-slate-700">
+            <SelectValue placeholder="Country" />
+          </SelectTrigger>
+          <SelectContent>
+            {countryOptions.length > 0
+              ? countryOptions.map((country, index) => (
+                  <SelectItem key={index} value={country}>
+                    {country}
+                  </SelectItem>
+                ))
+              : countries.map((c) => (
+                  <SelectItem key={c.cca2} value={c.name.common}>
+                    {c.name.common}
+                  </SelectItem>
+                ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.sponsorType}
+          onValueChange={(value) => handleFilterChange(value, "sponsorType")}
         >
-          <option value="">Country</option>
-          {countries.map((c) => (
-            <option key={c.cca2} value={c.name.common}>
-              {c.name.common}
-            </option>
-          ))}
-        </select>
-        <select
-          className="border p-2 rounded w-full sm:w-52"
-          value={selectedFundingType}
-          onChange={(e) => setSelectedFundingType(e.target.value)}
+          <SelectTrigger className="w-[180px] bg-white dark:bg-slate-700">
+            <SelectValue placeholder="Sponsor Type" />
+          </SelectTrigger>
+          <SelectContent>
+            {sponsorTypeOptions.length > 0
+              ? sponsorTypeOptions.map((type, index) => (
+                  <SelectItem key={index} value={type}>
+                    {type}
+                  </SelectItem>
+                ))
+              : ["Individual", "Corporate", "Institution"].map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.sponsorshipType}
+          onValueChange={(value) =>
+            handleFilterChange(value, "sponsorshipType")
+          }
         >
-          <option value="">Funding Type</option>
-          <option value="Type A">Type A</option>
-          <option value="Type B">Type B</option>
-        </select>
+          <SelectTrigger className="w-[180px] bg-white dark:bg-slate-700">
+            <SelectValue placeholder="Sponsorship Type" />
+          </SelectTrigger>
+          <SelectContent>
+            {sponsorshipTypeOptions.length > 0
+              ? sponsorshipTypeOptions.map((type, index) => (
+                  <SelectItem key={index} value={type}>
+                    {type}
+                  </SelectItem>
+                ))
+              : ["Cash", "Card", "Gift", "Professional Fee"].map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type}
+                  </SelectItem>
+                ))}
+          </SelectContent>
+        </Select>
+
+        <Select
+          value={filters.budgetRange}
+          onValueChange={(value) => handleFilterChange(value, "budgetRange")}
+        >
+          <SelectTrigger className="w-[180px] bg-white dark:bg-slate-700">
+            <SelectValue placeholder="Budget Range" />
+          </SelectTrigger>
+          <SelectContent>
+            {budgetRangeOptions.length > 0
+              ? budgetRangeOptions.map((range, index) => (
+                  <SelectItem key={index} value={range}>
+                    {range}
+                  </SelectItem>
+                ))
+              : ["10K-50K", "50K-100K", "100K-500K", "500K+"].map((range) => (
+                  <SelectItem key={range} value={range}>
+                    {range}
+                  </SelectItem>
+                ))}
+          </SelectContent>
+        </Select>
+
         <button
-          className="border flex items-center gap-2 text-sm px-8 py-2 bg-gray-100 rounded hover:bg-gray-200"
+          className="border flex items-center gap-2 text-sm px-8 py-2 bg-gray-100 dark:bg-gray-700 dark:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600"
           onClick={handleClear}
         >
           <span>Clear</span>
@@ -141,62 +391,176 @@ export default function PlayerSponsors() {
         </button>
       </div>
 
+      {/* Loading State */}
+      {status === "loading" && (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+        </div>
+      )}
+
+      {/* Error State */}
+      {status === "failed" && error && (
+        <div className="text-center p-6 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
+          <p className="text-lg font-semibold">Failed to load sponsors</p>
+          <p>{error}</p>
+          <Button
+            className="mt-4 bg-red-600 hover:bg-red-700"
+            onClick={fetchSponsors}
+          >
+            Try Again
+          </Button>
+        </div>
+      )}
+
+      {/* No Sponsors State */}
+      {status === "succeeded" && filteredSponsors.length === 0 && (
+        <div className="text-center p-10">
+          <p className="text-lg text-gray-500 dark:text-gray-400">
+            No sponsors found matching your criteria.
+          </p>
+        </div>
+      )}
+
       {/* Sponsor List */}
-      {filteredSponsors.map((sponsor, idx) => (
-        <Card
-          key={idx}
-          className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4 mb-3 dark:bg-gray-800"
-        >
-          <img
-            src={sponsor.imageUrl}
-            alt={sponsor.name}
-            className="w-58 h-28 object-fill rounded-md"
-          />
-          <CardContent className="flex-1 p-0">
-            <h2 className="text-lg font-semibold">{sponsor.name}</h2>
-            <p className="text-sm text-gray-600 dark:text-white">{sponsor.company}</p>
-            <p className="text-sm mt-1">{sponsor.description}</p>
-            <div className="flex items-center mt-2 text-sm text-gray-700">
-              <div className="flex items-center text-yellow-400 mr-2">
-                {Array.from({ length: Math.floor(sponsor.rating) }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-yellow-400" />
-                ))}
-              </div>
-              <span className="text-yellow-400 text-lg">{sponsor.rating}</span>
-              <span className="ml-2 text-gray-500 dark:text-white">
-                (Sponsored - {sponsor.sponsoredCount} players)
-              </span>
-            </div>
-          </CardContent>
-          <div className="flex flex-row justify-start items-start gap-5">
-            <Button
-              className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
-              onClick={() => handleViewProfile(sponsor)}
+      {status === "succeeded" &&
+        filteredSponsors.length > 0 &&
+        filteredSponsors.map((sponsor: SponsorProfile) => {
+          const rating = calculateRating(sponsor.reviewsReceived);
+          const sponsoredCount = sponsor.reviewsReceived?.length || 0;
+          const displayName =
+            `${sponsor.firstName || ""} ${sponsor.lastName || ""}`.trim() ||
+            sponsor.username ||
+            "Anonymous Sponsor";
+
+          return (
+            <Card
+              key={sponsor.id}
+              className="flex flex-col md:flex-row items-start md:items-center p-4 gap-4 mb-3 dark:bg-gray-800"
             >
-              View Profile
-            </Button>
-            <Button
-              variant="ghost"
-              className="text-2xl font-bold bg-gray-100 text-gray-800 flex items-center justify-center"
-              onClick={openReportModal}
-            >
-              ...
-            </Button>
-            {isReportOpen && (
-              <div className="fixed inset-0 z-50 bg-white flex flex-col dark:bg-gray-800">
-                <div className="flex justify-end p-4">
-                  <button onClick={closeReportModal}>
-                    <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black dark:text-white" />
-                  </button>
+              <img
+                src={sponsor.photo || sponsor2}
+                alt={displayName}
+                className="w-48 h-48 object-fill rounded-md"
+                onError={(e) => {
+                  // Fallback to default image if profile photo fails to load
+                  e.currentTarget.src = sponsor2;
+                }}
+              />
+              <CardContent className="flex-1 p-0">
+                <h2 className="text-lg font-semibold dark:text-white">
+                  {displayName}
+                </h2>
+                <p className="text-sm text-gray-600 dark:text-gray-300">
+                  {sponsor.company ||
+                    (sponsor.sponsorType === "individual"
+                      ? "Individual Sponsor"
+                      : "Organization")}
+                  {sponsor.city && sponsor.country
+                    ? ` • ${sponsor.city}, ${sponsor.country}`
+                    : ""}
+                </p>
+                <p className="text-sm mt-1 line-clamp-2 dark:text-gray-300">
+                  {sponsor.bio || "No description available."}
+                </p>
+                <div className="flex items-center mt-2 text-sm text-gray-700">
+                  <div className="flex items-center text-yellow-400 mr-2">
+                    {Array.from({
+                      length: Math.floor(Number(rating) || 0),
+                    }).map((_, i) => (
+                      <Star key={i} className="w-4 h-4 fill-yellow-400" />
+                    ))}
+                  </div>
+                  <span className="text-yellow-400 text-lg">
+                    {rating || "N/A"}
+                  </span>
+                  <span className="ml-2 text-gray-500 dark:text-gray-400">
+                    (Sponsored - {sponsoredCount} players)
+                  </span>
                 </div>
-                <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-md mx-8 my-6 p-6">
-                  <ApplicationForm />
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {sponsor.sponsorType && (
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-white">
+                      {sponsor.sponsorType}
+                    </span>
+                  )}
+                  {sponsor.budgetRange && (
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-white">
+                      {sponsor.budgetRange}
+                    </span>
+                  )}
+                  {sponsor.sponsorshipType && (
+                    <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-white">
+                      {sponsor.sponsorshipType}
+                    </span>
+                  )}
                 </div>
+              </CardContent>
+              <div className="flex flex-row justify-start items-start gap-5">
+                <Button
+                  className="bg-red-500 hover:bg-red-600 text-white cursor-pointer"
+                  onClick={() =>
+                    handleViewProfile(sponsor.id, sponsor.username)
+                  }
+                >
+                  View Profile
+                </Button>
+                <Button
+                  variant="ghost"
+                  className="text-2xl font-bold bg-gray-100 text-gray-800 flex items-center justify-center dark:bg-gray-700 dark:text-white"
+                  onClick={openReportModal}
+                >
+                  ...
+                </Button>
+                {isReportOpen && (
+                  <div className="fixed inset-0 z-50 bg-white dark:bg-gray-800 flex flex-col">
+                    <div className="flex justify-end p-4">
+                      <button onClick={closeReportModal}>
+                        <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black dark:text-white" />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-md mx-8 my-6 p-6">
+                      <ApplicationForm />
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
+            </Card>
+          );
+        })}
+
+      {/* Pagination */}
+      {status === "succeeded" && totalPages > 0 && (
+        <div className="flex flex-col items-center mt-6">
+          <div className="flex items-center mb-4">
+            <span className="text-sm text-gray-600 dark:text-gray-400 mr-2">
+              Items per page:
+            </span>
+            <select
+              value={limit}
+              onChange={(e) => {
+                setLimit(parseInt(e.target.value));
+                setCurrentPage(1); // Reset to first page when changing limit
+              }}
+              className="border rounded p-1 text-sm dark:bg-gray-700 dark:text-white"
+            >
+              <option value="4">4</option>
+              <option value="8">8</option>
+              <option value="12">12</option>
+              <option value="20">20</option>
+            </select>
           </div>
-        </Card>
-      ))}
+
+          <Pagination
+            totalPages={totalPages}
+            currentPage={currentPage}
+            onPageChange={setCurrentPage}
+          />
+
+          <div className="text-sm text-gray-600 dark:text-gray-400 mt-4">
+            Showing {filteredSponsors.length} of {profiles?.total || 0} sponsors
+          </div>
+        </div>
+      )}
     </div>
   );
 }
