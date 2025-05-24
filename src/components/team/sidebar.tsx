@@ -18,7 +18,6 @@ const adminSidebarMenuItems: MenuItem[] = [
     name: "Dashboard",
     icon: "fas fa-table-columns",
     path: "/team/dashboard",
-
   },
   {
     id: 2,
@@ -39,12 +38,11 @@ const adminSidebarMenuItems: MenuItem[] = [
     path: "/team/sponsors",
   },
   {
-    
     id: 4,
     name: "SponsorApplication",
 
     icon: "fas fa-handshake",
-    path: "/team/sponsorsapplicationpage",
+    path: "/team/sponsorsapplication",
   },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
   {

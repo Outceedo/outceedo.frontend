@@ -62,15 +62,15 @@ import TeamProfile from "./teampages/teamprofile";
 import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
 
-import TeamSponsor from "./teampages/sponser";
-import TeamExperts from "./teampages/expertprofile";
-import TeamPlayerInfo from "./teampages/playerspage";
+
+
 import TeamSponsor from "./teampages/TeamSponser";
-import SponsorApplicationPage from "./teampages/SponsorApplicationpage";
+
 import TeamPlayerInfo from "./SponsorPages/playerinfo";
 import TeamExperts from "./SponsorPages/Expertssponsor";
 import SponsorPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorExperts from "./SponsorPages/Expertssponsor";
+import Expertsponsors from "./expertpages/Expertsponsors";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -128,8 +128,8 @@ const AppContent: React.FC = () => {
     } else if (role === "expert") {
       navigate("/expert/dashboard");
 
-    } else if (role === "sponser") {
-      navigate("/sponser/dashboard");
+    } else if (role === "sponsor") {
+      navigate("/sponsor/dashboard");
     } else if (role === "team") {
       navigate("/team/dashboard");
 
@@ -152,8 +152,8 @@ const AppContent: React.FC = () => {
                   ? "/player/dashboard"
                   : user?.role === "expert"
                   ? "/expert/dashboard"
-                  : user?.role === "sponser"
-                  ? "/sponser/dashboard"
+                  : user?.role === "sponsor"
+                  ? "/sponsor/dashboard"
                   : "/team/dashboard"
               }
             />

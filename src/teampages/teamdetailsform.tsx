@@ -378,7 +378,7 @@ export default function TeamDetailsForm() {
 
       // Prepare the data for API submission
       const teamData = {
-        teamName: form.firstName.trim(),
+       
         profession: form.type,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -386,8 +386,7 @@ export default function TeamDetailsForm() {
         city: form.city,
         country: form.country,
         address: form.address,
-        countryCode: form.countryCode,
-        phone: form.phone,
+       
         bio: form.bio,
         photo: photoUrl,
         socialLinks: {
@@ -406,7 +405,7 @@ export default function TeamDetailsForm() {
 
         // Redirect to appropriate page after submission
         setTimeout(() => {
-          navigate("/teams/dashboard");
+          navigate("/team/dashboard");
         }, 1500);
       } else if (updateProfile.rejected.match(updateProfileResult)) {
         throw new Error("Failed to update profile.");

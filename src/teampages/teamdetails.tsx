@@ -1,32 +1,100 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Pencil, Save, X } from "lucide-react";
+import { Pencil, Save, X, ChevronDown, ChevronUp } from "lucide-react";
 import Swal from "sweetalert2";
+import { useAppDispatch } from "@/store/hooks";
+import { updateProfile } from "@/store/profile-slice";
 
-const TeamDetails = () => {
+interface ProfileData {
+  id?: string;
+  bio?: string;
+  firstName?: string;
+  lastName?: string;
+  profession?: string;
+  city?: string;
+  country?: string;
+  club?: string;
+  address?: string;
+  socialLinks?: {
+    twitter: string;
+    facebook: string;
+    linkedin: string;
+    instagram: string;
+  };
+  [key: string]: any;
+}
+
+const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
+  profileData = {},
+}) => {
+  const dispatch = useAppDispatch();
+  const bioTextRef = useRef<HTMLParagraphElement>(null);
+  const [expanded, setExpanded] = useState(false);
+  const [isBioLong, setIsBioLong] = useState(false);
+
   // About Team State
   const [aboutTeam, setAboutTeam] = useState(
-    "I am a professional guitarist and qualified music teacher with extensive experience as a soloist, accompanist, and band member across various genres including Rock, Soul, Funk, Folk, Latin, Reggae, Gypsy Jazz, Classical."
+    profileData.bio || "I am a professional team with extensive experience."
   );
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Team Members State
-  const [teamMembers, setTeamMembers] = useState(["jack", "mick", "jay", "axl", "nick"]);
+  const [teamMembers, setTeamMembers] = useState([
+    "jack",
+    "mick",
+    "jay",
+    "axl",
+    "nick",
+  ]);
   const [tempMembers, setTempMembers] = useState([...teamMembers]);
   const [newMember, setNewMember] = useState("");
   const [isEditingMembers, setIsEditingMembers] = useState(false);
 
+  // Update bio when profile data changes
+  useEffect(() => {
+    if (profileData && profileData.bio) {
+      setAboutTeam(profileData.bio);
+    }
+  }, [profileData]);
+
+  // Check if bio text overflows 3 lines
+  useEffect(() => {
+    const checkBioLength = () => {
+      if (bioTextRef.current) {
+        const lineHeight = parseInt(
+          window.getComputedStyle(bioTextRef.current).lineHeight
+        );
+        const height = bioTextRef.current.scrollHeight;
+        const lines = height / (lineHeight || 24); // Use 24px as fallback line height
+        setIsBioLong(lines > 3);
+      }
+    };
+
+    // Check after the component mounts and whenever the bio changes
+    checkBioLength();
+    window.addEventListener("resize", checkBioLength);
+
+    return () => {
+      window.removeEventListener("resize", checkBioLength);
+    };
+  }, [aboutTeam, expanded]);
+
+  // Toggle bio expand/collapse
+  const toggleBioExpand = () => {
+    setExpanded(!expanded);
+  };
+
   // Save About Team
-  const handleSaveAbout = () => {
+  const handleSaveAbout = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      setAboutTeam(aboutTeam.trim());
+    try {
+      await dispatch(updateProfile({ bio: aboutTeam.trim() })).unwrap();
       setIsEditingAbout(false);
-      setIsSubmitting(false);
+      setExpanded(false);
       Swal.fire({
         icon: "success",
         title: "Saved",
@@ -34,12 +102,21 @@ const TeamDetails = () => {
         timer: 1500,
         showConfirmButton: false,
       });
-    }, 500);
+    } catch (error: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: error.message || "Failed to update team information",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const cancelAboutEdit = () => {
     setIsEditingAbout(false);
-    setAboutTeam(aboutTeam);
+    // Reset to original value from profile data
+    setAboutTeam(profileData.bio || aboutTeam);
   };
 
   // Add New Team Member
@@ -104,7 +181,12 @@ const TeamDetails = () => {
         <CardContent className="p-4">
           <div className="flex items-start mb-2">
             <h2 className="text-md font-semibold">About Team</h2>
-            <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setIsEditingAbout(true)}>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="ml-auto"
+              onClick={() => setIsEditingAbout(true)}
+            >
               <Pencil className="w-4 h-4" />
             </Button>
           </div>
@@ -115,77 +197,70 @@ const TeamDetails = () => {
                 value={aboutTeam}
                 onChange={(e) => setAboutTeam(e.target.value)}
                 disabled={isSubmitting}
+                placeholder="Write about your team..."
               />
               <div className="flex justify-end gap-2 mt-2">
-                <Button variant="outline" onClick={cancelAboutEdit} disabled={isSubmitting}>
+                <Button
+                  variant="outline"
+                  onClick={cancelAboutEdit}
+                  disabled={isSubmitting}
+                >
                   <X className="w-4 h-4 mr-1" /> Cancel
                 </Button>
-                <Button onClick={handleSaveAbout} className="bg-red-600" disabled={isSubmitting}>
-                  <Save className="w-4 h-4 mr-1" /> Save
+                <Button
+                  onClick={handleSaveAbout}
+                  className="bg-red-600"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4 mr-1" /> Save
+                    </>
+                  )}
                 </Button>
               </div>
             </>
           ) : (
-            <>
-              <p className="text-sm text-gray-700">{aboutTeam}</p>
-              <Button variant="link" className="mt-2 text-blue-600 p-0 h-auto text-sm">
-                Read More ...
-              </Button>
-            </>
+            <div className="relative">
+              <p
+                ref={bioTextRef}
+                className={`text-sm text-gray-700 ${
+                  !expanded && isBioLong ? "line-clamp-3" : ""
+                }`}
+              >
+                {aboutTeam || "No team information available."}
+              </p>
+
+              {isBioLong && (
+                <Button
+                  variant="link"
+                  className="mt-1 text-red-600 p-0 h-auto text-sm flex items-center"
+                  onClick={toggleBioExpand}
+                >
+                  {expanded ? (
+                    <>
+                      Read Less <ChevronUp className="ml-1 h-4 w-4" />
+                    </>
+                  ) : (
+                    <>
+                      Read More <ChevronDown className="ml-1 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              )}
+            </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Team Members Card
-      <Card className="w-full md:w-1/3">
-        <CardContent className="p-4">
-          <div className="flex items-start mb-2">
-            <h3 className="text-md font-semibold">Team Members</h3>
-            <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setIsEditingMembers(true)}>
-              <Pencil className="w-4 h-4" />
-            </Button>
-          </div>
-          {isEditingMembers ? (
-            <>
-              <div className="space-y-2">
-                {tempMembers.map((member, idx) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <Input value={member} disabled className="text-sm" />
-                    <Button size="icon" variant="destructive" onClick={() => handleRemoveMember(idx)}>
-                      <X className="w-4 h-4" />
-                    </Button>
-                  </div>
-                ))}
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    value={newMember}
-                    onChange={(e) => setNewMember(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleAddMember()}
-                    placeholder="Add new member"
-                  />
-                  <Button className="bg-amber-400 text-black hover:bg-amber-500" onClick={handleAddMember}>
-                    Add
-                  </Button>
-                </div>
-              </div>
-              <div className="flex justify-end gap-2 mt-3">
-                <Button variant="outline" onClick={cancelMembersEdit}>
-                  <X className="w-4 h-4 mr-1" /> Cancel
-                </Button>
-                <Button className="bg-red-600" onClick={handleSaveMembers}>
-                  <Save className="w-4 h-4 mr-1" /> Save
-                </Button>
-              </div>
-            </>
-          ) : (
-            <ul className="text-sm text-gray-800 space-y-1">
-              {teamMembers.map((member, idx) => (
-                <li key={idx}>{member}</li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card> */}
+      
+
+      
     </div>
   );
 };

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 
 interface User {
@@ -9,12 +9,14 @@ interface CheckAuthProps {
   isAuthenticated: boolean;
   user: User | null;
   children: React.ReactNode;
+  onAuthCheck?: () => void; // Optional callback to trigger auth check
 }
 
 const CheckAuth: React.FC<CheckAuthProps> = ({
   isAuthenticated,
   user,
   children,
+  onAuthCheck,
 }) => {
   const location = useLocation();
 
@@ -27,7 +29,14 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
   const effectivelyAuthenticated = isAuthenticated || tokenExists;
   const effectiveRole = user?.role || roleFromStorage;
 
-  // If we're loading, show a loading indicator
+  // Trigger auth check when component mounts if token exists but no user
+  useEffect(() => {
+    if (tokenExists && !user && onAuthCheck) {
+      onAuthCheck();
+    }
+  }, [tokenExists, user, onAuthCheck]);
+
+  // Handle loading state when we have a token but no user data yet
   if (tokenExists && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -36,64 +45,62 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     );
   }
 
+  // Handle unauthenticated users
   if (!effectivelyAuthenticated) {
-    if (location.pathname !== "/login" && location.pathname !== "/signup") {
-      return <Navigate to="/login" />;
+    // Allow access to public routes
+    if (
+      location.pathname === "/login" ||
+      location.pathname === "/signup" ||
+      location.pathname === "/" ||
+      location.pathname.startsWith("/public/")
+    ) {
+      return <>{children}</>;
     }
-  } else {
+
+    // Redirect to login and remember the attempted URL
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Handle authenticated users
+  else {
     // Redirect from login/signup pages based on user role
     if (location.pathname === "/login" || location.pathname === "/signup") {
-      if (effectiveRole === "expert") {
-        return <Navigate to="/expert/dashboard" />;
-      }
-      if (effectiveRole === "player") {
-        return <Navigate to="/player/dashboard" />;
-      }
-      if (effectiveRole === "sponsor") {
-        return <Navigate to="/sponsor/dashboard" />;
-      }
-      if (effectiveRole === "team") {
-        return <Navigate to="/team/dashboard" />;
+      switch (effectiveRole) {
+        case "expert":
+          return <Navigate to="/expert/dashboard" replace />;
+        case "player":
+          return <Navigate to="/player/dashboard" replace />;
+        case "sponsor":
+          return <Navigate to="/sponsor/dashboard" replace />;
+        case "team":
+          return <Navigate to="/team/dashboard" replace />;
+        default:
+          // If role is unknown, redirect to a safe default
+          return <Navigate to="/" replace />;
       }
     }
 
-    // Role-based route restrictions
-    if (effectiveRole === "expert") {
-      if (
-        location.pathname.startsWith("/player") ||
-        location.pathname.startsWith("/sponsor") ||
-        location.pathname.startsWith("/team")
+    // Handle role-based route restrictions
+    const userRole = effectiveRole || "";
 
-      ) {
-        return <Navigate to="/unauthorized" />;
-      }
-    }
-    if (effectiveRole === "player") {
-      if (
-        location.pathname.startsWith("/expert") ||
-        location.pathname.startsWith("/sponsor") ||
-        location.pathname.startsWith("/team")
-      ) {
-        return <Navigate to="/unauthorized" />;
-      }
-    }
-    if (effectiveRole === "sponsor") {
-      if (
-        location.pathname.startsWith("/player") ||
-        location.pathname.startsWith("/expert") ||
-        location.pathname.startsWith("/team")
-      ) {
-        return <Navigate to="/unauthorized" />;
-      }
-    }
-    if (effectiveRole === "team") {
-      if (
-        location.pathname.startsWith("/player") ||
-        location.pathname.startsWith("/expert") ||
-        location.pathname.startsWith("/sponsor")
-      ) {
-        return <Navigate to="/unauthorized" />;
-      }
+    // Define allowed path prefixes for each role
+    const rolePathMap: Record<string, string[]> = {
+      expert: ["/expert", "/", "/public"],
+      player: ["/player", "/", "/public"],
+      sponsor: ["/sponsor", "/", "/public"],
+      team: ["/team", "/", "/public"],
+    };
+
+    // Check if current path is allowed for the user's role
+    const allowedPaths = rolePathMap[userRole] || [];
+    const isPathAllowed = allowedPaths.some(
+      (path) =>
+        location.pathname === path || location.pathname.startsWith(`${path}/`)
+    );
+
+    if (!isPathAllowed) {
+      // Redirect to unauthorized page
+      return <Navigate to="/unauthorized" replace />;
     }
   }
 
