@@ -229,14 +229,6 @@ const AppContent: React.FC = () => {
           </div>
         }
       />
-      <Route
-        path="/book"
-        element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <BookingCalendar />
-          </CheckAuth>
-        }
-      />
     </Routes>
   );
 };
