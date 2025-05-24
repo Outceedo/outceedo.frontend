@@ -16,6 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FaEllipsisH, FaCalendarAlt, FaUser } from "react-icons/fa";
 
 interface SponsorProfile {
   id: string;
@@ -118,6 +119,13 @@ export default function Expertsponsors() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8); // Number of profiles per page
+  const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(
+    null
+  );
+
+  // Current date and user info
+  const currentDateTime = "2025-05-24 12:47:36";
+  const currentUserLogin = "22951a3363";
 
   // Filter states
   const [filters, setFilters] = useState({
@@ -130,8 +138,15 @@ export default function Expertsponsors() {
   const navigate = useNavigate();
 
   // Open/close modal handlers
-  const openReportModal = () => setIsReportOpen(true);
-  const closeReportModal = () => setIsReportOpen(false);
+  const openReportModal = (sponsor: SponsorProfile) => {
+    setActiveSponsor(sponsor);
+    setIsReportOpen(true);
+    // Don't prevent body scrolling as modal is contained in the main content area
+  };
+
+  const closeReportModal = () => {
+    setIsReportOpen(false);
+  };
 
   // Navigation to sponsor profile
   const handleViewProfile = (sponsorId: string, username: string) => {
@@ -507,26 +522,47 @@ export default function Expertsponsors() {
                 <Button
                   variant="ghost"
                   className="text-2xl font-bold bg-gray-100 text-gray-800 flex items-center justify-center dark:bg-gray-700 dark:text-white"
-                  onClick={openReportModal}
+                  onClick={() => openReportModal(sponsor)}
                 >
-                  ...
+                  <FaEllipsisH />
                 </Button>
-                {isReportOpen && (
-                  <div className="fixed inset-0 z-50 bg-white dark:bg-gray-800 flex flex-col">
-                    <div className="flex justify-end p-4">
-                      <button onClick={closeReportModal}>
-                        <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black dark:text-white" />
-                      </button>
-                    </div>
-                    <div className="flex-1 overflow-auto bg-white dark:bg-gray-800 rounded-md mx-8 my-6 p-6">
-                      <ApplicationForm />
-                    </div>
-                  </div>
-                )}
               </div>
             </Card>
           );
         })}
+
+      {/* Modal that respects sidebar and header positioning */}
+      {isReportOpen && (
+        <div className="fixed left-[260px] top-0 right-0 bottom-0 z-50 bg-white dark:bg-gray-800 flex flex-col overflow-hidden">
+          <div className="sticky top-0 w-full flex justify-between items-center p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 z-10">
+            
+            <button
+              onClick={closeReportModal}
+              className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-800 dark:text-white" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-4 sm:p-6 md:p-8">
+            <ApplicationForm />
+          </div>
+          <div className="sticky bottom-0 w-full p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex justify-end">
+            <Button
+              variant="outline"
+              className="mr-2"
+              onClick={closeReportModal}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={closeReportModal}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {status === "succeeded" && totalPages > 0 && (
