@@ -151,11 +151,11 @@ const Matches: React.FC = () => {
   ];
 
   return (
-    <div className="container mx-auto p-4 space-y-6">
+    <div className="container mx-auto p-4 space-y-6 dark:bg-gray-900">
       <div className="grid grid-cols-1 gap-6">
         {/* Match Form */}
-        <Card className="w-full">
-          <CardContent>
+        <Card className="w-full dark:bg-gray-800 dark:border-gray-700">
+          <CardContent className="dark:text-gray-200">
             <CommonForm
               formControls={formControls}
               formData={formData}
@@ -180,26 +180,35 @@ const Matches: React.FC = () => {
         </Card>
 
         {/* Match Table */}
-        <Card className="w-full">
-          <CardHeader />
+        <Card className="w-full dark:bg-gray-800 dark:border-gray-700">
+          <CardHeader className="dark:border-gray-700" />
           <CardContent>
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Home Team</TableHead>
-                    <TableHead>Away Team</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Result</TableHead>
-                    <TableHead>Actions</TableHead>
+                <TableHeader className="dark:bg-gray-800 dark:text-gray-300">
+                  <TableRow className="dark:border-gray-700">
+                    <TableHead className="dark:text-gray-300">Date</TableHead>
+                    <TableHead className="dark:text-gray-300">
+                      Home Team
+                    </TableHead>
+                    <TableHead className="dark:text-gray-300">
+                      Away Team
+                    </TableHead>
+                    <TableHead className="dark:text-gray-300">Type</TableHead>
+                    <TableHead className="dark:text-gray-300">Status</TableHead>
+                    <TableHead className="dark:text-gray-300">Result</TableHead>
+                    <TableHead className="dark:text-gray-300">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {matches.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={7} className="text-center">
+                    <TableRow className="dark:border-gray-700">
+                      <TableCell
+                        colSpan={7}
+                        className="text-center dark:text-gray-300"
+                      >
                         No matches found
                       </TableCell>
                     </TableRow>
@@ -207,22 +216,37 @@ const Matches: React.FC = () => {
                     matches.map((match, index) => (
                       <TableRow
                         key={match.id}
-                        className={index % 2 === 0 ? "bg-white" : "bg-gray-100"}
+                        className={
+                          index % 2 === 0
+                            ? "bg-white dark:bg-gray-800"
+                            : "bg-gray-100 dark:bg-gray-700"
+                        }
                       >
-                        <TableCell className="font-medium">
+                        <TableCell className="font-medium dark:text-gray-300">
                           {match.date}
                         </TableCell>
-                        <TableCell>{match.homeTeam}</TableCell>
-                        <TableCell>{match.awayTeam}</TableCell>
-                        <TableCell>{match.type}</TableCell>
-                        <TableCell>{match.status}</TableCell>
-                        <TableCell>{match.result}</TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          {match.homeTeam}
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          {match.awayTeam}
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          {match.type}
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          {match.status}
+                        </TableCell>
+                        <TableCell className="dark:text-gray-300">
+                          {match.result}
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <Button
                               size="icon"
                               variant="ghost"
                               onClick={() => handleEdit(match.id)}
+                              className="dark:text-gray-300 dark:hover:text-white dark:hover:bg-gray-700"
                             >
                               <Pencil className="h-4 w-4" />
                               <span className="sr-only">Edit</span>
@@ -231,7 +255,7 @@ const Matches: React.FC = () => {
                               size="icon"
                               variant="ghost"
                               onClick={() => handleDelete(match.id)}
-                              className="text-destructive"
+                              className="text-destructive dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-gray-700"
                             >
                               <Trash2 className="h-4 w-4" />
                               <span className="sr-only">Delete</span>
