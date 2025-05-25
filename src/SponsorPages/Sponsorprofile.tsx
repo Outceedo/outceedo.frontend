@@ -5,7 +5,7 @@ import Sponsordetails from "./Sponsordetails";
 import Sponsormedia from "./Sponsormedia";
 import { Pencil, Loader2 } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import Sponsor2 from "../assets/images/sponsor2.jpg";
+import Sponsor2 from "../assets/images/avatar.png";
 import {
   faInstagram,
   faLinkedinIn,
@@ -88,8 +88,6 @@ const SponsorProfile = () => {
     }
   }, [dispatch, username]);
 
-  
-
   // Even in loading or error states, we'll show the UI with fallback values
   if (status === "loading") {
     return (
@@ -141,7 +139,6 @@ const SponsorProfile = () => {
                     ? `${data.firstName} ${data.lastName}`
                     : fallbackData.companyName)}
               </h1>
-              
             </div>
 
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
@@ -180,7 +177,6 @@ const SponsorProfile = () => {
             </div>
 
             {/* Biography if available */}
-            
 
             {/* Social Links */}
             <div className="mt-10 flex gap-6">

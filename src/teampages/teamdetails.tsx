@@ -36,9 +36,7 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
   const [isBioLong, setIsBioLong] = useState(false);
 
   // About Team State
-  const [aboutTeam, setAboutTeam] = useState(
-    profileData.bio || "I am a professional team with extensive experience."
-  );
+  const [aboutTeam, setAboutTeam] = useState(profileData.bio || "");
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -92,7 +90,7 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
   const handleSaveAbout = async () => {
     setIsSubmitting(true);
     try {
-      await dispatch(updateProfile({ bio: aboutTeam.trim() })).unwrap();
+      await dispatch(updateProfile({ bio: aboutTeam })).unwrap();
       setIsEditingAbout(false);
       setExpanded(false);
       Swal.fire({
@@ -257,10 +255,6 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
           )}
         </CardContent>
       </Card>
-
-      
-
-      
     </div>
   );
 };
