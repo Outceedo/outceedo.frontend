@@ -90,7 +90,7 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
   const handleSaveAbout = async () => {
     setIsSubmitting(true);
     try {
-      await dispatch(updateProfile({ bio: aboutTeam })).unwrap();
+      await dispatch(updateProfile({ bio: aboutTeam }));
       setIsEditingAbout(false);
       setExpanded(false);
       Swal.fire({
@@ -230,6 +230,7 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
                 className={`text-sm text-gray-700 ${
                   !expanded && isBioLong ? "line-clamp-3" : ""
                 }`}
+                style={{ whiteSpace: "pre-line" }}
               >
                 {aboutTeam || "No team information available."}
               </p>

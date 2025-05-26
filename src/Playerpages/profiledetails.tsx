@@ -643,6 +643,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     ? "line-clamp-3 overflow-hidden"
                     : ""
                 }`}
+                style={{ whiteSpace: "pre-line" }}
               >
                 {aboutMe}
               </p>

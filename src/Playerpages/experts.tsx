@@ -722,6 +722,7 @@ const Experts = () => {
                   "text-gray-700 dark:text-gray-300",
                   !readMore && shouldClamp && "line-clamp-2"
                 )}
+                style={{ whiteSpace: "pre-line" }}
               >
                 {expertData.about}
               </p>

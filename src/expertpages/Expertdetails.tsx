@@ -580,6 +580,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                     ? "line-clamp-3 overflow-hidden"
                     : ""
                 }`}
+                style={{ whiteSpace: "pre-line" }}
               >
                 {aboutMe}
               </p>
