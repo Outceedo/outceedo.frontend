@@ -247,7 +247,7 @@ const AppContent: React.FC = () => {
         <Route path="experts" element={<Sponsorexperts />} />
         <Route path="application" element={<SponsorApplication />} />
         <Route path="profile" element={<Sponsorprofile />} />
-        <Route path="SponsorDetailsForm" element={<SponsorDetailsForm />} />
+        <Route path="details-form" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
         <Route path="Sponsorinfo" element={<Sponsorinfo />} />
         <Route path="playerinfo" element={<SponsorPlayerInfo />} />

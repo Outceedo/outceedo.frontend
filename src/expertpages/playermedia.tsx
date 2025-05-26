@@ -116,7 +116,7 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
       </div>
 
       {/* Display Uploaded Media Based on Filter */}
-      <div className="flex flex-col items-center gap-6 w-full max-w-3xl">
+      <div className="flex flex-col items-center gap-6 w-full max-w-screen">
         {filteredMedia.length === 0 ? (
           <p className="text-gray-400 dark:text-white">
             No{" "}
@@ -131,8 +131,8 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
           <>
             {(filter === "all" || filter === "photo") &&
               filteredMedia.some((item) => item.type === "photo") && (
-                <div className="w-full text-left">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <div className="w-full max-w-screen text-left">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12">
                     {filteredMedia
                       .filter((item) => item.type === "photo")
                       .map((photo) => (
@@ -165,7 +165,7 @@ const PlayerMedia: React.FC<PlayerMediaProps> = ({
             {(filter === "all" || filter === "video") &&
               filteredMedia.some((item) => item.type === "video") && (
                 <div className="w-full text-left mt-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12">
                     {filteredMedia
                       .filter((item) => item.type === "video")
                       .map((video) => (

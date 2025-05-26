@@ -366,7 +366,7 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
                 {/* Photos Section */}
                 {media.some((item) => item.type === "photo") && (
                   <>
-                    <h2 className="col-span-2 md:col-span-3 text-lg font-semibold text-gray-700 dark:text-white">
+                    <h2 className="col-span-2 md:col-span-4 text-lg font-semibold text-gray-700 dark:text-white">
                       Photos
                     </h2>
                     {media
@@ -388,7 +388,7 @@ const Media: React.FC<MediaProps> = ({ playerdata, isExpertView = false }) => {
                 {/* Videos Section */}
                 {media.some((item) => item.type === "video") && (
                   <>
-                    <h2 className="col-span-2 md:col-span-3 text-lg font-semibold text-gray-700 dark:text-white mt-4">
+                    <h2 className="col-span-2 md:col-span-4 text-lg font-semibold text-gray-700 dark:text-white mt-4">
                       Videos
                     </h2>
                     {media
@@ -519,12 +519,12 @@ const MediaCard: React.FC<MediaCardProps> = ({
   }, []);
 
   return (
-    <div className="relative bg-white p-4 dark:bg-gray-700 shadow-md rounded-lg">
+    <div className="relative bg-white p-4 dark:bg-gray-700 shadow-md rounded-lg max-w-64">
       {/* Three-dot delete menu - Only show if not in expert view */}
       {!isExpertView && (
         <div className="absolute top-1 right-1 z-10" ref={menuRef}>
           <Button
-            className="text-black dark:text-white text-2xl bg-yellow-200 hover:bg-white"
+            className="text-black dark:text-white text-2xl bg-yellow-200 hover:bg-white w-4 h-8"
             onClick={() => setMenuOpen((prev) => !prev)}
           >
             &times;

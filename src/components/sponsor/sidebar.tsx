@@ -36,7 +36,7 @@ const sponsorSidebarMenuItems: MenuItem[] = [
 
   {
     id: 2,
-    name: "Sponsor Application",
+    name: "Applications",
     icon: "fas fa-handshake",
     path: "/sponsor/application",
   },
@@ -179,7 +179,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {playerName}
         </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400"></p>
+        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">{currentProfile?.company}</p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {sponsorProfession} - {sponsorRole}
         </p>
@@ -191,7 +191,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
         {/* Edit Profile Button */}
         <button
-          onClick={() => navigate("/sponsor/SponsorDetailsForm")}
+          onClick={() => navigate("/sponsor/details-form")}
           className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors cursor-pointer"
         >
           Edit Profile

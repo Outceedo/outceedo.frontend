@@ -48,6 +48,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 // Updated interfaces to match the new API response format
 interface Expert {
@@ -128,7 +129,18 @@ const MyBooking: React.FC = () => {
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
-  // Function to check if booking needs payment
+  // Function to check if booking is eligible for payment
+  const canPay = (booking: Booking) => {
+    return (
+      booking.status === "ACCEPTED" &&
+      !booking.isPaid &&
+      booking.status !== "REJECTED" &&
+      booking.status !== "CANCELLED" &&
+      booking.status !== "COMPLETED"
+    );
+  };
+
+  // Function to check if booking needs payment (for display purposes)
   const needsPayment = (booking: Booking) => {
     return (
       (booking.status === "WAITING_EXPERT_APPROVAL" ||
@@ -541,6 +553,7 @@ const MyBooking: React.FC = () => {
 
     return matchesSearch && matchesStatus;
   });
+  const navigate = useNavigate();
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
@@ -636,6 +649,11 @@ const MyBooking: React.FC = () => {
                         <span
                           className="truncate max-w-[80px]"
                           title={booking.expert?.username || "Unknown Expert"}
+                          onClick={() => {
+                            const expert = booking.expert?.username;
+                            localStorage.setItem("viewexpertusername", expert);
+                            navigate("/player/exdetails");
+                          }}
                         >
                           {truncateText(
                             booking.expert?.username || "Unknown Expert",
@@ -675,6 +693,8 @@ const MyBooking: React.FC = () => {
                           ? "Paid"
                           : booking.status === "REJECTED"
                           ? "Not Paid"
+                          : booking.status === "WAITING_EXPERT_APPROVAL"
+                          ? "Awaiting Approval"
                           : "Pay Now"}
                       </Badge>
                     </TableCell>
@@ -761,6 +781,11 @@ const MyBooking: React.FC = () => {
                       <p
                         className="text-sm text-gray-500 truncate"
                         title={`with ${booking.expert?.username || "Expert"}`}
+                        onClick={() => {
+                          const expert = booking.expert?.username;
+                          localStorage.setItem("viewexpertusername", expert);
+                          navigate("/player/exdetails");
+                        }}
                       >
                         with{" "}
                         {truncateText(booking.expert?.username || "Expert", 15)}
@@ -779,7 +804,7 @@ const MyBooking: React.FC = () => {
                     ${booking.service?.price || "N/A"}
                   </span>
 
-                  {!booking.isPaid && booking.status !== "REJECTED" ? (
+                  {!booking.isPaid && booking.status === "ACCEPTED" ? (
                     <Button
                       className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto"
                       onClick={(e) => {
@@ -788,6 +813,14 @@ const MyBooking: React.FC = () => {
                       }}
                     >
                       Pay Now
+                    </Button>
+                  ) : !booking.isPaid &&
+                    booking.status === "WAITING_EXPERT_APPROVAL" ? (
+                    <Button
+                      className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                      disabled
+                    >
+                      Awaiting Approval
                     </Button>
                   ) : booking.meetLink ? (
                     <a
@@ -1022,6 +1055,27 @@ const MyBooking: React.FC = () => {
                 )}
               </div>
 
+              {/* Payment Status */}
+              {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
+                <div className="mb-5 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                  <div className="flex items-start">
+                    <FontAwesomeIcon
+                      icon={faExclamationTriangle}
+                      className="mr-2 mt-1 text-amber-600 flex-shrink-0"
+                    />
+                    <div>
+                      <p className="font-medium text-amber-800">
+                        Payment Pending Expert Approval
+                      </p>
+                      <p className="text-amber-700 text-sm mt-1">
+                        You will be able to make a payment once the expert
+                        accepts your booking request.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Media Section - Updated to display video player for RECORDED VIDEO ASSESSMENT */}
               {(selectedBooking.recordedVideo ||
                 selectedBooking.meetingRecording) && (
@@ -1128,7 +1182,7 @@ const MyBooking: React.FC = () => {
 
             <DialogFooter className="flex flex-wrap gap-3 justify-end">
               {/* Session action buttons */}
-              {needsPayment(selectedBooking) && (
+              {canPay(selectedBooking) && (
                 <Button
                   className="bg-red-500 hover:bg-red-600 text-white"
                   onClick={() => handlePayment(selectedBooking.id)}
@@ -1164,6 +1218,16 @@ const MyBooking: React.FC = () => {
                       Pay Now (${selectedBooking.service?.price})
                     </>
                   )}
+                </Button>
+              )}
+
+              {needsPayment(selectedBooking) && !canPay(selectedBooking) && (
+                <Button
+                  className="bg-gray-300 text-gray-600 cursor-not-allowed"
+                  disabled
+                >
+                  <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                  Awaiting Expert Approval
                 </Button>
               )}
 

@@ -43,6 +43,7 @@ import {
   faLink,
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 
 // Updated interfaces to match the new API response format
 interface Expert {
@@ -388,7 +389,7 @@ const BookingExpertside: React.FC = () => {
       setLoading(false);
     }
   };
-
+  const navigate = useNavigate();
   // Handle rejecting a booking
   const handleRejectBooking = async (bookingId: string) => {
     try {
@@ -816,6 +817,11 @@ const BookingExpertside: React.FC = () => {
                         <span
                           className="truncate max-w-[100px]"
                           title={booking.player?.username}
+                          onClick={() => {
+                            const player = booking.player?.username;
+                            localStorage.setItem("viewplayerusername", player);
+                            navigate("/expert/playerinfo");
+                          }}
                         >
                           {truncateUsername(
                             booking.player?.username || "Unknown Player"
@@ -981,7 +987,14 @@ const BookingExpertside: React.FC = () => {
                     }}
                   />
                   <div>
-                    <p className="font-medium">
+                    <p
+                      className="font-medium"
+                      onClick={() => {
+                        const player = booking.player?.username;
+                        localStorage.setItem("viewplayerusername", player);
+                        navigate("/expert/playerinfo");
+                      }}
+                    >
                       {booking.player?.username || "Unknown Player"}
                     </p>
                     <p className="text-sm text-gray-500">

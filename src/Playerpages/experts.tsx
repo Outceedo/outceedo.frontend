@@ -853,7 +853,7 @@ const Experts = () => {
 
             {/* Skills Card - Now Full Width Below */}
             <Card className="p-6 relative">
-              <div className="flex justify-between items-center mb-4">
+              <div className="flex justify-between items-center mb-1">
                 <h2 className="text-xl font-bold">Skills</h2>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -934,7 +934,7 @@ const Experts = () => {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                 {filteredMedia.map((item) => (
                   <div
                     key={item.id}

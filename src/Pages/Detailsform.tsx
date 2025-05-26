@@ -1159,7 +1159,6 @@ const Detailsform: React.FC = () => {
                 className="border p-2 w-full rounded bg-gray-100"
                 readOnly
               />
-              
             </div>
           </div>
 
@@ -1226,9 +1225,7 @@ const Detailsform: React.FC = () => {
                 className="border p-2 w-full rounded bg-gray-100"
                 readOnly
               />
-              <p className="text-xs text-gray-500 mt-1">
-                
-              </p>
+              <p className="text-xs text-gray-500 mt-1"></p>
             </div>
           </div>
 
@@ -1461,6 +1458,45 @@ const Detailsform: React.FC = () => {
 
           <div className="flex space-x-4 mb-2">
             <div className="w-1/2 relative">
+              <label className="block text-black mb-1">City *</label>
+              <input
+                type="text"
+                placeholder="Search City"
+                className={`border p-2 w-full rounded ${
+                  validationErrors.city ? "border-red-500" : ""
+                }`}
+                value={citySearchTerm}
+                onChange={(e) => {
+                  setCitySearchTerm(e.target.value);
+                  setShowCityDropdown(true);
+                }}
+                onFocus={() => setShowCityDropdown(true)}
+                required
+              />
+              {validationErrors.city && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.city}
+                </p>
+              )}
+              {showCityDropdown && selectedCountry && (
+                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+                  {cities
+                    .filter((city) =>
+                      city.toLowerCase().includes(citySearchTerm.toLowerCase())
+                    )
+                    .map((city, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleCitySelect(city)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                      >
+                        {city}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+            <div className="w-1/2 relative">
               <label className="block text-black mb-1">Country *</label>
               <input
                 type="text"
@@ -1501,46 +1537,6 @@ const Detailsform: React.FC = () => {
                           className="w-6 h-4 mr-2"
                         />
                         {country.name}
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-
-            <div className="w-1/2 relative">
-              <label className="block text-black mb-1">City *</label>
-              <input
-                type="text"
-                placeholder="Search City"
-                className={`border p-2 w-full rounded ${
-                  validationErrors.city ? "border-red-500" : ""
-                }`}
-                value={citySearchTerm}
-                onChange={(e) => {
-                  setCitySearchTerm(e.target.value);
-                  setShowCityDropdown(true);
-                }}
-                onFocus={() => setShowCityDropdown(true)}
-                required
-              />
-              {validationErrors.city && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.city}
-                </p>
-              )}
-              {showCityDropdown && selectedCountry && (
-                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
-                  {cities
-                    .filter((city) =>
-                      city.toLowerCase().includes(citySearchTerm.toLowerCase())
-                    )
-                    .map((city, index) => (
-                      <li
-                        key={index}
-                        onClick={() => handleCitySelect(city)}
-                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                      >
-                        {city}
                       </li>
                     ))}
                 </ul>

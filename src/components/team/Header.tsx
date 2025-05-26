@@ -15,6 +15,7 @@ interface teamHeaderProps {
 }
 const menuItems = [
   { path: "/team/details-form", name: "Edit Profile" },
+  { path: "/team/dashboard", name: "Dashboard" },
   { path: "/team/player", name: "Players" },
   { path: "/team/experts", name: "Experts" },
   { path: "/team/sponsors", name: "Sponsor" },

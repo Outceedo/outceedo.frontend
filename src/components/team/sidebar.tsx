@@ -170,6 +170,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {teamName}
         </h2>
+        <p>{currentProfile?.firstName}</p>
         {/* Show loading indicator if profile is still loading */}
         {status === "loading" && (
           <div className="text-sm text-gray-500">Loading profile...</div>
