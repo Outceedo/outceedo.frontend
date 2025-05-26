@@ -566,10 +566,10 @@ export default function PlayerSponsors() {
                 </Button>
                 <Button
                   variant="ghost"
-                  className="text-2xl font-bold bg-gray-100 text-gray-800 flex items-center justify-center dark:bg-gray-700 dark:text-white"
+                  className=" bg-yellow-300 hover:bg-yellow-400 text-gray-800 flex items-center justify-center dark:bg-gray-700 dark:text-white"
                   onClick={() => openReportModal(sponsor)}
                 >
-                  <FaEllipsisH />
+                  Apply
                 </Button>
               </div>
             </Card>
