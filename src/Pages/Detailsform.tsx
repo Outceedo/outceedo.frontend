@@ -76,6 +76,8 @@ const Detailsform: React.FC = () => {
   // Form data
   const [formData, setFormData] = useState({
     photo: "",
+    phone: "",
+    // email = "",
     firstName: "",
     lastName: "",
     profession: "",
@@ -947,6 +949,56 @@ const Detailsform: React.FC = () => {
     fetchCities();
   }, [selectedCountry]);
 
+  // Define states to store user data
+  const [userData, setUserData] = useState({
+    email: "",
+    id: "",
+    mobileNumber: "",
+    username: "",
+  });
+  const [countryCode, setCountryCode] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = getAuthToken();
+
+        const response = await axios.get(
+          `${API_BASE_URL}/auth/user/${localStorage.getItem("username")}`,
+
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "multipart/form-data",
+            },
+          }
+        );
+        const data = response.data;
+        setUserData(data);
+        if (data.mobileNumber) {
+          // Extract country code - assuming format like "+91 6302445751"
+          const parts = data.mobileNumber.split(" ");
+          if (parts.length === 2) {
+            setCountryCode(parts[0]); // "+91"
+            setPhoneNumber(parts[1]); // "6302445751"
+          } else {
+            // If format is different, store full number as is
+            setPhoneNumber(data.mobileNumber);
+          }
+        }
+
+        console.log(response);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+      }
+    };
+
+    // Parse mobile number to extract country code and number
+
+    fetchUserData();
+  });
+
   return (
     <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg">
       {/* Status messages */}
@@ -1058,8 +1110,9 @@ const Detailsform: React.FC = () => {
             </button>
           </div>
 
+          {/* Modified row with First Name, Last Name, and Email */}
           <div className="flex space-x-4 mb-2">
-            <div className="w-1/2">
+            <div className="w-1/3">
               <label className="block text-black mb-1">First Name *</label>
               <input
                 type="text"
@@ -1078,7 +1131,7 @@ const Detailsform: React.FC = () => {
                 </p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-1/3">
               <label className="block text-black mb-1">Last Name *</label>
               <input
                 type="text"
@@ -1097,10 +1150,22 @@ const Detailsform: React.FC = () => {
                 </p>
               )}
             </div>
+            <div className="w-1/3">
+              <label className="block text-black mb-1">Email</label>
+              <input
+                type="email"
+                name="email"
+                value={userData.email}
+                className="border p-2 w-full rounded bg-gray-100"
+                readOnly
+              />
+              
+            </div>
           </div>
 
+          {/* Modified row with Profession, SubProfession, Country Code and Phone Number */}
           <div className="flex space-x-4 mb-2">
-            <div className="w-1/2">
+            <div className="w-1/3">
               <label className="block text-black mb-1">Profession *</label>
               <select
                 name="profession"
@@ -1127,7 +1192,7 @@ const Detailsform: React.FC = () => {
                 </p>
               )}
             </div>
-            <div className="w-1/2">
+            <div className="w-1/3">
               <label className="block text-black mb-1">Sub Profession</label>
               <select
                 name="subProfession"
@@ -1143,6 +1208,27 @@ const Detailsform: React.FC = () => {
                 <option value="coach">Coach</option>
                 <option value="midfielder">Midfielder</option>
               </select>
+            </div>
+            {/* <div className="w-1/6">
+              <label className="block text-black mb-1">Country Code</label>
+              <input
+                type="text"
+                value={countryCode}
+                className="border p-2 w-full rounded bg-gray-100"
+                readOnly
+              />
+            </div> */}
+            <div className="w-1/3">
+              <label className="block text-black mb-1">Phone</label>
+              <input
+                type="text"
+                value={userData.mobileNumber}
+                className="border p-2 w-full rounded bg-gray-100"
+                readOnly
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                
+              </p>
             </div>
           </div>
 

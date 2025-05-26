@@ -6,7 +6,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -50,6 +50,13 @@ interface CountryData {
   cities: string[];
 }
 
+interface UserData {
+  email: string;
+  id: string;
+  mobileNumber: string;
+  username: string;
+}
+
 export default function TeamDetailsForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -63,6 +70,12 @@ export default function TeamDetailsForm() {
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
+
+  // User data from API
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [countryCode, setCountryCode] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
 
   // Redux hooks
   const dispatch = useAppDispatch();
@@ -118,6 +131,62 @@ export default function TeamDetailsForm() {
     return localStorage.getItem("token");
   };
 
+  // Fetch user data from API
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true);
+        const token = getAuthToken();
+        const username = localStorage.getItem("username");
+
+        if (!username) {
+          throw new Error("Username not found in localStorage");
+        }
+
+        const response = await axios.get(
+          `${API_BASE_URL}/auth/user/${username}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Extract data from response
+        const data = response.data;
+        setUserData(data);
+
+        // Parse mobile number to extract country code and number
+        if (data.mobileNumber) {
+          // Extract country code - assuming format like "+91 6302445751"
+          const parts = data.mobileNumber.split(" ");
+          if (parts.length === 2) {
+            setCountryCode(parts[0]); // "+91"
+            setPhoneNumber(parts[1]); // "6302445751"
+          } else {
+            // If format is different, store full number as is
+            setPhoneNumber(data.mobileNumber);
+          }
+        }
+
+        // Pre-fill the email field
+        setForm((prev) => ({
+          ...prev,
+          email: data.email || "",
+        }));
+
+        console.log("User data fetched successfully:", data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setError("Failed to fetch user data");
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [API_BASE_URL]);
+
   // Validation for each step
   const validateCurrentStep = (): boolean => {
     setError(null);
@@ -142,11 +211,7 @@ export default function TeamDetailsForm() {
       if (!form.city) {
         errors.city = "City is required";
       }
-      if (!form.email) {
-        errors.email = "Email is required";
-      } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-        errors.email = "Please enter a valid email address";
-      }
+      // Skip email validation since it's now read-only
     }
 
     setValidationErrors(errors);
@@ -244,7 +309,7 @@ export default function TeamDetailsForm() {
         address: profileData.address || "",
         countryCode: profileData.countryCode || "",
         phone: profileData.phone || "",
-        email: profileData.email || "",
+        email: userData?.email || profileData.email || "", // Prioritize userData email
         bio: profileData.bio || "",
         socialLinks: {
           instagram: profileData.socialLinks?.instagram || "",
@@ -254,7 +319,7 @@ export default function TeamDetailsForm() {
         },
       });
     }
-  }, [profileData]);
+  }, [profileData, userData]);
 
   useEffect(() => {
     const fetchCountries = async () => {
@@ -385,6 +450,7 @@ export default function TeamDetailsForm() {
         city: form.city,
         country: form.country,
         address: form.address,
+        email: userData?.email || form.email, // Use userData email if available
 
         bio: form.bio,
         photo: photoUrl,
@@ -435,6 +501,16 @@ export default function TeamDetailsForm() {
       setIsSubmitting(false);
     }
   };
+
+  // Display loading spinner while fetching data
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen flex justify-center items-center dark:bg-gray-900">
+        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+        <p className="ml-2 text-lg">Loading user data...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="w-full p-20 mx-auto dark:bg-gray-900">
@@ -579,6 +655,17 @@ export default function TeamDetailsForm() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Email
+              </label>
+              <Input
+                name="email"
+                value={userData?.email || ""}
+                className="bg-gray-100 cursor-not-allowed"
+                readOnly
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
                 First Name*
               </label>
               <Input
@@ -608,6 +695,23 @@ export default function TeamDetailsForm() {
                   {validationErrors.lastName}
                 </p>
               )}
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Phone Number
+              </label>
+              <div className="flex gap-2">
+                {/* <Input    
+                  value={countryCode}
+                  className="w-1/3 bg-gray-100 cursor-not-allowed"
+                  readOnly
+                /> */}
+                <Input
+                  value={userData?.mobileNumber}
+                  className="w-full bg-gray-100 cursor-not-allowed"
+                  readOnly
+                />
+              </div>
             </div>
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
@@ -680,53 +784,6 @@ export default function TeamDetailsForm() {
                 value={form.address}
                 onChange={handleChange}
               />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white mb-1 block">
-                Phone Number
-              </label>
-              <div className="flex items-center gap-2">
-                <div className="w-1/3">
-                  <select
-                    name="countryCode"
-                    value={form.countryCode}
-                    onChange={handleChange}
-                    className="border p-2 rounded text-sm text-gray-700 w-full"
-                  >
-                    <option value="">Code</option>
-                    {countries.map((country) => (
-                      <option key={country.code} value={country.dialCode}>
-                        {country.dialCode}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="flex-1">
-                  <Input
-                    name="phone"
-                    placeholder="Phone Number"
-                    value={form.phone}
-                    onChange={handleChange}
-                  />
-                </div>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Email*
-              </label>
-              <Input
-                name="email"
-                placeholder="Email"
-                value={form.email}
-                onChange={handleChange}
-                className={validationErrors.email ? "border-red-500" : ""}
-              />
-              {validationErrors.email && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.email}
-                </p>
-              )}
             </div>
           </div>
           <div className="text-right mt-6">
@@ -822,26 +879,7 @@ export default function TeamDetailsForm() {
             >
               {isSubmitting ? (
                 <div className="flex items-center">
-                  <svg
-                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-black"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Submitting...
                 </div>
               ) : (

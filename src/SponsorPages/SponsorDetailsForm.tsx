@@ -16,6 +16,7 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 import { updateProfile, updateProfilePhoto } from "@/store/profile-slice";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import axios from "axios";
 
 interface CountryData {
   name: string;
@@ -51,6 +52,13 @@ interface FormData {
   };
 }
 
+interface UserData {
+  email: string;
+  id: string;
+  mobileNumber: string;
+  username: string;
+}
+
 export default function SponsorDetailsForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,9 +75,79 @@ export default function SponsorDetailsForm() {
     Record<string, string>
   >({});
 
+  // User data from API
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [countryCode, setCountryCode] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+
+  const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
+
+  // Get auth token from localStorage
+  const getAuthToken = (): string | null => {
+    return localStorage.getItem("token");
+  };
+  const username = localStorage.getItem("username");
+
   // Redux hooks
   const dispatch = useAppDispatch();
   const profileState = useAppSelector((state) => state.profile);
+
+  // Fetch user data from API
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        setIsLoading(true);
+        const token = getAuthToken();
+        const username = localStorage.getItem("username");
+
+        if (!username) {
+          throw new Error("Username not found in localStorage");
+        }
+
+        const response = await axios.get(
+          `${API_BASE_URL}/auth/user/${username}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Extract data from response
+        const data = response.data;
+        setUserData(data);
+
+        // Parse mobile number to extract country code and number
+        if (data.mobileNumber) {
+          // Extract country code - assuming format like "+91 6302445751"
+          const parts = data.mobileNumber.split(" ");
+          if (parts.length === 2) {
+            setCountryCode(parts[0]); // "+91"
+            setPhoneNumber(parts[1]); // "6302445751"
+          } else {
+            // If format is different, store full number as is
+            setPhoneNumber(data.mobileNumber);
+          }
+        }
+
+        // Pre-fill the email field
+        setForm((prev) => ({
+          ...prev,
+          email: data.email || "",
+        }));
+
+        console.log("User data fetched successfully:", data);
+        setIsLoading(false);
+      } catch (error) {
+        console.error("Error fetching user data:", error);
+        setError("Failed to fetch user data");
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [API_BASE_URL]);
 
   const nextStep = () => {
     if (validateCurrentStep()) {
@@ -145,7 +223,7 @@ export default function SponsorDetailsForm() {
           address: profile.address || "",
           countryCode: profile.countryCode || "",
           phone: profile.phone || "",
-          email: profile.email || "",
+          email: userData?.email || profile.email || "", // Prioritize userData email
           CompanyLink: profile.companyLink || "",
           BudegetRange: profile.budgetRange || "",
           SponsorshipType: profile.sponsorshipType || "",
@@ -161,7 +239,12 @@ export default function SponsorDetailsForm() {
         });
       }
     }
-  }, [profileState.status, profileState.error, profileState.currentProfile]);
+  }, [
+    profileState.status,
+    profileState.error,
+    profileState.currentProfile,
+    userData,
+  ]);
 
   // Validation for each step
   const validateCurrentStep = (): boolean => {
@@ -175,11 +258,7 @@ export default function SponsorDetailsForm() {
       if (!form.lastName.trim()) {
         errors.lastName = "Last name is required";
       }
-      if (!form.email) {
-        errors.email = "Email is required";
-      } else if (!/^\S+@\S+\.\S+$/.test(form.email)) {
-        errors.email = "Please enter a valid email address";
-      }
+      // Skip email validation since it's now read-only
       if (!form.sponsorType) {
         errors.sponsorType = "Please select a sponsor type";
       }
@@ -424,6 +503,16 @@ export default function SponsorDetailsForm() {
     }
   };
 
+  // Display loading spinner while fetching data
+  if (isLoading) {
+    return (
+      <div className="w-full h-screen flex justify-center items-center dark:bg-gray-900">
+        <Loader2 className="h-8 w-8 animate-spin text-red-500" />
+        <p className="ml-2 text-lg">Loading user data...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full p-20 mx-auto dark:bg-gray-900">
       {/* Status messages */}
@@ -532,6 +621,59 @@ export default function SponsorDetailsForm() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
+                First Name
+                {validationErrors.fullName && (
+                  <span className="text-red-500"> *</span>
+                )}
+              </label>
+              <Input
+                name="fullName"
+                value={form.fullName}
+                onChange={handleChange}
+                className={validationErrors.fullName ? "border-red-500" : ""}
+              />
+              {validationErrors.fullName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.fullName}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Last Name
+                {validationErrors.lastName && (
+                  <span className="text-red-500"> *</span>
+                )}
+              </label>
+              <Input
+                name="lastName"
+                value={form.lastName}
+                onChange={handleChange}
+                className={validationErrors.lastName ? "border-red-500" : ""}
+              />
+              {validationErrors.lastName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.lastName}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Email
+              </label>
+              <Input
+                name="email"
+                value={userData?.email || ""}
+                className="bg-gray-100 cursor-not-allowed"
+                readOnly
+              />
+              
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Sponsor Type
                 {validationErrors.sponsorType && (
                   <span className="text-red-500"> *</span>
@@ -574,63 +716,21 @@ export default function SponsorDetailsForm() {
 
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
-                First Name
-                {validationErrors.fullName && (
-                  <span className="text-red-500"> *</span>
-                )}
+                Phone Number
               </label>
-              <Input
-                name="fullName"
-                value={form.fullName}
-                onChange={handleChange}
-                className={validationErrors.fullName ? "border-red-500" : ""}
-              />
-              {validationErrors.fullName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.fullName}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Last Name
-                {validationErrors.lastName && (
-                  <span className="text-red-500"> *</span>
-                )}
-              </label>
-              <Input
-                name="lastName"
-                value={form.lastName}
-                onChange={handleChange}
-                className={validationErrors.lastName ? "border-red-500" : ""}
-              />
-              {validationErrors.lastName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.lastName}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Email
-                {validationErrors.email && (
-                  <span className="text-red-500"> *</span>
-                )}
-              </label>
-              <Input
-                name="email"
-                placeholder="Email"
-                value={form.email}
-                onChange={handleChange}
-                className={validationErrors.email ? "border-red-500" : ""}
-              />
-              {validationErrors.email && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.email}
-                </p>
-              )}
+              <div className="flex w-full">
+                {/* <Input
+                  value={countryCode}
+                  className="w-1/4 bg-gray-100 cursor-not-allowed"
+                  readOnly
+                /> */}
+                <Input
+                  value={userData?.mobileNumber}
+                  className="w-full bg-gray-100 cursor-not-allowed"
+                  readOnly
+                />
+              </div>
+             
             </div>
 
             <div>
@@ -723,40 +823,6 @@ export default function SponsorDetailsForm() {
                 value={form.address}
                 onChange={handleChange}
               />
-            </div>
-
-            <div className="flex gap-4 items-end">
-              {/* Country Code (smaller width) */}
-              <div className="w-1/3 sm:w-1/4">
-                <label className="text-sm font-medium text-gray-900 dark:text-white">
-                  Country Code
-                </label>
-                <select
-                  name="countryCode"
-                  value={form.countryCode}
-                  onChange={handleChange}
-                  className="border p-2 rounded text-sm text-gray-700 w-full"
-                >
-                  <option value="">Select Code</option>
-                  {countries.map((country) => (
-                    <option key={country.code} value={country.dialCode}>
-                      {country.dialCode} ({country.name})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex-1">
-                <label className="text-sm font-medium text-gray-900 dark:text-white">
-                  Phone Number
-                </label>
-                <Input
-                  name="phone"
-                  placeholder="Phone Number"
-                  value={form.phone}
-                  onChange={handleChange}
-                />
-              </div>
             </div>
           </div>
 
