@@ -254,6 +254,7 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
                 className={`text-gray-700 dark:text-gray-300 ${
                   !expanded && isBioLong ? "line-clamp-3" : ""
                 }`}
+                style={{ whiteSpace: "pre-line" }}
               >
                 {aboutMe}
               </p>
@@ -263,17 +264,7 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
                   onClick={toggleBioExpand}
                   className="text-blue-600 hover:text-blue-700 font-medium text-sm mt-1 flex items-center justify-center w-full cursor-pointer text-center"
                 >
-                  {expanded ? (
-                    <>
-                      Read Less{" "}
-                      
-                    </>
-                  ) : (
-                    <>
-                      Read More{" "}
-                     
-                    </>
-                  )}
+                  {expanded ? <>Read Less </> : <>Read More </>}
                 </button>
               )}
             </div>

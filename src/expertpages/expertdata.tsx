@@ -176,6 +176,7 @@ const ExpertProfile = () => {
       documents: profile.documents || [],
       rawProfile: profile,
       reviewsReceived: profile.reviewsReceived,
+      language: profile.language,
 
       // Include raw profile for passing to child components
     };
@@ -332,14 +333,28 @@ const ExpertProfile = () => {
                 </p>
               </div>
               <div className="text-left">
-                <p className="text-gray-500 dark:text-white ">Location</p>
+                <p className="text-gray-500 dark:text-white">
+                  Certification Level
+                </p>
                 <p className="font-semibold dark:text-white">
-                  {expertData.location || "Not specified"}
+                  {expertData.certificationLevel}
+                </p>
+              </div>
+              <div className="text-left">
+                <p className="text-gray-500 dark:text-white">Languages</p>
+                <p className="font-semibold dark:text-white">
+                  {expertData.language}
                 </p>
               </div>
             </div>
             {/* Additional Information */}
             <div className="flex justify-start gap-40 mt-6 text-center">
+              <div className="text-left">
+                <p className="text-gray-500 dark:text-white ">Location</p>
+                <p className="font-semibold dark:text-white">
+                  {expertData.location || "Not specified"}
+                </p>
+              </div>
               <div className="text-left">
                 <p className="text-gray-500 dark:text-white">Response Time</p>
                 <p className="font-semibold dark:text-white">
@@ -350,14 +365,6 @@ const ExpertProfile = () => {
                 <p className="text-gray-500 dark:text-white">Travel Limit</p>
                 <p className="font-semibold dark:text-white">
                   {expertData.travelLimit}
-                </p>
-              </div>
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white">
-                  Certification Level
-                </p>
-                <p className="font-semibold dark:text-white">
-                  {expertData.certificationLevel}
                 </p>
               </div>
             </div>

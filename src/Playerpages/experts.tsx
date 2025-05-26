@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import axios from "axios"; // Import axios
@@ -12,7 +11,6 @@ import {
   faLinkedin,
   faInstagram,
   faFacebook,
-  faTwitter,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import profile from "../assets/images/avatar.png";
@@ -22,7 +20,6 @@ import {
   faCamera,
   faVideo,
   faUpload,
-  faMapMarkerAlt,
   faFileUpload,
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -30,7 +27,6 @@ import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile } from "../store/profile-slice";
 import { MoveLeft } from "lucide-react";
-import Reviews from "./reviews";
 import Expertreviews from "./expertreviews";
 
 const icons = [
@@ -62,7 +58,7 @@ interface Service {
   description?: string;
   additionalDetails?: string;
   price: string | number;
-  isActive?: boolean;
+  isActive?: boolean; 
 }
 
 interface Certificate {
@@ -137,7 +133,7 @@ const Experts = () => {
     }
   }, [dispatch]);
 
-  // Get certificates from documents
+  // Get certificates and awards from documents
   const certificates = viewedProfile?.documents
     ? viewedProfile.documents
         .filter((doc: any) => doc.type === "certificate")
@@ -149,6 +145,20 @@ const Experts = () => {
           imageUrl: cert.imageUrl || "",
           type: cert.type,
           description: cert.description || "",
+        }))
+    : [];
+
+  const awards = viewedProfile?.documents
+    ? viewedProfile.documents
+        .filter((doc: any) => doc.type === "award")
+        .map((award: any) => ({
+          id: award.id,
+          title: award.title,
+          issuedBy: award.issuedBy || "",
+          issuedDate: award.issuedDate || "",
+          imageUrl: award.imageUrl || "",
+          type: award.type,
+          description: award.description || "",
         }))
     : [];
 
@@ -187,8 +197,10 @@ const Experts = () => {
             "Team Management",
           ],
         certificates: certificates,
+        awards: awards,
         services: viewedProfile.services || [],
         reviewsReceived: viewedProfile.reviewsReceived,
+        language:viewedProfile.language
       }
     : {
         name: "N/A",
@@ -204,6 +216,7 @@ const Experts = () => {
         about: "N/A",
         skills: [],
         certificates: [],
+        awards: [],
         services: [],
       };
   localStorage.setItem("expertid", expertData?.id);
@@ -587,13 +600,25 @@ const Experts = () => {
               </p>
             </div>
             <div>
+              <p className="text-gray-500">Certification Level</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.certificationLevel}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">Languages</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.language}
+              </p>
+            </div>
+            {/* <div className="md:col-span-1"></div>{" "} */}
+            {/* Empty column for proper alignment */}
+            <div>
               <p className="text-gray-500">Location</p>
               <p className="font-semibold dark:text-white">
                 {expertData.location}
               </p>
             </div>
-            <div className="md:col-span-1"></div>{" "}
-            {/* Empty column for proper alignment */}
             <div>
               <p className="text-gray-500">Response Time</p>
               <p className="font-semibold dark:text-white">
@@ -606,12 +631,7 @@ const Experts = () => {
                 {expertData.travelLimit}
               </p>
             </div>
-            <div>
-              <p className="text-gray-500">Certification Level</p>
-              <p className="font-semibold dark:text-white">
-                {expertData.certificationLevel}
-              </p>
-            </div>
+            
           </div>
         </div>
 
@@ -737,30 +757,9 @@ const Experts = () => {
               )}
             </Card>
 
-            {/* Skills Card */}
+            {/* Certificates & Awards Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Skills Section */}
-              <Card className="p-6 relative">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">Skills</h2>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {expertData.skills && expertData.skills.length > 0 ? (
-                    expertData.skills.map((skill: string, index: number) => (
-                      <span
-                        key={index}
-                        className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
-                      >
-                        {skill}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">No skills available</p>
-                  )}
-                </div>
-              </Card>
-
-              {/* Certifications Section */}
+              {/* Certificates Section */}
               <Card className="p-6 relative">
                 <div className="flex justify-between mb-4">
                   <h2 className="text-xl font-bold">Certifications</h2>
@@ -805,7 +804,73 @@ const Experts = () => {
                   )}
                 </div>
               </Card>
+
+              {/* Awards Section */}
+              <Card className="p-6 relative">
+                <div className="flex justify-between mb-4">
+                  <h2 className="text-xl font-bold">Awards</h2>
+                </div>
+                <div className="space-y-3">
+                  {expertData.awards && expertData.awards.length > 0 ? (
+                    expertData.awards.map((award: Certificate) => (
+                      <div
+                        key={award.id}
+                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                        onClick={() => handleCertificateClick(award)}
+                      >
+                        {/* Image thumbnail if available */}
+                        {award.imageUrl && (
+                          <div className="w-16 h-16 flex-shrink-0">
+                            <img
+                              src={award.imageUrl}
+                              alt={award.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Award details */}
+                        <div className="p-3 flex-1">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                            {award.title}
+                          </h4>
+                          {award.issuedBy && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Issued by: {award.issuedBy}
+                              {award.issuedDate &&
+                                ` (${formatDate(award.issuedDate)})`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">No awards available</p>
+                  )}
+                </div>
+              </Card>
             </div>
+
+            {/* Skills Card - Now Full Width Below */}
+            <Card className="p-6 relative">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Skills</h2>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {expertData.skills && expertData.skills.length > 0 ? (
+                  expertData.skills.map((skill: string, index: number) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
+                    >
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No skills available</p>
+                )}
+              </div>
+            </Card>
           </div>
         )}
 

@@ -272,6 +272,7 @@ const AppContent: React.FC = () => {
         <Route path="exdetails" element={<TeamExperts />} />
         <Route path="playerinfo" element={<TeamPlayerInfo />} />
         <Route path="sponsorinfo" element={<TeamSponsorInfo />} />
+        <Route path="book" element={<BookingCalendar />} />
       </Route>
 
       <Route

@@ -165,6 +165,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             className={`text-gray-600 dark:text-gray-300 ${
               !bioExpanded && isBioLong ? "line-clamp-3" : ""
             }`}
+            style={{ whiteSpace: "pre-line" }}
           >
             {aboutMe}
           </p>

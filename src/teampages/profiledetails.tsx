@@ -125,7 +125,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       {/* About Me Section */}
       <Card className="p-6 shadow-sm dark:bg-gray-700 dark:text-white">
         <h3 className="text-lg font-semibold mb-3">About Me</h3>
-        <p className="text-gray-600 dark:text-gray-300">{aboutMe}</p>
+        <p
+          className="text-gray-600 dark:text-gray-300"
+          style={{ whiteSpace: "pre-line" }}
+        >
+          {aboutMe}
+        </p>
       </Card>
 
       {/* Certificates & Awards */}

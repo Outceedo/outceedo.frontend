@@ -7,7 +7,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, CheckCircle } from "lucide-react";
+import { Search, CheckCircle, X } from "lucide-react";
 import avatar from "../assets/images/avatar.png";
 import {
   Select,
@@ -17,9 +17,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Import fallback profile images
-
-// Default image mapping for fallbacks
+// Default fallback images array - you need to define this
+const defaultImages = [avatar]; // Add more default images as needed
 
 interface Expert {
   id: string;
@@ -132,12 +131,58 @@ const Expertspage: React.FC = () => {
 
   // Handle filter changes
   const handleFilterChange = (value: string, filterType: string) => {
-    setFilters({
-      ...filters,
-      [filterType.toLowerCase()]: value,
-    });
+    // Make sure we use the exact filter keys with correct casing
+    const normalizedKey = filterType.toLowerCase();
+
+    // Map the normalized key to the correct casing used in our state
+    let stateKey = "";
+    switch (normalizedKey) {
+      case "profession":
+        stateKey = "profession";
+        break;
+      case "city":
+        stateKey = "city";
+        break;
+      case "country":
+        stateKey = "country";
+        break;
+      case "gender":
+        stateKey = "gender";
+        break;
+      case "language":
+        stateKey = "language";
+        break;
+      default:
+        stateKey = normalizedKey;
+    }
+
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [stateKey]: value,
+    }));
+
     // Reset to first page when filters change
     setCurrentPage(1);
+  };
+
+  // Clear all filters
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setFilters({
+      profession: "",
+      city: "",
+      country: "",
+      gender: "",
+      language: "",
+    });
+    setCurrentPage(1);
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      searchQuery !== "" || Object.values(filters).some((value) => value !== "")
+    );
   };
 
   // Apply client-side filtering for search
@@ -277,11 +322,10 @@ const Expertspage: React.FC = () => {
     localStorage.setItem("viewexpertusername", expert.username);
     if (role === "player") {
       navigate("/player/exdetails");
-    }  else if (role === "sponsor") {
+    } else if (role === "sponsor") {
       navigate("/sponsor/exdetails");
-    }else if(role==="team") {
+    } else if (role === "team") {
       navigate("/team/exdetails");
-
     }
   };
 
@@ -305,10 +349,13 @@ const Expertspage: React.FC = () => {
           </div>
 
           {/* Filters Section */}
-          <div className="flex flex-wrap gap-4 justify-start mb-8">
+          <div className="flex flex-wrap gap-4 justify-start items-center mb-8">
             {filterConfig.map((filter) => (
               <Select
                 key={filter.name}
+                value={
+                  filters[filter.name.toLowerCase() as keyof typeof filters]
+                }
                 onValueChange={(value) =>
                   handleFilterChange(value, filter.name)
                 }
@@ -318,13 +365,24 @@ const Expertspage: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   {filter.options.map((option, index) => (
-                    <SelectItem key={index} value={option}>
+                    <SelectItem key={`${filter.name}-${index}`} value={option}>
                       {option}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             ))}
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters() && (
+              <Button
+                variant="outline"
+                onClick={clearAllFilters}
+                className="flex items-center gap-1 bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-600"
+              >
+                <X size={16} /> Clear Filters
+              </Button>
+            )}
           </div>
 
           {/* Loading State */}

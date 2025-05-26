@@ -30,7 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 
 // Default image mapping
 const defaultImages = [player, player1, player2, player3, player4, player5];
@@ -202,6 +202,26 @@ const PlayersProfile: React.FC = () => {
     setCurrentPage(1);
   };
 
+  // Clear all filters
+  const clearAllFilters = () => {
+    setFilters({
+      profession: "",
+      city: "",
+      country: "",
+      gender: "",
+      language: "",
+    });
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      searchQuery !== "" || Object.values(filters).some((value) => value !== "")
+    );
+  };
+
   // Apply client-side filtering for search
   const filteredProfiles = usersArray.filter((profile: Profile) => {
     // Search query filtering
@@ -338,12 +358,10 @@ const PlayersProfile: React.FC = () => {
       navigate(`/player/playerinfo`);
     } else if (localStorage.getItem("role") === "expert") {
       navigate(`/expert/playerinfo`);
-    } 
-    else if (localStorage.getItem("role") === "team") {
+    } else if (localStorage.getItem("role") === "team") {
       navigate(`/team/playerinfo`);
-    } else if(localStorage.getItem("role") === "sponsor") {
+    } else if (localStorage.getItem("role") === "sponsor") {
       navigate(`/sponsor/playerinfo`);
-
     }
   };
 
@@ -369,12 +387,16 @@ const PlayersProfile: React.FC = () => {
           </div>
 
           {/* Filters Section */}
-          <div className="flex flex-wrap gap-4 justify-start mb-6">
+          <div className="flex flex-wrap gap-4 justify-start items-center mb-6">
             {filterConfig.map((filter) => (
               <Select
                 key={filter.name}
                 onValueChange={(value) =>
                   handleFilterChange(value, filter.name)
+                }
+                value={
+                  filters[filter.name.toLowerCase() as keyof typeof filters] ||
+                  ""
                 }
               >
                 <SelectTrigger className="w-[180px] bg-white dark:bg-slate-600">
@@ -389,7 +411,21 @@ const PlayersProfile: React.FC = () => {
                 </SelectContent>
               </Select>
             ))}
+
+            {/* Clear Filters Button */}
+            {hasActiveFilters() && (
+              <Button
+                variant="outline"
+                onClick={clearAllFilters}
+                className="flex items-center gap-1 bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-600"
+              >
+                <X size={16} /> Clear Filters
+              </Button>
+            )}
           </div>
+
+          
+          
 
           {/* Loading State */}
           {status === "loading" && (

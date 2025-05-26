@@ -67,15 +67,22 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   const [newSkill, setNewSkill] = useState("");
   const [isEditingSkills, setIsEditingSkills] = useState(false);
 
-  // Certifications state - initialize from documents
+  // Certifications state
   const [certificates, setCertificates] = useState<Certificate[]>([]);
   const [tempCertificates, setTempCertificates] = useState<Certificate[]>([]);
   const [isEditingCertifications, setIsEditingCertifications] = useState(false);
+
+  // Awards state
+  const [awards, setAwards] = useState<Certificate[]>([]);
+  const [tempAwards, setTempAwards] = useState<Certificate[]>([]);
+  const [isEditingAwards, setIsEditingAwards] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   // File input refs
   const certificateFileRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const awardFileRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Helper function to get auth token
   const getAuthToken = (): string | null => {
@@ -102,18 +109,16 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     }
   }, [aboutMe]);
 
-  // Initialize certificates from documents
+  // Initialize certificates & awards from documents
   useEffect(() => {
     if (
       expertData &&
       expertData.rawProfile &&
       expertData.rawProfile.documents
     ) {
-      // Filter for certificates only
+      // Filter for certificates
       const docCertificates = expertData.rawProfile.documents
-        .filter(
-          (doc: any) => doc.type === "certificate" || doc.type === "award"
-        )
+        .filter((doc: any) => doc.type === "certificate")
         .map((doc: any) => ({
           id: doc.id,
           title: doc.title,
@@ -125,9 +130,25 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
           type: doc.type,
         }));
 
-      console.log("Certificates from documents:", docCertificates);
+      // Filter for awards
+      const docAwards = expertData.rawProfile.documents
+        .filter((doc: any) => doc.type === "award")
+        .map((doc: any) => ({
+          id: doc.id,
+          title: doc.title,
+          issuedBy: doc.issuedBy || "",
+          issuedDate: doc.issuedDate || "",
+          documentId: doc.id,
+          imageUrl: doc.imageUrl,
+          description: doc.description || "",
+          type: doc.type,
+        }));
+
       setCertificates(docCertificates);
       setTempCertificates(docCertificates);
+
+      setAwards(docAwards);
+      setTempAwards(docAwards);
     } else if (expertData.certificates) {
       // Fallback to certificates if documents not available
       const formattedCerts = Array.isArray(expertData.certificates)
@@ -187,10 +208,14 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     }
   }, [expertData]);
 
-  // Update refs when certificates change
+  // Update refs when certificates and awards change
   useEffect(() => {
     certificateFileRefs.current = tempCertificates.map(() => null);
   }, [tempCertificates.length]);
+
+  useEffect(() => {
+    awardFileRefs.current = tempAwards.map(() => null);
+  }, [tempAwards.length]);
 
   // Toggle See More in About section
   const toggleAboutExpanded = () => {
@@ -515,6 +540,189 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     setIsEditingCertifications(false);
   };
 
+  // Awards Management
+  const handleAddAward = () => {
+    setTempAwards([
+      ...tempAwards,
+      {
+        id: `award-${Date.now()}`,
+        title: "",
+        issuedBy: "",
+        issuedDate: new Date().toISOString().split("T")[0],
+        description: "",
+        type: "award",
+      },
+    ]);
+  };
+
+  const handleAwardChange = (
+    index: number,
+    field: keyof Certificate,
+    value: string
+  ) => {
+    const newAwards = [...tempAwards];
+    newAwards[index] = { ...newAwards[index], [field]: value };
+    setTempAwards(newAwards);
+  };
+
+  const handleRemoveAward = async (index: number) => {
+    Swal.fire({
+      title: "Are you sure?",
+      text: "Do you want to delete this award?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, delete it!",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        try {
+          const award = tempAwards[index];
+
+          // If award has a document ID, delete it from the server
+          if (award.documentId) {
+            const token = getAuthToken();
+            await axios.delete(
+              `${API_BASE_URL}/user/document/${award.documentId}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              }
+            );
+          }
+
+          // Remove from local state
+          const newAwards = [...tempAwards];
+          newAwards.splice(index, 1);
+          setTempAwards(newAwards);
+
+          Swal.fire("Deleted!", "The award has been removed.", "success");
+        } catch (error) {
+          console.error("Error deleting award:", error);
+          Swal.fire({
+            icon: "error",
+            title: "Error",
+            text: "Failed to delete the award",
+          });
+        }
+      }
+    });
+  };
+
+  const handleAwardImageUpload = async (
+    index: number,
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+
+      // Create form data for document upload
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("title", tempAwards[index].title || `Award ${index + 1}`);
+      formData.append("issuedBy", tempAwards[index].issuedBy || "");
+      formData.append(
+        "issuedDate",
+        tempAwards[index].issuedDate || new Date().toISOString().split("T")[0]
+      );
+      formData.append("type", "award");
+      if (tempAwards[index].description) {
+        formData.append("description", tempAwards[index].description);
+      }
+
+      // Upload document
+      const token = getAuthToken();
+      const response = await axios.post(
+        `${API_BASE_URL}/user/document`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      console.log("Document upload response:", response.data);
+
+      // Update award with document ID and image URL
+      const newAwards = [...tempAwards];
+      newAwards[index] = {
+        ...newAwards[index],
+        documentId: response.data.id || response.data._id,
+        imageUrl: response.data.imageUrl || response.data.url,
+      };
+      setTempAwards(newAwards);
+
+      // Show success message
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Award image uploaded successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Error uploading award image:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: "Failed to upload award image",
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleSaveAwards = async () => {
+    setIsSubmitting(true);
+
+    try {
+      // Validate required fields
+      const allValid = tempAwards.every((award) => award.title.trim() !== "");
+
+      if (!allValid) {
+        Swal.fire({
+          title: "Validation Error",
+          text: "All awards must have a title.",
+          icon: "error",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Just update the local state
+      setAwards([...tempAwards]);
+
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Awards updated successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+
+      setIsEditingAwards(false);
+    } catch (error: any) {
+      Swal.fire({
+        icon: "error",
+        title: "Update Failed",
+        text: error.message || "Failed to update awards",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const cancelAwardsEdit = () => {
+    setTempAwards([...awards]);
+    setIsEditingAwards(false);
+  };
+
   // Format date for display
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
@@ -607,119 +815,8 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
         )}
       </Card>
 
-      {/* Skills & Certifications in 2 columns */}
+      {/* Certifications & Awards in 2 columns */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Skills Section */}
-        <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-            Skills
-          </h3>
-
-          {isEditingSkills ? (
-            <div className="space-y-3">
-              <div className="flex gap-2">
-                <Input
-                  value={newSkill}
-                  onChange={(e) => setNewSkill(e.target.value)}
-                  placeholder="Add new skill"
-                  className="flex-1"
-                  onKeyPress={handleSkillKeyPress}
-                  disabled={isSubmitting}
-                />
-                <Button
-                  variant="default"
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={handleAddSkill}
-                  disabled={!newSkill.trim() || isSubmitting}
-                >
-                  <FontAwesomeIcon icon={faPlus} />
-                </Button>
-              </div>
-
-              <div className="space-y-2 mt-4">
-                {tempSkills.length > 0 ? (
-                  tempSkills.map((skill, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between bg-gray-50 dark:bg-gray-600 p-2 rounded-md"
-                    >
-                      <span className="text-gray-700 dark:text-gray-200">
-                        {skill}
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-700"
-                        onClick={() => handleRemoveSkill(skill)}
-                        disabled={isSubmitting}
-                      >
-                        <FontAwesomeIcon icon={faTrash} />
-                      </Button>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400 italic">
-                    No skills added yet. Add your first skill above.
-                  </p>
-                )}
-              </div>
-
-              <div className="flex justify-end space-x-2 mt-4">
-                <Button
-                  variant="outline"
-                  onClick={cancelSkillsEdit}
-                  disabled={isSubmitting}
-                >
-                  <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
-                </Button>
-                <Button
-                  variant="default"
-                  className="bg-red-600 hover:bg-red-700"
-                  onClick={handleSaveSkills}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
-                    </>
-                  )}
-                </Button>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex flex-col space-y-2">
-                {skills.length > 0 ? (
-                  skills.map((skill, index) => (
-                    <div key={index} className="flex items-center">
-                      <span className="px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200 w-full">
-                        {skill}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <p className="text-gray-500 dark:text-gray-400">
-                    No skills listed
-                  </p>
-                )}
-              </div>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
-                onClick={() => setIsEditingSkills(true)}
-              >
-                <FontAwesomeIcon icon={faPen} />
-              </Button>
-            </>
-          )}
-        </Card>
-
         {/* Certifications Section */}
         <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
@@ -1008,7 +1105,392 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
             </>
           )}
         </Card>
+
+        {/* Awards Section */}
+        <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+            Awards
+          </h3>
+
+          {isEditingAwards ? (
+            <div className="space-y-5">
+              {tempAwards.map((award, index) => (
+                <div
+                  key={award.id || index}
+                  className="border dark:border-gray-600 rounded-lg p-4 space-y-3 bg-gray-50 dark:bg-gray-800"
+                >
+                  <div className="flex justify-between items-start">
+                    <h4 className="font-medium text-gray-700 dark:text-gray-300">
+                      Award #{index + 1}
+                    </h4>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => handleRemoveAward(index)}
+                      disabled={isUploading || isSubmitting}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Title <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      value={award.title}
+                      onChange={(e) =>
+                        handleAwardChange(index, "title", e.target.value)
+                      }
+                      placeholder="Award title"
+                      className="w-full dark:bg-gray-700"
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Issued By
+                    </Label>
+                    <Input
+                      value={award.issuedBy || ""}
+                      onChange={(e) =>
+                        handleAwardChange(index, "issuedBy", e.target.value)
+                      }
+                      placeholder="Organization name"
+                      className="w-full dark:bg-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Issue Date
+                    </Label>
+                    <Input
+                      type="date"
+                      value={award.issuedDate || ""}
+                      onChange={(e) =>
+                        handleAwardChange(index, "issuedDate", e.target.value)
+                      }
+                      className="w-full dark:bg-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Description (Optional)
+                    </Label>
+                    <Textarea
+                      value={award.description || ""}
+                      onChange={(e) =>
+                        handleAwardChange(index, "description", e.target.value)
+                      }
+                      placeholder="Describe your award..."
+                      className="w-full min-h-[80px] dark:bg-gray-700"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      Award Image
+                    </Label>
+                    <div className="flex flex-col space-y-2">
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        ref={(el) => {
+                          awardFileRefs.current[index] = el;
+                        }}
+                        onChange={(e) => handleAwardImageUpload(index, e)}
+                      />
+                      {award.imageUrl ? (
+                        <div className="relative">
+                          <img
+                            src={award.imageUrl}
+                            alt={award.title || `Award ${index}`}
+                            className="w-full h-40 object-cover rounded-md mb-2"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://via.placeholder.com/400x300?text=Award+Image+Not+Found";
+                              target.onerror = null;
+                            }}
+                          />
+                        </div>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          onClick={() => awardFileRefs.current[index]?.click()}
+                          className="flex items-center justify-center border-dashed w-full h-32"
+                          disabled={isUploading || isSubmitting}
+                        >
+                          {isUploading ? (
+                            <div className="flex items-center">
+                              <svg
+                                className="animate-spin -ml-1 mr-2 h-4 w-4 text-gray-700"
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                              >
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Uploading...
+                            </div>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon
+                                icon={faImage}
+                                className="mr-2"
+                              />
+                              Upload Image
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+
+              <Button
+                variant="outline"
+                className="w-full mt-4"
+                onClick={handleAddAward}
+                disabled={isUploading || isSubmitting}
+              >
+                <FontAwesomeIcon icon={faPlus} className="mr-1" /> Add New Award
+              </Button>
+
+              <div className="flex justify-end space-x-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={cancelAwardsEdit}
+                  disabled={isUploading || isSubmitting}
+                >
+                  <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
+                </Button>
+                <Button
+                  variant="default"
+                  className="bg-red-600 hover:bg-red-700"
+                  onClick={handleSaveAwards}
+                  disabled={isUploading || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center">
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                      Saving...
+                    </div>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4">
+                {awards.length > 0 ? (
+                  awards.map((award, index) => (
+                    <div
+                      key={award.id || index}
+                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                    >
+                      {/* Image Section */}
+                      {award.imageUrl && (
+                        <div className="w-20 h-20 flex-shrink-0">
+                          <img
+                            src={award.imageUrl}
+                            alt={award.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://via.placeholder.com/80x80?text=Image";
+                              target.onerror = null;
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Text Content */}
+                      <div className="p-4 flex-grow">
+                        <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                          {award.title}
+                        </h4>
+                        {award.issuedBy && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            Issued by: {award.issuedBy}
+                            {award.issuedDate &&
+                              ` (${formatDate(award.issuedDate)})`}
+                          </p>
+                        )}
+                        {award.description && (
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                            {award.description}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-gray-500 dark:text-gray-400 italic">
+                    No awards added yet.
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                onClick={() => setIsEditingAwards(true)}
+              >
+                <FontAwesomeIcon icon={faPen} />
+              </Button>
+            </>
+          )}
+        </Card>
       </div>
+
+      {/* Skills Section - Now full width below Certificates and Awards */}
+      <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+          Skills
+        </h3>
+
+        {isEditingSkills ? (
+          <div className="space-y-3">
+            <div className="flex gap-2">
+              <Input
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                placeholder="Add new skill"
+                className="flex-1"
+                onKeyPress={handleSkillKeyPress}
+                disabled={isSubmitting}
+              />
+              <Button
+                variant="default"
+                className="bg-red-600 hover:bg-red-700"
+                onClick={handleAddSkill}
+                disabled={!newSkill.trim() || isSubmitting}
+              >
+                <FontAwesomeIcon icon={faPlus} />
+              </Button>
+            </div>
+
+            <div className="space-y-2 mt-4">
+              {tempSkills.length > 0 ? (
+                tempSkills.map((skill, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between bg-gray-50 dark:bg-gray-600 p-2 rounded-md"
+                  >
+                    <span className="text-gray-700 dark:text-gray-200">
+                      {skill}
+                    </span>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => handleRemoveSkill(skill)}
+                      disabled={isSubmitting}
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                    </Button>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400 italic">
+                  No skills added yet. Add your first skill above.
+                </p>
+              )}
+            </div>
+
+            <div className="flex justify-end space-x-2 mt-4">
+              <Button
+                variant="outline"
+                onClick={cancelSkillsEdit}
+                disabled={isSubmitting}
+              >
+                <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
+              </Button>
+              <Button
+                variant="default"
+                className="bg-red-600 hover:bg-red-700"
+                onClick={handleSaveSkills}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <>
+                    <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
+                  </>
+                )}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex flex-wrap gap-2">
+              {skills.length > 0 ? (
+                skills.map((skill, index) => (
+                  <div key={index} className="flex items-center">
+                    <span className="px-3 py-2 bg-gray-100 dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200">
+                      {skill}
+                    </span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 dark:text-gray-400">
+                  No skills listed
+                </p>
+              )}
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+              onClick={() => setIsEditingSkills(true)}
+            >
+              <FontAwesomeIcon icon={faPen} />
+            </Button>
+          </>
+        )}
+      </Card>
     </div>
   );
 };

@@ -2,24 +2,31 @@ import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import axios from "axios"; // Import axios
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
   faInstagram,
   faFacebook,
-  faTwitter,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import profile from "../assets/images/avatar.png";
 
-import { faStar, faCamera, faVideo } from "@fortawesome/free-solid-svg-icons";
+import {
+  faStar,
+  faCamera,
+  faVideo,
+  faUpload,
+  faFileUpload,
+} from "@fortawesome/free-solid-svg-icons";
 
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile } from "../store/profile-slice";
 import { MoveLeft } from "lucide-react";
-import Reviews from "./reviews";
 import Expertreviews from "./expertreviews";
 
 const icons = [
@@ -64,6 +71,16 @@ interface Certificate {
   description?: string;
 }
 
+interface MediaUploadResponse {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 type TabType = "details" | "media" | "reviews" | "services";
 
 const TeamExperts = () => {
@@ -75,11 +92,25 @@ const TeamExperts = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">(
     "all"
   );
+
   // Certificate preview state
   const [selectedCertificate, setSelectedCertificate] =
     useState<Certificate | null>(null);
   const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] =
     useState(false);
+
+  // Video Upload Modal state (for RECORDED VIDEO ASSESSMENT)
+  const [isVideoUploadModalOpen, setIsVideoUploadModalOpen] = useState(false);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [videoDescription, setVideoDescription] = useState("");
+  const [currentService, setCurrentService] = useState<Service | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+
+  // On Ground Assessment Modal state
+  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
+  const [location, setLocation] = useState("");
+  const [locationDescription, setLocationDescription] = useState("");
 
   // Redux state
   const dispatch = useAppDispatch();
@@ -87,6 +118,10 @@ const TeamExperts = () => {
     (state) => state.profile
   );
   const navigate = useNavigate();
+
+  // API endpoints
+  const API_MEDIA_URL = `${import.meta.env.VITE_PORT}/api/v1/user/media`;
+  const API_BOOKING_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
   // Fetch expert profile on component mount
   useEffect(() => {
@@ -98,7 +133,7 @@ const TeamExperts = () => {
     }
   }, [dispatch]);
 
-  // Get certificates from documents
+  // Get certificates and awards from documents
   const certificates = viewedProfile?.documents
     ? viewedProfile.documents
         .filter((doc: any) => doc.type === "certificate")
@@ -110,6 +145,20 @@ const TeamExperts = () => {
           imageUrl: cert.imageUrl || "",
           type: cert.type,
           description: cert.description || "",
+        }))
+    : [];
+
+  const awards = viewedProfile?.documents
+    ? viewedProfile.documents
+        .filter((doc: any) => doc.type === "award")
+        .map((award: any) => ({
+          id: award.id,
+          title: award.title,
+          issuedBy: award.issuedBy || "",
+          issuedDate: award.issuedDate || "",
+          imageUrl: award.imageUrl || "",
+          type: award.type,
+          description: award.description || "",
         }))
     : [];
 
@@ -148,8 +197,10 @@ const TeamExperts = () => {
             "Team Management",
           ],
         certificates: certificates,
+        awards: awards,
         services: viewedProfile.services || [],
         reviewsReceived: viewedProfile.reviewsReceived,
+        language: viewedProfile.language,
       }
     : {
         name: "N/A",
@@ -165,6 +216,7 @@ const TeamExperts = () => {
         about: "N/A",
         skills: [],
         certificates: [],
+        awards: [],
         services: [],
       };
   localStorage.setItem("expertid", expertData?.id);
@@ -204,9 +256,10 @@ const TeamExperts = () => {
     },
   ];
   const SERVICE_NAME_MAP: Record<string, string> = {
-    "1": "ONLINE ASSESSMENT",
+    "1": "RECORDED VIDEO ASSESSMENT",
     "2": "ONLINE TRAINING",
     "3": "ON GROUND ASSESSMENT",
+    "4": "ONLINE ASSESSMENT",
   };
 
   // Helper function to get service name from ID
@@ -277,6 +330,7 @@ const TeamExperts = () => {
 
       return {
         id: service.id || service.serviceId,
+        serviceId: service.serviceId,
         name: serviceName,
         description: displayDescription,
         price:
@@ -334,23 +388,167 @@ const TeamExperts = () => {
       </div>
     );
   }
+  function getTodaysDate() {
+    const today = new Date();
+
+    const year = today.getFullYear();
+
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+
+    const day = String(today.getDate()).padStart(2, "0");
+
+    return `${year}-${month}-${day}`;
+  }
 
   const handlebook = (service: Service) => {
-    // Save service details to localStorage
-    localStorage.setItem(
-      "selectedService",
-      JSON.stringify({
-        expertname: expertData.name, // Add expert name
-        expertProfileImage: expertData.profileImage,
-        serviceid: service.id, // Add expert profile image
-        name: service.name,
-        description: service.description,
-        price: service.price,
-      })
-    );
+    // Set current service for modals
+    setCurrentService(service);
 
-    // Navigate to the BookService page
-    navigate("/player/book");
+    // Store common data for booking
+    const serviceData = {
+      expertname: expertData.name,
+      expertProfileImage: expertData.profileImage,
+      serviceid: service.id,
+      name: service.name,
+      description: service.description,
+      price: service.price,
+    };
+
+    // Handle different service types based on serviceId
+    switch (service.serviceId) {
+      case "1": // RECORDED VIDEO ASSESSMENT - open video upload modal
+        setIsVideoUploadModalOpen(true);
+        setVideoDescription("");
+        // setSelectedVideo(null);
+        setUploadProgress(0);
+        break;
+
+      case "2": // ONLINE TRAINING - navigate to booking page
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/team/book");
+        break;
+
+      case "3": // ON GROUND ASSESSMENT - navigate to booking page
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/team/book");
+        break;
+      case "4": // ONLINE ASSESSMENT - navigate to booking page
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/team/book");
+        break;
+
+      default:
+        // Default behavior for unknown service types
+        localStorage.setItem("selectedService", JSON.stringify(serviceData));
+        navigate("/team/book");
+    }
+  };
+
+  // Handle video file selection
+  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedVideo(e.target.files[0]);
+    }
+  };
+
+  // Handle video upload submission
+  const handleVideoUploadSubmit = async () => {
+    // Validate required fields
+    if (!selectedVideo) {
+      alert("Please select a video to upload");
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      setUploadProgress(20);
+
+      // Get auth token from localStorage
+      const token = localStorage.getItem("token");
+      if (!token) {
+        alert("Authentication token not found. Please log in again.");
+        setIsUploading(false);
+        return;
+      }
+
+      // Get required IDs
+      const expertId = localStorage.getItem("expertid");
+      const teamId = localStorage.getItem("userId");
+
+      if (!expertId) {
+        alert("Expert information missing. Please try again.");
+        setIsUploading(false);
+        return;
+      }
+
+      // Create FormData to send both video file and booking data in one request
+      const formData = new FormData();
+
+      // Add the video file
+      formData.append("video", selectedVideo);
+
+      // Add other booking data as JSON string
+      const bookingData = {
+        expertId: expertId,
+        playerId: teamId,
+        serviceId: currentService?.id,
+        date: getTodaysDate(),
+        startTime: "00:00",
+        endTime: "00:00",
+        description: videoDescription || "",
+        status: "WAITING_EXPERT_APPROVAL",
+      };
+
+      // Append each field individually
+      Object.entries(bookingData).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          formData.append(key, value);
+        }
+      });
+
+      setUploadProgress(50);
+
+      console.log("Sending booking request with video...");
+
+      // Make the API call with the FormData
+      const bookingResponse = await axios.post(API_BOOKING_URL, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data", // Important for file uploads
+          Authorization: `Bearer ${token}`,
+        },
+        onUploadProgress: (progressEvent) => {
+          const progress = Math.round(
+            50 + (progressEvent.loaded * 40) / progressEvent.total!
+          );
+          setUploadProgress(progress);
+        },
+      });
+
+      setUploadProgress(100);
+      console.log("Booking created successfully:", bookingResponse.data);
+
+      // Close modal and show success message
+      setIsVideoUploadModalOpen(false);
+      alert(
+        "Video assessment request submitted successfully! You'll be notified when the expert reviews your recording."
+      );
+
+      // Navigate to bookings page
+      navigate("/team/mybooking");
+    } catch (error: any) {
+      console.error("Error during video booking submission:", error);
+
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        error.message ||
+        "An unknown error occurred";
+
+      alert(`Error: ${errorMessage}`);
+    } finally {
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
   };
 
   return (
@@ -402,13 +600,25 @@ const TeamExperts = () => {
               </p>
             </div>
             <div>
+              <p className="text-gray-500">Certification Level</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.certificationLevel}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500">Languages</p>
+              <p className="font-semibold dark:text-white">
+                {expertData.language}
+              </p>
+            </div>
+            {/* <div className="md:col-span-1"></div>{" "} */}
+            {/* Empty column for proper alignment */}
+            <div>
               <p className="text-gray-500">Location</p>
               <p className="font-semibold dark:text-white">
                 {expertData.location}
               </p>
             </div>
-            <div className="md:col-span-1"></div>{" "}
-            {/* Empty column for proper alignment */}
             <div>
               <p className="text-gray-500">Response Time</p>
               <p className="font-semibold dark:text-white">
@@ -419,12 +629,6 @@ const TeamExperts = () => {
               <p className="text-gray-500">Travel Limit</p>
               <p className="font-semibold dark:text-white">
                 {expertData.travelLimit}
-              </p>
-            </div>
-            <div>
-              <p className="text-gray-500">Certification Level</p>
-              <p className="font-semibold dark:text-white">
-                {expertData.certificationLevel}
               </p>
             </div>
           </div>
@@ -537,6 +741,7 @@ const TeamExperts = () => {
                   "text-gray-700 dark:text-gray-300",
                   !readMore && shouldClamp && "line-clamp-2"
                 )}
+                style={{ whiteSpace: "pre-line" }}
               >
                 {expertData.about}
               </p>
@@ -551,30 +756,9 @@ const TeamExperts = () => {
               )}
             </Card>
 
-            {/* Skills Card */}
+            {/* Certificates & Awards Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Skills Section */}
-              <Card className="p-6 relative">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-bold">Skills</h2>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {expertData.skills && expertData.skills.length > 0 ? (
-                    expertData.skills.map((skill: string, index: number) => (
-                      <span
-                        key={index}
-                        className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
-                      >
-                        {skill}
-                      </span>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">No skills available</p>
-                  )}
-                </div>
-              </Card>
-
-              {/* Certifications Section */}
+              {/* Certificates Section */}
               <Card className="p-6 relative">
                 <div className="flex justify-between mb-4">
                   <h2 className="text-xl font-bold">Certifications</h2>
@@ -619,7 +803,73 @@ const TeamExperts = () => {
                   )}
                 </div>
               </Card>
+
+              {/* Awards Section */}
+              <Card className="p-6 relative">
+                <div className="flex justify-between mb-4">
+                  <h2 className="text-xl font-bold">Awards</h2>
+                </div>
+                <div className="space-y-3">
+                  {expertData.awards && expertData.awards.length > 0 ? (
+                    expertData.awards.map((award: Certificate) => (
+                      <div
+                        key={award.id}
+                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                        onClick={() => handleCertificateClick(award)}
+                      >
+                        {/* Image thumbnail if available */}
+                        {award.imageUrl && (
+                          <div className="w-16 h-16 flex-shrink-0">
+                            <img
+                              src={award.imageUrl}
+                              alt={award.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Award details */}
+                        <div className="p-3 flex-1">
+                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
+                            {award.title}
+                          </h4>
+                          {award.issuedBy && (
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
+                              Issued by: {award.issuedBy}
+                              {award.issuedDate &&
+                                ` (${formatDate(award.issuedDate)})`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="text-gray-500">No awards available</p>
+                  )}
+                </div>
+              </Card>
             </div>
+
+            {/* Skills Card - Now Full Width Below */}
+            <Card className="p-6 relative">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Skills</h2>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {expertData.skills && expertData.skills.length > 0 ? (
+                  expertData.skills.map((skill: string, index: number) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
+                    >
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No skills available</p>
+                )}
+              </div>
+            </Card>
           </div>
         )}
 
@@ -728,8 +978,6 @@ const TeamExperts = () => {
         {activeTab === "reviews" && (
           <Expertreviews expertData={expertData} isExpertView={false} />
         )}
-
-        {/* Services Tab */}
       </div>
 
       {/* Media Preview Modal */}
@@ -809,6 +1057,123 @@ const TeamExperts = () => {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Video Upload Modal (for RECORDED VIDEO ASSESSMENT) */}
+      {isVideoUploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-lg p-6 relative">
+            <button
+              onClick={() => setIsVideoUploadModalOpen(false)}
+              disabled={isUploading}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
+            >
+              ✕
+            </button>
+            <h3 className="text-xl font-semibold mb-4 text-center">
+              Upload Video for Assessment
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Upload Video <span className="text-red-500">*</span>
+                </Label>
+                <div className="mt-2">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoChange}
+                    className="hidden"
+                    id="videoUpload"
+                    disabled={isUploading}
+                  />
+                  <div className="relative">
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        document.getElementById("videoUpload")?.click()
+                      }
+                      className="w-full h-32 border-dashed border-2 flex flex-col items-center justify-center gap-2"
+                      disabled={isUploading}
+                    >
+                      <FontAwesomeIcon
+                        icon={faUpload}
+                        className="text-2xl text-gray-400"
+                      />
+                      <span className="text-gray-500">
+                        {selectedVideo
+                          ? selectedVideo.name
+                          : "Click to upload video"}
+                      </span>
+                    </Button>
+                    {selectedVideo && (
+                      <div className="mt-2 text-sm text-green-600">
+                        Selected: {selectedVideo.name}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Description
+                </Label>
+                <Textarea
+                  value={videoDescription}
+                  onChange={(e) => setVideoDescription(e.target.value)}
+                  placeholder="Describe what you'd like the expert to assess in your video..."
+                  className="w-full h-32 dark:bg-gray-700"
+                  disabled={isUploading}
+                />
+              </div>
+
+              {isUploading && (
+                <div className="w-full">
+                  <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-red-500"
+                      style={{ width: `${uploadProgress}%` }}
+                    ></div>
+                  </div>
+                  <p className="text-center text-sm text-gray-600 mt-2">
+                    {uploadProgress < 100
+                      ? "Uploading video..."
+                      : "Processing..."}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-end space-x-2 mt-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsVideoUploadModalOpen(false)}
+                  disabled={isUploading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  onClick={handleVideoUploadSubmit}
+                  disabled={isUploading || !selectedVideo}
+                >
+                  {isUploading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                      <span>Uploading...</span>
+                    </div>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faFileUpload} className="mr-2" />
+                      Submit for Assessment
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

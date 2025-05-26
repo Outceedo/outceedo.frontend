@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FaEllipsisH } from "react-icons/fa";
+import { FaEllipsisH, FaCalendarAlt, FaUser } from "react-icons/fa";
 
 interface SponsorProfile {
   id: string;
@@ -103,7 +103,11 @@ const Pagination: React.FC<{
   );
 };
 
-export default function TeamSponsor() {
+export default function TeamSponsors() {
+  // Current date and time display
+  const currentDateTime = "2025-05-26 09:17:22";
+  const currentUserLogin = "22951a3363";
+
   // Redux state and dispatch
   const dispatch = useAppDispatch();
   const { profiles, status, error, totalPages } = useAppSelector(
@@ -119,8 +123,11 @@ export default function TeamSponsor() {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8); // Number of profiles per page
+  const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(
+    null
+  );
 
-  // Filter states
+  // Filter states - ensure we use consistent exact keys for filters
   const [filters, setFilters] = useState({
     country: "",
     sponsorType: "",
@@ -131,8 +138,14 @@ export default function TeamSponsor() {
   const navigate = useNavigate();
 
   // Open/close modal handlers
-  const openReportModal = () => setIsReportOpen(true);
-  const closeReportModal = () => setIsReportOpen(false);
+  const openReportModal = (sponsor: SponsorProfile) => {
+    setActiveSponsor(sponsor);
+    setIsReportOpen(true);
+  };
+
+  const closeReportModal = () => {
+    setIsReportOpen(false);
+  };
 
   // Navigation to sponsor profile
   const handleViewProfile = (sponsorId: string, username: string) => {
@@ -171,18 +184,43 @@ export default function TeamSponsor() {
       });
   }, []);
 
-  // Handle filter changes
+  // Handle filter changes - key fix here!
   const handleFilterChange = (value: string, filterType: string) => {
-    setFilters({
-      ...filters,
-      [filterType.toLowerCase()]: value,
-    });
+    // Make sure we use the exact filter keys with correct casing
+    const normalizedKey = filterType.toLowerCase();
+
+    // Map the normalized key to the correct casing used in our state
+    let stateKey = "";
+    switch (normalizedKey) {
+      case "country":
+        stateKey = "country";
+        break;
+      case "sponsortype":
+        stateKey = "sponsorType";
+        break;
+      case "sponsorship type":
+      case "sponsorshiptype":
+        stateKey = "sponsorshipType";
+        break;
+      case "budget range":
+      case "budgetrange":
+        stateKey = "budgetRange";
+        break;
+      default:
+        stateKey = normalizedKey;
+    }
+
+    setFilters((prevFilters) => ({
+      ...prevFilters,
+      [stateKey]: value,
+    }));
+
     // Reset to first page when filters change
     setCurrentPage(1);
   };
 
   // Clear all filters
-  const handleClear = () => {
+  const clearAllFilters = () => {
     setSearchTerm("");
     setFilters({
       country: "",
@@ -191,6 +229,13 @@ export default function TeamSponsor() {
       budgetRange: "",
     });
     setCurrentPage(1);
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      searchTerm !== "" || Object.values(filters).some((value) => value !== "")
+    );
   };
 
   // Extract unique filter options from sponsor data
@@ -211,7 +256,12 @@ export default function TeamSponsor() {
   const sponsorshipTypeOptions = extractFilterOptions("sponsorshipType");
   const budgetRangeOptions = extractFilterOptions("budgetRange");
 
-  // Filter sponsor data
+  // Default options when data doesn't provide any
+  const defaultSponsorTypes = ["Individual", "Corporate", "Institution"];
+  const defaultSponsorshipTypes = ["Cash", "Card", "Gift", "Professional Fee"];
+  const defaultBudgetRanges = ["10K-50K", "50K-100K", "100K-500K", "500K+"];
+
+  // Filter sponsor data - using case-insensitive comparison
   const filteredSponsors = sponsorsArray.filter((sponsor: SponsorProfile) => {
     // Search query filtering
     const fullName = `${sponsor.firstName || ""} ${
@@ -229,7 +279,7 @@ export default function TeamSponsor() {
       return false;
     }
 
-    // Apply other filters if they're set
+    // Apply other filters if they're set (case insensitive)
     if (
       filters.country &&
       sponsor.country &&
@@ -293,6 +343,7 @@ export default function TeamSponsor() {
 
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-6 items-center">
+        {/* Country Filter */}
         <Select
           value={filters.country}
           onValueChange={(value) => handleFilterChange(value, "country")}
@@ -303,18 +354,19 @@ export default function TeamSponsor() {
           <SelectContent>
             {countryOptions.length > 0
               ? countryOptions.map((country, index) => (
-                  <SelectItem key={index} value={country}>
+                  <SelectItem key={`country-${index}`} value={country}>
                     {country}
                   </SelectItem>
                 ))
               : countries.map((c) => (
-                  <SelectItem key={c.cca2} value={c.name.common}>
+                  <SelectItem key={`country-${c.cca2}`} value={c.name.common}>
                     {c.name.common}
                   </SelectItem>
                 ))}
           </SelectContent>
         </Select>
 
+        {/* Sponsor Type Filter */}
         <Select
           value={filters.sponsorType}
           onValueChange={(value) => handleFilterChange(value, "sponsorType")}
@@ -325,18 +377,19 @@ export default function TeamSponsor() {
           <SelectContent>
             {sponsorTypeOptions.length > 0
               ? sponsorTypeOptions.map((type, index) => (
-                  <SelectItem key={index} value={type}>
+                  <SelectItem key={`sponsorType-${index}`} value={type}>
                     {type}
                   </SelectItem>
                 ))
-              : ["Individual", "Corporate", "Institution"].map((type) => (
-                  <SelectItem key={type} value={type}>
+              : defaultSponsorTypes.map((type) => (
+                  <SelectItem key={`sponsorType-${type}`} value={type}>
                     {type}
                   </SelectItem>
                 ))}
           </SelectContent>
         </Select>
 
+        {/* Sponsorship Type Filter */}
         <Select
           value={filters.sponsorshipType}
           onValueChange={(value) =>
@@ -349,18 +402,19 @@ export default function TeamSponsor() {
           <SelectContent>
             {sponsorshipTypeOptions.length > 0
               ? sponsorshipTypeOptions.map((type, index) => (
-                  <SelectItem key={index} value={type}>
+                  <SelectItem key={`sponsorshipType-${index}`} value={type}>
                     {type}
                   </SelectItem>
                 ))
-              : ["Cash", "Card", "Gift", "Professional Fee"].map((type) => (
-                  <SelectItem key={type} value={type}>
+              : defaultSponsorshipTypes.map((type) => (
+                  <SelectItem key={`sponsorshipType-${type}`} value={type}>
                     {type}
                   </SelectItem>
                 ))}
           </SelectContent>
         </Select>
 
+        {/* Budget Range Filter */}
         <Select
           value={filters.budgetRange}
           onValueChange={(value) => handleFilterChange(value, "budgetRange")}
@@ -371,26 +425,31 @@ export default function TeamSponsor() {
           <SelectContent>
             {budgetRangeOptions.length > 0
               ? budgetRangeOptions.map((range, index) => (
-                  <SelectItem key={index} value={range}>
+                  <SelectItem key={`budgetRange-${index}`} value={range}>
                     {range}
                   </SelectItem>
                 ))
-              : ["10K-50K", "50K-100K", "100K-500K", "500K+"].map((range) => (
-                  <SelectItem key={range} value={range}>
+              : defaultBudgetRanges.map((range) => (
+                  <SelectItem key={`budgetRange-${range}`} value={range}>
                     {range}
                   </SelectItem>
                 ))}
           </SelectContent>
         </Select>
 
-        <button
-          className="border flex items-center gap-2 text-sm px-8 py-2 bg-gray-100 dark:bg-gray-700 dark:text-white rounded hover:bg-gray-200 dark:hover:bg-gray-600"
-          onClick={handleClear}
-        >
-          <span>Clear</span>
-          <IoIosRefresh />
-        </button>
+        {/* Clear Filters Button */}
+        {hasActiveFilters() && (
+          <Button
+            variant="outline"
+            onClick={clearAllFilters}
+            className="flex items-center gap-1 bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-600"
+          >
+            <X size={16} /> Clear Filters
+          </Button>
+        )}
       </div>
+
+      {/* Active Filters Debug Display */}
 
       {/* Loading State */}
       {status === "loading" && (
@@ -508,44 +567,46 @@ export default function TeamSponsor() {
                 <Button
                   variant="ghost"
                   className="text-2xl font-bold bg-gray-100 text-gray-800 flex items-center justify-center dark:bg-gray-700 dark:text-white"
-                  onClick={openReportModal}
+                  onClick={() => openReportModal(sponsor)}
                 >
-                  <FaEllipsisH/>
+                  <FaEllipsisH />
                 </Button>
-                {isReportOpen && (
-                  <div className="fixed left-[260px] top-0 right-0 bottom-0 z-50 bg-white dark:bg-gray-800 flex flex-col overflow-hidden">
-                    <div className="sticky top-0 w-full flex justify-between items-center p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 z-10">
-                      <button
-                        onClick={closeReportModal}
-                        className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                      >
-                        <X className="w-6 h-6 text-gray-800 dark:text-white" />
-                      </button>
-                    </div>
-                    <div className="flex-1 overflow-auto p-4 sm:p-6 md:p-8">
-                      <ApplicationForm />
-                    </div>
-                    <div className="sticky bottom-0 w-full p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex justify-end">
-                      <Button
-                        variant="outline"
-                        className="mr-2"
-                        onClick={closeReportModal}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                        onClick={closeReportModal}
-                      >
-                        Close
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </div>
             </Card>
           );
         })}
+
+      {/* Modal that respects sidebar and header positioning */}
+      {isReportOpen && (
+        <div className="fixed left-[260px] top-0 right-0 bottom-0 z-50 bg-white dark:bg-gray-800 flex flex-col overflow-hidden">
+          <div className="sticky top-0 w-full flex justify-between items-center p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 z-10">
+            <button
+              onClick={closeReportModal}
+              className="flex items-center justify-center h-10 w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            >
+              <X className="w-6 h-6 text-gray-800 dark:text-white" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-4 sm:p-6 md:p-8">
+            <ApplicationForm />
+          </div>
+          <div className="sticky bottom-0 w-full p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex justify-end">
+            <Button
+              variant="outline"
+              className="mr-2"
+              onClick={closeReportModal}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={closeReportModal}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* Pagination */}
       {status === "succeeded" && totalPages > 0 && (
