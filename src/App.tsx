@@ -65,13 +65,14 @@ import TeamPlayer from "./teampages/player";
 import TeamSponsor from "./teampages/TeamSponser";
 
 import TeamPlayerInfo from "./SponsorPages/playerinfo";
-import TeamExperts from "./SponsorPages/Expertssponsor";
+
 import SponsorPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorExperts from "./SponsorPages/Expertssponsor";
 import Expertsponsors from "./expertpages/Expertsponsors";
 import SponsorInfo from "./expertpages/sponsorinfo";
 import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
 import TeamSponsorInfo from "./teampages/Sponsorinfo";
+import TeamExperts from "./teampages/expertprofile";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {

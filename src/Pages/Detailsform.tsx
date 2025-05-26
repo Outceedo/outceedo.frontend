@@ -1287,14 +1287,6 @@ const Detailsform: React.FC = () => {
               >
                 <option value="">Select Sport</option>
                 <option value="football">Football</option>
-                <option value="basketball">Basketball</option>
-                <option value="tennis">Tennis</option>
-                <option value="cricket">Cricket</option>
-                <option value="volleyball">Volleyball</option>
-                <option value="rugby">Rugby</option>
-                <option value="hockey">Hockey</option>
-                <option value="baseball">Baseball</option>
-                <option value="other">Other</option>
               </select>
             </div>
 

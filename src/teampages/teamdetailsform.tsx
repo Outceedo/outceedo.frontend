@@ -378,7 +378,6 @@ export default function TeamDetailsForm() {
 
       // Prepare the data for API submission
       const teamData = {
-       
         profession: form.type,
         firstName: form.firstName.trim(),
         lastName: form.lastName.trim(),
@@ -386,7 +385,7 @@ export default function TeamDetailsForm() {
         city: form.city,
         country: form.country,
         address: form.address,
-       
+
         bio: form.bio,
         photo: photoUrl,
         socialLinks: {
@@ -571,9 +570,6 @@ export default function TeamDetailsForm() {
               >
                 <option value="">Select Type</option>
                 <option value="football">Football</option>
-                <option value="tennis">Tennis</option>
-                <option value="basketball">Basketball</option>
-                <option value="other">Other</option>
               </select>
               {validationErrors.type && (
                 <p className="text-red-500 text-xs mt-1">

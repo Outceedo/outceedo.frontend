@@ -569,9 +569,6 @@ export default function SponsorDetailsForm() {
               >
                 <option value="">Select a sport</option>
                 <option value="football">Football</option>
-                <option value="tennis">Tennis</option>
-                <option value="basketball">Basketball</option>
-                <option value="other">Other</option>
               </select>
             </div>
 
