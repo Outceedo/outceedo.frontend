@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { verifyEmail, resendOtp } from "../store/auth-slice";
 import { RootState } from "../store/store";
 import football from "../assets/images/football.jpg";
+import Swal from "sweetalert2"; // Import SweetAlert2
 
 const EmailVerification: React.FC = () => {
   const navigate = useNavigate();
@@ -23,8 +24,14 @@ const EmailVerification: React.FC = () => {
   useEffect(() => {
     const storedEmail = localStorage.getItem("verificationEmail");
     if (!storedEmail) {
-      alert("No email found for verification. Please sign up first.");
-      navigate("/signup");
+      Swal.fire({
+        icon: "error",
+        title: "No Email Found",
+        text: "No email found for verification. Please sign up first.",
+        confirmButtonColor: "#FE221E",
+      }).then(() => {
+        navigate("/signup");
+      });
       return;
     }
     setEmail(storedEmail);
@@ -79,8 +86,19 @@ const EmailVerification: React.FC = () => {
       const resultAction = await dispatch(verifyEmail(requestData));
 
       if (verifyEmail.fulfilled.match(resultAction)) {
-        alert("Email verification successful! Redirecting to login.");
-        navigate("/login");
+        // Use SweetAlert2 instead of standard alert
+        Swal.fire({
+          icon: "success",
+          title: "Verification Successful!",
+          text: "Your email has been verified successfully.",
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          background: "#fff",
+          iconColor: "#4CAF50",
+        }).then(() => {
+          navigate("/login");
+        });
       } else if (verifyEmail.rejected.match(resultAction)) {
         console.error("Verification error:", resultAction.payload);
         // Display the specific API error
@@ -124,6 +142,18 @@ const EmailVerification: React.FC = () => {
         setResendSuccess(true);
         // Set cooldown period (60 seconds)
         setCooldown(60);
+
+        // Show success message for OTP resend
+        Swal.fire({
+          icon: "success",
+          title: "OTP Resent",
+          text: "A new verification code has been sent to your email.",
+          timer: 3000,
+          timerProgressBar: true,
+          showConfirmButton: false,
+          background: "#fff",
+          iconColor: "#4CAF50",
+        });
       } else if (resendOtp.rejected.match(resultAction)) {
         console.error("Resend OTP error:", resultAction.payload);
         // Display the specific API error
@@ -239,15 +269,6 @@ const EmailVerification: React.FC = () => {
             <div className="">
               <p className="text-gray-600">
                 Didn't receive the code?{" "}
-                {/* <button
-                  type="button"
-                  className="text-[#FA6357] hover:underline cursor-pointer"
-                  onClick={() => {
-                    navigate("/signup");
-                  }}
-                >
-                  Go back to signup
-                </button> */}
                 <button
                   type="button"
                   onClick={handleResendOtp}

@@ -5,6 +5,7 @@ import * as countryCodes from "country-codes-list";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { registerUser } from "../store/auth-slice";
 import { RootState } from "../store/store";
+import Swal from "sweetalert2";
 
 type Role = "expert" | "player" | "team" | "sponser" | "fan";
 
@@ -188,8 +189,19 @@ const Signup: React.FC = () => {
         console.log("Registration successful:", resultAction.payload);
         localStorage.setItem("verificationEmail", email);
         localStorage.setItem("username", username); // Store username in localStorage
-        alert("Signup successful! Redirecting to email verification.");
-        navigate("/emailverification");
+        localStorage.setItem("Profilecomplete", check);
+
+        // Show success SweetAlert instead of regular alert
+        Swal.fire({
+          icon: "success",
+          title: "Registration Successful!",
+          text: "Please check your email for verification.",
+          timer: 3000,
+          showConfirmButton: false,
+        }).then(() => {
+          // Navigate after the alert is closed or timer expires
+          navigate("/emailverification");
+        });
       } else if (registerUser.rejected.match(resultAction)) {
         console.error("Registration failed:", resultAction.error);
 
@@ -240,7 +252,18 @@ const Signup: React.FC = () => {
       localStorage.setItem("verificationEmail", email);
       localStorage.setItem("username", username); // Store username in localStorage
       localStorage.setItem("Profilecomplete", check);
-      navigate("/emailverification");
+
+      // Show success SweetAlert using the effect as backup
+      Swal.fire({
+        icon: "success",
+        title: "Registration Successful!",
+        text: "Please check your email for verification.",
+        timer: 3000,
+        showConfirmButton: false,
+      }).then(() => {
+        // Navigate after the alert is closed or timer expires
+        navigate("/emailverification");
+      });
     }
   }, [
     registrationAttempted,
@@ -250,6 +273,7 @@ const Signup: React.FC = () => {
     navigate,
     email,
     username,
+    check,
   ]);
 
   return (
