@@ -768,7 +768,7 @@ const Experts = () => {
                 {showButton && (
                   <Button
                     variant="link"
-                    className="p-0 text-red-600 hover:underline mt-2 text-center w-full"
+                    className="p-0 text-blue-600 hover:underline mt-2 text-center w-full"
                     onClick={() => setReadMore(!readMore)}
                   >
                     {readMore ? "Show less" : "Read more"}
