@@ -293,9 +293,9 @@ export default function TeamDetailsForm() {
       // Map the team data to form data structure
       setForm({
         teamName: profileData.firstName || "",
-        type: profileData.type || "",
+        type: profileData.profession || "",
 
-        clubName: profileData.clubName || "",
+        clubName: profileData.club || "",
         city: profileData.city || "",
         country: profileData.country || "",
         address: profileData.address || "",
