@@ -238,7 +238,7 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
               {isBioLong && (
                 <Button
                   variant="link"
-                  className="mt-1 text-red-600 p-0 h-auto text-sm flex items-center"
+                  className="mt-1 text-red-600 p-0 h-auto text-sm flex items-center w-full"
                   onClick={toggleBioExpand}
                 >
                   {expanded ? (

@@ -19,10 +19,9 @@ const menuItems = [
   { path: "/sponsor/players", name: "Players" },
   { path: "/sponsor/application", name: "Application Form" },
   { path: "/sponsor/profile", name: "Profile" },
-  { path: "/sponsor/Sponsorinfo", name: "Profile" },
-  
-
-
+  { path: "/sponsor/sponsorinfo", name: "Profile" },
+  { path: "/sponsor/playerinfo", name: "Player Profile" },
+  { path: "/sponsor/exdetails", name: "Expert Profile" },
 ];
 function SponsorHeader({ setOpen }: SponserHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+
 import { Button } from "@/components/ui/button";
 import TeamDetails from "./teamdetails";
-import TeamMedia from "./teammedia";
-import { Pencil, Loader2 } from "lucide-react";
+
+import { Loader2 } from "lucide-react";
 import {
   faInstagram,
   faLinkedinIn,
@@ -15,17 +15,18 @@ import teamImage from "../assets/images/team.jpg";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
 import { useNavigate } from "react-router-dom";
+import Mediaedit from "@/Pages/Media/MediaEdit";
 
 const TeamProfile = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media">("details");
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { currentProfile, viewedProfile, status, error } = useAppSelector(
+  const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
 
   // Use the profile that's actively being viewed (could be currentProfile or viewedProfile)
-  const profileData = currentProfile || viewedProfile;
+  const profileData = currentProfile;
 
   // Fallback data for display when profile isn't loaded
   const fallbackData = {
@@ -261,7 +262,7 @@ const TeamProfile = () => {
 
           <div className="mt-4">
             {activeTab === "details" && <TeamDetails profileData={data} />}
-            {activeTab === "media" && <TeamMedia profileData={data} />}
+            {activeTab === "media" && <Mediaedit Data={data} />}
           </div>
         </div>
       </>

@@ -15,6 +15,7 @@ import {
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
+import Mediaedit from "@/Pages/Media/MediaEdit";
 
 const SponsorProfile = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media">("details");
@@ -287,7 +288,7 @@ const SponsorProfile = () => {
 
           <div className="mt-4">
             {activeTab === "details" && <Sponsordetails profileData={data} />}
-            {activeTab === "media" && <Sponsormedia profileData={data} />}
+            {activeTab === "media" && <Mediaedit Data={data} />}
           </div>
         </div>
       </>

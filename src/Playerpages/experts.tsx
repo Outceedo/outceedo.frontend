@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -29,6 +29,8 @@ import { getProfile } from "../store/profile-slice";
 import { MoveLeft } from "lucide-react";
 import Expertreviews from "./expertreviews";
 import Mediaview from "@/Pages/Media/MediaView";
+
+// REMOVED the useState hooks that were here outside the component
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
@@ -93,6 +95,8 @@ const Experts = () => {
   const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">(
     "all"
   );
+  // Added the state here instead of outside the component
+  const [showButton, setShowButton] = useState(false);
 
   // Certificate preview state
   const [selectedCertificate, setSelectedCertificate] =
@@ -224,7 +228,12 @@ const Experts = () => {
   localStorage.setItem("serviceid", expertData?.services.id);
 
   // Determine if text should be clamped
-  const shouldClamp = expertData.about?.split(" ").length > 25;
+  useEffect(() => {
+    // Rough estimate: average ~40-50 chars per line depending on font/width
+    // For 3 lines, ~120-150 chars would be reasonable
+    const charThreshold = 150;
+    setShowButton(expertData.about?.length > charThreshold);
+  }, [expertData.about]);
 
   // Media, reviews, and services
   const mediaItems =
@@ -737,24 +746,26 @@ const Experts = () => {
               <div className="flex justify-between mb-4">
                 <h2 className="text-xl font-bold">About Me</h2>
               </div>
-              <p
-                className={cn(
-                  "text-gray-700 dark:text-gray-300",
-                  !readMore && shouldClamp && "line-clamp-2"
-                )}
-                style={{ whiteSpace: "pre-line" }}
-              >
-                {expertData.about}
-              </p>
-              {shouldClamp && (
-                <Button
-                  variant="link"
-                  className="p-0 text-blue-600 hover:underline mt-2"
-                  onClick={() => setReadMore(!readMore)}
+              <div className="relative">
+                <p
+                  className={cn(
+                    "text-gray-700 dark:text-gray-300",
+                    !readMore && "line-clamp-3"
+                  )}
+                  style={{ whiteSpace: "pre-line" }}
                 >
-                  {readMore ? "Show less" : "Read more"}
-                </Button>
-              )}
+                  {expertData.about}
+                </p>
+                {showButton && (
+                  <Button
+                    variant="link"
+                    className="p-0 text-blue-600 hover:underline mt-2"
+                    onClick={() => setReadMore(!readMore)}
+                  >
+                    {readMore ? "Show less" : "Read more"}
+                  </Button>
+                )}
+              </div>
             </Card>
 
             {/* Certificates & Awards Side by Side */}

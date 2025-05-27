@@ -11,6 +11,7 @@ import { getProfile } from "../store/profile-slice";
 
 // Import default images
 import profile from "../assets/images/avatar.png";
+import Mediaview from "@/Pages/Media/MediaView";
 
 interface Stat {
   label: string;
@@ -312,9 +313,7 @@ const TeamPlayerInfo: React.FC = () => {
               {activeTab === "details" && (
                 <ProfileDetails playerData={profileData} isExpertView={true} />
               )}
-              {activeTab === "media" && (
-                <PlayerMedia playerData={profileData} isExpertView={true} />
-              )}
+              {activeTab === "media" && <Mediaview Data={profileData} />}
               {activeTab === "reviews" && (
                 <Reviews playerData={profileData} isExpertView={true} />
               )}

@@ -28,6 +28,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile } from "../store/profile-slice";
 import { MoveLeft } from "lucide-react";
 import Expertreviews from "./expertreviews";
+import Mediaview from "@/Pages/Media/MediaView";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
@@ -201,6 +202,7 @@ const SponserExperts = () => {
         services: viewedProfile.services || [],
         reviewsReceived: viewedProfile.reviewsReceived,
         language: viewedProfile.language,
+        uploads:viewedProfile.uploads
       }
     : {
         name: "N/A",
@@ -874,142 +876,13 @@ const SponserExperts = () => {
         )}
 
         {/* Media Tab */}
-        {activeTab === "media" && (
-          <div>
-            {/* Filter Buttons */}
-            <div className="flex gap-4 mb-6">
-              <Button
-                variant="ghost"
-                onClick={() => setMediaFilter("all")}
-                className={`px-4 py-2 rounded-md ${
-                  mediaFilter === "all"
-                    ? "bg-blue-200 text-blue-600"
-                    : "hover:bg-blue-200"
-                }`}
-              >
-                All
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setMediaFilter("photo")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
-                  mediaFilter === "photo"
-                    ? "bg-blue-200 text-blue-600"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                <FontAwesomeIcon icon={faCamera} />
-                Photos
-              </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setMediaFilter("video")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-md hover:text-blue-600 ${
-                  mediaFilter === "video"
-                    ? "bg-blue-200 text-blue-600"
-                    : "hover:bg-gray-100"
-                }`}
-              >
-                <FontAwesomeIcon icon={faVideo} />
-                Videos
-              </Button>
-            </div>
-
-            {/* Media Content */}
-            {filteredMedia.length === 0 ? (
-              <div className="text-center py-12 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                <FontAwesomeIcon
-                  icon={mediaFilter === "video" ? faVideo : faCamera}
-                  className="text-4xl text-gray-400 mb-3"
-                />
-                <p className="text-gray-500">
-                  No{" "}
-                  {mediaFilter === "all"
-                    ? "media"
-                    : mediaFilter === "photo"
-                    ? "photos"
-                    : "videos"}{" "}
-                  available
-                </p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                {filteredMedia.map((item) => (
-                  <div
-                    key={item.id}
-                    className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden"
-                  >
-                    <div className="h-48 overflow-hidden">
-                      {item.type === "photo" ? (
-                        <img
-                          src={item.src}
-                          alt={item.title}
-                          onClick={() => {
-                            setSelectedMedia(item);
-                            setIsPreviewOpen(true);
-                          }}
-                          className="w-full h-full object-cover cursor-pointer"
-                        />
-                      ) : (
-                        <video
-                          src={item.src}
-                          controls
-                          className="w-full h-full object-cover"
-                          onClick={() => {
-                            setSelectedMedia(item);
-                            setIsPreviewOpen(true);
-                          }}
-                        />
-                      )}
-                    </div>
-                    <div className="p-3 text-center">
-                      <h3 className="font-medium text-gray-800 dark:text-white truncate">
-                        {item.title}
-                      </h3>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        {activeTab === "media" && <Mediaview Data={expertData} />}
 
         {/* Reviews Tab */}
         {activeTab === "reviews" && (
           <Expertreviews expertData={expertData} isExpertView={false} />
         )}
       </div>
-
-      {/* Media Preview Modal */}
-      {selectedMedia && isPreviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-3xl p-4 relative">
-            <button
-              onClick={() => setIsPreviewOpen(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              {selectedMedia.title}
-            </h3>
-            {selectedMedia.type === "photo" ? (
-              <img
-                src={selectedMedia.src}
-                alt={selectedMedia.title}
-                className="max-w-full max-h-[70vh] mx-auto object-contain"
-              />
-            ) : (
-              <video
-                src={selectedMedia.src}
-                controls
-                autoPlay
-                className="max-w-full max-h-[70vh] mx-auto"
-              />
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Certificate Preview Modal */}
       {selectedCertificate && isCertificatePreviewOpen && (

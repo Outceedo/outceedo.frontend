@@ -21,7 +21,9 @@ const menuItems = [
   { path: "/team/sponsors", name: "Sponsor" },
   { path: "/team/sponsorsapplication", name: "Sponsors Application" },
   { path: "/team/profile", name: "Profile" },
-   { path: "/team/Sponsorinfo", name: "Profile" },
+  { path: "/team/sponsorinfo", name: "Sponsor Profile" },
+  { path: "/team/playerinfo", name: "Player Profile" },
+  { path: "/team/exdetails", name: "Expert Profile" },
 ];
 function TeamHeader({ setOpen }: teamHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);

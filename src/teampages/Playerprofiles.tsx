@@ -148,7 +148,7 @@ const Pagination: React.FC<{
   );
 };
 
-const PlayersProfile: React.FC = () => {
+const TeamPlayerProfiles: React.FC = () => {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -561,4 +561,4 @@ const PlayersProfile: React.FC = () => {
   );
 };
 
-export default PlayersProfile;
+export default TeamPlayerProfiles;
