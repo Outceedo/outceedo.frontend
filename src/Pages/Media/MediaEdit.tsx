@@ -6,11 +6,12 @@ import {
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
-import MediaUpload from "../Playerpages/MediaUpload";
+
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
 import Swal from "sweetalert2";
+import MediaUpload from "./Mediaupload";
 
 interface UploadItem {
   id: string | number;
@@ -21,13 +22,13 @@ interface UploadItem {
   url?: string;
 }
 
-interface ExpertMediaProps {
-  expertData?: any;
+interface MediaeditProps {
+  Data?: any;
 }
 
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
-const ExpertMedia: React.FC<ExpertMediaProps> = ({ expertData }) => {
+const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
   const [activeTab, setActiveTab] = useState<string>("All");
   const [previewItem, setPreviewItem] = useState<UploadItem | null>(null);
   const [media, setMedia] = useState<UploadItem[]>([]);
@@ -41,17 +42,17 @@ const ExpertMedia: React.FC<ExpertMediaProps> = ({ expertData }) => {
   };
 
   useEffect(() => {
-    // Check if expertData with uploads is available
+    // Check if Data with uploads is available
     if (
-      expertData &&
-      expertData.uploads &&
-      Array.isArray(expertData.uploads) &&
-      expertData.uploads.length > 0
+      Data &&
+      Data.uploads &&
+      Array.isArray(Data.uploads) &&
+      Data.uploads.length > 0
     ) {
-      console.log("Using media from expertData:", expertData.uploads);
+      console.log("Using media from Data:", Data.uploads);
 
       // Transform uploads to match our UploadItem format
-      const mediaItems: UploadItem[] = expertData.uploads.map((item: any) => ({
+      const mediaItems: UploadItem[] = Data.uploads.map((item: any) => ({
         id: item.id || item._id,
         title: item.title || "Untitled",
         preview: item.url,
@@ -62,10 +63,10 @@ const ExpertMedia: React.FC<ExpertMediaProps> = ({ expertData }) => {
       setMedia(mediaItems);
       setIsLoading(false);
     } else {
-      // Fetch from API if no expertData uploads
+      // Fetch from API if no Data uploads
       fetchMediaFromAPI();
     }
-  }, [expertData]);
+  }, [Data]);
 
   // Separate function to fetch media from API
   const fetchMediaFromAPI = async () => {
@@ -334,7 +335,7 @@ const ExpertMedia: React.FC<ExpertMediaProps> = ({ expertData }) => {
   );
 };
 
-export default ExpertMedia;
+export default Mediaedit;
 
 //  Reusable MediaCard Component
 interface UploadItem {

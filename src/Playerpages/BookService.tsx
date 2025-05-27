@@ -16,6 +16,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import profile from "../assets/images/avatar.png";
+import Swal from "sweetalert2";
 
 // Define interfaces for our data types
 interface Service {
@@ -222,14 +223,10 @@ const BookingCalendar: React.FC = () => {
   // Provide mock suggestions for demonstration
   const provideMockSuggestions = (input: string) => {
     // More diverse location types
-    const locationTypes = [
-      ""
-    ];
+    const locationTypes = [""];
 
     // City names for diversity
-    const cities = [
-      ""
-    ];
+    const cities = [""];
 
     // Generate mock suggestions
     const mockResults: LocationSuggestion[] = [];
@@ -241,7 +238,6 @@ const BookingCalendar: React.FC = () => {
       id: `id-${Math.random().toString(36).substr(2, 9)}`,
       structured_formatting: {
         main_text: input,
-       
       },
     });
 
@@ -453,7 +449,13 @@ const BookingCalendar: React.FC = () => {
   const handleConfirm = async () => {
     // For ON GROUND ASSESSMENT, validate location first
     if (isOnGroundAssessment && !bookingLocation.trim()) {
-      alert("Please enter a location for the on-ground assessment");
+      Swal.fire({
+        icon: "failure",
+        title: "Please Enter Location",
+        text: "Enter your location for On Ground Assessment.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
       return;
     }
 
@@ -504,9 +506,17 @@ const BookingCalendar: React.FC = () => {
         alert(`Booking failed: ${data.message || "Unknown error"}`);
       } else {
         console.log("Booking successful:", data);
-        alert("Booking confirmed successfully!");
+        Swal.fire({
+          icon: "success",
+          title: "Booking Successful!",
+          text: "Redirecting to Bookings Page",
+          timer: 3000,
+          showConfirmButton: false,
+        }).then(() => {
+          // Navigate after the alert is closed or timer expires
+          navigate("/player/mybooking");
+        });
         // Navigate to bookings page
-        navigate("/player/mybooking");
       }
     } catch (error) {
       console.error("Booking error:", error);

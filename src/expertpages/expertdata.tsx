@@ -18,6 +18,7 @@ import Swal from "sweetalert2";
 import avatar from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 import { profile } from "console";
+import Mediaedit from "@/Pages/Media/MediaEdit";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
@@ -477,7 +478,7 @@ const ExpertProfile = () => {
             {activeTab === "details" && (
               <ExpertDetails expertData={expertData} />
             )}
-            {activeTab === "media" && <ExpertMedia expertData={expertData} />}
+            {activeTab === "media" && <Mediaedit Data={expertData} />}
             {activeTab === "reviews" && (
               <ExpertReviews expertData={expertData} />
             )}

@@ -21,8 +21,8 @@ const menuItems = [
   { path: "/player/mybooking", name: "My Bookings" },
   { path: "/player/sponsors", name: "Sponsors" },
   { path: "/player/profile", name: "Profile" },
-   { path: "/player/Sponsorinfo", name: "Profile" },
-
+  { path: "/player/exdetails", name: "Expert Profile" },
+  { path: "/player/Sponsorinfo", name: "Profile" },
 ];
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
