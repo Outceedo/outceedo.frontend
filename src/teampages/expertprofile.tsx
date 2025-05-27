@@ -766,6 +766,26 @@ const TeamExperts = () => {
                 </Button>
               )}
             </Card>
+            {/* Skills Card - Now Full Width Below */}
+            <Card className="p-6 relative">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Skills</h2>
+              </div>
+              <div className="flex flex-wrap gap-3">
+                {expertData.skills && expertData.skills.length > 0 ? (
+                  expertData.skills.map((skill: string, index: number) => (
+                    <span
+                      key={index}
+                      className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
+                    >
+                      {skill}
+                    </span>
+                  ))
+                ) : (
+                  <p className="text-gray-500">No skills available</p>
+                )}
+              </div>
+            </Card>
 
             {/* Certificates & Awards Side by Side */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -860,27 +880,6 @@ const TeamExperts = () => {
                 </div>
               </Card>
             </div>
-
-            {/* Skills Card - Now Full Width Below */}
-            <Card className="p-6 relative">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Skills</h2>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {expertData.skills && expertData.skills.length > 0 ? (
-                  expertData.skills.map((skill: string, index: number) => (
-                    <span
-                      key={index}
-                      className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
-                    >
-                      {skill}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-gray-500">No skills available</p>
-                )}
-              </div>
-            </Card>
           </div>
         )}
 
