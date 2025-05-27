@@ -11,13 +11,13 @@ import { faStar, faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
 import ExpertDetails from "./Expertdetails";
 import ExpertReviews from "./Expertreviews";
 import ExpertServices from "./Expertservices";
-import ExpertMedia from "./expertmedia";
+
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
 import avatar from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
-import { profile } from "console";
+
 import Mediaedit from "@/Pages/Media/MediaEdit";
 
 const icons = [
@@ -251,7 +251,7 @@ const ExpertProfile = () => {
   };
   // Get the formatted expert data
   const expertData = formatExpertData();
-  console.log("expert data im sending to review is");
+
   console.log(expertData);
 
   // Show loading state
@@ -291,7 +291,7 @@ const ExpertProfile = () => {
   }
 
   return (
-    <div className="flex -mt-5">
+    <div className="flex -mt-6">
       {/* Main Content */}
       <main className="flex-1 p-6 dark:bg-gray-900 ml-15">
         <div className="flex justify-between items-center w-full p-4 mx-auto bg-dark:bg-slate-700 ">
@@ -343,8 +343,17 @@ const ExpertProfile = () => {
               </div>
               <div className="text-left">
                 <p className="text-gray-500 dark:text-white">Languages</p>
-                <p className="font-semibold dark:text-white">
-                  {expertData.language}
+                <p className="font-semibold dark:text-white px-2">
+                  {expertData.language?.length > 0
+                    ? expertData.language.slice(0, 3).map((lang, index) => (
+                        <span
+                          key={index}
+                          className="px-1  dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200"
+                        >
+                          {lang}
+                        </span>
+                      ))
+                    : "Not specified"}
                 </p>
               </div>
             </div>

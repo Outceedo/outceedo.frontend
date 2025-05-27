@@ -202,7 +202,7 @@ const SponserExperts = () => {
         services: viewedProfile.services || [],
         reviewsReceived: viewedProfile.reviewsReceived,
         language: viewedProfile.language,
-        uploads:viewedProfile.uploads
+        uploads: viewedProfile.uploads,
       }
     : {
         name: "N/A",
@@ -607,10 +607,19 @@ const SponserExperts = () => {
                 {expertData.certificationLevel}
               </p>
             </div>
-            <div>
-              <p className="text-gray-500">Languages</p>
-              <p className="font-semibold dark:text-white">
-                {expertData.language}
+            <div className="text-left">
+              <p className="text-gray-500 dark:text-white">Languages</p>
+              <p className="font-semibold dark:text-white px-2">
+                {expertData.language?.length > 0
+                  ? expertData.language.slice(0, 3).map((lang, index) => (
+                      <span
+                        key={index}
+                        className="px-1  dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200"
+                      >
+                        {lang}
+                      </span>
+                    ))
+                  : "Not specified"}
               </p>
             </div>
             {/* <div className="md:col-span-1"></div>{" "} */}
@@ -673,7 +682,7 @@ const SponserExperts = () => {
           </div>
         </div>
       </div>
-      <div className="border-b py-6 mb-8">
+      {/* <div className="border-b py-6 mb-8">
         <h2 className="text-xl font-bold">Services Offered</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 mb-8">
           {services.length > 0 ? (
@@ -706,7 +715,7 @@ const SponserExperts = () => {
             </p>
           )}
         </div>
-      </div>
+      </div> */}
 
       {/* Tabs navigation */}
       <div className="mb-8 border-b">

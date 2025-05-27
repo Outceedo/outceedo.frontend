@@ -651,9 +651,9 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               {showSeeMore && (
                 <button
                   onClick={toggleAboutExpanded}
-                  className="text-blue-500 hover:text-blue-700 font-medium mt-1 focus:outline-none flex justify-center w-full"
+                  className="text-red-500 hover:text-red-700 font-medium mt-1 focus:outline-none flex justify-center w-full"
                 >
-                  {isAboutExpanded ? "See less" : "read more"}
+                  {isAboutExpanded ? "See less" : "Read more"}
                 </button>
               )}
             </div>

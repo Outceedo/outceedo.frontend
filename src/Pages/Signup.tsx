@@ -461,7 +461,7 @@ const Signup: React.FC = () => {
           </div>
 
           <div className="flex space-x-4">
-            <div className="w-1/3 relative">
+            <div className="w-1/2 relative">
               <label
                 className={`block text-sm font-medium ${
                   fieldErrors.countryCode ? "text-red-500" : "text-gray-700"
@@ -544,13 +544,16 @@ const Signup: React.FC = () => {
               </span>
             </label>
           </div>
-          <button
-            type="submit"
-            className="w-full bg-[#FE221E] text-white py-2 rounded-lg hover:bg-[#C91C1A] transition duration-300"
-            disabled={isLoading}
-          >
-            {isLoading ? "Signing Up..." : "Sign Up"}
-          </button>
+          <div className="flex justify-center">
+            <button
+              type="submit"
+              className="w-4/5 bg-[#FE221E] text-white py-2 rounded-lg hover:bg-[#C91C1A] transition duration-300"
+              disabled={isLoading}
+            >
+              {isLoading ? "Signing Up..." : "Sign Up"}
+            </button>
+          </div>
+
           <p className="text-gray-600">
             Already Registered?{" "}
             <button
