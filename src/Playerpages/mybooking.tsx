@@ -704,9 +704,7 @@ const MyBooking: React.FC = () => {
                         size="icon"
                         className="h-8 w-8 cursor-pointer"
                         onClick={(e) => openVideoModal(booking.id, e)}
-                        disabled={
-                          !booking.recordedVideo && !booking.meetingRecording
-                        }
+                        disabled={booking.service.service.id !== "1"}
                       >
                         <FontAwesomeIcon icon={faVideo} />
                       </Button>
@@ -1261,7 +1259,7 @@ const MyBooking: React.FC = () => {
 
       {/* Video Modal */}
       {isVideoOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-blur ml-[260px] bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-[95%] max-w-3xl relative">
             <button
               onClick={closeVideoModal}

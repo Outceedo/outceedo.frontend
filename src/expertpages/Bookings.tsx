@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -44,6 +44,7 @@ import {
   faExclamationTriangle,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
+import { createPortal } from "react-dom";
 
 // Updated interfaces to match the new API response format
 interface Expert {
@@ -124,8 +125,33 @@ const BookingExpertside: React.FC = () => {
   const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
   const [bookingToAccept, setBookingToAccept] = useState<string | null>(null);
 
+  // Video modal state
+  const [isFullscreenVideoOpen, setIsFullscreenVideoOpen] = useState(false);
+  const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
+
+  // Helper function to check if a booking is a recorded video assessment
+  const isRecordedVideoAssessment = (booking: Booking) => {
+    return booking.service?.service?.id === "1" && booking.recordedVideo;
+  };
+
+  // Open fullscreen video modal
+  const openFullscreenVideo = (booking: Booking) => {
+    if (isRecordedVideoAssessment(booking)) {
+      setVideoError(null); // Reset any previous errors
+      setCurrentVideoUrl(booking.recordedVideo);
+      setIsFullscreenVideoOpen(true);
+    }
+  };
+
+  // Close fullscreen video modal
+  const closeFullscreenVideo = () => {
+    setIsFullscreenVideoOpen(false);
+    setCurrentVideoUrl(null);
+  };
 
   // Fetch bookings from API
   useEffect(() => {
@@ -914,16 +940,34 @@ const BookingExpertside: React.FC = () => {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        title="Start Video Session"
-                        disabled={!["ACCEPTED"].includes(booking.status)}
+                        title={
+                          isRecordedVideoAssessment(booking)
+                            ? "View Video Assessment"
+                            : "Start Video Session"
+                        }
+                        disabled={
+                          !isRecordedVideoAssessment(booking) &&
+                          !booking.meetLink
+                        }
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (booking.meetLink) {
+                          if (isRecordedVideoAssessment(booking)) {
+                            openFullscreenVideo(booking);
+                          } else if (booking.meetLink) {
                             window.open(booking.meetLink, "_blank");
                           }
                         }}
                       >
-                        <FontAwesomeIcon icon={faVideo} />
+                        <FontAwesomeIcon
+                          icon={faVideo}
+                          className={
+                            isRecordedVideoAssessment(booking)
+                              ? "text-black"
+                              : booking.meetLink
+                              ? "text-green-500"
+                              : "text-gray-400"
+                          }
+                        />
                       </Button>
                     </TableCell>
                     <TableCell className="text-center">
@@ -1644,6 +1688,73 @@ const BookingExpertside: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {isFullscreenVideoOpen &&
+        currentVideoUrl &&
+        createPortal(
+          <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+            <div className="absolute top-4 right-4 z-10">
+              <Button
+                variant="ghost"
+                className="h-10 w-10 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                onClick={closeFullscreenVideo}
+              >
+                <FontAwesomeIcon icon={faTimes} size="lg" />
+              </Button>
+            </div>
+
+            <div className="w-full h-full max-w-6xl max-h-[80vh] p-4">
+              <div className="w-full h-full bg-black rounded-lg overflow-hidden relative">
+                {videoError ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="bg-red-50 p-6 rounded-lg border border-red-200 text-red-700 max-w-md">
+                      <FontAwesomeIcon
+                        icon={faExclamationTriangle}
+                        className="mr-2"
+                      />
+                      <span>{videoError}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <video
+                    ref={videoRef}
+                    src={currentVideoUrl}
+                    controls
+                    autoPlay
+                    className="w-full h-full"
+                    onError={handleVideoError}
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                )}
+              </div>
+
+              <div className="mt-4 text-white text-center">
+                <p className="text-sm">
+                  If the video doesn't play properly, you can{" "}
+                  <a
+                    href={currentVideoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-400 hover:underline"
+                  >
+                    download it
+                  </a>{" "}
+                  and play it locally.
+                </p>
+                <div className="flex justify-end">
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 w-24"
+                    onClick={closeFullscreenVideo}
+                  >
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

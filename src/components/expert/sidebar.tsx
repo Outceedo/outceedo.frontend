@@ -174,8 +174,12 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {expertName}
         </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">
-          {expertAge}
+        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400 font-sans">
+          {currentProfile?.age
+            ? `Age ${currentProfile.age} (${
+                new Date().getFullYear() - currentProfile.age
+              })`
+            : ""}
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {expertProfession}

@@ -1392,19 +1392,12 @@ const Detailsform: React.FC = () => {
               <label className="block text-black mb-1">
                 Certification Level
               </label>
-              <select
+              <input
                 name="certificationLevel"
                 value={formData.certificationLevel}
                 onChange={handleInputChange}
                 className="border p-2 w-full rounded"
-              >
-                <option value="">Select Certification Level</option>
-                <option value="beginner">Beginner</option>
-                <option value="intermediate">Intermediate</option>
-                <option value="advanced">Advanced</option>
-                <option value="expert">Expert</option>
-                <option value="professional">Professional</option>
-              </select>
+              />
             </div>
           )}
 

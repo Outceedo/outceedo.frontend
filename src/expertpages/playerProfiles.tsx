@@ -495,11 +495,7 @@ const PlayersProfile: React.FC = () => {
                             defaultImages[index % defaultImages.length];
                         }}
                       />
-                      {isVerified && (
-                        <Badge className="absolute top-2 right-4 rounded-full bg-green-400 hover:bg-green-500">
-                          ✔
-                        </Badge>
-                      )}
+                      
                     </div>
                     <CardHeader className="p-4 pb-0">
                       <h3 className="text-lg font-semibold">{displayName}</h3>
@@ -508,6 +504,12 @@ const PlayersProfile: React.FC = () => {
                           (profileType === "player" ? "Player" : "Expert")}
                         {profile.city && profile.country
                           ? ` • ${profile.city}, ${profile.country}`
+                          : ""}
+                      </p>
+                      <p>
+                        {profile.subProfession
+                          ? profile.subProfession.charAt(0).toUpperCase() +
+                            profile.subProfession.slice(1)
                           : ""}
                       </p>
                     </CardHeader>

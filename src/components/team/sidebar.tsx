@@ -67,8 +67,9 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
   // Format name from profile data
   const teamName = currentProfile
-    ? `${currentProfile.firstName || ""} ${
-        currentProfile.lastName || ""
+    ? `${
+        currentProfile.firstName?.charAt(0).toUpperCase() +
+        currentProfile.firstName?.slice(1)
       }`.trim()
     : "Loading...";
 
@@ -170,7 +171,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {teamName}
         </h2>
-        <p>{currentProfile?.firstName}</p>
+        
         {/* Show loading indicator if profile is still loading */}
         {status === "loading" && (
           <div className="text-sm text-gray-500">Loading profile...</div>

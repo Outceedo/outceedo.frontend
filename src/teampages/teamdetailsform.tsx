@@ -25,8 +25,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 interface FormData {
   teamName: string;
   type: string;
-  firstName: string;
-  lastName: string;
+
   clubName: string;
   city: string;
   country: string;
@@ -104,8 +103,7 @@ export default function TeamDetailsForm() {
   const [form, setForm] = useState<FormData>({
     teamName: "",
     type: "",
-    firstName: "",
-    lastName: "",
+
     clubName: "",
     city: "",
     country: "",
@@ -196,12 +194,7 @@ export default function TeamDetailsForm() {
       if (!form.teamName.trim()) {
         errors.teamName = "Team name is required";
       }
-      if (!form.firstName.trim()) {
-        errors.firstName = "First name is required";
-      }
-      if (!form.lastName.trim()) {
-        errors.lastName = "Last name is required";
-      }
+
       if (!form.type) {
         errors.type = "Please select a type";
       }
@@ -301,8 +294,7 @@ export default function TeamDetailsForm() {
       setForm({
         teamName: profileData.firstName || "",
         type: profileData.type || "",
-        firstName: profileData.firstName || "",
-        lastName: profileData.lastName || "",
+
         clubName: profileData.clubName || "",
         city: profileData.city || "",
         country: profileData.country || "",
@@ -444,13 +436,12 @@ export default function TeamDetailsForm() {
       // Prepare the data for API submission
       const teamData = {
         profession: form.type,
-        firstName: form.firstName.trim(),
-        lastName: form.lastName.trim(),
+        firstName: form.teamName.trim(),
+
         club: form.clubName.trim(),
         city: form.city,
         country: form.country,
         address: form.address,
-        email: userData?.email || form.email, // Use userData email if available
 
         bio: form.bio,
         photo: photoUrl,
@@ -664,38 +655,7 @@ export default function TeamDetailsForm() {
                 readOnly
               />
             </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                First Name*
-              </label>
-              <Input
-                name="firstName"
-                value={form.firstName}
-                onChange={handleChange}
-                className={validationErrors.firstName ? "border-red-500" : ""}
-              />
-              {validationErrors.firstName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.firstName}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Last Name*
-              </label>
-              <Input
-                name="lastName"
-                value={form.lastName}
-                onChange={handleChange}
-                className={validationErrors.lastName ? "border-red-500" : ""}
-              />
-              {validationErrors.lastName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.lastName}
-                </p>
-              )}
-            </div>
+
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Phone Number

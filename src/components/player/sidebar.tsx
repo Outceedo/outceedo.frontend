@@ -5,6 +5,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
+import { subYears } from "date-fns";
 
 interface MenuItem {
   id: number;
@@ -173,12 +174,19 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {playerName}
         </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">
-          {playerAge}
+        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400 font-sans">
+          {currentProfile?.age
+            ? `Age ${currentProfile.age} (${
+                new Date().getFullYear() - currentProfile.age
+              })`
+            : ""}
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {playerProfession}
           {playerSubProfession ? ` - ${playerSubProfession}` : ""}
+        </p>
+        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
+          {currentProfile?.gender}
         </p>
 
         {/* Show loading indicator if profile is still loading */}

@@ -343,14 +343,14 @@ const ExpertProfile = () => {
               </div>
               <div className="text-left">
                 <p className="text-gray-500 dark:text-white">Languages</p>
-                <p className="font-semibold dark:text-white px-2">
+                <p className="font-semibold dark:text-white pr-2">
                   {expertData.language?.length > 0
                     ? expertData.language.slice(0, 3).map((lang, index) => (
                         <span
                           key={index}
-                          className="px-1  dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200"
+                          className="dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200"
                         >
-                          {lang}
+                          {lang + " "}
                         </span>
                       ))
                     : "Not specified"}
