@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { resetPassword } from "../store/auth-slice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { resetPassword } from "../../store/auth-slice";
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();

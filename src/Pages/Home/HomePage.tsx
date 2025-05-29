@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-// import Background from "../assets/images/Background.jpg";
-import Hero from "../assets/images/Hero.png";
+
+import Hero from "../../assets/images/Hero.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,

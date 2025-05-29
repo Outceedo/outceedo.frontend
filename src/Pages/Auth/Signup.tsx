@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import football from "../assets/images/football.jpg";
+import football from "../../assets/images/football.jpg";
 import * as countryCodes from "country-codes-list";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { registerUser } from "../store/auth-slice";
-import { RootState } from "../store/store";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { registerUser } from "../../store/auth-slice";
+import { RootState } from "../../store/store";
 import Swal from "sweetalert2";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 

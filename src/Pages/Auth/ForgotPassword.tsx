@@ -1,7 +1,7 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { forgotPassword } from "../store/auth-slice";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { forgotPassword } from "../../store/auth-slice";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();

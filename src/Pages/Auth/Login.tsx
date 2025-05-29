@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import football from "../assets/images/football.jpg";
-import { loginUser, clearError } from "../store/auth-slice";
-import User from "./user";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import football from "../../assets/images/football.jpg";
+import { loginUser, clearError } from "../../store/auth-slice";
+import User from "../Home/user";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // <-- USE FA ICONS
 
 const Login: React.FC = () => {

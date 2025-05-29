@@ -8,13 +8,13 @@ import {
 } from "react-router-dom";
 
 //pages
-import HomePage from "./Pages/HomePage";
-import EmailVerification from "./Pages/EmailVerification";
-import Login from "./Pages/Login";
-import ForgotPassword from "./Pages/ForgotPassword";
+import HomePage from "./Pages/Home/HomePage";
+import EmailVerification from "./Pages/Auth/EmailVerification";
+import Login from "./Pages/Auth/Login";
+import ForgotPassword from "./Pages/Auth/ForgotPassword";
 import Detailsform from "./Pages/Detailsform";
-import SignUp from "./Pages/Signup";
-import ResetPassword from "./Pages/Resetpassword";
+import SignUp from "./Pages/Auth/Signup";
+import ResetPassword from "./Pages/Auth/Resetpassword";
 //playerpage
 import Profile from "./Playerpages/playerprofile";
 import Dashboard from "./Playerpages/dashboard";

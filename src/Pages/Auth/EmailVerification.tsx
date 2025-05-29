@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { verifyEmail, resendOtp } from "../store/auth-slice";
-import { RootState } from "../store/store";
-import football from "../assets/images/football.jpg";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { verifyEmail, resendOtp } from "../../store/auth-slice";
+import { RootState } from "../../store/store";
+import football from "../../assets/images/football.jpg";
 import Swal from "sweetalert2"; // Import SweetAlert2
 
 const EmailVerification: React.FC = () => {
