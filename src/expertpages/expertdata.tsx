@@ -19,6 +19,7 @@ import avatar from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 
 import Mediaedit from "@/Pages/Media/MediaEdit";
+import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
@@ -488,9 +489,7 @@ const ExpertProfile = () => {
               <ExpertDetails expertData={expertData} />
             )}
             {activeTab === "media" && <Mediaedit Data={expertData} />}
-            {activeTab === "reviews" && (
-              <ExpertReviews expertData={expertData} />
-            )}
+            {activeTab === "reviews" && <Reviewnoedit Data={expertData} />}
             {activeTab === "services" && (
               <ExpertServices expertData={expertData} />
             )}

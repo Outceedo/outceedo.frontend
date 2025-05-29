@@ -7,16 +7,13 @@ import {
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { Card } from "@/components/ui/card";
-import { Profile, DocumentItem } from "../types/Profile";
 
-interface ProfileDetailsProps {
-  playerData: Profile;
-  isExpertView?: boolean;
+interface PlayerProfileDetailsProps {
+  playerData: any;
 }
 
-const ProfileDetails: React.FC<ProfileDetailsProps> = ({
+const PlayerProfileDetails: React.FC<PlayerProfileDetailsProps> = ({
   playerData,
-  isExpertView = false,
 }) => {
   // Get player info
   const aboutMe = playerData.bio || "No information available";
@@ -340,4 +337,4 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   );
 };
 
-export default ProfileDetails;
+export default PlayerProfileDetails;

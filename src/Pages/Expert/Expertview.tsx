@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import axios from "axios"; // Import axios
+import axios from "axios";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -17,8 +17,6 @@ import profile from "../../assets/images/avatar.png";
 
 import {
   faStar,
-  faCamera,
-  faVideo,
   faUpload,
   faFileUpload,
 } from "@fortawesome/free-solid-svg-icons";

@@ -24,6 +24,7 @@ import Swal from "sweetalert2";
 import profile from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
+import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
 
 interface Stat {
   label: string;
@@ -910,7 +911,7 @@ const Profile: React.FC = () => {
                   )}
                   {activeTab === "media" && <Mediaedit Data={playerData} />}
                   {activeTab === "reviews" && (
-                    <Reviews playerData={playerData} isExpertView={false} />
+                    <Reviewnoedit Data={playerData} />
                   )}
                 </>
               )}
