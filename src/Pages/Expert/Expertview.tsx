@@ -29,7 +29,7 @@ import { MoveLeft } from "lucide-react";
 import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
 
-import ExpertProfiledetails from "./Expertprofiledetails";
+import ExpertProfiledetails from "./ExpertProfiledetails";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
