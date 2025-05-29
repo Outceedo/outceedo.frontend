@@ -12,7 +12,7 @@ import HomePage from "./Pages/Home/HomePage";
 import EmailVerification from "./Pages/Auth/EmailVerification";
 import Login from "./Pages/Auth/Login";
 import ForgotPassword from "./Pages/Auth/ForgotPassword";
-import Detailsform from "./Pages/Detailsform";
+import Detailsform from "./common/Detailsform";
 import SignUp from "./Pages/Auth/Signup";
 import ResetPassword from "./Pages/Auth/Resetpassword";
 //playerpage
