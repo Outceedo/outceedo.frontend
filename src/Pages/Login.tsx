@@ -4,6 +4,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import football from "../assets/images/football.jpg";
 import { loginUser, clearError } from "../store/auth-slice";
 import User from "./user";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // <-- USE FA ICONS
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -16,15 +17,14 @@ const Login: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false); // <-- NEW STATE
 
   useEffect(() => {
-    // Clear any previous errors when component mounts
     dispatch(clearError());
     setFormError("");
   }, [dispatch]);
 
   useEffect(() => {
-    // Update form error when error state changes
     if (error) {
       if (typeof error === "object") {
         if (error.message) {
@@ -43,16 +43,11 @@ const Login: React.FC = () => {
   }, [error]);
 
   useEffect(() => {
-    // Only proceed with navigation if user is logged in and not already redirecting
     if (user && !isRedirecting && user.token) {
-      console.log("User logged in:", user);
-
-      // Store essential user data in localStorage immediately after login
       localStorage.setItem("token", user.token);
       localStorage.setItem("username", user.username);
       localStorage.setItem("role", user.role);
       localStorage.setItem("userid", user.id);
-
       setLoginSuccess(true);
       setIsRedirecting(true);
     }
@@ -60,37 +55,26 @@ const Login: React.FC = () => {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Login form submitted");
-
-    // Reset form errors
     setFormError("");
-
-    // Validate form
     if (!email || !password) {
       setFormError("Please fill in all fields");
       return;
     }
-
-    // Dispatch login action
     try {
-      console.log("Dispatching login:", { email });
       await dispatch(loginUser({ email, password }));
     } catch (err) {
       console.error("Login error:", err);
     }
   };
 
-  // Close modal and clear errors when modal is closed
   const handleCloseModal = () => {
     setIsModalOpen(false);
     dispatch(clearError());
     setFormError("");
   };
 
-  // Safe error message display function
   const getErrorMessage = () => {
     if (!formError) return null;
-
     if (typeof formError === "object") {
       try {
         return JSON.stringify(formError);
@@ -103,13 +87,10 @@ const Login: React.FC = () => {
 
   return (
     <div className="relative w-full min-h-screen flex flex-col lg:flex-row items-center justify-center px-6 lg:px-20">
-      {/* Background Image */}
       <div
         className="absolute inset-0 bg-cover bg-center"
         style={{ backgroundImage: `url(${football})` }}
       ></div>
-
-      {/* Overlay for better text visibility */}
       <div className="absolute inset-0 bg-black opacity-40"></div>
       {isModalOpen && (
         <>
@@ -118,7 +99,6 @@ const Login: React.FC = () => {
         </>
       )}
 
-      {/* Left Side - Welcome Text */}
       <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 mb-8 sm:mb-12 hidden lg:block">
         <h2 className="text-2xl sm:text-3xl lg:text-5xl font-Raleway mb-4">
           Welcome To Sports App
@@ -130,11 +110,9 @@ const Login: React.FC = () => {
         </p>
       </div>
 
-      {/* Right Side - Login Form */}
       <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-md mx-auto lg:w-96 mt-12 sm:mt-16 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Login</h2>
 
-        {/* Success Message */}
         {loginSuccess && (
           <div className="mb-4 p-2 bg-green-100 text-green-800 rounded border border-green-300">
             <p className="font-medium">Login successful!</p>
@@ -142,7 +120,6 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        {/* Error Message */}
         {formError && (
           <div className="mb-4 p-2 bg-red-100 text-red-800 rounded border border-red-300">
             <p className="font-medium">Error</p>
@@ -171,18 +148,28 @@ const Login: React.FC = () => {
             />
           </div>
 
-          <div className="mb-4">
+          {/* Password Field with Eye Icon */}
+          <div className="mb-4 relative">
             <label className="block text-black-700 font-medium mb-2">
               Password
             </label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-white-500 pr-10"
               required
             />
+            <span
+              className="absolute right-3 top-13 transform -translate-y-1/2 cursor-pointer text-xl text-gray-500"
+              onClick={() => setShowPassword((prev) => !prev)}
+              tabIndex={0}
+              role="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
           </div>
 
           <div className="mb-4 flex justify-between items-center">
@@ -249,19 +236,17 @@ const Login: React.FC = () => {
           </button>
         </p>
 
-        {/* Modal */}
         {isModalOpen && (
           <>
             <div className="fixed inset-0 flex items-center justify-center z-50">
               <div className="relative">
-                {/* Close Button */}
                 <button
                   onClick={handleCloseModal}
                   className="absolute top-2 right-6 text-gray-600 hover:text-gray-800 text-2xl"
                 >
                   &times;
                 </button>
-                <User /> {/* Render the Signup component inside the modal */}
+                <User />
               </div>
             </div>
           </>

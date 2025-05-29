@@ -6,6 +6,7 @@ import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { registerUser } from "../store/auth-slice";
 import { RootState } from "../store/store";
 import Swal from "sweetalert2";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 type Role = "expert" | "player" | "team" | "sponser" | "fan";
 
@@ -34,31 +35,23 @@ const Signup: React.FC = () => {
   const [usernameGenerated, setUsernameGenerated] = useState(false);
   const [check, setcheck] = useState("false");
 
-  // Add debug logging for Redux state changes
-  useEffect(() => {
-    console.log("Auth state changed:", {
-      user,
-      isLoading,
-      error,
-      registrationAttempted,
-    });
+  // Password visibility state
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-    // Update formError when error state changes
+  useEffect(() => {
+    // Debug for Redux state changes
     if (error) {
       try {
-        // Check if error is a JSON string
         if (typeof error === "string" && error.includes("{")) {
           const errorObj = JSON.parse(error);
           setFormError(errorObj.error || "Registration failed");
         } else if (typeof error === "object" && error !== null) {
-          // If error is already an object
           setFormError(error.error || "Registration failed");
         } else {
-          // If error is a simple string
           setFormError(error.toString());
         }
       } catch (e) {
-        console.error("Error parsing error message:", e);
         setFormError(String(error));
       }
     }
@@ -72,8 +65,6 @@ const Signup: React.FC = () => {
       );
       setCountryList(Object.values(myCountryCodesObject));
     } catch (err) {
-      console.error("Error loading country codes:", err);
-      // Fallback to some common country codes
       setCountryList([
         "+1 (United States)",
         "+44 (United Kingdom)",
@@ -111,7 +102,6 @@ const Signup: React.FC = () => {
 
   useEffect(() => {
     const storedRole = localStorage.getItem("selectedRole") as Role | null;
-    console.log("Role from localStorage:", storedRole); // Debugging role
     setRole(storedRole);
   }, []);
 
@@ -149,12 +139,10 @@ const Signup: React.FC = () => {
     if (!countryCode) errors.countryCode = "Country code is required.";
     if (!mobileNumber) errors.mobileNumber = "Mobile number is required.";
 
-    // Username validation - allow letters, numbers, underscores only
     if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
       errors.username =
         "Username can only contain letters, numbers, and underscores.";
     }
-
     if (password && password.length < 8)
       errors.password = "Password must be at least 8 characters long.";
     if (password !== confirmPassword)
@@ -172,26 +160,17 @@ const Signup: React.FC = () => {
       mobileNumber: `${countryCode} ${mobileNumber}`,
       firstName,
       lastName,
-      username, // Add the username field to the request
+      username,
     };
 
-    console.log("Submitting registration with data:", requestData);
-
-    // Set registration attempted flag to true
     setRegistrationAttempted(true);
 
     try {
-      // Dispatch the register action and wait for it to complete
       const resultAction = await dispatch(registerUser(requestData));
-
       if (registerUser.fulfilled.match(resultAction)) {
-        // Handle the success case directly
-        console.log("Registration successful:", resultAction.payload);
         localStorage.setItem("verificationEmail", email);
-        localStorage.setItem("username", username); // Store username in localStorage
+        localStorage.setItem("username", username);
         localStorage.setItem("Profilecomplete", check);
-
-        // Show success SweetAlert instead of regular alert
         Swal.fire({
           icon: "success",
           title: "Registration Successful!",
@@ -199,17 +178,12 @@ const Signup: React.FC = () => {
           timer: 3000,
           showConfirmButton: false,
         }).then(() => {
-          // Navigate after the alert is closed or timer expires
           navigate("/emailverification");
         });
       } else if (registerUser.rejected.match(resultAction)) {
-        console.error("Registration failed:", resultAction.error);
-
-        // Handle error payload
         const errorPayload = resultAction.payload;
         if (errorPayload) {
           try {
-            // Try to parse the error if it's a string with JSON content
             if (
               typeof errorPayload === "string" &&
               errorPayload.includes("{")
@@ -220,40 +194,29 @@ const Signup: React.FC = () => {
               typeof errorPayload === "object" &&
               errorPayload !== null
             ) {
-              // If payload is already an object
               setFormError(errorPayload.error || "Registration failed");
             } else {
               setFormError(String(errorPayload));
             }
           } catch (e) {
-            console.error("Error parsing error payload:", e);
             setFormError(String(errorPayload));
           }
         } else {
-          // Handle error from action.error
           const errorMessage =
             resultAction.error?.message || "Registration failed";
           setFormError(errorMessage);
         }
       }
     } catch (err) {
-      console.error("Error during registration:", err);
       setFormError("An unexpected error occurred. Please try again later.");
     }
   };
 
-  // This is our backup effect in case the direct approach above doesn't catch the success
   useEffect(() => {
     if (registrationAttempted && !isLoading && user && !error) {
-      console.log(
-        "Registration successful via effect, redirecting to email verification"
-      );
-
       localStorage.setItem("verificationEmail", email);
-      localStorage.setItem("username", username); // Store username in localStorage
+      localStorage.setItem("username", username);
       localStorage.setItem("Profilecomplete", check);
-
-      // Show success SweetAlert using the effect as backup
       Swal.fire({
         icon: "success",
         title: "Registration Successful!",
@@ -261,7 +224,6 @@ const Signup: React.FC = () => {
         timer: 3000,
         showConfirmButton: false,
       }).then(() => {
-        // Navigate after the alert is closed or timer expires
         navigate("/emailverification");
       });
     }
@@ -410,7 +372,8 @@ const Signup: React.FC = () => {
             )}
           </div>
 
-          <div>
+          {/* Password field with eye icon */}
+          <div className="relative">
             <label
               className={`block text-sm font-medium ${
                 fieldErrors.password ? "text-red-500" : "text-gray-700"
@@ -419,7 +382,7 @@ const Signup: React.FC = () => {
               New Password <span className="text-red-500 ml-1">*</span>
             </label>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Enter your password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
@@ -427,14 +390,24 @@ const Signup: React.FC = () => {
                 fieldErrors.password
                   ? "border-red-500 ring-red-500"
                   : "border-gray-300 focus:ring-blue-500"
-              }`}
+              } pr-10`}
             />
+            <span
+              className="absolute right-3 top-10 transform -translate-y-1/2 cursor-pointer text-xl text-gray-500"
+              onClick={() => setShowPassword((prev) => !prev)}
+              tabIndex={0}
+              role="button"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
             {fieldErrors.password && (
               <p className="text-red-500 text-sm">{fieldErrors.password}</p>
             )}
           </div>
 
-          <div>
+          {/* Confirm password field with eye icon */}
+          <div className="relative">
             <label
               className={`block text-sm font-medium ${
                 fieldErrors.confirmPassword ? "text-red-500" : "text-gray-700"
@@ -443,7 +416,7 @@ const Signup: React.FC = () => {
               Confirm Password <span className="text-red-500 ml-1">*</span>
             </label>
             <input
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               placeholder="Enter your password again"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
@@ -451,8 +424,19 @@ const Signup: React.FC = () => {
                 fieldErrors.confirmPassword
                   ? "border-red-500 ring-red-500"
                   : "border-gray-300 focus:ring-blue-500"
-              }`}
+              } pr-10`}
             />
+            <span
+              className="absolute right-3 top-10 transform -translate-y-1/2 cursor-pointer text-xl text-gray-500"
+              onClick={() => setShowConfirmPassword((prev) => !prev)}
+              tabIndex={0}
+              role="button"
+              aria-label={
+                showConfirmPassword ? "Hide password" : "Show password"
+              }
+            >
+              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
+            </span>
             {fieldErrors.confirmPassword && (
               <p className="text-red-500 text-sm">
                 {fieldErrors.confirmPassword}
