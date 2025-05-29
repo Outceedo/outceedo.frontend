@@ -22,7 +22,7 @@ const menuItems = [
   { path: "/player/sponsors", name: "Sponsors" },
   { path: "/player/profile", name: "Profile" },
   { path: "/player/exdetails", name: "Expert Profile" },
-  { path: "/player/Sponsorinfo", name: "Profile" },
+  { path: "/player/sponsorinfo", name: "Sponsor Profile" },
 ];
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
