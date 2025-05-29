@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
@@ -29,7 +29,7 @@ import { MoveLeft } from "lucide-react";
 import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
 
-// REMOVED the useState hooks that were here outside the component
+import ExpertProfiledetails from "./Expertprofiledetails";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
@@ -37,21 +37,6 @@ const icons = [
   { icon: faInstagram, color: "#E1306C", link: "https://www.instagram.com" },
   { icon: faXTwitter, color: "#1DA1F2", link: "https://www.twitter.com" },
 ];
-
-interface MediaItem {
-  id: number | string;
-  type: "photo" | "video";
-  url: string;
-  src: string;
-  title: string;
-}
-
-interface Review {
-  id: number | string;
-  name: string;
-  date: string;
-  comment: string;
-}
 
 interface Service {
   id: number | string;
@@ -63,47 +48,12 @@ interface Service {
   isActive?: boolean;
 }
 
-interface Certificate {
-  id: string;
-  title: string;
-  issuedBy?: string;
-  issuedDate?: string;
-  imageUrl?: string;
-  type: string;
-  description?: string;
-}
-
-interface MediaUploadResponse {
-  id: string;
-  title: string;
-  url: string;
-  type: string;
-  userId: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
 type TabType = "details" | "media" | "reviews" | "services";
 
-const ExpertProfileView = () => {
+const Expertview = () => {
   const [activeTab, setActiveTab] = useState<TabType>("details");
   const tabs: TabType[] = ["details", "media", "reviews"];
-  const [readMore, setReadMore] = useState(false);
-  const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [mediaFilter, setMediaFilter] = useState<"all" | "photo" | "video">(
-    "all"
-  );
-  // Added the state here instead of outside the component
-  const [showButton, setShowButton] = useState(false);
 
-  // Certificate preview state
-  const [selectedCertificate, setSelectedCertificate] =
-    useState<Certificate | null>(null);
-  const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] =
-    useState(false);
-
-  // Video Upload Modal state (for RECORDED VIDEO ASSESSMENT)
   const [isVideoUploadModalOpen, setIsVideoUploadModalOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoDescription, setVideoDescription] = useState("");
@@ -111,23 +61,14 @@ const ExpertProfileView = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
-  // On Ground Assessment Modal state
-  const [isLocationModalOpen, setIsLocationModalOpen] = useState(false);
-  const [location, setLocation] = useState("");
-  const [locationDescription, setLocationDescription] = useState("");
-
-  // Redux state
   const dispatch = useAppDispatch();
   const { viewedProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
   const navigate = useNavigate();
 
-  // API endpoints
-
   const API_BOOKING_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
-  // Fetch expert profile on component mount
   useEffect(() => {
     const expertUsername = localStorage.getItem("viewexpertusername");
     if (expertUsername) {
@@ -137,7 +78,6 @@ const ExpertProfileView = () => {
     }
   }, [dispatch]);
 
-  // Get certificates and awards from documents
   const certificates = viewedProfile?.documents
     ? viewedProfile.documents
         .filter((doc: any) => doc.type === "certificate")
@@ -226,44 +166,6 @@ const ExpertProfileView = () => {
   localStorage.setItem("expertid", expertData?.id);
   localStorage.setItem("serviceid", expertData?.services.id);
 
-  // Determine if text should be clamped
-  useEffect(() => {
-    // Rough estimate: average ~40-50 chars per line depending on font/width
-    // For 3 lines, ~120-150 chars would be reasonable
-    const charThreshold = 150;
-    setShowButton(expertData.about?.length > charThreshold);
-  }, [expertData.about]);
-
-  // Media, reviews, and services
-  const mediaItems =
-    viewedProfile?.uploads?.map((upload: any) => ({
-      id: upload.id,
-      type: upload.url?.match(/\.(mp4|mov|avi|webm)$/i) ? "video" : "photo",
-      url: upload.url,
-      src: upload.url,
-      title: upload.title || "Untitled",
-    })) || [];
-
-  const reviews = [
-    {
-      id: 1,
-      name: "John Doe",
-      date: "2024-02-15",
-      comment: "Great service! Highly recommend.",
-    },
-    {
-      id: 2,
-      name: "Alice Johnson",
-      date: "2024-02-10",
-      comment: "The experience was amazing. Will come again!",
-    },
-    {
-      id: 3,
-      name: "Michael Smith",
-      date: "2024-01-25",
-      comment: "Good quality, but the waiting time was a bit long.",
-    },
-  ];
   const SERVICE_NAME_MAP: Record<string, string> = {
     "1": "RECORDED VIDEO ASSESSMENT",
     "2": "ONLINE TRAINING",
@@ -271,7 +173,6 @@ const ExpertProfileView = () => {
     "4": "ONLINE ASSESSMENT",
   };
 
-  // Helper function to get service name from ID
   const getServiceNameById = (
     serviceId: string | number | undefined
   ): string => {
@@ -281,7 +182,6 @@ const ExpertProfileView = () => {
     return SERVICE_NAME_MAP[id] || "Custom Service";
   };
 
-  // Format service description
   const formatServiceDescription = (description: any): string => {
     if (!description) return "No description available";
 
@@ -290,23 +190,20 @@ const ExpertProfileView = () => {
     }
 
     if (typeof description === "object") {
-      // Handle case where description is an object
       if (description.description) {
         return description.description;
       }
 
-      // Try to create a readable string from the object
       try {
         const entries = Object.entries(description);
         if (entries.length === 0) return "No description available";
 
         return entries
           .map(([key, value]) => {
-            // Skip rendering duration in the description text
             if (key === "duration") return null;
             return `${key}: ${value}`;
           })
-          .filter(Boolean) // Remove null values
+          .filter(Boolean)
           .join(", ");
       } catch (e) {
         return "No description available";
@@ -316,21 +213,15 @@ const ExpertProfileView = () => {
     return "No description available";
   };
 
-  // Map services with correct names
   const services =
     expertData.services?.map((service: any) => {
-      // Get service name from ID mapping
       const serviceName = getServiceNameById(service.serviceId);
-
-      // Format additionalDetails for display
       let displayDescription;
       if (typeof service.additionalDetails === "object") {
-        // If additionalDetails is an object, extract description
         displayDescription = formatServiceDescription(
           service.additionalDetails
         );
       } else {
-        // Otherwise use existing description or additionalDetails
         displayDescription =
           service.description ||
           service.additionalDetails ||
@@ -348,30 +239,6 @@ const ExpertProfileView = () => {
             : `$${service.price || 0}/h`,
       };
     }) || [];
-
-  // Filter media based on selection
-  const filteredMedia =
-    mediaFilter === "all"
-      ? mediaItems
-      : mediaItems.filter((item) => item.type === mediaFilter);
-
-  // Format issue date
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "";
-    try {
-      return new Date(dateString).toLocaleDateString();
-    } catch (error) {
-      return dateString;
-    }
-  };
-
-  // Handle certificate click for preview
-  const handleCertificateClick = (certificate: Certificate) => {
-    setSelectedCertificate(certificate);
-    setIsCertificatePreviewOpen(true);
-  };
-
-  // Loading state
   if (status === "loading") {
     return (
       <div className="flex justify-center items-center h-screen dark:bg-gray-900">
@@ -380,7 +247,6 @@ const ExpertProfileView = () => {
     );
   }
 
-  // Error state
   if (status === "failed" || error) {
     return (
       <div className="flex flex-col items-center justify-center h-screen dark:bg-gray-900 dark:text-white">
@@ -410,10 +276,8 @@ const ExpertProfileView = () => {
   }
 
   const handlebook = (service: Service) => {
-    // Set current service for modals
     setCurrentService(service);
 
-    // Store common data for booking
     const serviceData = {
       expertname: expertData.name,
       expertProfileImage: expertData.profileImage,
@@ -423,46 +287,41 @@ const ExpertProfileView = () => {
       price: service.price,
     };
 
-    // Handle different service types based on serviceId
     switch (service.serviceId) {
-      case "1": // RECORDED VIDEO ASSESSMENT - open video upload modal
+      case "1":
         setIsVideoUploadModalOpen(true);
         setVideoDescription("");
-        // setSelectedVideo(null);
+
         setUploadProgress(0);
         break;
 
-      case "2": // ONLINE TRAINING - navigate to booking page
+      case "2":
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
         break;
 
-      case "3": // ON GROUND ASSESSMENT - navigate to booking page
+      case "3":
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
         break;
-      case "4": // ONLINE ASSESSMENT - navigate to booking page
+      case "4":
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
         break;
 
       default:
-        // Default behavior for unknown service types
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
     }
   };
 
-  // Handle video file selection
   const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedVideo(e.target.files[0]);
     }
   };
 
-  // Handle video upload submission
   const handleVideoUploadSubmit = async () => {
-    // Validate required fields
     if (!selectedVideo) {
       alert("Please select a video to upload");
       return;
@@ -472,15 +331,12 @@ const ExpertProfileView = () => {
       setIsUploading(true);
       setUploadProgress(20);
 
-      // Get auth token from localStorage
       const token = localStorage.getItem("token");
       if (!token) {
         alert("Authentication token not found. Please log in again.");
         setIsUploading(false);
         return;
       }
-
-      // Get required IDs
       const expertId = localStorage.getItem("expertid");
       const userId = localStorage.getItem("userId");
 
@@ -490,13 +346,10 @@ const ExpertProfileView = () => {
         return;
       }
 
-      // Create FormData to send both video file and booking data in one request
       const formData = new FormData();
 
-      // Add the video file
       formData.append("video", selectedVideo);
 
-      // Add other booking data as JSON string
       const bookingData = {
         expertId: expertId,
         playerId: userId,
@@ -508,7 +361,6 @@ const ExpertProfileView = () => {
         status: "WAITING_EXPERT_APPROVAL",
       };
 
-      // Append each field individually
       Object.entries(bookingData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           formData.append(key, value);
@@ -519,7 +371,6 @@ const ExpertProfileView = () => {
 
       console.log("Sending booking request with video...");
 
-      // Make the API call with the FormData
       const bookingResponse = await axios.post(API_BOOKING_URL, formData, {
         headers: {
           "Content-Type": "multipart/form-data", // Important for file uploads
@@ -536,13 +387,11 @@ const ExpertProfileView = () => {
       setUploadProgress(100);
       console.log("Booking created successfully:", bookingResponse.data);
 
-      // Close modal and show success message
       setIsVideoUploadModalOpen(false);
       alert(
         "Video assessment request submitted successfully! You'll be notified when the expert reviews your recording."
       );
 
-      // Navigate to bookings page
       navigate("/player/mybooking");
     } catch (error: any) {
       console.error("Error during video booking submission:", error);
@@ -748,147 +597,7 @@ const ExpertProfileView = () => {
       <div className="mt-6">
         {/* Details Tab */}
         {activeTab === "details" && (
-          <div className="space-y-8">
-            {/* About Me Card */}
-            <Card className="p-6 relative">
-              <div className="flex justify-between mb-4">
-                <h2 className="text-xl font-bold">About Me</h2>
-              </div>
-              <div className="relative">
-                <p
-                  className={cn(
-                    "text-gray-700 dark:text-gray-300",
-                    !readMore && "line-clamp-3"
-                  )}
-                  style={{ whiteSpace: "pre-line" }}
-                >
-                  {expertData.about}
-                </p>
-                {showButton && (
-                  <Button
-                    variant="link"
-                    className="p-0 text-blue-600 hover:underline mt-2 text-center w-full"
-                    onClick={() => setReadMore(!readMore)}
-                  >
-                    {readMore ? "Show less" : "Read more"}
-                  </Button>
-                )}
-              </div>
-            </Card>
-            <Card className="p-6 relative">
-              <div className="flex justify-between items-center mb-1">
-                <h2 className="text-xl font-bold">Skills</h2>
-              </div>
-              <div className="flex flex-wrap gap-3">
-                {expertData.skills && expertData.skills.length > 0 ? (
-                  expertData.skills.map((skill: string, index: number) => (
-                    <span
-                      key={index}
-                      className="bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full text-gray-800 dark:text-gray-200"
-                    >
-                      {skill}
-                    </span>
-                  ))
-                ) : (
-                  <p className="text-gray-500">No skills available</p>
-                )}
-              </div>
-            </Card>
-
-            {/* Certificates & Awards Side by Side */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Certificates Section */}
-              <Card className="p-6 relative">
-                <div className="flex justify-between mb-4">
-                  <h2 className="text-xl font-bold">Certifications</h2>
-                </div>
-                <div className="space-y-3">
-                  {expertData.certificates &&
-                  expertData.certificates.length > 0 ? (
-                    expertData.certificates.map((cert: Certificate) => (
-                      <div
-                        key={cert.id}
-                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
-                        onClick={() => handleCertificateClick(cert)}
-                      >
-                        {/* Image thumbnail if available */}
-                        {cert.imageUrl && (
-                          <div className="w-16 h-16 flex-shrink-0">
-                            <img
-                              src={cert.imageUrl}
-                              alt={cert.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-
-                        {/* Certificate details */}
-                        <div className="p-3 flex-1">
-                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
-                            {cert.title}
-                          </h4>
-                          {cert.issuedBy && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Issued by: {cert.issuedBy}
-                              {cert.issuedDate &&
-                                ` (${formatDate(cert.issuedDate)})`}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">No certifications available</p>
-                  )}
-                </div>
-              </Card>
-
-              {/* Awards Section */}
-              <Card className="p-6 relative">
-                <div className="flex justify-between mb-4">
-                  <h2 className="text-xl font-bold">Awards</h2>
-                </div>
-                <div className="space-y-3">
-                  {expertData.awards && expertData.awards.length > 0 ? (
-                    expertData.awards.map((award: Certificate) => (
-                      <div
-                        key={award.id}
-                        className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
-                        onClick={() => handleCertificateClick(award)}
-                      >
-                        {/* Image thumbnail if available */}
-                        {award.imageUrl && (
-                          <div className="w-16 h-16 flex-shrink-0">
-                            <img
-                              src={award.imageUrl}
-                              alt={award.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        )}
-
-                        {/* Award details */}
-                        <div className="p-3 flex-1">
-                          <h4 className="font-semibold text-gray-800 dark:text-gray-200">
-                            {award.title}
-                          </h4>
-                          {award.issuedBy && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">
-                              Issued by: {award.issuedBy}
-                              {award.issuedDate &&
-                                ` (${formatDate(award.issuedDate)})`}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-gray-500">No awards available</p>
-                  )}
-                </div>
-              </Card>
-            </div>
-          </div>
+          <ExpertProfiledetails expertData={expertData} />
         )}
 
         {/* Media Tab */}
@@ -897,87 +606,6 @@ const ExpertProfileView = () => {
         {/* Reviews Tab */}
         {activeTab === "reviews" && <Reviewview Data={expertData} />}
       </div>
-
-      {/* Media Preview Modal */}
-      {selectedMedia && isPreviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-3xl p-4 relative">
-            <button
-              onClick={() => setIsPreviewOpen(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-semibold mb-4 text-center">
-              {selectedMedia.title}
-            </h3>
-            {selectedMedia.type === "photo" ? (
-              <img
-                src={selectedMedia.src}
-                alt={selectedMedia.title}
-                className="max-w-full max-h-[70vh] mx-auto object-contain"
-              />
-            ) : (
-              <video
-                src={selectedMedia.src}
-                controls
-                autoPlay
-                className="max-w-full max-h-[70vh] mx-auto"
-              />
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Certificate Preview Modal */}
-      {selectedCertificate && isCertificatePreviewOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-11/12 max-w-3xl p-4 relative">
-            <button
-              onClick={() => setIsCertificatePreviewOpen(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl"
-            >
-              ✕
-            </button>
-            <h3 className="text-xl font-semibold mb-2 text-center">
-              {selectedCertificate.title}
-            </h3>
-
-            {selectedCertificate.issuedBy && (
-              <p className="text-center text-gray-600 dark:text-gray-400 mb-4">
-                Issued by: {selectedCertificate.issuedBy}
-                {selectedCertificate.issuedDate &&
-                  ` • ${formatDate(selectedCertificate.issuedDate)}`}
-              </p>
-            )}
-
-            {selectedCertificate.imageUrl ? (
-              <img
-                src={selectedCertificate.imageUrl}
-                alt={selectedCertificate.title}
-                className="max-w-full max-h-[60vh] mx-auto object-contain border border-gray-200 dark:border-gray-700 rounded-lg"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-60 bg-gray-100 dark:bg-gray-700 rounded-lg">
-                <p className="text-gray-400 dark:text-gray-500">
-                  No image available
-                </p>
-              </div>
-            )}
-
-            {selectedCertificate.description && (
-              <div className="mt-4 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                <h4 className="font-medium text-gray-800 dark:text-gray-200 mb-2">
-                  Description
-                </h4>
-                <p className="text-gray-700 dark:text-gray-300">
-                  {selectedCertificate.description}
-                </p>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Video Upload Modal (for RECORDED VIDEO ASSESSMENT) */}
       {isVideoUploadModalOpen && (
@@ -1099,4 +727,4 @@ const ExpertProfileView = () => {
   );
 };
 
-export default ExpertProfileView;
+export default Expertview;

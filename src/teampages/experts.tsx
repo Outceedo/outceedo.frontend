@@ -1,8 +1,6 @@
-import Expertspage from "@/Playerpages/expertspage";
+import ExpertProfiles from "@/Pages/Expert/ExpertProfilefetch";
 
-const TeamExpert =() =>{
-    return(
-        <Expertspage />
-    )
-}
+const TeamExpert = () => {
+  return <ExpertProfiles />;
+};
 export default TeamExpert;

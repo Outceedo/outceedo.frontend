@@ -1,6 +1,6 @@
-import PlayersProfile from "@/expertpages/playerProfiles";
+import PlayerProfiles from "@/Pages/Player/PlayerProfilesfetch";
 
 const Sponsorplayer = () => {
-  return <PlayersProfile />;
+  return <PlayerProfiles />;
 };
 export default Sponsorplayer;

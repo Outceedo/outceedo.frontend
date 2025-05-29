@@ -1,6 +1,6 @@
-import PlayersProfile from "@/expertpages/playerProfiles";
-import TeamPlayerProfiles from "./Playerprofiles";
+import PlayerProfiles from "@/Pages/Player/PlayerProfilesfetch";
+
 const TeamPlayer = () => {
-  return <TeamPlayerProfiles />;
+  return <PlayerProfiles />;
 };
 export default TeamPlayer;

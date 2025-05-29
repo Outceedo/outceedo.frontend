@@ -1,15 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
-import { getProfiles } from "../store/profile-slice";
-import avatar from "../assets/images/avatar.png";
-// Default images for fallback
-import player from "../assets/images/player.jpg";
-import player1 from "../assets/images/player1.jpg";
-import player2 from "../assets/images/player2.jpg";
-import player3 from "../assets/images/player3.jpg";
-import player4 from "../assets/images/player4.jpg";
-import player5 from "../assets/images/player5.jpg";
+import { useAppDispatch, useAppSelector } from "../../store/hooks";
+import { getProfiles } from "../../store/profile-slice";
+import avatar from "../../assets/images/avatar.png";
 
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
@@ -21,7 +14,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+
 import {
   Select,
   SelectContent,
@@ -33,7 +26,6 @@ import { Input } from "@/components/ui/input";
 import { Search, X } from "lucide-react";
 
 // Default image mapping
-const defaultImages = [player, player1, player2, player3, player4, player5];
 
 type Role = "player" | "expert" | "admin";
 
@@ -148,7 +140,7 @@ const Pagination: React.FC<{
   );
 };
 
-const TeamPlayerProfiles: React.FC = () => {
+const PlayerProfiles: React.FC = () => {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
@@ -370,7 +362,7 @@ const TeamPlayerProfiles: React.FC = () => {
     <div className="flex bg">
       {/* Main Content */}
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
-        <div className="min-h-screen p-6 mt-4 rounded-xl ">
+        <div className="min-h-screen px-6 mt-2 rounded-xl ">
           {/* Search Box */}
           <div className="mb-6 relative">
             <div className="relative">
@@ -472,8 +464,7 @@ const TeamPlayerProfiles: React.FC = () => {
                 const reviews = Math.floor(Math.random() * 150) + 50; // Random reviews between 50-200
 
                 // Use photo from profile or fallback to default images in rotation
-                const profileImage =
-                  profile.photo || defaultImages[index % defaultImages.length];
+                const profileImage = profile.photo || avatar;
 
                 // Random verified status if not specified
                 const isVerified = Math.random() > 0.5;
@@ -488,18 +479,7 @@ const TeamPlayerProfiles: React.FC = () => {
                         className="w-full h-50 p-2 rounded-lg object-cover"
                         src={profileImage || avatar}
                         alt={displayName}
-                        onError={(e) => {
-                          // If image fails to load, use default image
-                          const target = e.target as HTMLImageElement;
-                          target.src =
-                            defaultImages[index % defaultImages.length];
-                        }}
                       />
-                      {isVerified && (
-                        <Badge className="absolute top-2 right-4 rounded-full bg-green-400 hover:bg-green-500">
-                          ✔
-                        </Badge>
-                      )}
                     </div>
                     <CardHeader className="p-4 pb-0">
                       <h3 className="text-lg font-semibold">{displayName}</h3>
@@ -508,6 +488,12 @@ const TeamPlayerProfiles: React.FC = () => {
                           (profileType === "player" ? "Player" : "Expert")}
                         {profile.city && profile.country
                           ? ` • ${profile.city}, ${profile.country}`
+                          : ""}
+                      </p>
+                      <p>
+                        {profile.subProfession
+                          ? profile.subProfession.charAt(0).toUpperCase() +
+                            profile.subProfession.slice(1)
                           : ""}
                       </p>
                     </CardHeader>
@@ -561,4 +547,4 @@ const TeamPlayerProfiles: React.FC = () => {
   );
 };
 
-export default TeamPlayerProfiles;
+export default PlayerProfiles;

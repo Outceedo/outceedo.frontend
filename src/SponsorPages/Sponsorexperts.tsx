@@ -1,8 +1,7 @@
-import Expertspage from "@/Playerpages/expertspage";
+import ExpertProfiles from "@/Pages/Expert/ExpertProfilefetch";
 
-const Sponsorexperts =() =>{
-    return(
-        <Expertspage />
-    )
-}
+
+const Sponsorexperts = () => {
+  return <ExpertProfiles />;
+};
 export default Sponsorexperts;
