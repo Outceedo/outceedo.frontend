@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faLinkedin,
@@ -14,21 +12,20 @@ import {
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import profile from "../../assets/images/avatar.png";
-
 import {
-  faStar,
+  faStar as faStarSolid,
+  faStarHalfAlt,
   faUpload,
   faFileUpload,
 } from "@fortawesome/free-solid-svg-icons";
+import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
 import { MoveLeft } from "lucide-react";
-
 import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
-
 import ExpertProfiledetails from "./ExpertProfiledetails";
 
 const icons = [
@@ -50,10 +47,44 @@ interface Service {
 
 type TabType = "details" | "media" | "reviews" | "services";
 
+const StarRating: React.FC<{
+  avg: number;
+  total?: number;
+  className?: string;
+}> = ({ avg, total = 5, className }) => {
+  const fullStars = Math.floor(avg);
+  const hasHalfStar = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
+  const emptyStars = total - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <span className={className}>
+      {[...Array(fullStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`full-${i}`}
+          icon={faStarSolid}
+          className="text-yellow-400 text-xl"
+        />
+      ))}
+      {hasHalfStar && (
+        <FontAwesomeIcon
+          icon={faStarHalfAlt}
+          className="text-yellow-400 text-xl"
+        />
+      )}
+      {[...Array(emptyStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`empty-${i}`}
+          icon={farStar}
+          className="text-xl text-yellow-400"
+        />
+      ))}
+    </span>
+  );
+};
+
 const Expertview = () => {
   const [activeTab, setActiveTab] = useState<TabType>("details");
   const tabs: TabType[] = ["details", "media", "reviews"];
-
   const [isVideoUploadModalOpen, setIsVideoUploadModalOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [videoDescription, setVideoDescription] = useState("");
@@ -106,7 +137,6 @@ const Expertview = () => {
         }))
     : [];
 
-  // Prepare data for display once profile is loaded
   const expertData = viewedProfile
     ? {
         id: viewedProfile.id,
@@ -126,9 +156,8 @@ const Expertview = () => {
         responseTime: viewedProfile.responseTime || "40 mins",
         travelLimit: viewedProfile.travelLimit || "30 kms",
         certificationLevel: viewedProfile.certificationLevel || "3rd highest",
-        reviews: Math.floor(Math.random() * 150) + 50, // Random number for demo
-        followers: Math.floor(Math.random() * 200) + 50, // Random number for demo
-        assessments: Math.floor(Math.random() * 150) + 50, // Random number for demo
+        followers: Math.floor(Math.random() * 200) + 50, // Demo
+        assessments: Math.floor(Math.random() * 150) + 50, // Demo
         profileImage: viewedProfile.photo || null,
         socialLinks: viewedProfile.socialLinks || {},
         about:
@@ -153,7 +182,6 @@ const Expertview = () => {
         responseTime: "N/A",
         travelLimit: "N/A",
         certificationLevel: "3rd highest",
-        reviews: 120,
         followers: 110,
         assessments: 100,
         profileImage: "N/A",
@@ -163,8 +191,8 @@ const Expertview = () => {
         awards: [],
         services: [],
       };
+
   localStorage.setItem("expertid", expertData?.id);
-  localStorage.setItem("serviceid", expertData?.services.id);
 
   const SERVICE_NAME_MAP: Record<string, string> = {
     "1": "RECORDED VIDEO ASSESSMENT",
@@ -177,27 +205,22 @@ const Expertview = () => {
     serviceId: string | number | undefined
   ): string => {
     if (!serviceId) return "Unknown Service";
-
     const id = String(serviceId);
     return SERVICE_NAME_MAP[id] || "Custom Service";
   };
 
   const formatServiceDescription = (description: any): string => {
     if (!description) return "No description available";
-
     if (typeof description === "string") {
       return description;
     }
-
     if (typeof description === "object") {
       if (description.description) {
         return description.description;
       }
-
       try {
         const entries = Object.entries(description);
         if (entries.length === 0) return "No description available";
-
         return entries
           .map(([key, value]) => {
             if (key === "duration") return null;
@@ -209,7 +232,6 @@ const Expertview = () => {
         return "No description available";
       }
     }
-
     return "No description available";
   };
 
@@ -227,7 +249,6 @@ const Expertview = () => {
           service.additionalDetails ||
           "No description available";
       }
-
       return {
         id: service.id || service.serviceId,
         serviceId: service.serviceId,
@@ -239,6 +260,16 @@ const Expertview = () => {
             : `$${service.price || 0}/h`,
       };
     }) || [];
+
+  // --- Star rating calculation using real reviewsReceived ---
+  const reviewsArray = viewedProfile?.reviewsReceived || [];
+  const totalReviews = reviewsArray.length;
+  const avgRating =
+    totalReviews === 0
+      ? 0
+      : reviewsArray.reduce((sum, r) => sum + (r.rating || 0), 0) /
+        totalReviews;
+
   if (status === "loading") {
     return (
       <div className="flex justify-center items-center h-screen dark:bg-gray-900">
@@ -263,21 +294,17 @@ const Expertview = () => {
       </div>
     );
   }
+
   function getTodaysDate() {
     const today = new Date();
-
     const year = today.getFullYear();
-
     const month = String(today.getMonth() + 1).padStart(2, "0");
-
     const day = String(today.getDate()).padStart(2, "0");
-
     return `${year}-${month}-${day}`;
   }
 
   const handlebook = (service: Service) => {
     setCurrentService(service);
-
     const serviceData = {
       expertname: expertData.name,
       expertProfileImage: expertData.profileImage,
@@ -286,29 +313,18 @@ const Expertview = () => {
       description: service.description,
       price: service.price,
     };
-
     switch (service.serviceId) {
       case "1":
         setIsVideoUploadModalOpen(true);
         setVideoDescription("");
-
         setUploadProgress(0);
         break;
-
       case "2":
-        localStorage.setItem("selectedService", JSON.stringify(serviceData));
-        navigate("/player/book");
-        break;
-
       case "3":
-        localStorage.setItem("selectedService", JSON.stringify(serviceData));
-        navigate("/player/book");
-        break;
       case "4":
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
         break;
-
       default:
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
         navigate("/player/book");
@@ -326,11 +342,9 @@ const Expertview = () => {
       alert("Please select a video to upload");
       return;
     }
-
     try {
       setIsUploading(true);
       setUploadProgress(20);
-
       const token = localStorage.getItem("token");
       if (!token) {
         alert("Authentication token not found. Please log in again.");
@@ -339,17 +353,13 @@ const Expertview = () => {
       }
       const expertId = localStorage.getItem("expertid");
       const userId = localStorage.getItem("userId");
-
       if (!expertId) {
         alert("Expert information missing. Please try again.");
         setIsUploading(false);
         return;
       }
-
       const formData = new FormData();
-
       formData.append("video", selectedVideo);
-
       const bookingData = {
         expertId: expertId,
         playerId: userId,
@@ -360,20 +370,15 @@ const Expertview = () => {
         description: videoDescription || "",
         status: "WAITING_EXPERT_APPROVAL",
       };
-
       Object.entries(bookingData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
           formData.append(key, value);
         }
       });
-
       setUploadProgress(50);
-
-      console.log("Sending booking request with video...");
-
-      const bookingResponse = await axios.post(API_BOOKING_URL, formData, {
+      await axios.post(API_BOOKING_URL, formData, {
         headers: {
-          "Content-Type": "multipart/form-data", // Important for file uploads
+          "Content-Type": "multipart/form-data",
           Authorization: `Bearer ${token}`,
         },
         onUploadProgress: (progressEvent) => {
@@ -383,25 +388,18 @@ const Expertview = () => {
           setUploadProgress(progress);
         },
       });
-
       setUploadProgress(100);
-      console.log("Booking created successfully:", bookingResponse.data);
-
       setIsVideoUploadModalOpen(false);
       alert(
         "Video assessment request submitted successfully! You'll be notified when the expert reviews your recording."
       );
-
       navigate("/player/mybooking");
     } catch (error: any) {
-      console.error("Error during video booking submission:", error);
-
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
         error.message ||
         "An unknown error occurred";
-
       alert(`Error: ${errorMessage}`);
     } finally {
       setIsUploading(false);
@@ -411,7 +409,7 @@ const Expertview = () => {
 
   return (
     <div className="container mx-auto px-4 max-w-6xl">
-      {/* Back button - simplified */}
+      {/* Back button */}
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -420,14 +418,12 @@ const Expertview = () => {
           <MoveLeft />
         </button>
       </div>
-
       {/* Header section with profile info and image */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
         {/* Left side - Expert info */}
         <div className="flex-grow">
           <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">{expertData.name}</h1>
-
             {/* Social Media Icons */}
             <div className="flex gap-3 mt-4">
               {icons.map((item, index) => (
@@ -449,7 +445,6 @@ const Expertview = () => {
               ))}
             </div>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-x-16 gap-y-6">
             <div>
               <p className="text-gray-500">Profession</p>
@@ -478,8 +473,6 @@ const Expertview = () => {
                   : "Not specified"}
               </p>
             </div>
-            {/* <div className="md:col-span-1"></div>{" "} */}
-            {/* Empty column for proper alignment */}
             <div>
               <p className="text-gray-500">Location</p>
               <p className="font-semibold dark:text-white">
@@ -500,7 +493,6 @@ const Expertview = () => {
             </div>
           </div>
         </div>
-
         {/* Right side - Profile image */}
         <div className="w-full md:w-1/3 lg:w-1/4 rounded-lg overflow-hidden">
           <img
@@ -510,19 +502,14 @@ const Expertview = () => {
           />
         </div>
       </div>
-
       {/* Stats row */}
       <div className="border-t border-b py-6 mb-8">
         <div className="flex flex-wrap justify-around items-center gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex text-yellow-300 text-xl">
-              <FontAwesomeIcon icon={faStar} />
-              <FontAwesomeIcon icon={faStar} />
-              <FontAwesomeIcon icon={faStar} />
-              <FontAwesomeIcon icon={faStar} />
-              <FontAwesomeIcon icon={faStar} />
-            </div>
-            <p className="text-gray-500">{expertData.reviews} reviews</p>
+            <StarRating avg={avgRating} className="mr-2" />
+            <span className="text-gray-500">
+              {totalReviews} review{totalReviews !== 1 ? "s" : ""}
+            </span>
           </div>
           <div className="text-center">
             <p className="text-red-500 text-3xl font-bold">
@@ -572,7 +559,6 @@ const Expertview = () => {
           )}
         </div>
       </div>
-
       {/* Tabs navigation */}
       <div className="mb-8 border-b">
         <div className="flex space-x-6">
@@ -592,21 +578,14 @@ const Expertview = () => {
           ))}
         </div>
       </div>
-
       {/* Tab content */}
       <div className="mt-6">
-        {/* Details Tab */}
         {activeTab === "details" && (
           <ExpertProfiledetails expertData={expertData} />
         )}
-
-        {/* Media Tab */}
         {activeTab === "media" && <Mediaview Data={viewedProfile} />}
-
-        {/* Reviews Tab */}
         {activeTab === "reviews" && <Reviewview Data={expertData} />}
       </div>
-
       {/* Video Upload Modal (for RECORDED VIDEO ASSESSMENT) */}
       {isVideoUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
@@ -621,7 +600,6 @@ const Expertview = () => {
             <h3 className="text-xl font-semibold mb-4 text-center">
               Upload Video for Assessment
             </h3>
-
             <div className="space-y-4">
               <div>
                 <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
@@ -663,7 +641,6 @@ const Expertview = () => {
                   </div>
                 </div>
               </div>
-
               <div>
                 <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
                   Description
@@ -676,7 +653,6 @@ const Expertview = () => {
                   disabled={isUploading}
                 />
               </div>
-
               {isUploading && (
                 <div className="w-full">
                   <div className="h-2 w-full bg-gray-200 rounded-full overflow-hidden">
@@ -692,7 +668,6 @@ const Expertview = () => {
                   </p>
                 </div>
               )}
-
               <div className="flex justify-end space-x-2 mt-6">
                 <Button
                   variant="outline"
