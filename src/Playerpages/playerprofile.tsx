@@ -7,13 +7,14 @@ import {
   faPen,
   faCheck,
   faTimes,
+  faStar as faStarSolid,
+  faStarHalfAlt,
 } from "@fortawesome/free-solid-svg-icons";
+import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import ProfileDetails from "./profiledetails";
-
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   getProfile,
@@ -56,6 +57,42 @@ const calculateOVR = (stats: Stat[]) => {
   return (total / stats.length).toFixed(1);
 };
 
+// StarRating component for review stars
+const StarRating: React.FC<{
+  avg: number;
+  total?: number;
+  className?: string;
+}> = ({ avg, total = 5, className }) => {
+  const fullStars = Math.floor(avg);
+  const hasHalfStar = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
+  const emptyStars = total - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <span className={className}>
+      {[...Array(fullStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`full-${i}`}
+          icon={faStarSolid}
+          className="text-yellow-400 text-xl"
+        />
+      ))}
+      {hasHalfStar && (
+        <FontAwesomeIcon
+          icon={faStarHalfAlt}
+          className="text-yellow-400 text-xl"
+        />
+      )}
+      {[...Array(emptyStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`empty-${i}`}
+          icon={faStarRegular}
+          className="text-yellow-400 text-xl"
+        />
+      ))}
+    </span>
+  );
+};
+
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
     "details"
@@ -76,28 +113,20 @@ const Profile: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Get profile state from Redux store
-  // currentProfile is set by getProfile thunk
   const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
   const navigate = useNavigate();
 
-  // Local state for player stats which might not be directly part of the API response
   const [playerStats, setPlayerStats] = useState(initialStats);
 
-  // Fetch profile data on component mount
   useEffect(() => {
-    // Get username from localStorage as set in the slice code
     const username = localStorage.getItem("username");
-    console.log(username);
     if (username) {
-      // Dispatch the getProfile action with the username
       dispatch(getProfile(username));
     }
   }, [dispatch]);
 
-  // Get stats from localStorage if available
   useEffect(() => {
     const savedStats = localStorage.getItem("playerStats");
     if (savedStats) {
@@ -105,7 +134,6 @@ const Profile: React.FC = () => {
     }
   }, []);
 
-  // Initialize edit data when profile data is loaded
   useEffect(() => {
     if (currentProfile) {
       setEditData({
@@ -122,7 +150,6 @@ const Profile: React.FC = () => {
     }
   }, [currentProfile]);
 
-  // Handle profile photo change
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
   };
@@ -133,9 +160,7 @@ const Profile: React.FC = () => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // Validate file size and type before uploading
     if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
       Swal.fire({
         icon: "error",
         title: "File too large",
@@ -156,7 +181,6 @@ const Profile: React.FC = () => {
     setIsUpdatingPhoto(true);
 
     try {
-      // Dispatch action to update profile photo using the thunk defined in the slice
       await dispatch(updateProfilePhoto(file)).unwrap();
 
       Swal.fire({
@@ -167,7 +191,6 @@ const Profile: React.FC = () => {
         showConfirmButton: false,
       });
 
-      // Refresh profile data
       const username = localStorage.getItem("username");
       if (username) {
         dispatch(getProfile(username));
@@ -181,16 +204,13 @@ const Profile: React.FC = () => {
     } finally {
       setIsUpdatingPhoto(false);
 
-      // Reset the input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   };
 
-  // Format the profile data from the API response for display
   const formatProfileData = () => {
-    // Use the profile that was fetched (currentProfile)
     const profile = currentProfile;
 
     if (!profile) {
@@ -212,19 +232,16 @@ const Profile: React.FC = () => {
         uploads: [],
         documents: [],
         rawProfile: {},
+        reviewsReceived: [],
       };
     }
 
-    // Filter certificates and awards from documents
     const certificates =
       profile.documents?.filter((doc) => doc.type === "certificate") || [];
     const awards =
       profile.documents?.filter((doc) => doc.type === "award") || [];
-
-    // Get media items (photos/videos)
     const mediaItems = profile.uploads || [];
 
-    // Get profile photo
     let profileImage = "";
     if (profile.photo) {
       profileImage = profile.photo;
@@ -251,7 +268,7 @@ const Profile: React.FC = () => {
           ? profile.language
           : [],
       profileImage: profileImage,
-      stats: playerStats, // Use local stats
+      stats: playerStats,
       aboutMe: profile.bio || "",
       certificates: certificates,
       awards: awards,
@@ -259,63 +276,44 @@ const Profile: React.FC = () => {
       uploads: mediaItems,
       documents: profile.documents || [],
       rawProfile: profile,
-      reviewsReceived: profile.reviewsReceived,
+      reviewsReceived: profile.reviewsReceived || [],
     };
   };
 
-  // Get the formatted player data
   const playerData = formatProfileData();
+
   useEffect(() => {
-    // Set a 2-second delay before executing navigation logic
     const navigationTimer = setTimeout(() => {
-      // Only proceed with navigation if user is logged in and not already redirecting
       const userRole = localStorage.getItem("role");
 
-      // Check if required profile fields are missing
       const isProfileIncomplete =
         !currentProfile?.age ||
         !currentProfile?.gender ||
         !currentProfile?.height ||
         !currentProfile?.weight;
 
-      console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
-      console.log("Missing fields:", {
-        age: !currentProfile?.age,
-        gender: !currentProfile?.gender,
-        height: !currentProfile?.height,
-        weight: !currentProfile?.weight,
-      });
-
       if (isProfileIncomplete) {
-        console.log("Profile is incomplete, redirecting to details form");
         navigate("/player/details-form");
       } else {
         if (userRole === "player") {
-          console.log("Redirecting to player profile");
           navigate("/player/profile");
         } else if (userRole === "expert") {
-          console.log("Redirecting to expert profile");
           navigate("/expert/profile");
         } else {
-          // Fallback if role is not recognized
-          console.log("Role not recognized, redirecting to details form");
           navigate("/player/details-form");
         }
       }
-    }, 2000); // 2000 milliseconds = 2 seconds
+    }, 2000);
 
-    // Cleanup function to clear the timeout if component unmounts before timeout completes
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
 
-  // Handle changes to edit fields
   const handleInputChange = (
     field: keyof EditableProfileData,
     value: string
   ) => {
     setEditData((prev) => ({ ...prev, [field]: value }));
 
-    // Clear error for this field
     if (errors[field]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -325,7 +323,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Handle changes to languages (comma-separated)
   const handleLanguagesChange = (value: string) => {
     const languageArray = value
       .split(",")
@@ -333,7 +330,6 @@ const Profile: React.FC = () => {
       .filter((lang) => lang !== "");
     setEditData((prev) => ({ ...prev, languages: languageArray }));
 
-    // Clear error for languages
     if (errors.languages) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -343,7 +339,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Validate form data
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
@@ -391,7 +386,6 @@ const Profile: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Save changes
   const handleSaveBasicInfo = async () => {
     if (!validateForm()) {
       return;
@@ -400,7 +394,6 @@ const Profile: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      // Format data for the API
       const updateData = {
         firstName: playerData.rawProfile.firstName || "",
         lastName: playerData.rawProfile.lastName || "",
@@ -415,7 +408,6 @@ const Profile: React.FC = () => {
         socialLinks: playerData.rawProfile.socialLinks || {},
       };
 
-      // Dispatch update profile action
       await dispatch(updateProfile(updateData)).unwrap();
 
       Swal.fire({
@@ -426,10 +418,8 @@ const Profile: React.FC = () => {
         showConfirmButton: false,
       });
 
-      // Exit edit mode
       setIsEditingBasicInfo(false);
 
-      // Refresh profile data
       const username = localStorage.getItem("username");
       if (username) {
         dispatch(getProfile(username));
@@ -445,12 +435,10 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Cancel editing
   const handleCancelEdit = () => {
     setIsEditingBasicInfo(false);
     setErrors({});
 
-    // Reset form data to current profile values
     if (currentProfile) {
       setEditData({
         age: currentProfile.age?.toString() || "",
@@ -466,11 +454,9 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Enter edit mode
   const enterEditMode = () => {
     setIsEditingBasicInfo(true);
 
-    // Set form data to current profile values
     if (currentProfile) {
       setEditData({
         age: currentProfile.age?.toString() || "",
@@ -486,10 +472,17 @@ const Profile: React.FC = () => {
     }
   };
 
-  // Calculate OVR score
   const ovrScore = calculateOVR(playerData.stats);
 
-  // Show loading state
+  // Calculate review stats
+  const reviewsArray = playerData.reviewsReceived || [];
+  const totalReviews = reviewsArray.length;
+  const avgRating =
+    totalReviews === 0
+      ? 0
+      : reviewsArray.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
+        totalReviews;
+
   if (status === "loading" && !currentProfile) {
     return (
       <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center">
@@ -503,7 +496,6 @@ const Profile: React.FC = () => {
     );
   }
 
-  // Show error state
   if (status === "failed" && error) {
     return (
       <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center">
@@ -539,9 +531,7 @@ const Profile: React.FC = () => {
                   className="rounded-lg w-60 h-60 object-cover shadow-md"
                 />
               ) : (
-                <div className="rounded-lg w-60 h-60 bg-gray-200 flex items-center justify-center shadow-md">
-                  {/* <Avatar /> */}
-                </div>
+                <div className="rounded-lg w-60 h-60 bg-gray-200 flex items-center justify-center shadow-md"></div>
               )}
 
               <div
@@ -555,7 +545,6 @@ const Profile: React.FC = () => {
                   </p>
                 </div>
               </div>
-
               <input
                 type="file"
                 ref={fileInputRef}
@@ -563,8 +552,6 @@ const Profile: React.FC = () => {
                 accept="image/*"
                 className="hidden"
               />
-
-              {/* Photo upload loading indicator */}
               {isUpdatingPhoto && (
                 <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-lg">
                   <div className="text-white text-center">
@@ -581,7 +568,6 @@ const Profile: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
                   {playerData.name || "Player Profile"}
                 </h2>
-
                 {/* Basic Info Section with Edit Button */}
                 <div className="mt-5 relative">
                   <div className="flex justify-between items-start">
@@ -624,8 +610,6 @@ const Profile: React.FC = () => {
                       </div>
                     )}
                   </div>
-
-                  {/* Display mode */}
                   {!isEditingBasicInfo ? (
                     <div className="flex flex-wrap gap-x-8 gap-y-2 text-gray-600 font-Opensans dark:text-gray-300">
                       <span>Age: {playerData.age || "Not specified"}</span>
@@ -647,7 +631,6 @@ const Profile: React.FC = () => {
                       </span>
                     </div>
                   ) : (
-                    /* Edit mode */
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                       {/* Age */}
                       <div>
@@ -672,7 +655,6 @@ const Profile: React.FC = () => {
                           </p>
                         )}
                       </div>
-
                       {/* Height */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -696,7 +678,6 @@ const Profile: React.FC = () => {
                           </p>
                         )}
                       </div>
-
                       {/* Weight */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -720,7 +701,6 @@ const Profile: React.FC = () => {
                           </p>
                         )}
                       </div>
-
                       {/* City */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -744,7 +724,6 @@ const Profile: React.FC = () => {
                           </p>
                         )}
                       </div>
-
                       {/* Country */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -768,7 +747,6 @@ const Profile: React.FC = () => {
                           </p>
                         )}
                       </div>
-
                       {/* Club */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -792,7 +770,6 @@ const Profile: React.FC = () => {
                           </p>
                         )}
                       </div>
-
                       {/* Languages */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -862,8 +839,22 @@ const Profile: React.FC = () => {
                   ))}
                 </div>
               </Card>
+
+              {/* Review stars and count */}
+              <div className="flex items-center gap-2 mt-4">
+                <StarRating avg={avgRating} className="mr-2" />
+                <span className="text-gray-500">
+                  {totalReviews} review{totalReviews !== 1 ? "s" : ""}
+                </span>
+                {totalReviews > 0 && (
+                  <span className="ml-2 text-gray-600 text-sm">
+                    ({avgRating.toFixed(1)} avg)
+                  </span>
+                )}
+              </div>
             </div>
           </div>
+
           {/* Tabs Section */}
           <div className="mt-8">
             <div className="flex gap-4 border-b">
@@ -889,7 +880,6 @@ const Profile: React.FC = () => {
                       playerData={playerData}
                       isExpertView={false}
                       onUpdate={(data) => {
-                        // Format data for update according to the backend schema
                         const updateData = {
                           firstName: data.name?.split(" ")[0] || "",
                           lastName: data.name?.split(" ")[1] || "",
@@ -903,8 +893,6 @@ const Profile: React.FC = () => {
                           language: data.languages,
                           socialLinks: data.socials,
                         };
-
-                        // Dispatch update profile action with the formatted data
                         dispatch(updateProfile(updateData));
                       }}
                     />

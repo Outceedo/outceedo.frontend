@@ -6,17 +6,20 @@ import {
   faFacebook,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
-import { faStar, faCamera, faSpinner } from "@fortawesome/free-solid-svg-icons";
+import {
+  faStar as faStarSolid,
+  faStarHalfAlt,
+  faCamera,
+  faSpinner,
+} from "@fortawesome/free-solid-svg-icons";
+import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import ExpertDetails from "./Expertdetails";
-
 import ExpertServices from "./Expertservices";
-
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
 import avatar from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
-
 import Mediaedit from "@/Pages/Media/MediaEdit";
 import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
 
@@ -26,6 +29,42 @@ const icons = [
   { icon: faInstagram, color: "#E1306C", link: "" },
   { icon: faXTwitter, color: "#0C0B0B", link: "" },
 ];
+
+// StarRating component for review stars
+const StarRating: React.FC<{
+  avg: number;
+  total?: number;
+  className?: string;
+}> = ({ avg, total = 5, className }) => {
+  const fullStars = Math.floor(avg);
+  const hasHalfStar = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
+  const emptyStars = total - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <span className={className}>
+      {[...Array(fullStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`full-${i}`}
+          icon={faStarSolid}
+          className="text-yellow-400 text-xl"
+        />
+      ))}
+      {hasHalfStar && (
+        <FontAwesomeIcon
+          icon={faStarHalfAlt}
+          className="text-yellow-400 text-xl"
+        />
+      )}
+      {[...Array(emptyStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`empty-${i}`}
+          icon={farStar}
+          className="text-yellow-400 text-xl"
+        />
+      ))}
+    </span>
+  );
+};
 
 const ExpertProfile = () => {
   const [activeTab, setActiveTab] = useState<
@@ -45,53 +84,31 @@ const ExpertProfile = () => {
   useEffect(() => {
     // Get username from localStorage
     const username = localStorage.getItem("username");
-    console.log("Expert username:", username);
     if (username) {
-      // Dispatch the getProfile action with the username
       dispatch(getProfile(username));
     }
   }, [dispatch]);
   useEffect(() => {
-    // Set a 2-second delay before executing navigation logic
     const navigationTimer = setTimeout(() => {
-      // Only proceed with navigation if user is logged in and not already redirecting
       const userRole = localStorage.getItem("role");
-      console.log(userRole);
-
-      // Check if required profile fields are missing
       const isProfileIncomplete =
         !currentProfile?.age ||
         !currentProfile?.gender ||
         !currentProfile?.height ||
         !currentProfile?.weight;
 
-      console.log("Profile check - isProfileIncomplete:", isProfileIncomplete);
-      console.log("Missing fields:", {
-        age: !currentProfile?.age,
-        gender: !currentProfile?.gender,
-        height: !currentProfile?.height,
-        weight: !currentProfile?.weight,
-      });
-
       if (isProfileIncomplete) {
-        console.log("Profile is incomplete, redirecting to details form");
         navigate("/expert/details-form");
       } else {
         if (userRole === "player") {
-          console.log("Redirecting to player profile");
           navigate("/player/profile");
         } else if (userRole === "expert") {
-          console.log("Redirecting to expert profile");
           navigate("/expert/profile");
         } else {
-          // Fallback if role is not recognized
-          console.log("Role not recognized, redirecting to details form");
           navigate("/expert/details-form");
         }
       }
-    }, 4000); // 2000 milliseconds = 2 seconds
-
-    // Cleanup function to clear the timeout if component unmounts before timeout completes
+    }, 4000);
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
 
@@ -117,16 +134,11 @@ const ExpertProfile = () => {
         documents: [],
         id: "",
         rawProfile: {},
-        reviewsReceived: {},
+        reviewsReceived: [],
       };
 
     const profile = currentProfile;
-    console.log("Expert profile data:", profile);
-
-    // Get media items (photos/videos)
     const mediaItems = profile.uploads || [];
-
-    // Get profile photo
     let profileImage = "";
     if (profile.photo) {
       profileImage = profile.photo;
@@ -136,22 +148,15 @@ const ExpertProfile = () => {
         profileImage = profilePhoto.url;
       }
     }
-
-    // Get social links
     const socials = profile.socialLinks || {};
-
-    // Generate icon links
     icons[0].link = socials.linkedin || "";
     icons[1].link = socials.facebook || "";
     icons[2].link = socials.instagram || "";
     icons[3].link = socials.twitter || "";
-
-    // Get certifications
     const certifications =
       profile.documents
         ?.filter((doc) => doc.type === "certificate")
         .map((cert) => cert.title) || [];
-
     return {
       id: profile.id || "",
       name:
@@ -176,19 +181,15 @@ const ExpertProfile = () => {
       uploads: mediaItems,
       documents: profile.documents || [],
       rawProfile: profile,
-      reviewsReceived: profile.reviewsReceived,
+      reviewsReceived: profile.reviewsReceived || [],
       language: profile.language,
-
-      // Include raw profile for passing to child components
     };
   };
 
-  // Handle profile photo click to open file selector
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle profile photo change
   const handlePhotoChange = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
@@ -197,7 +198,6 @@ const ExpertProfile = () => {
 
     // Validate file size and type before uploading
     if (file.size > 1 * 1024 * 1024) {
-      // 1MB limit (changed from 5MB)
       Swal.fire({
         icon: "error",
         title: "File too large",
@@ -218,9 +218,7 @@ const ExpertProfile = () => {
     setIsUpdatingPhoto(true);
 
     try {
-      // Dispatch action to update profile photo
       await dispatch(updateProfilePhoto(file)).unwrap();
-
       Swal.fire({
         icon: "success",
         title: "Success",
@@ -228,8 +226,6 @@ const ExpertProfile = () => {
         timer: 2000,
         showConfirmButton: false,
       });
-
-      // Refresh profile data
       const username = localStorage.getItem("username");
       if (username) {
         dispatch(getProfile(username));
@@ -242,17 +238,22 @@ const ExpertProfile = () => {
       });
     } finally {
       setIsUpdatingPhoto(false);
-
-      // Reset the file input
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
     }
   };
-  // Get the formatted expert data
+
   const expertData = formatExpertData();
 
-  console.log(expertData);
+  // Review Stars Calculation:
+  const reviewsArray = expertData.reviewsReceived || [];
+  const totalReviews = reviewsArray.length;
+  const avgRating =
+    totalReviews === 0
+      ? 0
+      : reviewsArray.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
+        totalReviews;
 
   // Show loading state
   if (status === "loading" && !currentProfile) {
@@ -301,7 +302,6 @@ const ExpertProfile = () => {
               <h1 className="text-4xl font-bold dark:text-white">
                 {expertData.name}
               </h1>
-
               <div className="gap-4 ml-32 flex">
                 {icons.map((item, index) =>
                   item.link ? (
@@ -324,7 +324,6 @@ const ExpertProfile = () => {
                 )}
               </div>
             </div>
-
             {/* Expert Info */}
             <div className="flex justify-start gap-40 text-center mt-8">
               <div className="text-left">
@@ -394,7 +393,6 @@ const ExpertProfile = () => {
                 className="w-full h-full object-cover"
               />
             )}
-
             {/* Profile photo upload overlay */}
             <div
               onClick={handlePhotoClick}
@@ -407,7 +405,6 @@ const ExpertProfile = () => {
                 </p>
               </div>
             </div>
-
             {/* Hidden file input */}
             <input
               type="file"
@@ -416,7 +413,6 @@ const ExpertProfile = () => {
               accept="image/*"
               className="hidden"
             />
-
             {/* Photo upload loading indicator */}
             {isUpdatingPhoto && (
               <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
@@ -435,16 +431,16 @@ const ExpertProfile = () => {
         </div>
         {/* Stats */}
         <div className="border-t border-b py-6 mt-6 text-center">
-          <div className="flex justify-around">
+          <div className="flex justify-around items-center">
             <div className="flex items-center gap-x-2">
-              <p className="text-yellow-300 text-3xl">
-                {/* Render 5 stars */}
-                {[...Array(5)].map((_, i) => (
-                  <FontAwesomeIcon key={i} icon={faStar} />
-                ))}
-              </p>
-              <p className="text-gray-500 dark:text-white">
-                {expertData.reviews} reviews
+              <StarRating avg={avgRating} />
+              <p className="text-gray-500 dark:text-white ml-2">
+                {totalReviews} review{totalReviews !== 1 ? "s" : ""}
+                {totalReviews > 0 && (
+                  <span className="ml-2 text-gray-600 text-base">
+                    ({avgRating.toFixed(1)} avg)
+                  </span>
+                )}
               </p>
             </div>
             <div>
@@ -482,7 +478,6 @@ const ExpertProfile = () => {
               )
             )}
           </div>
-
           <div className="mt-4">
             {activeTab === "details" && (
               <ExpertDetails expertData={expertData} />

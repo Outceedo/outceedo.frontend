@@ -1,6 +1,6 @@
 import "react-circular-progressbar/dist/styles.css";
 import profile2 from "../../assets/images/avatar.png";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { formatDistanceToNow } from "date-fns";
 
 // Define types for the reviews coming from the profile data
@@ -35,13 +35,15 @@ interface ReviewnoeditProps {
 }
 
 const Reviewnoedit: React.FC<ReviewnoeditProps> = ({ Data }) => {
-  // Fallback static reviews
-
   // State for selected review - can be either dynamic or static
   const [selectedDynamicReview, setSelectedDynamicReview] =
     useState<ReviewItem | null>(null);
   const [selectedStaticReview, setSelectedStaticReview] =
     useState<Review | null>(null);
+
+  // Refs for modal close on outside click
+  const dynamicModalRef = useRef<HTMLDivElement | null>(null);
+  const staticModalRef = useRef<HTMLDivElement | null>(null);
 
   // Function to format the review date
   const formatReviewDate = (dateString: string) => {
@@ -103,6 +105,38 @@ const Reviewnoedit: React.FC<ReviewnoeditProps> = ({ Data }) => {
     setSelectedStaticReview(null);
   };
 
+  // Close modal on outside click for dynamic review
+  useEffect(() => {
+    if (!selectedDynamicReview) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dynamicModalRef.current &&
+        !dynamicModalRef.current.contains(event.target as Node)
+      ) {
+        closeModal();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+    // eslint-disable-next-line
+  }, [selectedDynamicReview]);
+
+  // Close modal on outside click for static review
+  useEffect(() => {
+    if (!selectedStaticReview) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        staticModalRef.current &&
+        !staticModalRef.current.contains(event.target as Node)
+      ) {
+        closeModal();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+    // eslint-disable-next-line
+  }, [selectedStaticReview]);
+
   return (
     <div className="p-4 -mt-10 w-full">
       {/* Reviews Grid */}
@@ -153,10 +187,13 @@ const Reviewnoedit: React.FC<ReviewnoeditProps> = ({ Data }) => {
       {/* Dynamic Review Modal */}
       {selectedDynamicReview && (
         <div className="fixed inset-0 bg-opacity-50 z-50 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
+          <div
+            ref={dynamicModalRef}
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative"
+          >
             <button
               onClick={closeModal}
-              className="absolute top-2 right-3 text-gray-600 dark:text-gray-300 text-xl"
+              className="absolute top-2 right-3 text-gray-600 dark:text-gray-300 text-3xl"
             >
               &times;
             </button>
@@ -189,7 +226,10 @@ const Reviewnoedit: React.FC<ReviewnoeditProps> = ({ Data }) => {
       {/* Static Review Modal */}
       {selectedStaticReview && (
         <div className="fixed inset-0 bg-opacity-50 z-50 flex justify-center items-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
+          <div
+            ref={staticModalRef}
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative"
+          >
             <button
               onClick={closeModal}
               className="absolute top-2 right-3 text-gray-600 dark:text-gray-300 text-xl"

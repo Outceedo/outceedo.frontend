@@ -1,5 +1,5 @@
 import "react-circular-progressbar/dist/styles.css";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { formatDistanceToNow } from "date-fns";
 import profile2 from "../../assets/images/avatar.png";
 import axios from "axios";
@@ -39,6 +39,11 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
   const [error, setError] = useState("");
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [reviewToDelete, setReviewToDelete] = useState<ReviewItem | null>(null);
+
+  // For outside modal click refs
+  const reviewModalRef = useRef<HTMLDivElement | null>(null);
+  const addReviewModalRef = useRef<HTMLDivElement | null>(null);
+  const deleteModalRef = useRef<HTMLDivElement | null>(null);
 
   // Create a local reviews state that we can update immediately
   const [localReviews, setLocalReviews] = useState<ReviewItem[]>([]);
@@ -145,7 +150,7 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
 
       // Create a new review object to add to our local state
       const newReview: ReviewItem = {
-        id: response.data?.id || `temp-${Date.now()}`, // Use response ID or generate a temporary one
+        id: response.data?.id || `temp-${Date.now()}`,
         reviewerId: currentUser.id,
         revieweeId: Data.id,
         bookingId: "",
@@ -160,10 +165,7 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
         },
       };
 
-      // Update local state immediately
       setLocalReviews((prevReviews) => [...prevReviews, newReview]);
-
-      // Close modal and notify parent
       setIsAddReviewModalOpen(false);
     } catch (error) {
       console.error("Error submitting review:", error);
@@ -190,7 +192,6 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
     try {
       const token = localStorage.getItem("token");
 
-      // API call to delete a review
       await axios.delete(
         `${API_BASE_URL}/user/profile/review/${reviewToDelete.id}`,
         {
@@ -200,12 +201,9 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
         }
       );
 
-      // Update local state immediately by removing the deleted review
       setLocalReviews((prevReviews) =>
         prevReviews.filter((review) => review.id !== reviewToDelete.id)
       );
-
-      // Close modals and notify parent
       setIsDeleteModalOpen(false);
       setSelectedReview(null);
     } catch (error) {
@@ -269,6 +267,51 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
 
   const currentUserId = getCurrentUserId();
 
+  // Modal outside click close effect (review)
+  useEffect(() => {
+    if (!selectedReview) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        reviewModalRef.current &&
+        !reviewModalRef.current.contains(event.target as Node)
+      ) {
+        closeModal();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [selectedReview]);
+
+  // Modal outside click close effect (add review)
+  useEffect(() => {
+    if (!isAddReviewModalOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        addReviewModalRef.current &&
+        !addReviewModalRef.current.contains(event.target as Node)
+      ) {
+        closeAddReviewModal();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isAddReviewModalOpen]);
+
+  // Modal outside click close effect (delete modal)
+  useEffect(() => {
+    if (!isDeleteModalOpen) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        deleteModalRef.current &&
+        !deleteModalRef.current.contains(event.target as Node)
+      ) {
+        closeDeleteModal();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isDeleteModalOpen]);
+
   return (
     <div className="p-4 w-full">
       {/* Add Review Button */}
@@ -331,10 +374,13 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
       {/* Review Modal */}
       {selectedReview && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm bg-opacity z-50 flex justify-center items-center px-4">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
+          <div
+            ref={reviewModalRef}
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative"
+          >
             <button
               onClick={closeModal}
-              className="absolute top-2 right-3 text-gray-600 dark:text-gray-300 text-xl"
+              className="absolute top-2 right-3 text-gray-600 dark:text-gray-300 text-3xl"
             >
               &times;
             </button>
@@ -379,7 +425,10 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
       {/* Add Review Modal */}
       {isAddReviewModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm bg-opacity z-50 flex justify-center items-center px-4">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
+          <div
+            ref={addReviewModalRef}
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative"
+          >
             <button
               onClick={closeAddReviewModal}
               className="absolute top-2 right-3 text-gray-600 dark:text-gray-300 text-xl"
@@ -433,7 +482,10 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
       {/* Delete Confirmation Modal */}
       {isDeleteModalOpen && (
         <div className="fixed inset-0 bg-black/40 backdrop-blur-sm bg-opacity z-50 flex justify-center items-center px-4">
-          <div className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative">
+          <div
+            ref={deleteModalRef}
+            className="bg-white dark:bg-gray-900 p-6 rounded-lg w-full max-w-md shadow-lg relative"
+          >
             <h2 className="text-xl font-bold text-gray-800 dark:text-white text-center mb-4">
               Delete Review
             </h2>
