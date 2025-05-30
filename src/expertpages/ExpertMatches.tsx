@@ -1,6 +1,5 @@
 import "react-circular-progressbar/dist/styles.css";
 import { useState } from "react";
-import CommonForm from "../common/Commonform";
 import {
   Table,
   TableBody,
@@ -21,7 +20,6 @@ interface Match {
   type: string;
   status: string;
   result: string;
-  // Stats fields
   goals?: string;
   assists?: string;
   shots?: string;
@@ -142,30 +140,36 @@ const Matches: React.FC = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [matchToDelete, setMatchToDelete] = useState<number | null>(null);
 
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-
     if (editingId !== null) {
-      setMatches(
-        (prevMatches) =>
-          prevMatches
-            .map((match) =>
-              match.id === editingId ? { ...formData, id: editingId } : match
-            )
-            .sort(
-              (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-            ) // Sort matches by date
+      setMatches((prevMatches) =>
+        prevMatches
+          .map((match) =>
+            match.id === editingId ? { ...formData, id: editingId } : match
+          )
+          .sort(
+            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+          )
       );
       setEditingId(null);
     } else {
-      setMatches(
-        (prevMatches) =>
-          [...prevMatches, { ...formData, id: prevMatches.length + 1 }].sort(
-            (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
-          ) // Sort matches by date
+      setMatches((prevMatches) =>
+        [...prevMatches, { ...formData, id: prevMatches.length + 1 }].sort(
+          (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        )
       );
     }
-
     setFormData({
       id: 0,
       date: "",
@@ -192,13 +196,11 @@ const Matches: React.FC = () => {
     }
   };
 
-  // Updated to show confirmation modal
   const handleDeleteClick = (id: number) => {
     setMatchToDelete(id);
     setDeleteModalOpen(true);
   };
 
-  // Actual delete function
   const confirmDelete = () => {
     if (matchToDelete !== null) {
       setMatches(matches.filter((match) => match.id !== matchToDelete));
@@ -211,47 +213,6 @@ const Matches: React.FC = () => {
     setSelectedMatch(match);
     setStatsModalOpen(true);
   };
-
-  const formControls = [
-    { name: "date", label: "Date", componentType: "input", type: "date" },
-    {
-      name: "homeTeam",
-      label: "Home Team",
-      componentType: "input",
-      type: "text",
-    },
-    {
-      name: "awayTeam",
-      label: "Away Team",
-      componentType: "input",
-      type: "text",
-    },
-    { name: "type", label: "Type", componentType: "input", type: "text" },
-    { name: "status", label: "Status", componentType: "input", type: "text" },
-    { name: "result", label: "Result", componentType: "textarea" },
-    { name: "goals", label: "Goals", componentType: "input", type: "text" },
-    { name: "assists", label: "Assists", componentType: "input", type: "text" },
-    { name: "shots", label: "Shots", componentType: "input", type: "text" },
-    {
-      name: "shotsontarget",
-      label: "Shots on Target",
-      componentType: "input",
-      type: "text",
-    },
-    { name: "passes", label: "Passes", componentType: "input", type: "text" },
-    {
-      name: "yellowcards",
-      label: "Yellow Cards",
-      componentType: "input",
-      type: "text",
-    },
-    {
-      name: "redcards",
-      label: "Red Cards",
-      componentType: "input",
-      type: "text",
-    },
-  ];
 
   // Get match details by ID
   const getMatchDetails = (id: number | null): Match | undefined => {
@@ -267,33 +228,202 @@ const Matches: React.FC = () => {
         {/* Match Form */}
         <Card className="w-full dark:bg-gray-800 dark:border-gray-700">
           <CardContent className="dark:text-gray-200">
-            <CommonForm
-              formControls={formControls}
-              formData={formData}
-              setFormData={setFormData}
-              onSubmit={handleSubmit}
-              buttonText={editingId !== null ? "Update" : "Submit"}
-              isBtnDisabled={false}
-              onCancel={() => {
-                setFormData({
-                  id: 0,
-                  date: "",
-                  homeTeam: "",
-                  awayTeam: "",
-                  type: "",
-                  status: "",
-                  result: "",
-                  goals: "",
-                  assists: "",
-                  shots: "",
-                  shotsontarget: "",
-                  passes: "",
-                  yellowcards: "",
-                  redcards: "",
-                });
-                setEditingId(null);
-              }}
-            />
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Home Team
+                  </label>
+                  <input
+                    type="text"
+                    name="homeTeam"
+                    value={formData.homeTeam}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Away Team
+                  </label>
+                  <input
+                    type="text"
+                    name="awayTeam"
+                    value={formData.awayTeam}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Type
+                  </label>
+                  <input
+                    type="text"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Status
+                  </label>
+                  <input
+                    type="text"
+                    name="status"
+                    value={formData.status}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Result
+                  </label>
+                  <textarea
+                    name="result"
+                    value={formData.result}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+              </div>
+              {/* Stats Inputs */}
+              <div className="grid grid-cols-7 gap-6 ">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Goals
+                  </label>
+                  <input
+                    type="text"
+                    name="goals"
+                    value={formData.goals || ""}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Assists
+                  </label>
+                  <input
+                    type="text"
+                    name="assists"
+                    value={formData.assists || ""}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Shots
+                  </label>
+                  <input
+                    type="text"
+                    name="shots"
+                    value={formData.shots || ""}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Shots on Target
+                  </label>
+                  <input
+                    type="text"
+                    name="shotsontarget"
+                    value={formData.shotsontarget || ""}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Passes
+                  </label>
+                  <input
+                    type="text"
+                    name="passes"
+                    value={formData.passes || ""}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Yellow Cards
+                  </label>
+                  <input
+                    type="text"
+                    name="yellowcards"
+                    value={formData.yellowcards || ""}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Red Cards
+                  </label>
+                  <input
+                    type="text"
+                    name="redcards"
+                    value={formData.redcards || ""}
+                    onChange={handleInputChange}
+                    className="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex gap-2">
+                <Button
+                  type="submit"
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {editingId !== null ? "Update" : "Submit"}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setFormData({
+                      id: 0,
+                      date: "",
+                      homeTeam: "",
+                      awayTeam: "",
+                      type: "",
+                      status: "",
+                      result: "",
+                      goals: "",
+                      assists: "",
+                      shots: "",
+                      shotsontarget: "",
+                      passes: "",
+                      yellowcards: "",
+                      redcards: "",
+                    });
+                    setEditingId(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
 

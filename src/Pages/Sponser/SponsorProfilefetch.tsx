@@ -144,7 +144,15 @@ export default function SponsorProfiles() {
   // Navigation to sponsor profile
   const handleViewProfile = (sponsorId: string, username: string) => {
     localStorage.setItem("viewsponsorusername", username);
-    navigate("/team/sponsorinfo");
+    const role = localStorage.getItem("role");
+
+    if (role === "player") {
+      navigate("/player/sponsorinfo");
+    } else if (role === "sponsor") {
+      navigate("/sponsor/sponsorinfo");
+    } else if (role === "team") {
+      navigate("/team/sponsorinfo");
+    }
   };
 
   // Fetch sponsors on mount and when filters/pagination change
