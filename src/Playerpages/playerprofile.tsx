@@ -9,11 +9,11 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import ProfileDetails from "./profiledetails";
-import Reviews from "./reviews";
+
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import PlayerMedia from "./media";
+
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   getProfile,
