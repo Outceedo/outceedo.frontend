@@ -8,14 +8,20 @@ import { Card } from "@/components/ui/card";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
 
-// Import default images
 import profile from "../../assets/images/avatar.png";
 import Mediaview from "@/Pages/Media/MediaView";
 import PlayerProfileDetails from "./PlayerProfileDetails";
 
-import Reviewadd from "../Reviews/Reviewadd";
-import PlayerReview from "@/expertpages/playerreviews";
 import Reviewview from "../Reviews/Reviewview";
+
+// FontAwesome for stars
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faStar as faStarSolid,
+  faStarHalfAlt,
+} from "@fortawesome/free-solid-svg-icons";
+
+import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 
 interface Stat {
   label: string;
@@ -35,6 +41,42 @@ const defaultStats: Stat[] = [
 const calculateOVR = (stats: Stat[]) => {
   const total = stats.reduce((sum, stat) => sum + stat.percentage, 0);
   return (total / stats.length).toFixed(1);
+};
+
+// StarRating component for review stars
+const StarRating: React.FC<{
+  avg: number;
+  total?: number;
+  className?: string;
+}> = ({ avg, total = 5, className }) => {
+  const fullStars = Math.floor(avg);
+  const hasHalfStar = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
+  const emptyStars = total - fullStars - (hasHalfStar ? 1 : 0);
+
+  return (
+    <span className={className}>
+      {[...Array(fullStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`full-${i}`}
+          icon={faStarSolid}
+          className="text-yellow-400 text-xl"
+        />
+      ))}
+      {hasHalfStar && (
+        <FontAwesomeIcon
+          icon={faStarHalfAlt}
+          className="text-yellow-400 text-xl"
+        />
+      )}
+      {[...Array(emptyStars)].map((_, i) => (
+        <FontAwesomeIcon
+          key={`empty-${i}`}
+          icon={farStar}
+          className="text-yellow-400 text-xl"
+        />
+      ))}
+    </span>
+  );
 };
 
 const Playerview: React.FC = () => {
@@ -58,16 +100,12 @@ const Playerview: React.FC = () => {
         const username = localStorage.getItem("viewplayerusername");
 
         if (username) {
-          console.log(`Found username in localStorage: ${username}`);
           // Dispatch action to fetch profile by username
           await dispatch(getProfile(username));
         } else {
-          // Fallback to stored profile data if username is not available
-          console.log("Username not found in localStorage");
           setIsLoading(false);
         }
       } catch (error) {
-        console.error("Error loading profile data:", error);
         setIsLoading(false);
       }
     };
@@ -78,26 +116,14 @@ const Playerview: React.FC = () => {
   // Update profile data when the Redux state changes
   useEffect(() => {
     if (status === "succeeded" && viewedProfile) {
-      console.log("Profile data from Redux:", viewedProfile);
-
-      // IMPORTANT: Check what the structure of your profile data is
-      // It may be nested inside a 'user' object or be the direct response
       let processedProfile = viewedProfile;
-
-      // Check if profile is nested inside a property (common API pattern)
       if (viewedProfile.user) {
         processedProfile = viewedProfile.user;
       } else if (viewedProfile.data) {
         processedProfile = viewedProfile.data;
       }
-
-      // Log what we're actually setting as profile data
-      console.log("Setting profile data:", processedProfile);
-
       setProfileData(processedProfile);
       setIsLoading(false);
-
-      // Generate stats based on player attributes if available
       if (processedProfile.role === "player") {
         generatePlayerStats(processedProfile);
       }
@@ -112,7 +138,6 @@ const Playerview: React.FC = () => {
     const weight = profile.weight || 0;
     const age = profile.age || 20;
 
-    // Generate stats based on physical attributes
     const stats: Stat[] = [
       {
         label: "Pace",
@@ -155,7 +180,6 @@ const Playerview: React.FC = () => {
       },
     ];
 
-    // Round all percentages to integers
     setPlayerStats(
       stats.map((stat) => ({
         ...stat,
@@ -166,6 +190,15 @@ const Playerview: React.FC = () => {
 
   // Calculate OVR rating
   const OVR = calculateOVR(playerStats);
+
+  // Calculate review stats
+  const reviewsArray = profileData?.reviewsReceived || [];
+  const totalReviews = reviewsArray.length;
+  const avgRating =
+    totalReviews === 0
+      ? 0
+      : reviewsArray.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
+        totalReviews;
 
   if (isLoading) {
     return (
@@ -202,8 +235,6 @@ const Playerview: React.FC = () => {
     profileData.city && profileData.country
       ? `${profileData.city}, ${profileData.country}`
       : profileData.country || profileData.city || "N/A";
-
-  console.log("About to render with profile:", profileData);
 
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
@@ -292,6 +323,14 @@ const Playerview: React.FC = () => {
                   </div>
                 </Card>
               )}
+
+              {/* Review stars and count */}
+              <div className="flex items-center gap-2 mt-4">
+                <StarRating avg={avgRating} className="mr-2" />
+                <span className="text-gray-500">
+                  {totalReviews} review{totalReviews !== 1 ? "s" : ""}
+                </span>
+              </div>
             </div>
           </div>
 
@@ -313,14 +352,11 @@ const Playerview: React.FC = () => {
               ))}
             </div>
             <div className="mt-4">
-              {/* Pass the entire profile data to child components */}
               {activeTab === "details" && (
                 <PlayerProfileDetails playerData={profileData} />
               )}
               {activeTab === "media" && <Mediaview Data={profileData} />}
-              {activeTab === "reviews" && (
-                <Reviewview Data={profileData}  />
-              )}
+              {activeTab === "reviews" && <Reviewview Data={profileData} />}
             </div>
           </div>
         </div>
