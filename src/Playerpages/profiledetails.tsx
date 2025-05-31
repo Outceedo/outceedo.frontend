@@ -13,7 +13,7 @@ import {
   FaLinkedinIn,
   FaFacebookF,
   FaInstagram,
-  FaTwitter,
+  
 } from "react-icons/fa";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,7 +24,7 @@ import {
   faLinkedin,
   faInstagram,
   faFacebook,
-  faTwitter,
+  
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import Swal from "sweetalert2";
@@ -34,7 +34,7 @@ const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "linkedin" },
   { icon: faFacebook, color: "#3b5998", link: "facebook" },
   { icon: faInstagram, color: "#E1306C", link: "instagram" },
-  { icon: faTwitter, color: "#1DA1F2", link: "twitter" },
+  { icon: faXTwitter, color: "#1DA1F2", link: "twitter" },
 ];
 
 // API base URL

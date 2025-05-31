@@ -258,19 +258,24 @@ const Playerview: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
                   {displayName}
                 </h2>
-                <div className="flex flex-wrap gap-8 text-gray-600 font-Opensans mt-2 dark:text-gray-300">
+                <div className="flex flex-wrap gap-x-8 gap-y-2 text-gray-600 font-Opensans mt-2 dark:text-gray-300">
                   <span>
                     {profileData.age ? `Age: ${profileData.age}` : ""}
                   </span>
                   <span>
-                    {profileData.height ? `${profileData.height}cm` : ""}
+                    {profileData.height
+                      ? `Height: ${profileData.height}cm`
+                      : ""}
                   </span>
                   <span>
-                    {profileData.weight ? `${profileData.weight}kg` : ""}
+                    {profileData.weight
+                      ? `Weight: ${profileData.weight}kg`
+                      : ""}
                   </span>
-                  <span>{location}</span>
-                  <span>{profileData.company || ""}</span>
+                  <span>Location: {location}</span>
+                  <span>Club: {profileData.company || ""}</span>
                   <span>
+                    {`Language:  `}
                     {Array.isArray(profileData.language) &&
                     profileData.language.length > 0
                       ? profileData.language.join(", ")
