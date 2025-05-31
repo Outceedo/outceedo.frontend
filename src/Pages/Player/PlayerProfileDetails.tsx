@@ -318,7 +318,7 @@ const PlayerProfileDetails: React.FC<PlayerProfileDetailsProps> = ({
       {/* Modal for certificate/award details */}
       {modalItem && (
         <div className="fixed inset-0 z-50 flex justify-center items-center">
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+          <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-lg"></div>
           <div
             ref={modalRef}
             className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-lg border-black w-full z-10"
