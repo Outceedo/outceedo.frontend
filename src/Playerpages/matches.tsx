@@ -12,6 +12,17 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, BookOpen, X, AlertTriangle } from "lucide-react";
 
+/** Helper to format date as dd-mm-yyyy */
+function formatDateDMY(isoDate?: string) {
+  if (!isoDate) return "";
+  const dateObj = new Date(isoDate);
+  if (isNaN(dateObj.getTime())) return isoDate;
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const year = dateObj.getFullYear();
+  return `${day}-${month}-${year}`;
+}
+
 interface Match {
   id: number;
   date: string;
@@ -472,7 +483,7 @@ const Matches: React.FC = () => {
                         }
                       >
                         <TableCell className="font-medium dark:text-gray-300">
-                          {match.date}
+                          {formatDateDMY(match.date)}
                         </TableCell>
                         <TableCell className="dark:text-gray-300">
                           {match.homeTeam}
@@ -557,7 +568,7 @@ const Matches: React.FC = () => {
                   {selectedMatch.homeTeam} vs {selectedMatch.awayTeam}
                 </h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {selectedMatch.date} • {selectedMatch.type} •{" "}
+                  {formatDateDMY(selectedMatch.date)} • {selectedMatch.type} •{" "}
                   {selectedMatch.status}
                 </p>
                 <p className="text-lg font-bold mt-1 dark:text-white">
@@ -683,7 +694,8 @@ const Matches: React.FC = () => {
                     {matchToDeleteDetails.awayTeam}
                   </p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    {matchToDeleteDetails.date} • {matchToDeleteDetails.type}
+                    {formatDateDMY(matchToDeleteDetails.date)} •{" "}
+                    {matchToDeleteDetails.type}
                   </p>
                   <p className="text-sm font-bold mt-1 dark:text-gray-300">
                     Result: {matchToDeleteDetails.result}
