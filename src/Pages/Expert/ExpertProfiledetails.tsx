@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 
 interface Certificate {
   id: string;
@@ -25,6 +25,22 @@ const ExpertProfiledetails: React.FC<ExpertProfileDetailsProps> = ({
   const [isCertificatePreviewOpen, setIsCertificatePreviewOpen] =
     useState(false);
 
+  const aboutRef = useRef<HTMLParagraphElement>(null);
+  const [showButton, setShowButton] = useState(false);
+
+  // Dynamically check if about text is more than 3 lines visually
+  useEffect(() => {
+    if (aboutRef.current) {
+      // Get computed line-height (fallback to 24px)
+      const lineHeight = parseInt(
+        window.getComputedStyle(aboutRef.current).lineHeight || "24"
+      );
+      const maxLines = 3;
+      // Only show button if scrollHeight > lineHeight * maxLines + fudge
+      setShowButton(aboutRef.current.scrollHeight > lineHeight * maxLines + 5);
+    }
+  }, [expertData.about, readMore]);
+
   const formatDate = (dateString?: string) => {
     if (!dateString) return "";
     try {
@@ -38,11 +54,7 @@ const ExpertProfiledetails: React.FC<ExpertProfileDetailsProps> = ({
     setSelectedCertificate(certificate);
     setIsCertificatePreviewOpen(true);
   };
-  const [showButton, setShowButton] = useState(false);
-  useEffect(() => {
-    const charThreshold = 150;
-    setShowButton(expertData.about?.length > charThreshold);
-  }, [expertData.about]);
+
   return (
     <div className="space-y-8">
       {/* About Me Card */}
@@ -52,8 +64,9 @@ const ExpertProfiledetails: React.FC<ExpertProfileDetailsProps> = ({
         </div>
         <div className="relative">
           <p
+            ref={aboutRef}
             className={cn(
-              "text-gray-700 dark:text-gray-300",
+              "text-gray-700 dark:text-gray-300 transition-all duration-200",
               !readMore && "line-clamp-3"
             )}
             style={{ whiteSpace: "pre-line" }}
@@ -64,7 +77,7 @@ const ExpertProfiledetails: React.FC<ExpertProfileDetailsProps> = ({
             <Button
               variant="link"
               className="p-0 text-blue-600 hover:underline mt-2 text-center w-full"
-              onClick={() => setReadMore(!readMore)}
+              onClick={() => setReadMore((prev) => !prev)}
             >
               {readMore ? "Show less" : "Read more"}
             </Button>

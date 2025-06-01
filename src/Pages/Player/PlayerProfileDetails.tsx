@@ -129,21 +129,6 @@ const PlayerProfileDetails: React.FC<PlayerProfileDetailsProps> = ({
 
   // Helper to check if value is a valid, non-empty, non-placeholder URL
   function isValidSocialLink(link: string | undefined) {
-    if (!link) return false;
-    if (typeof link !== "string") return false;
-    if (link.trim() === "") return false;
-    if (
-      link.endsWith(".com") &&
-      !link.replace("https://", "").replace("http://", "").includes("/")
-    )
-      return false; // just a domain, not a profile/page
-    if (
-      link === "https://www.twitter.com" ||
-      link === "https://www.facebook.com" ||
-      link === "https://www.instagram.com" ||
-      link === "https://www.linkedin.com"
-    )
-      return false; // default domains only, not a user profile
     return true;
   }
 
@@ -321,7 +306,7 @@ const PlayerProfileDetails: React.FC<PlayerProfileDetailsProps> = ({
           <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-lg"></div>
           <div
             ref={modalRef}
-            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-lg border-black w-full z-10"
+            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-4xl border-black w-full z-10"
           >
             <button
               className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
@@ -350,7 +335,7 @@ const PlayerProfileDetails: React.FC<PlayerProfileDetailsProps> = ({
                 <img
                   src={modalItem.imageUrl}
                   alt={modalItem.title || ""}
-                  className="w-full max-h-60 object-contain rounded"
+                  className="w-full max-h-100 object-contain rounded"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";

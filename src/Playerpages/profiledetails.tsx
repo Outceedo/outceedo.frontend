@@ -9,12 +9,7 @@ import {
   faUpload,
   faImage,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  FaLinkedinIn,
-  FaFacebookF,
-  FaInstagram,
-  
-} from "react-icons/fa";
+import { FaLinkedinIn, FaFacebookF, FaInstagram } from "react-icons/fa";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +19,6 @@ import {
   faLinkedin,
   faInstagram,
   faFacebook,
-  
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import Swal from "sweetalert2";
@@ -47,7 +41,7 @@ interface DocumentItem {
   issuedDate?: string;
   imageUrl?: string;
   description?: string;
-  type: "certificate" | "award"; // Add type field to identify document type
+  type: "certificate" | "award";
 }
 
 interface PlayerData {
@@ -60,14 +54,14 @@ interface PlayerData {
   club?: string;
   languages?: string[];
   aboutMe?: string;
-  documents?: DocumentItem[]; // Updated to use documents instead of separate arrays
+  documents?: DocumentItem[];
   socials?: {
     linkedin?: string;
     instagram?: string;
     facebook?: string;
     twitter?: string;
   };
-  [key: string]: any; // For other properties
+  [key: string]: any;
 }
 
 interface ProfileDetailsProps {
@@ -101,7 +95,28 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   const certificateFileRefs = useRef<(HTMLInputElement | null)[]>([]);
   const awardFileRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // State for data
+  // Certificate modal state
+  const [modalCertificate, setModalCertificate] = useState<DocumentItem | null>(
+    null
+  );
+  const modalRef = useRef<HTMLDivElement | null>(null);
+
+  // Modal outside click for certificate modal
+  useEffect(() => {
+    if (!modalCertificate) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        modalRef.current &&
+        !modalRef.current.contains(event.target as Node)
+      ) {
+        setModalCertificate(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [modalCertificate]);
+
+  // Data state
   const [aboutMe, setAboutMe] = useState(playerData.aboutMe || "");
   const [certificates, setCertificates] = useState<DocumentItem[]>([]);
   const [awards, setAwards] = useState<DocumentItem[]>([]);
@@ -112,20 +127,16 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     twitter: playerData.socials?.twitter || "",
   });
 
-  // Check if about text is more than 3 lines
+  // About Me line clamp
   useEffect(() => {
     if (aboutTextRef.current) {
       const lineHeight = parseInt(
         window.getComputedStyle(aboutTextRef.current).lineHeight
       );
       const height = aboutTextRef.current.scrollHeight;
-
-      // Approximately check if the content is more than 3 lines
-      // We compare the scrollHeight against 3 times the lineHeight plus some margin
       const isTall = height > lineHeight * 3 + 5;
       setShowSeeMore(isTall);
 
-      // If we've determined it doesn't need "see more", always keep it expanded
       if (!isTall) {
         setIsAboutExpanded(true);
       }
@@ -140,11 +151,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   // Update local state when playerData changes
   useEffect(() => {
     setAboutMe(playerData.aboutMe || "");
-
-    // Reset the expanded state when data changes
     setIsAboutExpanded(false);
 
-    // Process documents array to separate certificates and awards
     if (Array.isArray(playerData.documents)) {
       const certificateItems: DocumentItem[] = playerData.documents
         .filter((doc: any) => doc.type === "certificate")
@@ -174,7 +182,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       setAwards(awardItems);
     }
 
-    // Set socials
     setSocials({
       linkedin: playerData.socials?.linkedin || "",
       instagram: playerData.socials?.instagram || "",
@@ -205,17 +212,13 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       aboutMe: aboutMe,
     });
     setIsEditingAbout(false);
-    // Reset the expanded state when saving new content
     setIsAboutExpanded(false);
   };
 
   const saveCertificates = async () => {
     setIsUploading(true);
-
     try {
-      // Validate required fields
       const allValid = certificates.every((cert) => cert.title.trim() !== "");
-
       if (!allValid) {
         Swal.fire({
           title: "Validation Error",
@@ -224,16 +227,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         });
         return;
       }
-
-      // Create a copy of all certificates to send to the server
       const updatedCertificates = [...certificates];
-
-      // Upload any certificates that don't have an ID yet (new certificates)
       for (let i = 0; i < updatedCertificates.length; i++) {
         const cert = updatedCertificates[i];
         if (!cert.id || cert.id.startsWith("cert-")) {
           try {
-            // Create new certificate on server
             const token = getAuthToken();
             const formData = new FormData();
             formData.append("title", cert.title);
@@ -244,15 +242,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             );
             formData.append("type", "certificate");
             formData.append("description", cert.description || "");
-
-            // Only append image if available
             if (certificateFileRefs.current[i]?.files?.length) {
               formData.append(
                 "image",
                 certificateFileRefs.current[i]?.files?.[0] as File
               );
             }
-
             const response = await axios.post(
               `${API_BASE_URL}/user/document`,
               formData,
@@ -263,8 +258,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 },
               }
             );
-
-            // Update the certificate with server-generated ID and image URL if provided
             updatedCertificates[i] = {
               ...cert,
               id: response.data.id || response.data._id,
@@ -275,24 +268,15 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           }
         }
       }
-
-      // Merge certificates with existing awards (replace certificates only)
       const existingAwards =
         playerData.documents?.filter((doc) => doc.type === "award") || [];
       const updatedDocuments = [...existingAwards, ...updatedCertificates];
-
-      // Update the player data with the new documents
       const updatedPlayerData = {
         ...playerData,
         documents: updatedDocuments,
       };
-
-      // Call onUpdate with the updated player data
       onUpdate(updatedPlayerData);
-
-      // Update local state with the updated certificates to show them immediately
       setCertificates(updatedCertificates);
-
       Swal.fire({
         icon: "success",
         title: "Success",
@@ -315,11 +299,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
   const saveAwards = async () => {
     setIsUploading(true);
-
     try {
-      // Validate required fields
       const allValid = awards.every((award) => award.title.trim() !== "");
-
       if (!allValid) {
         Swal.fire({
           title: "Validation Error",
@@ -328,16 +309,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         });
         return;
       }
-
-      // Create a copy of all awards to send to the server
       const updatedAwards = [...awards];
-
-      // Upload any awards that don't have an ID yet (new awards)
       for (let i = 0; i < updatedAwards.length; i++) {
         const award = updatedAwards[i];
         if (!award.id || award.id.startsWith("award-")) {
           try {
-            // Create new award on server
             const token = getAuthToken();
             const formData = new FormData();
             formData.append("title", award.title);
@@ -348,15 +324,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             );
             formData.append("type", "award");
             formData.append("description", award.description || "");
-
-            // Only append image if available
             if (awardFileRefs.current[i]?.files?.length) {
               formData.append(
                 "image",
                 awardFileRefs.current[i]?.files?.[0] as File
               );
             }
-
             const response = await axios.post(
               `${API_BASE_URL}/user/document`,
               formData,
@@ -367,8 +340,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 },
               }
             );
-
-            // Update the award with server-generated ID and image URL if provided
             updatedAwards[i] = {
               ...award,
               id: response.data.id || response.data._id,
@@ -379,24 +350,15 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           }
         }
       }
-
-      // Merge awards with existing certificates (replace awards only)
       const existingCertificates =
         playerData.documents?.filter((doc) => doc.type === "certificate") || [];
       const updatedDocuments = [...existingCertificates, ...updatedAwards];
-
-      // Update the player data with the new documents
       const updatedPlayerData = {
         ...playerData,
         documents: updatedDocuments,
       };
-
-      // Call onUpdate with the updated player data
       onUpdate(updatedPlayerData);
-
-      // Update local state with the updated awards to show them immediately
       setAwards(updatedAwards);
-
       Swal.fire({
         icon: "success",
         title: "Success",
@@ -418,14 +380,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   };
 
   const saveSocials = () => {
-    // Format URLs before saving
     const formattedSocials = {
       linkedin: socials.linkedin ? formatUrl(socials.linkedin) : "",
       instagram: socials.instagram ? formatUrl(socials.instagram) : "",
       facebook: socials.facebook ? formatUrl(socials.facebook) : "",
       twitter: socials.twitter ? formatUrl(socials.twitter) : "",
     };
-
     setSocials(formattedSocials);
 
     onUpdate({
@@ -498,8 +458,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       if (result.isConfirmed) {
         try {
           const cert = certificates[index];
-
-          // If certificate has an ID, delete it from the server
           if (cert.id && !cert.id.startsWith("cert-")) {
             const token = getAuthToken();
             await axios.delete(`${API_BASE_URL}/user/document/${cert.id}`, {
@@ -508,13 +466,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               },
             });
           }
-
-          // Remove from local state
           const newCertificates = [...certificates];
           newCertificates.splice(index, 1);
           setCertificates(newCertificates);
 
-          // Also update the player data to reflect the change immediately
           const existingAwards =
             playerData.documents?.filter((doc) => doc.type === "award") || [];
           const updatedDocuments = [...existingAwards, ...newCertificates];
@@ -549,8 +504,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       if (result.isConfirmed) {
         try {
           const award = awards[index];
-
-          // If award has an ID, delete it from the server
           if (award.id && !award.id.startsWith("award-")) {
             const token = getAuthToken();
             await axios.delete(`${API_BASE_URL}/user/document/${award.id}`, {
@@ -559,13 +512,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               },
             });
           }
-
-          // Remove from local state
           const newAwards = [...awards];
           newAwards.splice(index, 1);
           setAwards(newAwards);
 
-          // Also update the player data to reflect the change immediately
           const existingCertificates =
             playerData.documents?.filter((doc) => doc.type === "certificate") ||
             [];
@@ -599,6 +549,21 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   // Toggle See More in About section
   const toggleAboutExpanded = () => {
     setIsAboutExpanded(!isAboutExpanded);
+  };
+
+  // Format date for modal
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
+    } catch (e) {
+      return dateString;
+    }
   };
 
   return (
@@ -766,7 +731,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     />
                   </div>
 
-                  {/* Only show image upload for new certificates that don't have a server ID */}
                   {(!cert.id || cert.id.startsWith("cert-")) && (
                     <div>
                       <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
@@ -827,7 +791,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     </div>
                   )}
 
-                  {/* Display image preview for new certificates if file is selected */}
                   {(!cert.id || cert.id.startsWith("cert-")) &&
                     certificateFileRefs.current[index]?.files?.length > 0 && (
                       <div className="mt-2">
@@ -838,7 +801,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       </div>
                     )}
 
-                  {/* Show existing image if there is one */}
                   {cert.imageUrl && (
                     <div className="relative mt-2">
                       <img
@@ -914,7 +876,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   certificates.map((cert, index) => (
                     <div
                       key={cert.id || index}
-                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                      onClick={() => setModalCertificate(cert)}
                     >
                       {/* Image Section */}
                       {cert.imageUrl && (
@@ -970,12 +933,62 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           )}
         </Card>
 
+        {/* Certificate Modal */}
+        {modalCertificate && (
+          <div className="fixed inset-0 z-50 flex justify-center items-center">
+            <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+            <div
+              ref={modalRef}
+              className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-lg w-full z-10"
+            >
+              <button
+                className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
+                onClick={() => setModalCertificate(null)}
+              >
+                &times;
+              </button>
+              <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+                {modalCertificate.title || "Certificate"}
+              </h2>
+              {modalCertificate.issuedBy && (
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                  <span className="font-medium">Issued by:</span>{" "}
+                  {modalCertificate.issuedBy}
+                </p>
+              )}
+              {modalCertificate.issuedDate && (
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                  <span className="font-medium">Date:</span>{" "}
+                  {formatDate(modalCertificate.issuedDate)}
+                </p>
+              )}
+              {modalCertificate.imageUrl && (
+                <div className="my-4">
+                  <img
+                    src={modalCertificate.imageUrl}
+                    alt={modalCertificate.title || ""}
+                    className="w-full max-h-60 object-contain rounded"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = "none";
+                    }}
+                  />
+                </div>
+              )}
+              {modalCertificate.description && (
+                <p className="text-base mt-2 text-gray-700 dark:text-gray-200 whitespace-pre-line">
+                  {modalCertificate.description}
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Awards */}
         <Card className="p-6 shadow-sm dark:bg-gray-700 relative">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
             Awards
           </h3>
-
           {isEditingAwards ? (
             <div className="space-y-5">
               {awards.map((award, index) => (
@@ -1050,8 +1063,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       className="w-full min-h-[80px] dark:bg-gray-700"
                     />
                   </div>
-
-                  {/* Only show image upload for new awards that don't have a server ID */}
                   {(!award.id || award.id.startsWith("award-")) && (
                     <div>
                       <Label className="text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
@@ -1109,8 +1120,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       </div>
                     </div>
                   )}
-
-                  {/* Display image preview for new awards if file is selected */}
                   {(!award.id || award.id.startsWith("award-")) &&
                     awardFileRefs.current[index]?.files?.length > 0 && (
                       <div className="mt-2">
@@ -1120,8 +1129,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                         </p>
                       </div>
                     )}
-
-                  {/* Show existing image if there is one */}
                   {award.imageUrl && (
                     <div className="relative mt-2">
                       <img
@@ -1133,7 +1140,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   )}
                 </div>
               ))}
-
               <Button
                 variant="outline"
                 className="w-full mt-4"
@@ -1142,7 +1148,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               >
                 <FontAwesomeIcon icon={faPlus} className="mr-1" /> Add New Award
               </Button>
-
               <div className="flex justify-end space-x-2 mt-4">
                 <Button
                   variant="outline"
@@ -1198,7 +1203,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       key={award.id || index}
                       className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
                     >
-                      {/* Image Section */}
                       {award.imageUrl && (
                         <div className="w-20 h-15 flex-shrink-0">
                           <img
@@ -1208,8 +1212,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                           />
                         </div>
                       )}
-
-                      {/* Text Content */}
                       <div className="p-4">
                         <h4 className="font-semibold text-gray-800 dark:text-gray-200">
                           {award.title}
@@ -1237,7 +1239,6 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   </p>
                 )}
               </div>
-
               {!isExpertView && (
                 <Button
                   variant="ghost"
@@ -1253,7 +1254,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         </Card>
       </div>
 
-      {/* Social Links - Enhanced Design */}
+      {/* Social Links */}
       <Card className="mt-4 relative border p-6 w-1/3 rounded-lg dark:bg-gray-700 dark:text-white">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Social Media
@@ -1337,39 +1338,25 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
               <div className="flex justify-center gap-6 mt-4">
                 {icons
                   .map((item, index) => {
-                    // Get the social media platform identifier (linkedin, facebook, etc.)
                     const platform = item.link;
-
-                    // Get the user-provided handle/URL from socials object
                     const userInput = socials[platform as keyof typeof socials];
-
-                    // Skip rendering if no value provided
                     if (
                       !userInput ||
                       userInput === "#" ||
                       userInput.trim() === ""
                     ) {
-                      return null; // Don't render this social icon at all
+                      return null;
                     }
-
-                    // Build the correct URL based on the platform
                     let properUrl;
-
-                    // Extract just the username/handle/ID by removing common prefixes
                     let cleanedInput = userInput
                       .trim()
-                      .replace(/^(https?:\/\/)?(www\.)?/, "") // Remove protocol and www
-                      .replace(/\/$/, ""); // Remove trailing slash
-
-                    // Remove the platform name from the beginning if it exists
+                      .replace(/^(https?:\/\/)?(www\.)?/, "")
+                      .replace(/\/$/, "");
                     cleanedInput = cleanedInput
                       .replace(new RegExp(`^${platform}\\.com\\/`), "")
                       .replace(new RegExp(`^${platform}\\.`), "");
-
-                    // Build proper URL based on platform
                     switch (platform) {
                       case "linkedin":
-                        // Check if it's a full profile URL or just a username
                         properUrl = cleanedInput.includes("linkedin.com")
                           ? `https://${cleanedInput}`
                           : `https://www.linkedin.com/in/${cleanedInput}`;
@@ -1390,12 +1377,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                           : `https://twitter.com/${cleanedInput}`;
                         break;
                       default:
-                        // For any other platforms, just make sure there's a protocol
                         properUrl = cleanedInput.match(/^https?:\/\//i)
                           ? cleanedInput
                           : `https://${cleanedInput}`;
                     }
-
                     return (
                       <a
                         key={index}
@@ -1414,8 +1399,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       </a>
                     );
                   })
-                  .filter(Boolean)}{" "}
-                {/* Filter out null values */}
+                  .filter(Boolean)}
               </div>
             </div>
 
