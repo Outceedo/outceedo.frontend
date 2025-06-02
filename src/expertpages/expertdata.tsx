@@ -307,7 +307,11 @@ const ExpertProfile = () => {
                   item.link ? (
                     <a
                       key={index}
-                      href={item.link}
+                      href={
+                        item.link.startsWith("http")
+                          ? item.link
+                          : `https://${item.link.replace(/^\/+/, "")}`
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"

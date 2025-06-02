@@ -99,15 +99,19 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   const [modalCertificate, setModalCertificate] = useState<DocumentItem | null>(
     null
   );
-  const modalRef = useRef<HTMLDivElement | null>(null);
+  const modalCertificateRef = useRef<HTMLDivElement | null>(null);
+
+  // Award modal state
+  const [modalAward, setModalAward] = useState<DocumentItem | null>(null);
+  const modalAwardRef = useRef<HTMLDivElement | null>(null);
 
   // Modal outside click for certificate modal
   useEffect(() => {
     if (!modalCertificate) return;
     function handleClickOutside(event: MouseEvent) {
       if (
-        modalRef.current &&
-        !modalRef.current.contains(event.target as Node)
+        modalCertificateRef.current &&
+        !modalCertificateRef.current.contains(event.target as Node)
       ) {
         setModalCertificate(null);
       }
@@ -115,6 +119,21 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [modalCertificate]);
+
+  // Modal outside click for award modal
+  useEffect(() => {
+    if (!modalAward) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        modalAwardRef.current &&
+        !modalAwardRef.current.contains(event.target as Node)
+      ) {
+        setModalAward(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [modalAward]);
 
   // Data state
   const [aboutMe, setAboutMe] = useState(playerData.aboutMe || "");
@@ -936,10 +955,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         {/* Certificate Modal */}
         {modalCertificate && (
           <div className="fixed inset-0 z-50 flex justify-center items-center">
-            <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"></div>
+            <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
             <div
-              ref={modalRef}
-              className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-lg w-full z-10"
+              ref={modalCertificateRef}
+              className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-3xl max-h-5xl w-full z-10"
             >
               <button
                 className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
@@ -967,7 +986,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   <img
                     src={modalCertificate.imageUrl}
                     alt={modalCertificate.title || ""}
-                    className="w-full max-h-60 object-contain rounded"
+                    className="w-full max-h-90 object-contain rounded"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = "none";
@@ -1201,7 +1220,8 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   awards.map((award, index) => (
                     <div
                       key={award.id || index}
-                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                      onClick={() => setModalAward(award)}
                     >
                       {award.imageUrl && (
                         <div className="w-20 h-15 flex-shrink-0">
@@ -1253,6 +1273,57 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
           )}
         </Card>
       </div>
+
+      {/* Award Modal */}
+      {modalAward && (
+        <div className="fixed inset-0 z-50 flex justify-center items-center">
+          <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
+          <div
+            ref={modalAwardRef}
+            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-4xl w-full z-10"
+          >
+            <button
+              className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
+              onClick={() => setModalAward(null)}
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+              {modalAward.title || "Award"}
+            </h2>
+            {modalAward.issuedBy && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <span className="font-medium">Issued by:</span>{" "}
+                {modalAward.issuedBy}
+              </p>
+            )}
+            {modalAward.issuedDate && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <span className="font-medium">Date:</span>{" "}
+                {formatDate(modalAward.issuedDate)}
+              </p>
+            )}
+            {modalAward.imageUrl && (
+              <div className="my-4">
+                <img
+                  src={modalAward.imageUrl}
+                  alt={modalAward.title || ""}
+                  className="w-full max-h-90 object-contain rounded"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                  }}
+                />
+              </div>
+            )}
+            {modalAward.description && (
+              <p className="text-base mt-2 text-gray-700 dark:text-gray-200 whitespace-pre-line">
+                {modalAward.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Social Links */}
       <Card className="mt-4 relative border p-6 w-1/3 rounded-lg dark:bg-gray-700 dark:text-white">

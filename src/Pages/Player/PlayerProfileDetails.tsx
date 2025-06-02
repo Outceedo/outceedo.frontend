@@ -129,6 +129,9 @@ const PlayerProfileDetails: React.FC<PlayerProfileDetailsProps> = ({
 
   // Helper to check if value is a valid, non-empty, non-placeholder URL
   function isValidSocialLink(link: string | undefined) {
+    if (link === "") {
+      return false;
+    }
     return true;
   }
 

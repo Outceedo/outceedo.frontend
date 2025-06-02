@@ -77,6 +77,14 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   const [tempAwards, setTempAwards] = useState<Certificate[]>([]);
   const [isEditingAwards, setIsEditingAwards] = useState(false);
 
+  // Modal states
+  const [modalCertificate, setModalCertificate] = useState<Certificate | null>(
+    null
+  );
+  const [modalAward, setModalAward] = useState<Certificate | null>(null);
+  const modalCertificateRef = useRef<HTMLDivElement | null>(null);
+  const modalAwardRef = useRef<HTMLDivElement | null>(null);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -108,6 +116,36 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
       }
     }
   }, [aboutMe]);
+
+  // Modal outside click for certificate modal
+  useEffect(() => {
+    if (!modalCertificate) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        modalCertificateRef.current &&
+        !modalCertificateRef.current.contains(event.target as Node)
+      ) {
+        setModalCertificate(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [modalCertificate]);
+
+  // Modal outside click for award modal
+  useEffect(() => {
+    if (!modalAward) return;
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        modalAwardRef.current &&
+        !modalAwardRef.current.contains(event.target as Node)
+      ) {
+        setModalAward(null);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [modalAward]);
 
   // Initialize certificates & awards from documents
   useEffect(() => {
@@ -728,7 +766,12 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
     if (!dateString) return "";
 
     try {
-      return new Date(dateString).toLocaleDateString();
+      const date = new Date(dateString);
+      return date.toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      });
     } catch (e) {
       return dateString;
     }
@@ -1159,7 +1202,8 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                   certificates.map((cert, index) => (
                     <div
                       key={cert.id || index}
-                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                      onClick={() => setModalCertificate(cert)}
                     >
                       {/* Image Section */}
                       {cert.imageUrl && (
@@ -1191,7 +1235,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                           </p>
                         )}
                         {cert.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                             {cert.description}
                           </p>
                         )}
@@ -1433,7 +1477,8 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                   awards.map((award, index) => (
                     <div
                       key={award.id || index}
-                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden"
+                      className="flex items-center bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-sm overflow-hidden cursor-pointer"
+                      onClick={() => setModalAward(award)}
                     >
                       {/* Image Section */}
                       {award.imageUrl && (
@@ -1465,7 +1510,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                           </p>
                         )}
                         {award.description && (
-                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
                             {award.description}
                           </p>
                         )}
@@ -1490,6 +1535,108 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
           )}
         </Card>
       </div>
+
+      {/* Certificate Modal */}
+      {modalCertificate && (
+        <div className="fixed inset-0 z-50 flex justify-center items-center">
+          <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
+          <div
+            ref={modalCertificateRef}
+            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-3xl w-full z-10"
+          >
+            <button
+              className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
+              onClick={() => setModalCertificate(null)}
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+              {modalCertificate.title || "Certificate"}
+            </h2>
+            {modalCertificate.issuedBy && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <span className="font-medium">Issued by:</span>{" "}
+                {modalCertificate.issuedBy}
+              </p>
+            )}
+            {modalCertificate.issuedDate && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <span className="font-medium">Date:</span>{" "}
+                {formatDate(modalCertificate.issuedDate)}
+              </p>
+            )}
+            {modalCertificate.imageUrl && (
+              <div className="my-4">
+                <img
+                  src={modalCertificate.imageUrl}
+                  alt={modalCertificate.title || ""}
+                  className="w-full max-h-90 object-contain rounded"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                  }}
+                />
+              </div>
+            )}
+            {modalCertificate.description && (
+              <p className="text-base mt-2 text-gray-700 dark:text-gray-200 whitespace-pre-line">
+                {modalCertificate.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Award Modal */}
+      {modalAward && (
+        <div className="fixed inset-0 z-50 flex justify-center items-center">
+          <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
+          <div
+            ref={modalAwardRef}
+            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-3xl w-full z-10"
+          >
+            <button
+              className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
+              onClick={() => setModalAward(null)}
+            >
+              &times;
+            </button>
+            <h2 className="text-xl font-bold mb-2 text-gray-900 dark:text-white">
+              {modalAward.title || "Award"}
+            </h2>
+            {modalAward.issuedBy && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <span className="font-medium">Issued by:</span>{" "}
+                {modalAward.issuedBy}
+              </p>
+            )}
+            {modalAward.issuedDate && (
+              <p className="text-sm text-gray-600 dark:text-gray-300 mb-1">
+                <span className="font-medium">Date:</span>{" "}
+                {formatDate(modalAward.issuedDate)}
+              </p>
+            )}
+            {modalAward.imageUrl && (
+              <div className="my-4">
+                <img
+                  src={modalAward.imageUrl}
+                  alt={modalAward.title || ""}
+                  className="w-full max-h-90 object-contain rounded"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.style.display = "none";
+                  }}
+                />
+              </div>
+            )}
+            {modalAward.description && (
+              <p className="text-base mt-2 text-gray-700 dark:text-gray-200 whitespace-pre-line">
+                {modalAward.description}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
