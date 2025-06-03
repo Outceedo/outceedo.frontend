@@ -27,7 +27,7 @@ import { Search, X } from "lucide-react";
 
 // Default image mapping
 
-type Role = "player" | "expert" | "admin";
+type Role = "player" | "expert" | "sponsor";
 
 export interface DocumentItem {
   id: string;
@@ -168,7 +168,7 @@ const PlayerProfiles: React.FC = () => {
 
   // Determine user type to fetch opposite profiles (if expert, fetch players and vice versa)
   const userRole = localStorage.getItem("role") as Role;
-  const profileType: Role = userRole === "expert" ? "player" : "expert";
+  const profileType: Role = userRole === "expert" ? "player" : userRole === "sponsor" ? "player": "player";
 
   // Fetch profiles on mount and when filters/pagination change
   useEffect(() => {

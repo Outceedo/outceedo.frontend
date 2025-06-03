@@ -24,7 +24,71 @@ import SponserForm from "./SponsorForm";
 import { X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-const data = [];
+const data = [
+  {
+    name: "Cody Fisher",
+    date: "2 Jan 2025",
+    type: "Product",
+    action: "Accepted",
+    status: "Approved",
+    link: "CodyFisher.application",
+    image: profile3,
+  },
+  {
+    name: "Kieran",
+    date: "20 Dec 2024",
+    type: "None",
+    action: "Rejected",
+    status: "Disapproved",
+    link: "Kieran.application",
+    image: profile3,
+  },
+  {
+    name: "Samuel Moore",
+    date: "12 Dec 2024",
+    type: "-",
+    action: "Submitted",
+    status: "Pending",
+    link: "SamuelMoore.application",
+    image: profile3,
+  },
+  {
+    name: "Andy",
+    date: "25 Nov 2024",
+    type: "-",
+    action: "Accepted",
+    status: "Pending",
+    link: "Andy.application",
+    image: profile3,
+  },
+  {
+    name: "Miguel Mendes",
+    date: "20 Oct 2024",
+    type: "None",
+    action: "Rejected",
+    status: "Disapproved",
+    link: "MiguelMendes.application",
+    image: profile3,
+  },
+  {
+    name: "Joncan Kavlakoglu",
+    date: "15 Sep 2024",
+    type: "-",
+    action: "Accepted",
+    status: "Approved",
+    link: "JoncanKavlakoglu.application",
+    image: profile3,
+  },
+  {
+    name: "Michael",
+    date: "2 Aug 2025",
+    type: "-",
+    action: "Submitted",
+    status: "Pending",
+    link: "Michael.application",
+    image: profile3,
+  },
+];
 
 const getBadgeColor = (status: string) => {
   switch (status) {
@@ -41,7 +105,7 @@ const getBadgeColor = (status: string) => {
 
 const getStatusDot = (status: string) => {
   switch (status) {
-    case "Sponsored":
+    case "Approved":
       return "text-green-600 bg-green-200";
     case "Pending":
       return "text-yellow-600 bg-yellow-200";
@@ -49,6 +113,19 @@ const getStatusDot = (status: string) => {
       return "text-red-600 bg-red-200";
     default:
       return "text-gray-600 bg-gray-200";
+  }
+};
+
+const getStatus = (status: string) => {
+  switch (status) {
+    case "Approved":
+      return "text-green-600 ";
+    case "Pending":
+      return "text-yellow-600 ";
+    case "Disapproved":
+      return "text-red-600 ";
+    default:
+      return "text-gray-600 ";
   }
 };
 
@@ -78,7 +155,7 @@ const SponsorApplication = () => {
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="Sponsored">Sponsored</SelectItem>
+            <SelectItem value="Sponsored">Approved</SelectItem>
             <SelectItem value="Pending">Pending</SelectItem>
             <SelectItem value="Disapproved">Disapproved</SelectItem>
           </SelectContent>
@@ -88,20 +165,17 @@ const SponsorApplication = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Application ID</TableHead>
-              <TableHead>Applicant Name and Sponsor Type</TableHead>
+              <TableHead>Applicant Name </TableHead>
               <TableHead>Application Date</TableHead>
               <TableHead>Sponsorship Type</TableHead>
-              <TableHead>Budget</TableHead>
+              <TableHead>Application View</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Status</TableHead>
-              <TableHead>Application View</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {data.map((app) => (
-              <TableRow key={app.id}>
-                <TableCell>{app.id}</TableCell>
+              <TableRow>
                 <TableCell className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage src={app.image} />
@@ -116,20 +190,6 @@ const SponsorApplication = () => {
                 </TableCell>
                 <TableCell>{app.date}</TableCell>
                 <TableCell>{app.type}</TableCell>
-                <TableCell>{app.budget}</TableCell>
-                <TableCell>
-                  <span
-                    className={`text-sm px-2 py-1 rounded ${getBadgeColor(
-                      app.action
-                    )}`}
-                  >
-                    {app.action}
-                  </span>
-                </TableCell>
-                <TableCell className="flex items-center gap-2">
-                  <Circle size={10} className={getStatusDot(app.status)} />
-                  <span>{app.status}</span>
-                </TableCell>
 
                 <TableCell
                   className="text-blue-500 hover:underline cursor-pointer"
@@ -150,6 +210,32 @@ const SponsorApplication = () => {
                     </div>
                   </div>
                 )}
+
+                <TableCell>
+                  <div className="flex gap-2">
+                    <button
+                      className={`text-sm px-2 py-1 rounded ${getBadgeColor(
+                        "Accepted"
+                      )} hover:brightness-110`}
+                      onClick={() => console.log(`${app.name} Accepted`)}
+                    >
+                      Accept
+                    </button>
+                    <button
+                      className={`text-sm px-2 py-1 rounded ${getBadgeColor(
+                        "Rejected"
+                      )} hover:brightness-110`}
+                      onClick={() => console.log(`${app.name} Rejected`)}
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </TableCell>
+
+                <TableCell className="flex items-center gap-2">
+                  <Circle size={10} className={getStatusDot(app.status)} />
+                  <span className={getStatus(app.status)}>{app.status}</span>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
