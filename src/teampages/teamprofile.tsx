@@ -11,7 +11,7 @@ import {
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import teamImage from "../assets/images/team.jpg";
+import teamImage from "../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
 import { useNavigate } from "react-router-dom";
@@ -121,7 +121,7 @@ const TeamProfile = () => {
   }
 
   return (
-    <div className="w-full min-h-screen dark:bg-gray-900 p-10">
+    <div className="w-full min-h-screen dark:bg-gray-900 px-10">
       {renderProfileContent(profileData || fallbackData)}
     </div>
   );
@@ -131,7 +131,7 @@ const TeamProfile = () => {
     return (
       <>
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-5">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold dark:text-white">
@@ -142,6 +142,40 @@ const TeamProfile = () => {
               </h1>
             </div>
 
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-white mb-1">
+                  Sport
+                </label>
+                <span className="font-semibold dark:text-white">
+                  {data?.profession || fallbackData.profession}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-white mb-1">
+                  Country
+                </label>
+                <span className="font-semibold dark:text-white">
+                  {data?.country || fallbackData.country}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-white mb-1">
+                  City
+                </label>
+                <span className="font-semibold dark:text-white">
+                  {data?.city || fallbackData.city}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-white mb-1">
+                  Club
+                </label>
+                <span className="font-semibold dark:text-white">
+                  {data?.club || fallbackData.club}
+                </span>
+              </div>
+            </div>
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
               <div>
                 <label className="block text-sm text-gray-500 dark:text-white mb-1">

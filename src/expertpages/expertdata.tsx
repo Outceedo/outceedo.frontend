@@ -88,6 +88,7 @@ const ExpertProfile = () => {
       dispatch(getProfile(username));
     }
   }, [dispatch]);
+
   useEffect(() => {
     const navigationTimer = setTimeout(() => {
       const userRole = localStorage.getItem("role");
@@ -183,6 +184,7 @@ const ExpertProfile = () => {
       rawProfile: profile,
       reviewsReceived: profile.reviewsReceived || [],
       language: profile.language,
+      club: profile.club,
     };
   };
 
@@ -295,14 +297,14 @@ const ExpertProfile = () => {
     <div className="flex -mt-6">
       {/* Main Content */}
       <main className="flex-1 p-6 dark:bg-gray-900 ml-15">
-        <div className="flex justify-between items-center w-full p-4 mx-auto bg-dark:bg-slate-700 ">
-          {/* Left - Expert Name */}
-          <div>
-            <div className="flex gap-10">
+        <div className="flex justify-between items-start w-full p-4 mx-auto bg-dark:bg-slate-700">
+          {/* Left - Expert Info Section */}
+          <div className="flex-1 pr-6">
+            <div className="flex items-center mb-6">
               <h1 className="text-4xl font-bold dark:text-white">
                 {expertData.name}
               </h1>
-              <div className="gap-4 ml-32 flex">
+              <div className="ml-10 flex gap-4">
                 {icons.map((item, index) =>
                   item.link ? (
                     <a
@@ -314,7 +316,7 @@ const ExpertProfile = () => {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg"
+                      className="w-10 h-10 flex items-center justify-center rounded-full text-white text-xl shadow-lg"
                       style={{
                         background:
                           item.icon === faInstagram
@@ -328,62 +330,76 @@ const ExpertProfile = () => {
                 )}
               </div>
             </div>
-            {/* Expert Info */}
-            <div className="flex justify-start gap-40 text-center mt-8">
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white">Profession</p>
+
+            {/* Expert Info - First row */}
+            <div className="grid grid-cols-3 gap-8 mb-6">
+              <div>
+                <p className="text-gray-500 dark:text-white text-sm">
+                  Profession
+                </p>
                 <p className="font-semibold dark:text-white">
                   {expertData.profession || "Not specified"}
                 </p>
               </div>
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white">
-                  Certification Level
-                </p>
+              <div>
+                <p className="text-gray-500 dark:text-white text-sm">Club</p>
                 <p className="font-semibold dark:text-white">
-                  {expertData.certificationLevel}
+                  {expertData.club || "Not specified"}
                 </p>
               </div>
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white">Languages</p>
-                <p className="font-semibold dark:text-white pr-2">
+              <div>
+                <p className="text-gray-500 dark:text-white text-sm">
+                  Languages
+                </p>
+                <p className="font-semibold dark:text-white">
                   {expertData.language?.length > 0
-                    ? expertData.language.slice(0, 3).map((lang, index) => (
-                        <span
-                          key={index}
-                          className="dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200"
-                        >
-                          {lang + " "}
-                        </span>
-                      ))
+                    ? expertData.language.slice(0, 3).join(", ")
                     : "Not specified"}
                 </p>
               </div>
             </div>
-            {/* Additional Information */}
-            <div className="flex justify-start gap-40 mt-6 text-center">
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white ">Location</p>
+
+            {/* Expert Info - Second row */}
+            <div className="grid grid-cols-3 gap-8 mb-6">
+              <div>
+                <p className="text-gray-500 dark:text-white text-sm">
+                  Location
+                </p>
                 <p className="font-semibold dark:text-white">
                   {expertData.location || "Not specified"}
                 </p>
               </div>
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white">Response Time</p>
+
+              <div>
+                <p className="text-gray-500 dark:text-white text-sm">
+                  Certification Level
+                </p>
                 <p className="font-semibold dark:text-white">
-                  {expertData.responseTime}
+                  {expertData.certificationLevel || "N/A"}
                 </p>
               </div>
-              <div className="text-left">
-                <p className="text-gray-500 dark:text-white">Travel Limit</p>
+              <div>
+                <p className="text-gray-500 dark:text-white text-sm">
+                  Response Time
+                </p>
                 <p className="font-semibold dark:text-white">
-                  {expertData.travelLimit}
+                  {expertData.responseTime || "N/A"} mins
                 </p>
               </div>
             </div>
+            <div>
+              <p className="text-gray-500 dark:text-white text-sm">
+                Travel Limit
+              </p>
+              <p className="font-semibold dark:text-white">
+                {expertData.travelLimit.replace("kms", " ")}kms
+                {/* {expertData.travelLimit || "N/A"} kms */}
+              </p>
+            </div>
           </div>
-          {/* Right - Profile Picture in a Rectangle with Update Functionality */}
-          <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden mr-20 shadow-md relative group">
+
+          {/* Right - Profile Picture */}
+          <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden shadow-md relative group flex-shrink-0">
             {expertData.profileImage ? (
               <img
                 src={expertData.profileImage}
@@ -433,10 +449,11 @@ const ExpertProfile = () => {
             )}
           </div>
         </div>
+
         {/* Stats */}
-        <div className="border-t border-b py-6 mt-6 text-center">
-          <div className="flex justify-around items-center">
-            <div className="flex items-center gap-x-2">
+        <div className="border-t border-b py-6 mt-6">
+          <div className="grid grid-cols-3 gap-4">
+            <div className="flex items-center justify-center">
               <StarRating avg={avgRating} />
               <p className="text-gray-500 dark:text-white ml-2">
                 {totalReviews} review{totalReviews !== 1 ? "s" : ""}
@@ -447,15 +464,15 @@ const ExpertProfile = () => {
                 )}
               </p>
             </div>
-            <div>
+            <div className="text-center">
               <p className="text-red-500 text-3xl font-bold">
-                {expertData.followers}
+                {expertData.followers || 0}
               </p>
               <p className="text-gray-500 dark:text-white">Followers</p>
             </div>
-            <div>
+            <div className="text-center">
               <p className="text-red-500 text-3xl font-bold">
-                {expertData.assessments}
+                {expertData.assessments || 0}
               </p>
               <p className="text-gray-500 dark:text-white">
                 Assessments Evaluated
@@ -463,9 +480,10 @@ const ExpertProfile = () => {
             </div>
           </div>
         </div>
+
         {/* Tabs Section */}
         <div className="mt-8">
-          <div className="flex gap-4 border-b ">
+          <div className="flex gap-4 border-b">
             {(["details", "media", "reviews", "services"] as const).map(
               (tab) => (
                 <button

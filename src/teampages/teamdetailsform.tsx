@@ -6,7 +6,13 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowLeftFromLine,
+  ArrowLeftIcon,
+  Loader2,
+  MoveLeft,
+} from "lucide-react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -25,7 +31,7 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 interface FormData {
   teamName: string;
   type: string;
-
+  sport: string;
   clubName: string;
   city: string;
   country: string;
@@ -103,7 +109,7 @@ export default function TeamDetailsForm() {
   const [form, setForm] = useState<FormData>({
     teamName: "",
     type: "",
-
+    sport: "",
     clubName: "",
     city: "",
     country: "",
@@ -294,7 +300,7 @@ export default function TeamDetailsForm() {
       setForm({
         teamName: profileData.firstName || "",
         type: profileData.profession || "",
-
+        sport: profileData.sport || "",
         clubName: profileData.club || "",
         city: profileData.city || "",
         country: profileData.country || "",
@@ -504,7 +510,7 @@ export default function TeamDetailsForm() {
   }
 
   return (
-    <div className="w-full p-20 mx-auto dark:bg-gray-900">
+    <div className="w-full px-20 mx-auto dark:bg-gray-900">
       {/* Status messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
@@ -531,7 +537,7 @@ export default function TeamDetailsForm() {
         onClick={goBack}
         className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
       >
-        <ArrowLeft className="w-5 h-5 mr-1" />
+        <MoveLeft className="w-5 h-5 mr-1" />
       </button>
       {/* Step Indicator */}
       <div className="flex flex-col items-center mb-12">
@@ -625,17 +631,17 @@ export default function TeamDetailsForm() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Type*
+                Sport*
               </label>
               <select
                 name="type"
-                value={form.type}
+                value={form.sport}
                 onChange={handleChange}
                 className={`border p-2 rounded text-sm text-gray-700 w-full ${
                   validationErrors.type ? "border-red-500" : ""
                 }`}
               >
-                <option value="">Select Type</option>
+                <option value="">Select Sport</option>
                 <option value="football">Football</option>
               </select>
               {validationErrors.type && (
@@ -682,6 +688,31 @@ export default function TeamDetailsForm() {
                 value={form.clubName}
                 onChange={handleChange}
               />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Type*
+              </label>
+              <select
+                name="type"
+                value={form.type}
+                onChange={handleChange}
+                className={`border p-2 rounded text-sm text-gray-700 w-full ${
+                  validationErrors.type ? "border-red-500" : ""
+                }`}
+              >
+                <option value="">Select Type</option>
+                <option value="team">Team</option>
+                <option value="league">League</option>
+                <option value="club">Club</option>
+                <option value="academy">Academy</option>
+                <option value="athleticFacility">Athletic Facility</option>
+              </select>
+              {validationErrors.type && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.type}
+                </p>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">

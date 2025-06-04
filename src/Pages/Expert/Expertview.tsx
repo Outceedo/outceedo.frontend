@@ -174,6 +174,7 @@ const Expertview = () => {
         services: viewedProfile.services || [],
         reviewsReceived: viewedProfile.reviewsReceived,
         language: viewedProfile.language,
+        club: viewedProfile.club,
       }
     : {
         name: "N/A",
@@ -421,76 +422,97 @@ const Expertview = () => {
       {/* Header section with profile info and image */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-10">
         {/* Left side - Expert info */}
-        <div className="flex-grow">
-          <div className="mb-8">
-            <h1 className="text-4xl font-bold mb-2">{expertData.name}</h1>
-            {/* Social Media Icons */}
-            <div className="flex gap-3 mt-4">
-              {icons.map((item, index) => (
-                <a
-                  key={index}
-                  href={item.link}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-12 h-12 flex items-center justify-center rounded-full text-white text-xl shadow-md"
-                  style={{
-                    background:
-                      item.icon === faInstagram
-                        ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
-                        : item.color,
-                  }}
-                >
-                  <FontAwesomeIcon icon={item.icon} />
-                </a>
-              ))}
+        <div className="flex-1 pr-6">
+          <div className="flex items-center mb-6">
+            <h1 className="text-4xl font-bold dark:text-white">
+              {expertData.name}
+            </h1>
+            <div className="ml-10 flex gap-4">
+              {icons.map((item, index) =>
+                item.link ? (
+                  <a
+                    key={index}
+                    href={
+                      item.link.startsWith("http")
+                        ? item.link
+                        : `https://${item.link.replace(/^\/+/, "")}`
+                    }
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 flex items-center justify-center rounded-full text-white text-xl shadow-lg"
+                    style={{
+                      background:
+                        item.icon === faInstagram
+                          ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                          : item.color,
+                    }}
+                  >
+                    <FontAwesomeIcon icon={item.icon} />
+                  </a>
+                ) : null
+              )}
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-16 gap-y-6">
+
+          {/* Expert Info - First row */}
+          <div className="grid grid-cols-3 gap-8 mb-6">
             <div>
-              <p className="text-gray-500">Profession</p>
+              <p className="text-gray-500 dark:text-white text-sm">
+                Profession
+              </p>
               <p className="font-semibold dark:text-white">
-                {expertData.profession}
+                {expertData.profession || "Not specified"}
               </p>
             </div>
             <div>
-              <p className="text-gray-500">Certification Level</p>
+              <p className="text-gray-500 dark:text-white text-sm">Club</p>
               <p className="font-semibold dark:text-white">
-                {expertData.certificationLevel}
+                {expertData.club || "Not specified"}
               </p>
             </div>
-            <div className="text-left">
-              <p className="text-gray-500 dark:text-white">Languages</p>
+            <div>
+              <p className="text-gray-500 dark:text-white text-sm">Languages</p>
               <p className="font-semibold dark:text-white">
                 {expertData.language?.length > 0
-                  ? expertData.language.slice(0, 3).map((lang, index) => (
-                      <span
-                        key={index}
-                        className="px-1  dark:bg-gray-600 rounded-md text-base font-medium text-gray-700 dark:text-gray-200"
-                      >
-                        {lang}
-                      </span>
-                    ))
+                  ? expertData.language.slice(0, 3).join(", ")
                   : "Not specified"}
               </p>
             </div>
+          </div>
+
+          {/* Expert Info - Second row */}
+          <div className="grid grid-cols-3 gap-8 mb-6">
             <div>
-              <p className="text-gray-500">Location</p>
+              <p className="text-gray-500 dark:text-white text-sm">Location</p>
               <p className="font-semibold dark:text-white">
-                {expertData.location}
+                {expertData.location || "Not specified"}
+              </p>
+            </div>
+
+            <div>
+              <p className="text-gray-500 dark:text-white text-sm">
+                Certification Level
+              </p>
+              <p className="font-semibold dark:text-white">
+                {expertData.certificationLevel || "N/A"}
               </p>
             </div>
             <div>
-              <p className="text-gray-500">Response Time</p>
+              <p className="text-gray-500 dark:text-white text-sm">
+                Response Time
+              </p>
               <p className="font-semibold dark:text-white">
-                {expertData.responseTime}
+                {expertData.responseTime || "N/A"} mins
               </p>
             </div>
-            <div>
-              <p className="text-gray-500">Travel Limit</p>
-              <p className="font-semibold dark:text-white">
-                {expertData.travelLimit}
-              </p>
-            </div>
+          </div>
+          <div>
+            <p className="text-gray-500 dark:text-white text-sm">
+              Travel Limit
+            </p>
+            <p className="font-semibold dark:text-white">
+              {expertData.travelLimit || "N/A"} kms
+            </p>
           </div>
         </div>
         {/* Right side - Profile image */}
