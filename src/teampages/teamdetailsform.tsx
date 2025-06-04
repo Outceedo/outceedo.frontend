@@ -443,6 +443,7 @@ export default function TeamDetailsForm() {
       const teamData = {
         profession: form.type,
         firstName: form.teamName.trim(),
+        sport: form.sport,
 
         club: form.clubName.trim(),
         city: form.city,
@@ -458,6 +459,7 @@ export default function TeamDetailsForm() {
           twitter: form.socialLinks.twitter || "",
         },
       };
+      console.log(form);
 
       // Update profile using Redux action
       const updateProfileResult = await dispatch(updateProfile(teamData));
@@ -634,7 +636,7 @@ export default function TeamDetailsForm() {
                 Sport*
               </label>
               <select
-                name="type"
+                name="sport"
                 value={form.sport}
                 onChange={handleChange}
                 className={`border p-2 rounded text-sm text-gray-700 w-full ${

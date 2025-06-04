@@ -148,7 +148,7 @@ const TeamProfile = () => {
                   Sport
                 </label>
                 <span className="font-semibold dark:text-white">
-                  {data?.profession || fallbackData.profession}
+                  {data?.sport || fallbackData.profession}
                 </span>
               </div>
               <div>
