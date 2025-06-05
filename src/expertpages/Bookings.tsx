@@ -159,6 +159,7 @@ const BookingExpertside: React.FC = () => {
   const isRecordedVideoAssessment = (booking: Booking) => {
     return booking.service?.service?.id === "1" && booking.recordedVideo;
   };
+  console.log(bookings);
 
   // Get service type based on service ID and attributes
   const getServiceType = (booking: Booking): string => {
@@ -167,11 +168,11 @@ const BookingExpertside: React.FC = () => {
       return "recorded-video";
     }
     // Check if there's a meet link for online sessions
-    else if (booking.meetLink) {
+    else if (booking.service?.serviceId === "2") {
       return "online";
     }
     // If there's a physical location
-    else if (booking.location) {
+    else if (booking.service?.serviceId === "3") {
       return "in-person";
     }
     // Default to other
@@ -182,13 +183,14 @@ const BookingExpertside: React.FC = () => {
   const getServiceTypeName = (type: string): string => {
     switch (type) {
       case "recorded-video":
-        return "Recorded Video Assessment";
+        return "RECORDED VIDEO ASSESSMENT";
       case "online":
-        return "Online Session";
+        return "ONLINE TRAINING";
       case "in-person":
-        return "In-Person Training";
+        return "ON GROUND ASSESSMENT";
+      case "other":
       default:
-        return "Other Service";
+        return "ONLINE ASSESSMENT";
     }
   };
 
@@ -928,11 +930,11 @@ const BookingExpertside: React.FC = () => {
           <SelectContent>
             <SelectItem value="all">All Service Types</SelectItem>
             <SelectItem value="recorded-video">
-              Recorded Video Assessment
+              RECORDED VIDEO ASSESSMENT
             </SelectItem>
-            <SelectItem value="online">Online Session</SelectItem>
-            <SelectItem value="in-person">In-Person Training</SelectItem>
-            <SelectItem value="other">Other Services</SelectItem>
+            <SelectItem value="online">ONLINE TRAINING</SelectItem>
+            <SelectItem value="in-person">ON GROUND ASSESSMENT</SelectItem>
+            <SelectItem value="other">ONLINE ASSESSMENT</SelectItem>
           </SelectContent>
         </Select>
 
@@ -948,8 +950,6 @@ const BookingExpertside: React.FC = () => {
           </Button>
         )}
       </div>
-
-     
 
       {error && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md">
