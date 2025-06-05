@@ -320,6 +320,9 @@ const MediaUpload: React.FC<{
                       ? "opacity-60 cursor-not-allowed"
                       : ""
                   }`}
+                  placeholder={
+                    activeTab == "photo" ? "Max size 2MB" : "Max size 5MB"
+                  }
                 />
 
                 {uploads.filter((u) => u.type === activeTab).length > 1 && (

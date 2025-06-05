@@ -481,8 +481,6 @@ const PlayerProfiles: React.FC = () => {
             )}
           </div>
 
-          
-
           {/* Loading State */}
           {status === "loading" && (
             <div className="flex justify-center items-center h-64">
@@ -518,12 +516,9 @@ const PlayerProfiles: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {filteredProfiles.map((profile: Profile, index: number) => {
                 // Create a display name from available fields
-                const displayName =
-                  `${profile.firstName || ""} ${
-                    profile.lastName || ""
-                  }`.trim() ||
-                  profile.username ||
-                  "Anonymous User";
+                const displayName = `${profile.firstName || ""} ${
+                  profile.lastName || ""
+                }`.trim();
 
                 // Calculate rating and reviews count (or use defaults)
                 const rating = Math.floor(Math.random() * 2) + 3.5; // Random rating between 3.5-5.5
@@ -567,7 +562,7 @@ const PlayerProfiles: React.FC = () => {
                       {/* Display sports */}
                       {playerSports && (
                         <p className="text-blue-600 text-sm font-medium dark:text-blue-300 my-1">
-                          {playerSports}
+                          {playerSports.toUpperCase()}
                         </p>
                       )}
 

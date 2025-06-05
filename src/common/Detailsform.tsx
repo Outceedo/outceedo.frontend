@@ -788,8 +788,12 @@ const Detailsform: React.FC = () => {
 
       // Prepare the profile data to match the schema exactly
       const profileUpdateData = {
-        firstName: formData.firstName.charAt(0) + formData.firstName.slice(1),
-        lastName: formData.lastName.charAt(0) + formData.lastName.slice(1),
+        firstName:
+          formData.firstName.charAt(0).toUpperCase() +
+          formData.firstName.slice(1),
+        lastName:
+          formData.lastName.charAt(0).toUpperCase() +
+          formData.lastName.slice(1),
         photo: professionalPhotoMedia?.id || formData.photo || null,
         gender: formData.gender.charAt(0) + formData.gender.slice(1),
         age: formData.age ? parseInt(formData.age) : null,

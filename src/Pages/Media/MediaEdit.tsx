@@ -218,7 +218,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
       </div>
 
       {/* Media Section */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-6 mt-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-6">
         {filteredMedia.length === 0 ? (
           <p className="text-gray-400 text-center col-span-3">
             No Media Available
@@ -371,7 +371,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview }) => {
   }, []);
 
   return (
-    <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 max-w-64 ">
+    <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 lg:max-w-96 max-w-64 3xl:h-84">
       {/* Three-dot delete menu */}
       <div className="absolute top-1 right-1 z-10" ref={menuRef}>
         <Button
@@ -387,7 +387,7 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview }) => {
                 onDelete(item.id);
                 setMenuOpen(false);
               }}
-              className="block px-4 py-2 text-sm text-red-600 bg-white w-full text-left"
+              className="block px-4 py-2 text-sm text-red-600 bg-white w-full text-left hover:bg-white"
             >
               <FontAwesomeIcon icon={faTrash} className="mr-2" />
               Delete
@@ -402,12 +402,12 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview }) => {
           <img
             src={item.preview || item.url || ""}
             alt={item.title}
-            className="w-full h-40 object-cover rounded-lg mt-2"
+            className="w-full h-40 3xl:h-56 object-cover rounded-lg mt-2"
           />
         ) : (
           <video
             src={item.preview || item.url || ""}
-            className="w-full h-40 rounded-lg mt-2"
+            className="w-full h-40 3xl:h-72 rounded-lg mt-2"
           />
         )}
       </div>

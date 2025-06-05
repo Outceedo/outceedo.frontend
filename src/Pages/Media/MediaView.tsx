@@ -125,7 +125,7 @@ const Mediaview: React.FC<MediaviewProps> = ({ Data }) => {
             {(filter === "all" || filter === "photo") &&
               filteredMedia.some((item) => item.type === "photo") && (
                 <div className="w-full max-w-screen text-left">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12">
                     {filteredMedia
                       .filter((item) => item.type === "photo")
                       .map((photo) => (
@@ -158,7 +158,7 @@ const Mediaview: React.FC<MediaviewProps> = ({ Data }) => {
             {(filter === "all" || filter === "video") &&
               filteredMedia.some((item) => item.type === "video") && (
                 <div className="w-full text-left mt-8">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-12">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-12">
                     {filteredMedia
                       .filter((item) => item.type === "video")
                       .map((video) => (
@@ -211,7 +211,7 @@ const Mediaview: React.FC<MediaviewProps> = ({ Data }) => {
           className="fixed inset-0 bg-opacity-75 flex items-center justify-center z-50 p-4"
           onClick={() => setPreviewItem(null)}
         >
-          <div className="fixed inset-0 bg-black/40 backdrop-blur-sm"></div>
+          <div className="fixed inset-0 bg-blur backdrop-blur-sm"></div>
           <div
             className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-4xl w-full relative"
             onClick={(e) => e.stopPropagation()}
