@@ -42,9 +42,11 @@ import {
   faMapMarkerAlt,
   faLink,
   faExclamationTriangle,
+  faPager,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
+import { faPage4 } from "@fortawesome/free-brands-svg-icons";
 
 // Updated interfaces to match the new API response format
 interface Expert {
@@ -745,6 +747,7 @@ const BookingExpertside: React.FC = () => {
 
     return matchesSearch && matchesStatus && matchesAction;
   });
+  console.log(bookings);
 
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
@@ -1229,9 +1232,6 @@ const BookingExpertside: React.FC = () => {
                 <p className="font-medium break-words">
                   {selectedBooking.service?.service?.name}
                 </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  {selectedBooking.service?.service?.description}
-                </p>
               </div>
 
               {/* Session Information */}
@@ -1263,20 +1263,39 @@ const BookingExpertside: React.FC = () => {
                   </p>
                 )}
                 {selectedBooking.meetLink && (
-                  <p className="mb-1 flex items-start">
-                    <FontAwesomeIcon
-                      icon={faLink}
-                      className="mr-2 mt-1 text-gray-600"
-                    />
-                    <a
-                      href={selectedBooking.meetLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:underline break-all"
-                    >
-                      {selectedBooking.meetLink}
-                    </a>
-                  </p>
+                  <>
+                    <p className="mb-1 flex items-start">
+                      <FontAwesomeIcon
+                        icon={faLink}
+                        className="mr-2 mt-1 text-gray-600"
+                      />
+                      <a
+                        href={selectedBooking.meetLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline break-all"
+                      >
+                        {selectedBooking.meetLink}
+                      </a>
+                    </p>
+                  </>
+                )}
+              </div>
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2 flex items-center">
+                  <FontAwesomeIcon
+                    icon={faPager}
+                    className="mr-2 text-gray-600"
+                  />
+                  Description
+                </h3>
+
+                {selectedBooking.description && (
+                  <>
+                    <p className="mb-1 flex items-start">
+                      {selectedBooking.description}
+                    </p>
+                  </>
                 )}
               </div>
 

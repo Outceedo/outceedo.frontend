@@ -152,6 +152,8 @@ export default function SponsorProfiles() {
       navigate("/sponsor/sponsorinfo");
     } else if (role === "team") {
       navigate("/team/sponsorinfo");
+    } else {
+      navigate("/expert/sponsorinfo");
     }
   };
 
