@@ -15,7 +15,7 @@ const menuItems = [
   { path: "/expert/mybooking", name: "My Bookings" },
   { path: "/expert/sponsors", name: "Sponsors" },
   { path: "/expert/profile", name: "Profile" },
-  { path: "/expert/Sponsorinfo", name: "Sponsor Profile" },
+  { path: "/expert/sponsorinfo", name: "Sponsor Profile" },
   { path: "/expert/details-form", name: "Edit Profile" },
   { path: "/expert/playerinfo", name: "Player Profile" },
 ];
