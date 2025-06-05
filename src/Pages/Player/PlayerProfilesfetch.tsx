@@ -80,6 +80,8 @@ export interface Profile {
   role?: "player" | "expert" | "admin";
   language?: string[];
   interests?: string[];
+  sports?: string[]; // Added sports array property
+  sport?: string; // Added single sport property
   services?: any[];
   documents?: DocumentItem[];
   uploads?: UploadItem[];
@@ -144,6 +146,7 @@ const PlayerProfiles: React.FC = () => {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
+    sport: "", // Added sport filter
     profession: "",
     city: "",
     country: "",
@@ -168,7 +171,12 @@ const PlayerProfiles: React.FC = () => {
 
   // Determine user type to fetch opposite profiles (if expert, fetch players and vice versa)
   const userRole = localStorage.getItem("role") as Role;
-  const profileType: Role = userRole === "expert" ? "player" : userRole === "sponsor" ? "player": "player";
+  const profileType: Role =
+    userRole === "expert"
+      ? "player"
+      : userRole === "sponsor"
+      ? "player"
+      : "player";
 
   // Fetch profiles on mount and when filters/pagination change
   useEffect(() => {
@@ -198,6 +206,7 @@ const PlayerProfiles: React.FC = () => {
   // Clear all filters
   const clearAllFilters = () => {
     setFilters({
+      sport: "", // Added sport to clear filters
       profession: "",
       city: "",
       country: "",
@@ -277,6 +286,30 @@ const PlayerProfiles: React.FC = () => {
       }
     }
 
+    // Sport filter logic
+    if (filters.sport) {
+      // Check for sports array
+      if (profile.sports && Array.isArray(profile.sports)) {
+        if (
+          !profile.sports.some(
+            (s) => s.toLowerCase() === filters.sport.toLowerCase()
+          )
+        ) {
+          return false;
+        }
+      }
+      // Check for single sport field
+      else if (profile.sport && typeof profile.sport === "string") {
+        if (profile.sport.toLowerCase() !== filters.sport.toLowerCase()) {
+          return false;
+        }
+      }
+      // If profile has neither sports array nor sport field, they don't match the filter
+      else {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -292,6 +325,15 @@ const PlayerProfiles: React.FC = () => {
         langs.forEach((lang) => {
           if (lang) options.add(lang);
         });
+      } else if (key === "sports" || key === "sport") {
+        // Handle sports (both array and single string formats)
+        if (profile.sports && Array.isArray(profile.sports)) {
+          profile.sports.forEach((sport) => {
+            if (sport) options.add(sport);
+          });
+        } else if (profile.sport && typeof profile.sport === "string") {
+          options.add(profile.sport);
+        }
       } else {
         const value = profile[key];
         if (value && typeof value === "string") options.add(value);
@@ -302,20 +344,42 @@ const PlayerProfiles: React.FC = () => {
   };
 
   // Get profile filter options
+  const sportOptions = [
+    ...extractFilterOptions("sports"),
+    // ...extractFilterOptions("sport"),
+  ];
   const professionOptions = extractFilterOptions("profession");
   const cityOptions = extractFilterOptions("city");
   const countryOptions = extractFilterOptions("country");
   const genderOptions = extractFilterOptions("gender");
   const languageOptions = extractFilterOptions("language");
 
+  // Default sports if none found in data
+  const defaultSports = [
+    "Football",
+    "Basketball",
+    "Tennis",
+    "Cricket",
+    "Rugby",
+    "Swimming",
+    "Athletics",
+    "Volleyball",
+  ];
+  const finalSportOptions =
+    sportOptions.length > 0 ? sportOptions : defaultSports;
+
   // Generate filter objects
   const filterConfig = [
+    {
+      name: "Sport", // Added sport filter first
+      options: finalSportOptions,
+    },
     {
       name: "Profession",
       options:
         professionOptions.length > 0
           ? professionOptions
-          : ["Coach", "Trainer", "Scout"],
+          : ["Footballer", "Basketball Player", "Tennis Player"],
     },
     {
       name: "City",
@@ -417,6 +481,8 @@ const PlayerProfiles: React.FC = () => {
             )}
           </div>
 
+          
+
           {/* Loading State */}
           {status === "loading" && (
             <div className="flex justify-center items-center h-64">
@@ -469,6 +535,13 @@ const PlayerProfiles: React.FC = () => {
                 // Random verified status if not specified
                 const isVerified = Math.random() > 0.5;
 
+                // Get player sports
+                const playerSports = profile.sports
+                  ? Array.isArray(profile.sports)
+                    ? profile.sports.join(", ")
+                    : profile.sports
+                  : profile.sport || "";
+
                 return (
                   <Card
                     key={profile.id}
@@ -490,7 +563,15 @@ const PlayerProfiles: React.FC = () => {
                           ? ` • ${profile.city}, ${profile.country}`
                           : ""}
                       </p>
-                      <p>
+
+                      {/* Display sports */}
+                      {playerSports && (
+                        <p className="text-blue-600 text-sm font-medium dark:text-blue-300 my-1">
+                          {playerSports}
+                        </p>
+                      )}
+
+                      <p className="text-gray-600 text-sm dark:text-gray-300">
                         {profile.subProfession
                           ? profile.subProfession.charAt(0).toUpperCase() +
                             profile.subProfession.slice(1)

@@ -160,7 +160,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       </h1>
 
       {/* Profile Section */}
-      <div className="flex flex-col items-center gap-2 mb-6">
+      <div className="flex flex-col items-center gap-2 mb-2">
         <img
           src={currentProfile?.photo || profile}
           alt="Profile"
@@ -176,14 +176,19 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         </h2>
         <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400 font-sans">
           {currentProfile?.age
-            ? `Age ${currentProfile.age} (${
+            ? `Age ${currentProfile.age} yrs (${
                 new Date().getFullYear() - currentProfile.age
               })`
             : ""}
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {expertProfession}
-          {expertSubProfession ? ` - ${expertSubProfession}` : ""}
+          {expertProfession.toUpperCase()}
+          {expertSubProfession
+            ? ` - ${
+                expertSubProfession.charAt(0).toUpperCase() +
+                expertSubProfession.slice(1)
+              }`
+            : ""}
         </p>
 
         {/* Show loading indicator if profile is still loading */}

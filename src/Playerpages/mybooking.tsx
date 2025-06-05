@@ -16,6 +16,12 @@ import {
   faCreditCard,
   faStar,
   faExclamationTriangle,
+  faTrash,
+  faFilter,
+  faTimes,
+  faLaptop,
+  faVideoCamera,
+  faChalkboardTeacher,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import Video from "./Video";
@@ -104,10 +110,14 @@ interface Booking {
 const MyBooking: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingStatus, setBookingStatus] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [videoError, setVideoError] = useState<string | null>(null);
+  const [filtersApplied, setFiltersApplied] = useState(false);
 
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
@@ -128,6 +138,26 @@ const MyBooking: React.FC = () => {
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+
+  // Check if any filters are applied
+  useEffect(() => {
+    setFiltersApplied(
+      bookingStatus !== "all" ||
+        actionFilter !== "all" ||
+        serviceTypeFilter !== "all" ||
+        dateFilter !== "" ||
+        search !== ""
+    );
+  }, [bookingStatus, actionFilter, serviceTypeFilter, dateFilter, search]);
+
+  // Function to clear all filters
+  const clearAllFilters = () => {
+    setBookingStatus("all");
+    setActionFilter("all");
+    setServiceTypeFilter("all");
+    setDateFilter("");
+    setSearch("");
+  };
 
   // Function to check if booking is eligible for payment
   const canPay = (booking: Booking) => {
@@ -164,6 +194,38 @@ const MyBooking: React.FC = () => {
     setVideoError(
       "Failed to load video. The URL might be invalid or the video may no longer be available."
     );
+  };
+
+  // Get service type based on service ID and attributes
+  const getServiceType = (booking: Booking): string => {
+    // Assuming service ID "1" is for recorded video assessment
+    if (booking.service?.serviceId === "1") {
+      return "recorded-video";
+    }
+    // Check if there's a meet link for online sessions
+    else if (booking.meetLink) {
+      return "online";
+    }
+    // If there's a physical location
+    else if (booking.location) {
+      return "in-person";
+    }
+    // Default to other
+    return "other";
+  };
+
+  // Get friendly name for service type
+  const getServiceTypeName = (type: string): string => {
+    switch (type) {
+      case "recorded-video":
+        return "Recorded Video Assessment";
+      case "online":
+        return "Online Session";
+      case "in-person":
+        return "In-Person Training";
+      default:
+        return "Other Service";
+    }
   };
 
   // Dummy data for demonstration when API fails
@@ -488,6 +550,20 @@ const MyBooking: React.FC = () => {
     }
   };
 
+  // Get service type icon
+  const getServiceTypeIcon = (type: string) => {
+    switch (type) {
+      case "recorded-video":
+        return faVideoCamera;
+      case "online":
+        return faLaptop;
+      case "in-person":
+        return faChalkboardTeacher;
+      default:
+        return faInfoCircle;
+    }
+  };
+
   // Format status for display
   const formatStatus = (status: string) => {
     return status
@@ -538,7 +614,43 @@ const MyBooking: React.FC = () => {
     });
   };
 
-  // Filter bookings based on search and status filter
+  // Check if a booking matches the date filter
+  const matchesDateFilter = (booking: Booking) => {
+    if (!dateFilter) return true;
+
+    const bookingDate = new Date(booking.date);
+    bookingDate.setHours(0, 0, 0, 0);
+
+    const filterDate = new Date(dateFilter);
+    filterDate.setHours(0, 0, 0, 0);
+
+    return bookingDate.getTime() === filterDate.getTime();
+  };
+
+  // Check if booking matches the action filter
+  const matchesActionFilter = (booking: Booking) => {
+    if (actionFilter === "all") return true;
+
+    if (actionFilter === "accepted" && booking.status === "ACCEPTED")
+      return true;
+    if (actionFilter === "rejected" && booking.status === "REJECTED")
+      return true;
+    if (
+      actionFilter === "waiting" &&
+      booking.status === "WAITING_EXPERT_APPROVAL"
+    )
+      return true;
+
+    return false;
+  };
+
+  // Check if booking matches the service type filter
+  const matchesServiceTypeFilter = (booking: Booking) => {
+    if (serviceTypeFilter === "all") return true;
+    return getServiceType(booking) === serviceTypeFilter;
+  };
+
+  // Filter bookings based on all filters
   const filteredBookings = bookings.filter((booking) => {
     const expertName = booking.expert?.username || "";
     const matchesSearch = expertName
@@ -551,7 +663,13 @@ const MyBooking: React.FC = () => {
         booking.status === "WAITING_EXPERT_APPROVAL") ||
       (bookingStatus === "PENDING" && ["ACCEPTED"].includes(booking.status));
 
-    return matchesSearch && matchesStatus;
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesDateFilter(booking) &&
+      matchesActionFilter(booking) &&
+      matchesServiceTypeFilter(booking)
+    );
   });
   const navigate = useNavigate();
 
@@ -560,7 +678,8 @@ const MyBooking: React.FC = () => {
       <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
-        <div className="relative w-full sm:w-1/3">
+        {/* Search Input */}
+        <div className="relative w-full sm:w-1/5">
           <FontAwesomeIcon
             icon={faSearch}
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -574,17 +693,71 @@ const MyBooking: React.FC = () => {
           />
         </div>
 
+        {/* Date Filter */}
+        <div className="relative w-full sm:w-auto min-w-[180px]">
+          <FontAwesomeIcon
+            icon={faCalendarAlt}
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+          />
+          <Input
+            type="date"
+            className="pl-10"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            max="2030-12-31"
+            min="2020-01-01"
+          />
+        </div>
+
+        {/* Status Filter */}
         <Select value={bookingStatus} onValueChange={setBookingStatus}>
           <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Booking Status" />
+            <SelectValue placeholder="Payment Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="all">All Payments</SelectItem>
             <SelectItem value="PAID">Paid</SelectItem>
             <SelectItem value="NOT_PAID">Not Paid</SelectItem>
             <SelectItem value="PENDING">Pending</SelectItem>
           </SelectContent>
         </Select>
+        <Select value={actionFilter} onValueChange={setActionFilter}>
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Booking Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            <SelectItem value="accepted">Accepted</SelectItem>
+            <SelectItem value="rejected">Rejected</SelectItem>
+            <SelectItem value="waiting">Waiting Approval</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Service Type Filter */}
+        <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
+          <SelectTrigger className=" sm:w-[180px]">
+            <SelectValue placeholder="Service Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Service Types</SelectItem>
+            <SelectItem value="recorded-video">
+              Recorded Video Assessment
+            </SelectItem>
+            <SelectItem value="online">Online Session</SelectItem>
+            <SelectItem value="in-person">In-Person Training</SelectItem>
+            <SelectItem value="other">Other Services</SelectItem>
+          </SelectContent>
+        </Select>
+        {filtersApplied && (
+          <Button
+            variant="outline"
+            className=" flex items-center gap-2 text-red-600 border-red-600 hover:text-red-600 "
+            onClick={clearAllFilters}
+          >
+            <FontAwesomeIcon icon={faTrash} />
+            <span>Clear Filters</span>
+          </Button>
+        )}
       </div>
 
       {error && (
@@ -666,14 +839,20 @@ const MyBooking: React.FC = () => {
                       {formatShortDate(booking.date)}
                     </TableCell>
                     <TableCell>
-                      <span
-                        className="truncate block max-w-[120px]"
-                        title={
-                          booking.service?.service?.name || "Unknown Service"
-                        }
-                      >
-                        {booking.service?.service?.name || "Unknown Service"}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <FontAwesomeIcon
+                          icon={getServiceTypeIcon(getServiceType(booking))}
+                          className="text-gray-500"
+                        />
+                        <span
+                          className="truncate block max-w-[100px]"
+                          title={
+                            booking.service?.service?.name || "Unknown Service"
+                          }
+                        >
+                          {booking.service?.service?.name || "Unknown Service"}
+                        </span>
+                      </div>
                     </TableCell>
                     <TableCell>${booking.service?.price || "N/A"}</TableCell>
                     <TableCell>
@@ -760,12 +939,18 @@ const MyBooking: React.FC = () => {
               >
                 <div className="flex justify-between items-start">
                   <div className="max-w-[70%]">
-                    <h3
-                      className="font-medium truncate"
-                      title={booking.service?.service?.name || "Service"}
-                    >
-                      {booking.service?.service?.name || "Service"}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <FontAwesomeIcon
+                        icon={getServiceTypeIcon(getServiceType(booking))}
+                        className="text-gray-500"
+                      />
+                      <h3
+                        className="font-medium truncate"
+                        title={booking.service?.service?.name || "Service"}
+                      >
+                        {booking.service?.service?.name || "Service"}
+                      </h3>
+                    </div>
                     <div className="flex items-center gap-2 mt-2">
                       <img
                         src={booking.expert?.photo || profile}
@@ -936,7 +1121,7 @@ const MyBooking: React.FC = () => {
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-lg font-semibold flex items-center">
                     <FontAwesomeIcon
-                      icon={faInfoCircle}
+                      icon={getServiceTypeIcon(getServiceType(selectedBooking))}
                       className="mr-2 text-gray-600"
                     />
                     Service Details
@@ -949,6 +1134,9 @@ const MyBooking: React.FC = () => {
                 <h4 className="font-medium mb-2 break-words">
                   {selectedBooking.service?.service?.name}
                 </h4>
+                <p className="text-sm text-gray-600 mb-2">
+                  Type: {getServiceTypeName(getServiceType(selectedBooking))}
+                </p>
                 <p className="text-gray-600 mb-4">
                   {selectedBooking.service?.service?.description}
                 </p>
@@ -1176,6 +1364,32 @@ const MyBooking: React.FC = () => {
                   )}
                 </div>
               )}
+
+              {/* Booking Information */}
+              <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                <h3 className="text-lg font-semibold mb-2">
+                  Booking Information
+                </h3>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Booking ID:</span>{" "}
+                  {selectedBooking.id}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Created:</span>{" "}
+                  {new Date(selectedBooking.createdAt).toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">Last Updated:</span>{" "}
+                  {new Date(selectedBooking.updatedAt).toLocaleString()}
+                </p>
+                <p className="text-sm text-gray-600 mt-2">
+                  <span className="font-medium">Current Time (UTC):</span>{" "}
+                  2025-06-05 05:28:58
+                </p>
+                <p className="text-sm text-gray-600">
+                  <span className="font-medium">User:</span> 22951a3363
+                </p>
+              </div>
             </div>
 
             <DialogFooter className="flex flex-wrap gap-3 justify-end">

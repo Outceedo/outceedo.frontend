@@ -70,7 +70,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const { currentProfile, status } = useAppSelector((state) => state.profile);
 
   // Format name from profile data
-  const playerName = currentProfile
+  const sponsorName = currentProfile
     ? `${currentProfile.firstName || ""} ${
         currentProfile.lastName || ""
       }`.trim()
@@ -165,7 +165,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       </h1>
 
       {/* Profile Section */}
-      <div className="flex flex-col items-center gap-2 mb-6">
+      <div className="flex flex-col items-center gap-2 mb-2">
         <img
           src={currentProfile?.photo || profile}
           alt="Profile"
@@ -177,9 +177,11 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           }}
         />
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
-          {playerName}
+          {sponsorName.charAt(0).toUpperCase() + sponsorName.slice(1)}
         </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">{currentProfile?.company}</p>
+        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400">
+          {currentProfile?.company}
+        </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {sponsorProfession} - {sponsorRole}
         </p>

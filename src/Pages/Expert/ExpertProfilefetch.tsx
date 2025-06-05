@@ -31,6 +31,8 @@ interface Expert {
   country?: string;
   gender?: string;
   language?: string[];
+  sports?: string[]; // Added sports property
+  sport?: string; // Alternative single sport field
   photo?: string;
   verified?: boolean;
   role?: string;
@@ -96,6 +98,7 @@ const ExpertProfiles: React.FC = () => {
     country: "",
     gender: "",
     language: "",
+    sport: "", // Added sport filter
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8); // Number of experts per page
@@ -152,6 +155,9 @@ const ExpertProfiles: React.FC = () => {
       case "language":
         stateKey = "language";
         break;
+      case "sport":
+        stateKey = "sport";
+        break;
       default:
         stateKey = normalizedKey;
     }
@@ -174,6 +180,7 @@ const ExpertProfiles: React.FC = () => {
       country: "",
       gender: "",
       language: "",
+      sport: "",
     });
     setCurrentPage(1);
   };
@@ -249,6 +256,30 @@ const ExpertProfiles: React.FC = () => {
       }
     }
 
+    // Sport filter logic
+    if (filters.sport) {
+      // Check if expert has sports array
+      if (expert.sports && Array.isArray(expert.sports)) {
+        if (
+          !expert.sports.some(
+            (s) => s.toLowerCase() === filters.sport.toLowerCase()
+          )
+        ) {
+          return false;
+        }
+      }
+      // Check if expert has single sport field
+      else if (expert.sport && typeof expert.sport === "string") {
+        if (expert.sport.toLowerCase() !== filters.sport.toLowerCase()) {
+          return false;
+        }
+      }
+      // If expert has neither sports array nor sport field, they don't match the filter
+      else {
+        return false;
+      }
+    }
+
     return true;
   });
 
@@ -264,6 +295,15 @@ const ExpertProfiles: React.FC = () => {
         langs.forEach((lang) => {
           if (lang) options.add(lang);
         });
+      } else if (key === "sports" || key === "sport") {
+        // Handle sports (both array and single string formats)
+        if (expert.sports && Array.isArray(expert.sports)) {
+          expert.sports.forEach((sport) => {
+            if (sport) options.add(sport);
+          });
+        } else if (expert.sport && typeof expert.sport === "string") {
+          options.add(expert.sport);
+        }
       } else {
         const value = expert[key];
         if (value && typeof value === "string") options.add(value);
@@ -280,8 +320,32 @@ const ExpertProfiles: React.FC = () => {
   const genderOptions = extractFilterOptions("gender");
   const languageOptions = extractFilterOptions("language");
 
+  // Get sport options from expert data
+  const sportOptions = [
+    ...extractFilterOptions("sports"),
+    ...extractFilterOptions("sport"),
+  ];
+
+  // If no sports found in data, provide default sports
+  const defaultSports = [
+    "Football",
+    "Basketball",
+    "Tennis",
+    "Golf",
+    "Rugby",
+    "Cricket",
+    "Hockey",
+    "Swimming",
+  ];
+  const finalSportOptions =
+    sportOptions.length > 0 ? sportOptions : defaultSports;
+
   // Generate filter objects
   const filterConfig = [
+    {
+      name: "Sport", // Added sport filter first
+      options: finalSportOptions,
+    },
     {
       name: "Profession",
       options:
@@ -314,7 +378,6 @@ const ExpertProfiles: React.FC = () => {
           : ["English", "Spanish", "French"],
     },
   ];
-  const role = localStorage.getItem("role");
 
   // Handle view expert profile
   const handleViewProfile = (expert: Expert) => {
@@ -442,6 +505,13 @@ const ExpertProfiles: React.FC = () => {
                     ? expert.verified
                     : Math.random() > 0.5;
 
+                // Get expert sports
+                const expertSports = expert.sports
+                  ? Array.isArray(expert.sports)
+                    ? expert.sports.join(", ")
+                    : expert.sports
+                  : expert.sport || "";
+
                 return (
                   <Card
                     key={expert.id}
@@ -470,13 +540,25 @@ const ExpertProfiles: React.FC = () => {
                     {/* Content */}
                     <CardContent className="p-4">
                       <h3 className="text-lg font-semibold">{displayName}</h3>
-                      <p className="text-gray-500 text-sm mb-3 dark:text-gray-300">
+                      <p className="text-gray-500 text-sm mb-2 dark:text-gray-300">
                         {expert.profession || "Expert Coach"}
                         {expert.city && expert.country
                           ? ` • ${expert.city}, ${expert.country}`
                           : ""}
                       </p>
-                      {expert.subProfession}
+
+                      {/* Display sports */}
+                      {expertSports && (
+                        <p className="text-blue-600 text-sm font-medium dark:text-blue-300 mb-2">
+                          {expertSports}
+                        </p>
+                      )}
+
+                      {expert.subProfession && (
+                        <p className="text-gray-600 text-sm dark:text-gray-300">
+                          {expert.subProfession}
+                        </p>
+                      )}
 
                       <div className="flex items-center justify-between mt-4">
                         <div className="flex items-center">

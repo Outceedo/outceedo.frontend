@@ -157,7 +157,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       </h1>
 
       {/* Profile Section */}
-      <div className="flex flex-col items-center gap-2 mb-6">
+      <div className="flex flex-col items-center gap-2 mb-2">
         <img
           src={currentProfile?.photo || profile}
           alt="Profile"
@@ -165,13 +165,13 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           onClick={() => navigate("/player/details-form")}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = profile; // Fallback to default profile image
+            target.src = profile;
           }}
         />
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
           {teamName}
         </h2>
-        
+
         {/* Show loading indicator if profile is still loading */}
         {status === "loading" && (
           <div className="text-sm text-gray-500">Loading profile...</div>

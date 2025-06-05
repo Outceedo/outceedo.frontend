@@ -788,10 +788,10 @@ const Detailsform: React.FC = () => {
 
       // Prepare the profile data to match the schema exactly
       const profileUpdateData = {
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
+        firstName: formData.firstName.charAt(0) + formData.firstName.slice(1),
+        lastName: formData.lastName.charAt(0) + formData.lastName.slice(1),
         photo: professionalPhotoMedia?.id || formData.photo || null,
-        gender: formData.gender || null,
+        gender: formData.gender.charAt(0) + formData.gender.slice(1),
         age: formData.age ? parseInt(formData.age) : null,
         birthYear: formData.birthYear ? parseInt(formData.birthYear) : null,
         language: languageArray,
@@ -810,10 +810,9 @@ const Detailsform: React.FC = () => {
         interests: [], // Not collected in the form
         profession: formData.profession || null,
         subProfession: formData.subProfession || null, // Ensure subProfession is sent correctly
-        sport: formData.sport || null, // Add sport field
+        sport: formData.sport.charAt(0) + formData.sport.slice(1), // Add sport field
         club: formData.club || null, // Add club field
         company: formData.footballClub || null, // Keep existing footballClub field for backward compatibility
-        role: localStorage.getItem("role") || "player",
 
         // Include expert-specific fields only if user is an expert
         ...(isExpert && {
@@ -1545,7 +1544,7 @@ const Detailsform: React.FC = () => {
                   Response Time (mins) *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="responseTime"
                   placeholder="e.g., 30 mins"
                   value={formData.responseTime}
