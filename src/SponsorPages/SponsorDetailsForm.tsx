@@ -440,10 +440,15 @@ export default function SponsorDetailsForm() {
       // Prepare the data for API submission with the correct field mappings for Redux
       const sponsorData = {
         sponsorType: form.sponsorType, // Map sponsorType to profession
-        profession: form.sportInterest, // Map sportInterest to subProfession
-        firstName: form.fullName,
-        lastName: form.lastName,
-        company: form.companyName, // Map companyName to company
+        profession:
+          form.sportInterest.charAt(0).toUpperCase() +
+          form.sportInterest.slice(1), // Map sportInterest to subProfession
+        firstName:
+          form.fullName.charAt(0).toUpperCase() + form.fullName.slice(1),
+        lastName:
+          form.lastName.charAt(0).toUpperCase() + form.lastName.slice(1),
+        company:
+          form.companyName.charAt(0).toUpperCase() + form.companyName.slice(1), // Map companyName to company
         companyLink: form.companyLink,
         city: form.city,
         country: form.country,
@@ -451,7 +456,9 @@ export default function SponsorDetailsForm() {
 
         budgetRange: form.BudegetRange, // Map BudegetRange to budgetRange
         sponsorshipType: form.SponsorshipType, // Map SponsorshipType to sponsorshipType
-        sponsorshipCountryPreferred: form.SponsorshipCountryPreferred, // Map SponsorshipCountryPreferred to sponsorshipCountryPreferred
+        sponsorshipCountryPreferred:
+          form.SponsorshipCountryPreferred.charAt(0).toUpperCase() +
+          form.SponsorshipCountryPreferred.slice(1), // Map SponsorshipCountryPreferred to sponsorshipCountryPreferred
         bio: form.bio,
         photo: photoUrl,
 
@@ -514,7 +521,7 @@ export default function SponsorDetailsForm() {
   }
 
   return (
-    <div className="w-full p-20 mx-auto dark:bg-gray-900">
+    <div className="w-full px-20 mx-auto dark:bg-gray-900">
       {/* Status messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
@@ -669,7 +676,6 @@ export default function SponsorDetailsForm() {
                 className="bg-gray-100 cursor-not-allowed"
                 readOnly
               />
-              
             </div>
 
             <div>
@@ -730,7 +736,6 @@ export default function SponsorDetailsForm() {
                   readOnly
                 />
               </div>
-             
             </div>
 
             <div>

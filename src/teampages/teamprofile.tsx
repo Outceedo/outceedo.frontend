@@ -169,38 +169,14 @@ const TeamProfile = () => {
               </div>
               <div>
                 <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  Club
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.club || fallbackData.club}
-                </span>
-              </div>
-            </div>
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
                   Type
                 </label>
                 <span className="font-semibold dark:text-white">
                   {data?.profession || fallbackData.profession}
                 </span>
               </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  Country
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.country || fallbackData.country}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  City
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.city || fallbackData.city}
-                </span>
-              </div>
+            </div>
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
               <div>
                 <label className="block text-sm text-gray-500 dark:text-white mb-1">
                   Club

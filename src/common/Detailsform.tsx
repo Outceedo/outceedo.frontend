@@ -783,7 +783,7 @@ const Detailsform: React.FC = () => {
         // Split by comma and trim whitespace from each entry
         languageArray = formData.languages
           .split(",")
-          .map((lang) => lang.trim());
+          .map((lang) => lang.charAt(0).toUpperCase() + lang.slice(1));
       }
 
       // Prepare the profile data to match the schema exactly
@@ -812,15 +812,21 @@ const Detailsform: React.FC = () => {
           twitter: formData.twitter || "",
         },
         interests: [], // Not collected in the form
-        profession: formData.profession || null,
-        subProfession: formData.subProfession || null, // Ensure subProfession is sent correctly
-        sport: formData.sport.charAt(0) + formData.sport.slice(1), // Add sport field
+        profession:
+          formData.profession.charAt(0).toUpperCase() +
+            formData.profession.slice(1) || null,
+        subProfession:
+          formData.subProfession.charAt(0).toUpperCase() +
+            formData.subProfession.slice(1) || null, // Ensure subProfession is sent correctly
+        sport: formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1), // Add sport field
         club: formData.club || null, // Add club field
         company: formData.footballClub || null, // Keep existing footballClub field for backward compatibility
 
         // Include expert-specific fields only if user is an expert
         ...(isExpert && {
-          certificationLevel: formData.certificationLevel || null,
+          certificationLevel:
+            formData.certificationLevel.charAt(0).toUpperCase() +
+              formData.certificationLevel.slice(1) || null,
           skills: Array.isArray(formData.skills)
             ? formData.skills.map((skill: any) =>
                 typeof skill === "string"

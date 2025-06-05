@@ -441,11 +441,12 @@ export default function TeamDetailsForm() {
 
       // Prepare the data for API submission
       const teamData = {
-        profession: form.type,
-        firstName: form.teamName.trim(),
-        sport: form.sport,
+        profession: form.type.charAt(0).toUpperCase() + form.type.slice(1),
+        firstName:
+          form.teamName.charAt(0).toUpperCase() + form.teamName.slice(1),
+        sport: form.sport.charAt(0).toUpperCase() + form.sport.slice(1),
 
-        club: form.clubName.trim(),
+        club: form.clubName.charAt(0).toUpperCase() + form.clubName.slice(1),
         city: form.city,
         country: form.country,
         address: form.address,
