@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faPlus, faTimes } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
@@ -114,18 +114,15 @@ const MediaUpload: React.FC<{
     }
 
     try {
-      // Mark this item as uploading
       setUploads(
         uploads.map((u) =>
           u.id === item.id ? { ...u, isUploading: true, error: undefined } : u
         )
       );
 
-      // Create form data with the exact field names from your curl example
       const formData = new FormData();
       formData.append("title", item.title.trim());
       formData.append("type", item.type);
-      // Use 'media' as the file field name as shown in your curl example
       formData.append("media", item.file);
 
       const token = getAuthToken();
@@ -140,18 +137,12 @@ const MediaUpload: React.FC<{
         }
       );
 
-      console.log(`Upload success for ${item.title}:`, response.data);
-
-      // Clean up preview URL
       if (item.preview) {
         URL.revokeObjectURL(item.preview);
       }
 
       return true;
     } catch (error: any) {
-      console.error(`Upload failed for ${item.title}:`, error);
-
-      // Mark the error for this specific item
       setUploads(
         uploads.map((u) =>
           u.id === item.id
@@ -163,7 +154,6 @@ const MediaUpload: React.FC<{
             : u
         )
       );
-
       return false;
     }
   };
@@ -185,13 +175,11 @@ const MediaUpload: React.FC<{
     setIsSubmitting(true);
 
     try {
-      // Check if we have an auth token
       const token = getAuthToken();
       if (!token) {
         throw new Error("Authentication token not found. Please log in again.");
       }
 
-      // Upload files one by one
       const results = await Promise.all(
         itemsToUpload.map((item) => uploadSingleFile(item))
       );
@@ -207,8 +195,8 @@ const MediaUpload: React.FC<{
           }.`,
         });
 
-        onMediaUpdate(); // Update parent component
-        onClose(); // Close upload dialog
+        onMediaUpdate();
+        onClose();
       } else {
         Swal.fire({
           icon: "info",
@@ -217,7 +205,6 @@ const MediaUpload: React.FC<{
         });
       }
     } catch (error: any) {
-      console.error("Upload process failed:", error);
       Swal.fire({
         icon: "error",
         title: "Upload Failed",
@@ -229,13 +216,19 @@ const MediaUpload: React.FC<{
   };
 
   const handleClose = () => {
-    // Clean up any preview URLs
     uploads.forEach((item) => {
       if (item.preview) {
         URL.revokeObjectURL(item.preview);
       }
     });
     onClose();
+  };
+
+  // File input refs for triggering click on label
+  const fileInputRefs = useRef<{ [key: number]: HTMLInputElement | null }>({});
+
+  const getFilePlaceholder = () => {
+    return activeTab === "photo" ? "(Max size 3MB)" : "(Max size 5MB)";
   };
 
   return (
@@ -292,22 +285,26 @@ const MediaUpload: React.FC<{
       <div className="overflow-y-auto flex-grow py-2">
         {uploads
           .filter((item) => item.type === activeTab)
-          .map((upload) => (
-            <div key={upload.id} className="mt-4">
-              <div className="flex items-center space-x-3">
-                <input
-                  type="text"
-                  placeholder="Title"
-                  value={upload.title}
-                  onChange={(e) => handleTitleChange(upload.id, e.target.value)}
-                  disabled={isSubmitting || upload.isUploading}
-                  className={`border p-2 w-full rounded-md dark:bg-gray-600 dark:text-white ${
-                    isSubmitting || upload.isUploading
-                      ? "opacity-60 cursor-not-allowed"
-                      : ""
-                  }`}
-                />
+          .map((upload, idx, arr) => (
+            <div
+              key={upload.id}
+              className="mt-4 flex flex-col items-center w-full"
+            >
+              <input
+                type="text"
+                placeholder="Title"
+                value={upload.title}
+                onChange={(e) => handleTitleChange(upload.id, e.target.value)}
+                disabled={isSubmitting || upload.isUploading}
+                className={`border p-2 w-full rounded-md dark:bg-gray-600 dark:text-white mb-2 ${
+                  isSubmitting || upload.isUploading
+                    ? "opacity-60 cursor-not-allowed"
+                    : ""
+                }`}
+              />
 
+              {/* Custom file input with Browse button and placeholder */}
+              <div className="w-full flex items-start">
                 <input
                   type="file"
                   accept={activeTab === "photo" ? "image/*" : "video/*"}
@@ -315,29 +312,35 @@ const MediaUpload: React.FC<{
                     handleFileChange(upload.id, e.target.files?.[0] || null)
                   }
                   disabled={isSubmitting || upload.isUploading}
-                  className={`border p-2 file:bg-white file:rounded-lg file:border-gray-300 file:dark:bg-slate-400 file:dark:text-white rounded-md dark:bg-gray-600 dark:text-white ${
+                  className="hidden py-3 text-sm"
+                  ref={(el) => (fileInputRefs.current[upload.id] = el)}
+                  id={`file-input-${upload.id}`}
+                />
+                <label
+                  htmlFor={`file-input-${upload.id}`}
+                  className={`flex-grow border p-2 rounded-md mr-2 bg-white dark:bg-gray-600 text-sm py-2 dark:text-white cursor-pointer ${
                     isSubmitting || upload.isUploading
                       ? "opacity-60 cursor-not-allowed"
                       : ""
                   }`}
-                  placeholder={
-                    activeTab == "photo" ? "Max size 2MB" : "Max size 5MB"
-                  }
-                />
-
-                {uploads.filter((u) => u.type === activeTab).length > 1 && (
-                  <button
-                    onClick={() => handleRemove(upload.id)}
-                    disabled={isSubmitting || upload.isUploading}
-                    className={`text-red-500 ${
-                      isSubmitting || upload.isUploading
-                        ? "opacity-60 cursor-not-allowed"
-                        : ""
-                    }`}
-                  >
-                    <FontAwesomeIcon icon={faTimes} size="lg" />
-                  </button>
-                )}
+                  onClick={(e) => {
+                    if (isSubmitting || upload.isUploading) e.preventDefault();
+                  }}
+                >
+                  {upload.file ? upload.file.name : getFilePlaceholder()}
+                </label>
+                <button
+                  type="button"
+                  disabled={isSubmitting || upload.isUploading}
+                  className={`bg-yellow-200 hover:bg-yellow-300 dark:bg-gray-500 dark:hover:bg-gray-600 px-2 text-sm py-2 rounded transition-all ${
+                    isSubmitting || upload.isUploading
+                      ? "opacity-60 cursor-not-allowed"
+                      : ""
+                  }`}
+                  onClick={() => fileInputRefs.current[upload.id]?.click()}
+                >
+                  Browse
+                </button>
               </div>
 
               {/* Error message for this item */}
@@ -346,7 +349,6 @@ const MediaUpload: React.FC<{
                   {upload.error}
                 </div>
               )}
-
               {/* Loading indicator for this item */}
               {upload.isUploading && (
                 <div className="text-blue-500 text-sm mt-1 ml-1 flex items-center">
@@ -373,22 +375,48 @@ const MediaUpload: React.FC<{
                   Uploading...
                 </div>
               )}
-
-              {/* Preview */}
+              {/* Preview with cross icon */}
               {upload.preview && (
-                <div className="mt-2">
+                <div className="mt-2 w-full flex justify-center relative">
                   {upload.type === "photo" ? (
-                    <img
-                      src={upload.preview}
-                      alt={upload.title}
-                      className="w-full h-40 object-cover rounded-md cursor-pointer"
-                    />
+                    <div className="relative inline-block">
+                      <img
+                        src={upload.preview}
+                        alt={upload.title}
+                        className="max-w-xs h-40 object-cover rounded-md cursor-pointer border"
+                      />
+                      {/* Show cross only if more than one for this tab */}
+                      {arr.length > 1 && (
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 bg-white bg-opacity-80 hover:bg-red-500 hover:text-white border border-gray-300 rounded-full px-2 transition-colors"
+                          onClick={() => handleRemove(upload.id)}
+                          disabled={isSubmitting || upload.isUploading}
+                          title="Remove"
+                        >
+                          <FontAwesomeIcon icon={faTimes} size="sm" />
+                        </button>
+                      )}
+                    </div>
                   ) : (
-                    <video
-                      src={upload.preview}
-                      controls
-                      className="w-full h-40 rounded-md cursor-pointer"
-                    />
+                    <div className="relative inline-block">
+                      <video
+                        src={upload.preview}
+                        controls
+                        className="max-w-xs h-40 rounded-md cursor-pointer border"
+                      />
+                      {arr.length > 1 && (
+                        <button
+                          type="button"
+                          className="absolute top-1 right-1 bg-white bg-opacity-80 hover:bg-red-500 hover:text-white border border-gray-300 rounded-full p-1 transition-colors"
+                          onClick={() => handleRemove(upload.id)}
+                          disabled={isSubmitting || upload.isUploading}
+                          title="Remove"
+                        >
+                          <FontAwesomeIcon icon={faTimes} size="sm" />
+                        </button>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
