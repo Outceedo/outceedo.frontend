@@ -350,7 +350,8 @@ export default function SponsorDetailsForm() {
         country: form.country,
         address: form.address,
         budgetRange: form.BudegetRange,
-        sponsorshipType: form.SponsorshipType.charAt(0).toUpperCase()+form.SponsorshipType,
+        sponsorshipType:
+          form.SponsorshipType.charAt(0).toUpperCase() + form.SponsorshipType,
         sponsorshipCountryPreferred: form.SponsorshipCountryPreferred
           ? form.SponsorshipCountryPreferred.charAt(0).toUpperCase() +
             form.SponsorshipCountryPreferred.slice(1)

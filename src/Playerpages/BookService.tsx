@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
   Clock,
-  User,
   Video,
   DollarSign,
   ChevronLeft,
@@ -36,35 +35,18 @@ interface CalendarMonth {
   firstDayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
 }
 
-interface LocationSuggestion {
-  id: string;
-  description: string;
-  place_id: string;
-  structured_formatting?: {
-    main_text: string;
-    secondary_text?: string;
-  };
+interface AvailabilityData {
+  [date: string]: boolean;
 }
 
-declare global {
-  interface Window {
-    google: any;
-    initAutocomplete: () => void;
-  }
+interface TimeSlot {
+  startTime: string;
+  endTime: string;
+  available: boolean;
 }
 
 const BookingCalendar: React.FC = () => {
   const navigate = useNavigate();
-  const autocompleteInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteServiceRef = useRef<any>(null);
-  const placesServiceRef = useRef<any>(null);
-  const sessionTokenRef = useRef<any>(null);
-
-  const [locationSuggestions, setLocationSuggestions] = useState<
-    LocationSuggestion[]
-  >([]);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [isGoogleMapsLoaded, setIsGoogleMapsLoaded] = useState(false);
 
   // Current date for comparison
   const today = new Date();
@@ -92,8 +74,8 @@ const BookingCalendar: React.FC = () => {
   const [selectedMonthIndex, setSelectedMonthIndex] =
     useState<number>(initialMonthIndex);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
-  const [selectedDate, setSelectedDate] = useState<number>(today.getDate());
-  const [selectedTime, setSelectedTime] = useState<string>("12:30pm");
+  const [selectedDate, setSelectedDate] = useState<number | null>(null);
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
   const [bookingDescription, setBookingDescription] = useState<string>("");
   const [bookingLocation, setBookingLocation] = useState<string>("");
   const [displayedMonth, setDisplayedMonth] = useState<CalendarMonth>({
@@ -105,9 +87,15 @@ const BookingCalendar: React.FC = () => {
 
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const [debouncedLocation, setDebouncedLocation] = useState("");
+  const [loadingAvailability, setLoadingAvailability] =
+    useState<boolean>(false);
+  const [loadingTimeSlots, setLoadingTimeSlots] = useState<boolean>(false);
+  const [availabilityData, setAvailabilityData] = useState<AvailabilityData>(
+    {}
+  );
+  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
 
-  // API base URL
+  // API base URLs
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
   // Check if service is ON GROUND ASSESSMENT
@@ -121,206 +109,138 @@ const BookingCalendar: React.FC = () => {
     }
   }, []);
 
-  // Load Google Maps API
+  // Fetch monthly availability when month, year, or expert changes
   useEffect(() => {
-    // Check if Google Maps API is already loaded
-    if (window.google && window.google.maps) {
-      setIsGoogleMapsLoaded(true);
-      initializeGoogleMapsAutocomplete();
-      return;
-    }
+    const fetchExpertAvailability = async () => {
+      if (!service?.expertId) return;
 
-    // Define the callback function
-    window.initAutocomplete = () => {
-      setIsGoogleMapsLoaded(true);
-      initializeGoogleMapsAutocomplete();
-    };
+      setLoadingAvailability(true);
+      try {
+        // Get auth token
+        const token = localStorage.getItem("token");
 
-    // Create and add the script
-    const googleMapsScript = document.createElement("script");
-    // In production, replace YOUR_API_KEY with an actual key
-    googleMapsScript.src = `https://maps.googleapis.com/maps/api/js?key=${
-      import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "YOUR_API_KEY"
-    }&libraries=places&callback=initAutocomplete`;
-    googleMapsScript.async = true;
-    googleMapsScript.defer = true;
+        // Fetch availability data for the selected month and year
+        const API_AV = `${import.meta.env.VITE_PORT}/api/v1/user/availability/${
+          service.expertId
+        }/monthly?month=${selectedMonthIndex + 1}&year=${selectedYear}`;
 
-    // If API key is not available, use a fallback approach
-    if (!import.meta.env.VITE_GOOGLE_MAPS_API_KEY) {
-      console.warn("Google Maps API key not available. Using mock data.");
-      setIsGoogleMapsLoaded(true); // Pretend it's loaded
-      return; // Skip loading the script
-    }
+        const response = await fetch(API_AV, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-    document.body.appendChild(googleMapsScript);
+        if (!response.ok) {
+          throw new Error("Failed to fetch expert availability");
+        }
 
-    return () => {
-      // Clean up
-      document.body.removeChild(googleMapsScript);
-      delete window.initAutocomplete;
-    };
-  }, []);
+        const data = await response.json();
+        setAvailabilityData(data);
 
-  // Initialize Google Maps Autocomplete
-  const initializeGoogleMapsAutocomplete = () => {
-    if (window.google && window.google.maps) {
-      autocompleteServiceRef.current =
-        new window.google.maps.places.AutocompleteService();
-      placesServiceRef.current = new window.google.maps.places.PlacesService(
-        document.createElement("div")
-      );
-      sessionTokenRef.current =
-        new window.google.maps.places.AutocompleteSessionToken();
-
-      console.log("Google Maps Autocomplete initialized");
-    }
-  };
-
-  // Debounce the location input
-  useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedLocation(bookingLocation);
-    }, 300);
-
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [bookingLocation]);
-
-  // Get location suggestions
-  useEffect(() => {
-    if (!debouncedLocation || debouncedLocation.length < 2) {
-      setLocationSuggestions([]);
-      setShowSuggestions(false);
-      return;
-    }
-
-    // If Google Maps API is loaded, use it
-    if (isGoogleMapsLoaded && autocompleteServiceRef.current) {
-      autocompleteServiceRef.current.getPlacePredictions(
-        {
-          input: debouncedLocation,
-          types: [], // Empty array to get all types of places
-          componentRestrictions: { country: "us" }, // Limit to US - change or remove as needed
-          sessionToken: sessionTokenRef.current,
-        },
-        (predictions: LocationSuggestion[], status: string) => {
-          if (status === "OK" && predictions && predictions.length > 0) {
-            setLocationSuggestions(predictions);
-            setShowSuggestions(true);
-          } else {
-            // Fallback to mock data if no results or error
-            provideMockSuggestions(debouncedLocation);
+        // Reset selected date if it's no longer available in the new month
+        if (selectedDate) {
+          const formattedDate = formatDateString(
+            selectedYear,
+            selectedMonthIndex,
+            selectedDate
+          );
+          if (!data[formattedDate]) {
+            setSelectedDate(null);
+            setSelectedTime(null);
+            setAvailableTimeSlots([]);
           }
         }
-      );
-    } else {
-      // Use mock data if Google Maps API is not available
-      provideMockSuggestions(debouncedLocation);
-    }
-  }, [debouncedLocation, isGoogleMapsLoaded]);
-
-  // Provide mock suggestions for demonstration
-  const provideMockSuggestions = (input: string) => {
-    // More diverse location types
-    const locationTypes = [""];
-
-    // City names for diversity
-    const cities = [""];
-
-    // Generate mock suggestions
-    const mockResults: LocationSuggestion[] = [];
-
-    // First, exact match
-    mockResults.push({
-      place_id: `place-${Math.random().toString(36).substr(2, 9)}`,
-      description: `${input}, Main Street, Downtown`,
-      id: `id-${Math.random().toString(36).substr(2, 9)}`,
-      structured_formatting: {
-        main_text: input,
-      },
-    });
-
-    // Then, add variations
-    for (let i = 0; i < 4; i++) {
-      const locationType =
-        locationTypes[Math.floor(Math.random() * locationTypes.length)];
-      const city = cities[Math.floor(Math.random() * cities.length)];
-
-      mockResults.push({
-        place_id: `place-${Math.random().toString(36).substr(2, 9)}`,
-        description: `${input} ${locationType}, ${city}`,
-        id: `id-${Math.random().toString(36).substr(2, 9)}`,
-        structured_formatting: {
-          main_text: `${input} ${locationType}`,
-          secondary_text: city,
-        },
-      });
-    }
-
-    setLocationSuggestions(mockResults);
-    setShowSuggestions(true);
-  };
-
-  // Handle location input change
-  const handleLocationInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const { value } = e.target;
-    setBookingLocation(value);
-
-    if (value.length < 2) {
-      setShowSuggestions(false);
-    }
-  };
-
-  // Handle suggestion select
-  const handleSuggestionSelect = (suggestion: LocationSuggestion) => {
-    setBookingLocation(suggestion.description);
-    setShowSuggestions(false);
-
-    // If using real Google API, get place details
-    if (
-      isGoogleMapsLoaded &&
-      placesServiceRef.current &&
-      !suggestion.id.startsWith("id-")
-    ) {
-      placesServiceRef.current.getDetails(
-        {
-          placeId: suggestion.place_id,
-          fields: ["formatted_address", "name", "geometry"],
-          sessionToken: sessionTokenRef.current,
-        },
-        (place: any, status: string) => {
-          if (status === "OK") {
-            // Update with the full formatted address
-            setBookingLocation(place.formatted_address);
-
-            // Generate new session token for next search
-            sessionTokenRef.current =
-              new window.google.maps.places.AutocompleteSessionToken();
-          }
-        }
-      );
-    }
-  };
-
-  // Close suggestions when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        autocompleteInputRef.current &&
-        !autocompleteInputRef.current.contains(event.target as Node)
-      ) {
-        setShowSuggestions(false);
+      } catch (error) {
+        console.error("Error fetching expert availability:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to load expert's availability. Please try again.",
+          timer: 3000,
+          showConfirmButton: false,
+        });
+      } finally {
+        setLoadingAvailability(false);
       }
     };
 
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
+    fetchExpertAvailability();
+  }, [selectedMonthIndex, selectedYear, service?.expertId]);
+
+  // Fetch time slots when a date is selected
+  useEffect(() => {
+    const fetchTimeSlots = async () => {
+      if (!selectedDate || !service?.expertId) {
+        setAvailableTimeSlots([]);
+        return;
+      }
+
+      setLoadingTimeSlots(true);
+      try {
+        // Get auth token
+        const token = localStorage.getItem("token");
+
+        // Format date for API
+        const formattedDate = formatDateString(
+          selectedYear,
+          selectedMonthIndex,
+          selectedDate
+        );
+
+        // Fetch available time slots for the selected date
+        const API_AV = `${import.meta.env.VITE_PORT}/api/v1/user/availability/${
+          service.expertId
+        }/slots?date=${formattedDate}`;
+
+        const response = await fetch(API_AV, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to fetch time slots");
+        }
+
+        const data: TimeSlot[] = await response.json();
+
+        // Filter only available slots
+        const availableSlots = data.filter((slot) => slot.available);
+        setAvailableTimeSlots(availableSlots);
+
+        // Reset selected time if it's no longer available
+        if (selectedTime) {
+          const [hour, minute] = selectedTime.split(":");
+          const selectedTimeFormatted = `${hour}:${minute}`;
+
+          const isTimeAvailable = availableSlots.some(
+            (slot) => slot.startTime === selectedTimeFormatted
+          );
+
+          if (!isTimeAvailable) {
+            setSelectedTime(null);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching time slots:", error);
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text: "Failed to load available time slots. Please try again.",
+          timer: 3000,
+          showConfirmButton: false,
+        });
+      } finally {
+        setLoadingTimeSlots(false);
+      }
     };
-  }, []);
+
+    fetchTimeSlots();
+  }, [selectedDate, service?.expertId, selectedMonthIndex, selectedYear]);
 
   // Update displayed month when month or year changes
   useEffect(() => {
@@ -340,14 +260,55 @@ const BookingCalendar: React.FC = () => {
     });
   }, [selectedMonthIndex, selectedYear]);
 
+  // Format date as YYYY-MM-DD for API comparison
+  const formatDateString = (
+    year: number,
+    month: number,
+    day: number
+  ): string => {
+    return `${year}-${String(month + 1).padStart(2, "0")}-${String(
+      day
+    ).padStart(2, "0")}`;
+  };
+
+  // Format time from 24-hour to 12-hour format
+  const formatTime = (time: string): string => {
+    const [hour, minute] = time.split(":");
+    const hourNum = parseInt(hour, 10);
+
+    if (hourNum === 0) {
+      return `12:${minute}am`;
+    } else if (hourNum === 12) {
+      return `12:${minute}pm`;
+    } else if (hourNum > 12) {
+      return `${hourNum - 12}:${minute}pm`;
+    } else {
+      return `${hourNum}:${minute}am`;
+    }
+  };
+
+  // Check if a date is available based on expert's availability
+  const isDateAvailable = (day: number): boolean => {
+    const dateString = formatDateString(selectedYear, selectedMonthIndex, day);
+    return availabilityData[dateString] === true;
+  };
+
   // Calendar data
   const daysOfWeek = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-  // Time slots
-  const timeSlots = [
-    ["10:30am", "11:30am", "12:30pm", "02:30pm"],
-    ["03:30pm", "04:30pm", "05:30pm", "07:30pm"],
-  ];
+  // Organize time slots into rows for display
+  const organizeTimeSlotsIntoRows = () => {
+    const rows = [];
+    const slotsPerRow = 4;
+
+    for (let i = 0; i < availableTimeSlots.length; i += slotsPerRow) {
+      rows.push(availableTimeSlots.slice(i, i + slotsPerRow));
+    }
+
+    return rows;
+  };
+
+  const timeSlotRows = organizeTimeSlotsIntoRows();
 
   const handlePrevMonth = () => {
     if (selectedYear === currentYear && selectedMonthIndex <= currentMonth) {
@@ -376,20 +337,15 @@ const BookingCalendar: React.FC = () => {
   };
 
   const handleDateSelect = (day: number) => {
-    // Only allow selecting dates if they're not in the past
-    if (
-      selectedYear > currentYear ||
-      (selectedYear === currentYear && selectedMonthIndex > currentMonth) ||
-      (selectedYear === currentYear &&
-        selectedMonthIndex === currentMonth &&
-        day >= currentDay)
-    ) {
+    // Only allow selecting dates if they're available and not in the past
+    if (isDateAvailable(day) && !isDateInPast(day)) {
       setSelectedDate(day);
+      setSelectedTime(null); // Reset time selection when date changes
     }
   };
 
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
+  const handleTimeSelect = (slot: TimeSlot) => {
+    setSelectedTime(slot.startTime);
   };
 
   const handleBack = () => {
@@ -403,42 +359,48 @@ const BookingCalendar: React.FC = () => {
     setBookingDescription(e.target.value);
   };
 
-  // Convert 12-hour time format to 24-hour format
-  const convertTo24HourFormat = (time: string): string => {
-    const [hour, minuteWithSuffix] = time.split(":");
-    const minute = minuteWithSuffix.substring(0, 2);
-    const isPM = minuteWithSuffix.toLowerCase().includes("pm");
-
-    let hourNum = parseInt(hour, 10);
-
-    if (isPM && hourNum !== 12) {
-      hourNum += 12;
-    } else if (!isPM && hourNum === 12) {
-      hourNum = 0;
-    }
-
-    return `${hourNum.toString().padStart(2, "0")}:${minute || "00"}`;
+  // Handle location input change
+  const handleLocationInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setBookingLocation(e.target.value);
   };
 
-  // Calculate end time (assuming 1 hour duration)
+  // Calculate end time
   const calculateEndTime = (startTime: string): string => {
     const [hour, minute] = startTime.split(":").map((num) => parseInt(num, 10));
-    let endHour = hour + 1;
 
-    // Handle hour overflow
+    // Find the matching time slot to get the actual end time
+    const selectedSlot = availableTimeSlots.find(
+      (slot) => slot.startTime === startTime
+    );
+    if (selectedSlot) {
+      return selectedSlot.endTime;
+    }
+
+    // Fallback: calculate end time as start time + 30 minutes
+    let endHour = hour;
+    let endMinute = minute + 30;
+
+    if (endMinute >= 60) {
+      endHour += 1;
+      endMinute -= 60;
+    }
+
     if (endHour >= 24) {
       endHour -= 24;
     }
 
-    return `${endHour.toString().padStart(2, "0")}:${minute
+    return `${endHour.toString().padStart(2, "0")}:${endMinute
       .toString()
       .padStart(2, "0")}`;
   };
 
   // Format date as YYYY-MM-DD
   const formatDateForAPI = (): string => {
-    const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
+    if (!selectedDate) return "";
 
+    const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
@@ -447,10 +409,34 @@ const BookingCalendar: React.FC = () => {
   };
 
   const handleConfirm = async () => {
+    // Validate selected date
+    if (!selectedDate) {
+      Swal.fire({
+        icon: "error",
+        title: "Please Select a Date",
+        text: "You must select an available date to continue.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    // Validate selected time
+    if (!selectedTime) {
+      Swal.fire({
+        icon: "error",
+        title: "Please Select a Time",
+        text: "You must select an available time slot to continue.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
     // For ON GROUND ASSESSMENT, validate location first
     if (isOnGroundAssessment && !bookingLocation.trim()) {
       Swal.fire({
-        icon: "failure",
+        icon: "error",
         title: "Please Enter Location",
         text: "Enter your location for On Ground Assessment.",
         timer: 3000,
@@ -462,26 +448,27 @@ const BookingCalendar: React.FC = () => {
     setLoading(true);
 
     try {
-      // Get expertId from localStorage
-      const expertId = localStorage.getItem("expertid");
+      // Get expertId from service or localStorage
+      const expertId = service?.expertId || localStorage.getItem("expertid");
 
       // Get serviceId from service object or localStorage
       const serviceId = service?.serviceid;
 
-      // Format time for API
-      const startTime24H = convertTo24HourFormat(selectedTime);
-      const endTime24H = calculateEndTime(startTime24H);
+      // Get start and end time
+      const startTime = selectedTime;
+      const endTime = calculateEndTime(selectedTime);
       const formattedDate = formatDateForAPI();
 
       console.log("Booking date being sent:", formattedDate);
+      console.log("Booking time being sent:", startTime, "to", endTime);
 
       // Prepare booking data
       const bookingData = {
         expertId: expertId,
         serviceId: serviceId,
         date: formattedDate,
-        startTime: startTime24H,
-        endTime: endTime24H,
+        startTime: startTime,
+        endTime: endTime,
         location: bookingLocation,
         description: bookingDescription,
       };
@@ -503,7 +490,13 @@ const BookingCalendar: React.FC = () => {
 
       if (!response.ok) {
         console.error("Booking failed:", data);
-        alert(`Booking failed: ${data.message || "Unknown error"}`);
+        Swal.fire({
+          icon: "error",
+          title: "Booking Failed",
+          text: data.message || "Unknown error occurred",
+          timer: 3000,
+          showConfirmButton: false,
+        });
       } else {
         console.log("Booking successful:", data);
         Swal.fire({
@@ -516,11 +509,16 @@ const BookingCalendar: React.FC = () => {
           // Navigate after the alert is closed or timer expires
           navigate("/player/mybooking");
         });
-        // Navigate to bookings page
       }
     } catch (error) {
       console.error("Booking error:", error);
-      alert("An error occurred during booking. Please try again.");
+      Swal.fire({
+        icon: "error",
+        title: "Booking Error",
+        text: "An error occurred during booking. Please try again.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
     } finally {
       setLoading(false);
     }
@@ -528,6 +526,8 @@ const BookingCalendar: React.FC = () => {
 
   // Format the selected date
   const getFormattedDate = () => {
+    if (!selectedDate) return "Select a date";
+
     const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -559,6 +559,27 @@ const BookingCalendar: React.FC = () => {
   };
 
   const calendarDays = generateCalendarDays();
+
+  // Get class name for calendar day
+  const getDayClassName = (day: number) => {
+    if (day === null) return "";
+
+    const isSelected =
+      selectedDate === day &&
+      selectedMonthIndex === monthNames.indexOf(displayedMonth.name) &&
+      selectedYear === displayedMonth.year;
+
+    const isPast = isDateInPast(day);
+    const isAvailable = isDateAvailable(day);
+
+    if (isSelected) {
+      return "bg-red-500 text-white font-medium shadow-md";
+    } else if (isPast || !isAvailable) {
+      return "text-gray-300 cursor-not-allowed bg-gray-50";
+    } else {
+      return "hover:bg-gray-100 text-gray-800";
+    }
+  };
 
   return (
     <div className="flex flex-col justify-center items-center">
@@ -607,7 +628,7 @@ const BookingCalendar: React.FC = () => {
 
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-gray-500" />
-                  <span className="text-gray-600">60 mins</span>
+                  <span className="text-gray-600">30 mins per session</span>
                 </div>
 
                 <div className="flex items-start gap-3">
@@ -666,51 +687,52 @@ const BookingCalendar: React.FC = () => {
                 </button>
               </div>
 
-              {/* Calendar */}
+              {/* Calendar with loading state */}
               <div className="mb-6">
-                {/* Days of week */}
-                <div className="grid grid-cols-7 text-center mb-2">
-                  {daysOfWeek.map((day) => (
-                    <div
-                      key={day}
-                      className="text-sm font-medium text-gray-500"
-                    >
-                      {day}
-                    </div>
-                  ))}
-                </div>
-
-                {/* Calendar days */}
-                <div className="grid grid-cols-7 gap-2">
-                  {calendarDays.map((day, index) => (
-                    <div
-                      key={index}
-                      className="h-10 w-10 flex items-center justify-center"
-                    >
-                      {day !== null ? (
-                        <button
-                          onClick={() => handleDateSelect(day)}
-                          disabled={isDateInPast(day)}
-                          className={`
-                            h-10 w-10 rounded-full flex items-center justify-center text-sm
-                            ${
-                              selectedDate === day &&
-                              selectedMonthIndex ===
-                                monthNames.indexOf(displayedMonth.name) &&
-                              selectedYear === displayedMonth.year
-                                ? "bg-red-500 text-white font-medium shadow-md" // Updated styling for selected date
-                                : isDateInPast(day)
-                                ? "text-gray-300 cursor-not-allowed"
-                                : "hover:bg-gray-100"
-                            }
-                          `}
+                {loadingAvailability ? (
+                  <div className="flex justify-center items-center h-[240px]">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                  </div>
+                ) : (
+                  <>
+                    {/* Days of week */}
+                    <div className="grid grid-cols-7 text-center mb-2">
+                      {daysOfWeek.map((day) => (
+                        <div
+                          key={day}
+                          className="text-sm font-medium text-gray-500"
                         >
                           {day}
-                        </button>
-                      ) : null}
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
+
+                    {/* Calendar days */}
+                    <div className="grid grid-cols-7 gap-2">
+                      {calendarDays.map((day, index) => (
+                        <div
+                          key={index}
+                          className="h-10 w-10 flex items-center justify-center"
+                        >
+                          {day !== null ? (
+                            <button
+                              onClick={() => handleDateSelect(day)}
+                              disabled={
+                                isDateInPast(day) || !isDateAvailable(day)
+                              }
+                              className={`
+                                h-10 w-10 rounded-full flex items-center justify-center text-sm
+                                ${getDayClassName(day)}
+                              `}
+                            >
+                              {day}
+                            </button>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* Selected date */}
@@ -720,31 +742,51 @@ const BookingCalendar: React.FC = () => {
                 </p>
               </div>
 
-              {/* Time slots */}
-              <div className="space-y-3 mb-6">
-                {timeSlots.map((row, rowIndex) => (
-                  <div key={rowIndex} className="grid grid-cols-4 gap-2">
-                    {row.map((time) => (
-                      <button
-                        key={time}
-                        onClick={() => handleTimeSelect(time)}
-                        className={`
-                          py-2 px-3 border rounded-md text-sm
-                          ${
-                            selectedTime === time
-                              ? "border-red-500 bg-red-50 text-red-500"
-                              : "border-gray-200 hover:border-gray-300"
-                          }
-                        `}
-                      >
-                        {time}
-                      </button>
+              {/* Time slots with loading state */}
+              <div className="mb-6">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">
+                  Available Time Slots
+                </h3>
+
+                {!selectedDate ? (
+                  <p className="text-gray-500 text-sm italic">
+                    Select a date to view available time slots
+                  </p>
+                ) : loadingTimeSlots ? (
+                  <div className="flex justify-center items-center h-[100px]">
+                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>
+                  </div>
+                ) : availableTimeSlots.length === 0 ? (
+                  <p className="text-gray-500 text-sm italic">
+                    No available time slots for this date
+                  </p>
+                ) : (
+                  <div className="space-y-3">
+                    {timeSlotRows.map((row, rowIndex) => (
+                      <div key={rowIndex} className="grid grid-cols-4 gap-2">
+                        {row.map((slot) => (
+                          <button
+                            key={slot.startTime}
+                            onClick={() => handleTimeSelect(slot)}
+                            className={`
+                              py-2 px-3 border rounded-md text-sm
+                              ${
+                                selectedTime === slot.startTime
+                                  ? "border-red-500 bg-red-50 text-red-500"
+                                  : "border-gray-200 hover:border-gray-300 text-gray-800"
+                              }
+                            `}
+                          >
+                            {formatTime(slot.startTime)}
+                          </button>
+                        ))}
+                      </div>
                     ))}
                   </div>
-                ))}
+                )}
               </div>
 
-              {/* Location field with autocomplete - Only for ON GROUND ASSESSMENT */}
+              {/* Simple Location field - Only for ON GROUND ASSESSMENT */}
               {isOnGroundAssessment && (
                 <div className="mt-6 mb-4">
                   <Label
@@ -754,47 +796,14 @@ const BookingCalendar: React.FC = () => {
                     <MapPin className="h-4 w-4 mr-1 text-red-500" />
                     Location <span className="text-red-500 ml-1">*</span>
                   </Label>
-                  <div className="relative" ref={autocompleteInputRef}>
-                    <Input
-                      id="booking-location"
-                      placeholder="Search for any location (stadiums, schools, parks, etc.)"
-                      value={bookingLocation}
-                      onChange={handleLocationInputChange}
-                      className="w-full border-gray-200 rounded-md focus:border-red-500 focus:ring focus:ring-red-200"
-                      required
-                      autoComplete="off"
-                    />
-                    {showSuggestions && locationSuggestions.length > 0 && (
-                      <div className="absolute z-10 w-full mt-1 bg-white shadow-lg rounded-md border border-gray-200 max-h-60 overflow-y-auto">
-                        {locationSuggestions.map((suggestion) => (
-                          <div
-                            key={suggestion.id || suggestion.place_id}
-                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
-                            onClick={() => handleSuggestionSelect(suggestion)}
-                          >
-                            {suggestion.structured_formatting ? (
-                              <>
-                                <div className="font-medium">
-                                  {suggestion.structured_formatting.main_text}
-                                </div>
-                                {suggestion.structured_formatting
-                                  .secondary_text && (
-                                  <div className="text-xs text-gray-500">
-                                    {
-                                      suggestion.structured_formatting
-                                        .secondary_text
-                                    }
-                                  </div>
-                                )}
-                              </>
-                            ) : (
-                              <div>{suggestion.description}</div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  <Input
+                    id="booking-location"
+                    placeholder="Enter your location (stadiums, schools, parks, etc.)"
+                    value={bookingLocation}
+                    onChange={handleLocationInputChange}
+                    className="w-full border-gray-200 rounded-md focus:border-red-500 focus:ring focus:ring-red-200"
+                    required
+                  />
                   <p className="text-xs text-gray-500 mt-1">
                     Enter any location including stadiums, fields, schools,
                     parks, community centers, etc.
@@ -828,7 +837,7 @@ const BookingCalendar: React.FC = () => {
         <Button
           className="bg-red-500 hover:bg-red-600 text-white px-8"
           onClick={handleConfirm}
-          disabled={loading}
+          disabled={loading || !selectedDate || !selectedTime}
         >
           {loading ? "Processing..." : "Confirm Booking"}
         </Button>

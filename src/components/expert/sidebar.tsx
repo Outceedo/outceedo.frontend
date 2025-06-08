@@ -75,6 +75,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const expertAge = currentProfile?.age ? `Age ${currentProfile.age}` : "";
   const expertProfession = currentProfile?.profession || "Expert";
   const expertSubProfession = currentProfile?.subProfession || "";
+  console.log(currentProfile?.id);
+  localStorage.setItem("expertId", currentProfile?.id);
 
   // Function to handle logout
   function handleLogout() {

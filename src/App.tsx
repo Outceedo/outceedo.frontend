@@ -73,6 +73,7 @@ import SponsorInfo from "./expertpages/sponsorinfo";
 import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
 import TeamSponsorInfo from "./teampages/Sponsorinfo";
 import TeamExperts from "./teampages/expertprofile";
+import ExpertAvailabilityManager from "./expertpages/Slots";
 // Set up authorization headers from localStorage immediately before rendering
 const token = localStorage.getItem("token");
 if (token) {
@@ -133,6 +134,8 @@ const AppContent: React.FC = () => {
       navigate("/sponsor/dashboard");
     } else if (role === "team") {
       navigate("/team/dashboard");
+    } else {
+      navigate("/fan/dashboard");
     }
   }
 
@@ -154,7 +157,9 @@ const AppContent: React.FC = () => {
                   ? "/expert/dashboard"
                   : user?.role === "sponsor"
                   ? "/sponsor/dashboard"
-                  : "/team/dashboard"
+                  : user?.role === "team"
+                  ? "/team/dashboard"
+                  : "/fan/dashboard"
               }
             />
           ) : (
@@ -175,7 +180,9 @@ const AppContent: React.FC = () => {
                   ? "/expert/dashboard"
                   : user?.role === "sponsor"
                   ? "/sponsor/dashboard"
-                  : "/team/dashboard"
+                  : user?.role === "team"
+                  ? "/team/dashboard"
+                  : "/fan/dashboard"
               }
             />
           ) : (
@@ -226,9 +233,9 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
-        <Route path="sponsors" element={<Expertsponsers />} />
         <Route path="ApplicationForm" element={<ApplicationForm />} />
-        <Route path="Sponsorinfo" element={<SponsorInfo />} />
+        <Route path="sponsorinfo" element={<SponsorInfo />} />
+        <Route path="slots" element={<ExpertAvailabilityManager />} />
       </Route>
 
       {/* Sponser routes */}
@@ -275,6 +282,14 @@ const AppContent: React.FC = () => {
         <Route path="sponsorinfo" element={<TeamSponsorInfo />} />
         <Route path="book" element={<BookingCalendar />} />
       </Route>
+      <Route
+        path="/fan"
+        element={
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <TeamLayout />
+          </CheckAuth>
+        }
+      ></Route>
 
       <Route
         path="/unauthorized"
