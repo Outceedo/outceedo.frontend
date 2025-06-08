@@ -6,13 +6,7 @@ import React from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import {
-  ArrowLeft,
-  ArrowLeftFromLine,
-  ArrowLeftIcon,
-  Loader2,
-  MoveLeft,
-} from "lucide-react";
+import { MoveLeft, Loader2 } from "lucide-react";
 import axios from "axios";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -48,13 +42,6 @@ interface FormData {
   };
 }
 
-interface CountryData {
-  name: string;
-  code: string;
-  dialCode: string;
-  cities: string[];
-}
-
 interface UserData {
   email: string;
   id: string;
@@ -76,10 +63,7 @@ export default function TeamDetailsForm() {
     Record<string, string>
   >({});
 
-  // User data from API
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [countryCode, setCountryCode] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   // Redux hooks
@@ -99,11 +83,9 @@ export default function TeamDetailsForm() {
   };
 
   const navigate = useNavigate();
-  const [countries, setCountries] = useState<CountryData[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
 
   const goBack = () => {
-    navigate(-1); // goes to previous page
+    navigate(-1);
   };
 
   const [form, setForm] = useState<FormData>({
@@ -162,14 +144,18 @@ export default function TeamDetailsForm() {
 
         // Parse mobile number to extract country code and number
         if (data.mobileNumber) {
-          // Extract country code - assuming format like "+91 6302445751"
           const parts = data.mobileNumber.split(" ");
           if (parts.length === 2) {
-            setCountryCode(parts[0]); // "+91"
-            setPhoneNumber(parts[1]); // "6302445751"
+            setForm((prev) => ({
+              ...prev,
+              countryCode: parts[0], // "+91"
+              phone: parts[1], // "6302445751"
+            }));
           } else {
-            // If format is different, store full number as is
-            setPhoneNumber(data.mobileNumber);
+            setForm((prev) => ({
+              ...prev,
+              phone: data.mobileNumber,
+            }));
           }
         }
 
@@ -179,10 +165,8 @@ export default function TeamDetailsForm() {
           email: data.email || "",
         }));
 
-        console.log("User data fetched successfully:", data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching user data:", error);
         setError("Failed to fetch user data");
         setIsLoading(false);
       }
@@ -200,7 +184,6 @@ export default function TeamDetailsForm() {
       if (!form.teamName.trim()) {
         errors.teamName = "Team name is required";
       }
-
       if (!form.type) {
         errors.type = "Please select a type";
       }
@@ -210,7 +193,6 @@ export default function TeamDetailsForm() {
       if (!form.city) {
         errors.city = "City is required";
       }
-      // Skip email validation since it's now read-only
     }
 
     setValidationErrors(errors);
@@ -220,18 +202,6 @@ export default function TeamDetailsForm() {
       return false;
     }
     return true;
-  };
-
-  // Helper to create axios instance with auth header
-  const createAuthAxios = () => {
-    const token = getAuthToken();
-    return axios.create({
-      baseURL: API_BASE_URL,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
   };
 
   // Handle file uploads
@@ -244,7 +214,6 @@ export default function TeamDetailsForm() {
       return;
     }
 
-    // Store the file locally and mark that profile photo has changed
     setProfilePhoto(file);
     setProfilePhotoChanged(true);
     setError(null);
@@ -256,7 +225,6 @@ export default function TeamDetailsForm() {
     >
   ) => {
     const { name, value } = e.target;
-    // Handling nested socialLinks
     if (name.startsWith("socialLinks.")) {
       const socialKey = name.split(".")[1];
       setForm((prev) => ({
@@ -270,7 +238,6 @@ export default function TeamDetailsForm() {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -279,35 +246,35 @@ export default function TeamDetailsForm() {
       });
     }
   };
+
   const username = localStorage.getItem("username");
   useEffect(() => {
     if (username) {
       dispatch(getProfile(username));
-    } else {
-      console.error("No username found in localStorage");
     }
   }, [dispatch, username]);
 
   // Fetch team data if editing existing team
   useEffect(() => {
     if (profileData) {
-      // Save existing profile photo if available
       if (profileData.photo) {
         setExistingProfilePhoto(profileData.photo);
       }
 
-      // Map the team data to form data structure
       setForm({
         teamName: profileData.firstName || "",
-        type: profileData.profession || "",
-        sport: profileData.sport || "",
+        type: profileData.profession
+          ? profileData.profession.toLowerCase()
+          : "",
+        sport: profileData.sport ? profileData.sport.toLowerCase() : "",
+
         clubName: profileData.club || "",
         city: profileData.city || "",
         country: profileData.country || "",
         address: profileData.address || "",
         countryCode: profileData.countryCode || "",
         phone: profileData.phone || "",
-        email: userData?.email || profileData.email || "", // Prioritize userData email
+        email: userData?.email || profileData.email || "",
         bio: profileData.bio || "",
         socialLinks: {
           instagram: profileData.socialLinks?.instagram || "",
@@ -319,62 +286,6 @@ export default function TeamDetailsForm() {
     }
   }, [profileData, userData]);
 
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const countryRes = await fetch("https://restcountries.com/v3.1/all");
-        const data = await countryRes.json();
-        const countryList: CountryData[] = data
-          .map((item: any) => ({
-            name: item.name.common,
-            code: item.cca2,
-            dialCode: item.idd.root
-              ? `${item.idd.root}${
-                  item.idd.suffixes ? item.idd.suffixes[0] : ""
-                }`
-              : "",
-            cities: [],
-          }))
-          .sort((a: CountryData, b: CountryData) =>
-            a.name.localeCompare(b.name)
-          );
-        setCountries(countryList);
-      } catch (error) {
-        console.error("Error fetching countries:", error);
-        setError("Failed to load countries. Please try again.");
-      }
-    };
-    fetchCountries();
-  }, []);
-
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (!form.country) return;
-
-      try {
-        const res = await fetch(
-          "https://countriesnow.space/api/v0.1/countries"
-        );
-        const data = await res.json();
-        const countryData = data.data.find(
-          (item: any) =>
-            item.country.toLowerCase() === form.country.toLowerCase()
-        );
-        if (countryData) {
-          setCities(countryData.cities);
-        } else {
-          setCities([]);
-        }
-      } catch (error) {
-        console.error("Error fetching cities:", error);
-        setError("Failed to load cities. Please try again.");
-      }
-    };
-
-    if (form.country) fetchCities();
-  }, [form.country]);
-
-  // Watch for changes in profileState status
   useEffect(() => {
     if (profileState.status === "failed" && profileState.error) {
       setError(profileState.error);
@@ -391,13 +302,8 @@ export default function TeamDetailsForm() {
     setForm((prev) => ({
       ...prev,
       [name]: value,
-      ...(name === "country" && {
-        countryCode: countries.find((c) => c.name === value)?.dialCode || "",
-        city: "",
-      }),
     }));
 
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -414,43 +320,33 @@ export default function TeamDetailsForm() {
     setError(null);
 
     try {
-      // First upload profile photo if it's changed
       let photoUrl = existingProfilePhoto;
 
       if (profilePhoto && profilePhotoChanged) {
         try {
-          // Dispatch updateProfilePhoto action and wait for the result
           const resultAction = await dispatch(updateProfilePhoto(profilePhoto));
-
-          // Check if the action was fulfilled
           if (updateProfilePhoto.fulfilled.match(resultAction)) {
-            // Extract the updated profile from the action payload
             const updatedProfile = resultAction.payload;
-            // Get the photo URL from the updated profile
             photoUrl = updatedProfile.photo || photoUrl;
           } else if (updateProfilePhoto.rejected.match(resultAction)) {
             throw new Error("Failed to upload profile photo.");
           }
         } catch (error) {
-          console.error("Error uploading profile photo:", error);
           setError("Failed to upload profile photo. Please try again.");
           setIsSubmitting(false);
           return;
         }
       }
 
-      // Prepare the data for API submission
       const teamData = {
         profession: form.type.charAt(0).toUpperCase() + form.type.slice(1),
         firstName:
           form.teamName.charAt(0).toUpperCase() + form.teamName.slice(1),
         sport: form.sport.charAt(0).toUpperCase() + form.sport.slice(1),
-
         club: form.clubName.charAt(0).toUpperCase() + form.clubName.slice(1),
         city: form.city,
         country: form.country,
         address: form.address,
-
         bio: form.bio,
         photo: photoUrl,
         socialLinks: {
@@ -460,15 +356,11 @@ export default function TeamDetailsForm() {
           twitter: form.socialLinks.twitter || "",
         },
       };
-      console.log(form);
 
-      // Update profile using Redux action
       const updateProfileResult = await dispatch(updateProfile(teamData));
 
       if (updateProfile.fulfilled.match(updateProfileResult)) {
         setSuccess("Team details saved successfully!");
-
-        // Redirect to appropriate page after submission
         setTimeout(() => {
           navigate("/team/dashboard");
         }, 1500);
@@ -476,20 +368,14 @@ export default function TeamDetailsForm() {
         throw new Error("Failed to update profile.");
       }
     } catch (error: any) {
-      console.error("Error submitting team data:", error);
-
-      // Handle API error responses
       if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else if (error.response?.data?.errors) {
-        // Handle validation errors
         const apiErrors = error.response.data.errors;
         const formattedErrors: Record<string, string> = {};
-
         Object.keys(apiErrors).forEach((key) => {
           formattedErrors[key] = apiErrors[key].message || apiErrors[key];
         });
-
         setValidationErrors(formattedErrors);
         setError("Please correct the errors in the form.");
       } else {
@@ -502,7 +388,6 @@ export default function TeamDetailsForm() {
     }
   };
 
-  // Display loading spinner while fetching data
   if (isLoading) {
     return (
       <div className="w-full h-screen flex justify-center items-center dark:bg-gray-900">
@@ -514,7 +399,6 @@ export default function TeamDetailsForm() {
 
   return (
     <div className="w-full px-20 mx-auto dark:bg-gray-900">
-      {/* Status messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-semibold">Error</p>
@@ -528,21 +412,18 @@ export default function TeamDetailsForm() {
           )}
         </div>
       )}
-
       {success && (
         <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
           <p className="font-semibold">Success</p>
           <p>{success}</p>
         </div>
       )}
-
       <button
         onClick={goBack}
         className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
       >
         <MoveLeft className="w-5 h-5 mr-1" />
       </button>
-      {/* Step Indicator */}
       <div className="flex flex-col items-center mb-12">
         <div className="flex w-full max-w-lg items-center relative">
           {[1, 2].map((stepNum) => (
@@ -577,14 +458,12 @@ export default function TeamDetailsForm() {
           </div>
         </div>
       </div>
-      {/* Step 1: Profile Details */}
       {step === 1 && (
         <>
           <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
           <Label className="text-sm text-gray-400 mb-1">PROFILE PICTURE</Label>
           <Card className="border-dashed border border-gray-300 p-4 w-5/6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Display existing profile photo if available */}
               {existingProfilePhoto && !profilePhoto && (
                 <img
                   src={existingProfilePhoto}
@@ -613,7 +492,6 @@ export default function TeamDetailsForm() {
               </label>
             </div>
           </Card>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
@@ -664,17 +542,11 @@ export default function TeamDetailsForm() {
                 readOnly
               />
             </div>
-
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Phone Number
               </label>
               <div className="flex gap-2">
-                {/* <Input    
-                  value={countryCode}
-                  className="w-1/3 bg-gray-100 cursor-not-allowed"
-                  readOnly
-                /> */}
                 <Input
                   value={userData?.mobileNumber}
                   className="w-full bg-gray-100 cursor-not-allowed"
@@ -721,21 +593,13 @@ export default function TeamDetailsForm() {
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Country*
               </label>
-              <select
+              <Input
                 name="country"
                 value={form.country}
                 onChange={handleChange}
-                className={`border p-2 rounded text-sm text-gray-700 w-full ${
-                  validationErrors.country ? "border-red-500" : ""
-                }`}
-              >
-                <option value="">Select Country</option>
-                {countries.map((country) => (
-                  <option key={country.code} value={country.name}>
-                    {country.name}
-                  </option>
-                ))}
-              </select>
+                placeholder="Enter country"
+                className={validationErrors.country ? "border-red-500" : ""}
+              />
               {validationErrors.country && (
                 <p className="text-red-500 text-xs mt-1">
                   {validationErrors.country}
@@ -746,28 +610,19 @@ export default function TeamDetailsForm() {
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 City*
               </label>
-              <select
+              <Input
                 name="city"
                 value={form.city}
                 onChange={handleChange}
-                className={`border p-2 rounded text-sm text-gray-700 w-full ${
-                  validationErrors.city ? "border-red-500" : ""
-                }`}
-              >
-                <option value="">Select City</option>
-                {cities.map((city, index) => (
-                  <option key={index} value={city}>
-                    {city}
-                  </option>
-                ))}
-              </select>
+                placeholder="Enter city"
+                className={validationErrors.city ? "border-red-500" : ""}
+              />
               {validationErrors.city && (
                 <p className="text-red-500 text-xs mt-1">
                   {validationErrors.city}
                 </p>
               )}
             </div>
-
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Address
@@ -790,7 +645,6 @@ export default function TeamDetailsForm() {
           </div>
         </>
       )}
-      {/* Step 2: More Details */}
       {step === 2 && (
         <>
           <h2 className="text-xl font-semibold mb-4 dark:text-white">
@@ -856,7 +710,6 @@ export default function TeamDetailsForm() {
               </div>
             ))}
           </div>
-          {/* Navigation Buttons */}
           <div className="flex justify-end mt-6">
             <Button
               onClick={prevStep}
