@@ -84,9 +84,7 @@ const Matches: React.FC = () => {
   const token = localStorage.getItem("token");
 
   // API base URL with proper fallback
-  const API_BASE_URL = `${
-    import.meta.env.VITE_PORT || "https://sportsapp.publicvm.com"
-  }/api/v1/user/matches`;
+  const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/matches`;
 
   const [statsModalOpen, setStatsModalOpen] = useState(false);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);

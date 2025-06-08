@@ -43,6 +43,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import BulkAvailabilityManager from "./Bulkslotmanager";
 
 interface TimeSlot {
   id?: string;
@@ -126,7 +127,10 @@ const ExpertAvailabilityManager = () => {
     "friday",
     "saturday",
   ];
-  const expertId = localStorage.getItem("userid");
+  const expertId =
+    localStorage.getItem("userId") ||
+    localStorage.getItem("userid") ||
+    localStorage.getItem("user_id");
 
   const token = localStorage.getItem("token");
   const axiosInstance = axios.create({
@@ -165,7 +169,7 @@ const ExpertAvailabilityManager = () => {
     "18:30",
     "19:00",
     "19:30",
-    "20:00",    
+    "20:00",
     "20:30",
     "21:00",
     "21:30",
@@ -197,9 +201,7 @@ const ExpertAvailabilityManager = () => {
   const fetchAvailabilityPatterns = async () => {
     setLoadingAvailabilityPatterns(true);
     try {
-      const response = await axiosInstance.get(
-        `${API_BASE_URL}/${localStorage.getItem("expertId")}`
-      );
+      const response = await axiosInstance.get(`${API_BASE_URL}/${expertId}`);
       setAvailabilityPatterns(response.data);
     } catch (error) {
       console.error("Error fetching availability patterns:", error);
@@ -321,18 +323,22 @@ const ExpertAvailabilityManager = () => {
 
   const addTimeSlot = async (slot: Omit<TimeSlot, "id" | "available">) => {
     try {
+      // Format the payload with property names in quotations
+      // This is critical for some APIs that require exact JSON format
       const payload = {
-        availabilities: [
+        "availabilities": [
           {
-            dayOfWeek: dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
-            startTime: slot.startTime,
-            endTime: slot.endTime,
+            "dayOfWeek": dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
+            "startTime": slot.startTime,
+            "endTime": slot.endTime,
           },
         ],
       };
 
+      // Use POST method for adding new time slots
       await axiosInstance.post(`${API_BASE_URL}`, payload);
 
+      // Refresh the data
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
 
