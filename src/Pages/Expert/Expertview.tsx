@@ -547,40 +547,45 @@ const Expertview = () => {
           </div>
         </div>
       </div>
-      <div className="border-b py-6 mb-8">
-        <h2 className="text-xl font-bold">Services Offered</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 mb-8">
-          {services.length > 0 ? (
-            services.map((service) => (
-              <Card key={service.id} className="overflow-hidden">
-                <div className="p-5">
-                  <div className="flex justify-between items-start mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {service.name}
-                    </h3>
-                    <span className="text-red-600 font-bold">
-                      {service.price}
-                    </span>
-                  </div>
-                  <p className="text-gray-700 dark:text-gray-300 mb-4">
-                    {service.description}
-                  </p>
-                  <Button
-                    onClick={() => handlebook(service)}
-                    className="bg-red-600 hover:bg-red-700 text-white"
-                  >
-                    Book Now
-                  </Button>
-                </div>
-              </Card>
-            ))
-          ) : (
-            <p className="col-span-2 text-center text-gray-500 text-xl">
-              No services available.
-            </p>
-          )}
-        </div>
-      </div>
+      {localStorage.getItem("role") === "player" ? (
+        <>
+          <div className="border-b py-6 mb-8">
+            <h2 className="text-xl font-bold">Services Offered</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4 mb-8">
+              {services.length > 0 ? (
+                services.map((service) => (
+                  <Card key={service.id} className="overflow-hidden">
+                    <div className="p-5">
+                      <div className="flex justify-between items-start mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                          {service.name}
+                        </h3>
+                        <span className="text-red-600 font-bold">
+                          {service.price}
+                        </span>
+                      </div>
+                      <p className="text-gray-700 dark:text-gray-300 mb-4">
+                        {service.description}
+                      </p>
+                      <Button
+                        onClick={() => handlebook(service)}
+                        className="bg-red-600 hover:bg-red-700 text-white"
+                      >
+                        Book Now
+                      </Button>
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <p className="col-span-2 text-center text-gray-500 text-xl">
+                  No services available.
+                </p>
+              )}
+            </div>
+          </div>
+        </>
+      ) : null}
+
       {/* Tabs navigation */}
       <div className="mb-8 border-b">
         <div className="flex space-x-6">
