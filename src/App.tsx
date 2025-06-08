@@ -45,6 +45,7 @@ import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import Expertsponsers from "./expertpages/Expertsponsors";
 import ApplicationForm from "./expertpages/ApplicationForm";
+import ExpertAvailabilityManager from "./expertpages/Slots";
 
 import { authService } from "./store/apiConfig";
 //sponser pages
@@ -73,8 +74,15 @@ import SponsorInfo from "./expertpages/sponsorinfo";
 import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
 import TeamSponsorInfo from "./teampages/Sponsorinfo";
 import TeamExperts from "./teampages/expertprofile";
-import ExpertAvailabilityManager from "./expertpages/Slots";
-// Set up authorization headers from localStorage immediately before rendering
+
+//fan pages
+import FanLayout from "./components/fan/layout";
+import FanPlayers from "./fanpages/Players";
+
+import FanExperts from "./fanpages/Experts";
+import Fanprofile from "./fanpages/FanProfile";
+import Fandetailsform from "./fanpages/Fandetailsform";
+
 const token = localStorage.getItem("token");
 if (token) {
   authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -286,10 +294,16 @@ const AppContent: React.FC = () => {
         path="/fan"
         element={
           <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <TeamLayout />
+            <FanLayout />
           </CheckAuth>
         }
-      ></Route>
+      >
+        <Route path="dashboard" element={<>Fan dashboard</>} />
+        <Route path="players" element={<FanPlayers />} />
+        <Route path="experts" element={<FanExperts />} />
+        <Route path="profile" element={<Fanprofile />} />
+        <Route path="details-form" element={<Fandetailsform />} />
+      </Route>
 
       <Route
         path="/unauthorized"
