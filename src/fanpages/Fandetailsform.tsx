@@ -425,7 +425,7 @@ export default function Fandetailsform() {
   }
 
   return (
-    <div className="w-full p-20 mx-auto dark:bg-gray-900">
+    <div className="w-full px-20 mx-auto dark:bg-gray-900">
       {/* Status messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">

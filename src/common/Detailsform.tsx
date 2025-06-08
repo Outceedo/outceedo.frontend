@@ -997,7 +997,7 @@ const Detailsform: React.FC = () => {
           }
         }
 
-        console.log(response);
+        
       } catch (error) {
         console.error("Error fetching user data:", error);
       }

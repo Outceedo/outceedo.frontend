@@ -40,7 +40,7 @@ const Fanprofile = () => {
   ];
 
   return (
-    <div className=" w-full min-h-screen dark:bg-gray-900 p-10 ">
+    <div className=" w-full min-h-screen dark:bg-gray-900 px-10 ">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-5 ">
         <div>
