@@ -17,7 +17,6 @@ import { useNavigate } from "react-router-dom";
 import profile from "../assets/images/avatar.png";
 import Swal from "sweetalert2";
 
-// Define interfaces for our data types
 interface Service {
   serviceid?: string;
   expertId?: string;
@@ -32,7 +31,7 @@ interface CalendarMonth {
   name: string;
   year: number;
   numberOfDays: number;
-  firstDayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+  firstDayOfWeek: number;
 }
 
 interface AvailabilityData {
@@ -47,14 +46,10 @@ interface TimeSlot {
 
 const BookingCalendar: React.FC = () => {
   const navigate = useNavigate();
-
-  // Current date for comparison
   const today = new Date();
   const currentYear = today.getFullYear();
-  const currentMonth = today.getMonth(); // 0-indexed (0 = January)
+  const currentMonth = today.getMonth();
   const currentDay = today.getDate();
-
-  // Calculate initial month and year (current month)
   const initialMonthIndex = today.getMonth();
   const monthNames = [
     "January",
@@ -84,7 +79,6 @@ const BookingCalendar: React.FC = () => {
     numberOfDays: new Date(currentYear, initialMonthIndex + 1, 0).getDate(),
     firstDayOfWeek: new Date(currentYear, initialMonthIndex, 1).getDay(),
   });
-
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [loadingAvailability, setLoadingAvailability] =
@@ -95,13 +89,15 @@ const BookingCalendar: React.FC = () => {
   );
   const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
 
-  // API base URLs
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+  const BLOCK_API_URL = `${
+    import.meta.env.VITE_PORT
+  }/api/v1/user/availability/block`;
+  const daysOfWeek = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
-  // Check if service is ON GROUND ASSESSMENT
   const isOnGroundAssessment = service?.name?.includes("ON GROUND ASSESSMENT");
 
-  // Load service and expert data from localStorage
+  // 1. Load service from localStorage on mount
   useEffect(() => {
     const storedService = localStorage.getItem("selectedService");
     if (storedService) {
@@ -109,21 +105,17 @@ const BookingCalendar: React.FC = () => {
     }
   }, []);
 
-  // Fetch monthly availability when month, year, or expert changes
+  // 2. Fetch monthly availability after service loads or month/year change
   useEffect(() => {
-    const fetchExpertAvailability = async () => {
-      if (!service?.expertId) return;
+    if (!service || !service.expertId) return;
 
+    const fetchExpertAvailability = async () => {
       setLoadingAvailability(true);
       try {
-        // Get auth token
         const token = localStorage.getItem("token");
-
-        // Fetch availability data for the selected month and year
         const API_AV = `${import.meta.env.VITE_PORT}/api/v1/user/availability/${
           service.expertId
         }/monthly?month=${selectedMonthIndex + 1}&year=${selectedYear}`;
-
         const response = await fetch(API_AV, {
           method: "GET",
           headers: {
@@ -132,14 +124,12 @@ const BookingCalendar: React.FC = () => {
           },
         });
 
-        if (!response.ok) {
+        if (!response.ok)
           throw new Error("Failed to fetch expert availability");
-        }
 
         const data = await response.json();
         setAvailabilityData(data);
 
-        // Reset selected date if it's no longer available in the new month
         if (selectedDate) {
           const formattedDate = formatDateString(
             selectedYear,
@@ -167,33 +157,28 @@ const BookingCalendar: React.FC = () => {
     };
 
     fetchExpertAvailability();
-  }, [selectedMonthIndex, selectedYear, service?.expertId]);
+    // eslint-disable-next-line
+  }, [service, selectedMonthIndex, selectedYear]); // Depend on full service
 
-  // Fetch time slots when a date is selected
+  // 3. Fetch time slots after service loads and a date is selected
   useEffect(() => {
-    const fetchTimeSlots = async () => {
-      if (!selectedDate || !service?.expertId) {
-        setAvailableTimeSlots([]);
-        return;
-      }
+    if (!service || !service.expertId || !selectedDate) {
+      setAvailableTimeSlots([]);
+      return;
+    }
 
+    const fetchTimeSlots = async () => {
       setLoadingTimeSlots(true);
       try {
-        // Get auth token
         const token = localStorage.getItem("token");
-
-        // Format date for API
         const formattedDate = formatDateString(
           selectedYear,
           selectedMonthIndex,
           selectedDate
         );
-
-        // Fetch available time slots for the selected date
         const API_AV = `${import.meta.env.VITE_PORT}/api/v1/user/availability/${
           service.expertId
         }/slots?date=${formattedDate}`;
-
         const response = await fetch(API_AV, {
           method: "GET",
           headers: {
@@ -202,28 +187,19 @@ const BookingCalendar: React.FC = () => {
           },
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch time slots");
-        }
+        if (!response.ok) throw new Error("Failed to fetch time slots");
 
         const data: TimeSlot[] = await response.json();
-
-        // Filter only available slots
         const availableSlots = data.filter((slot) => slot.available);
         setAvailableTimeSlots(availableSlots);
 
-        // Reset selected time if it's no longer available
         if (selectedTime) {
           const [hour, minute] = selectedTime.split(":");
           const selectedTimeFormatted = `${hour}:${minute}`;
-
           const isTimeAvailable = availableSlots.some(
             (slot) => slot.startTime === selectedTimeFormatted
           );
-
-          if (!isTimeAvailable) {
-            setSelectedTime(null);
-          }
+          if (!isTimeAvailable) setSelectedTime(null);
         }
       } catch (error) {
         console.error("Error fetching time slots:", error);
@@ -240,9 +216,9 @@ const BookingCalendar: React.FC = () => {
     };
 
     fetchTimeSlots();
-  }, [selectedDate, service?.expertId, selectedMonthIndex, selectedYear]);
+    // eslint-disable-next-line
+  }, [service, selectedDate, selectedMonthIndex, selectedYear]);
 
-  // Update displayed month when month or year changes
   useEffect(() => {
     const numberOfDays = new Date(
       selectedYear,
@@ -260,7 +236,6 @@ const BookingCalendar: React.FC = () => {
     });
   }, [selectedMonthIndex, selectedYear]);
 
-  // Format date as YYYY-MM-DD for API comparison
   const formatDateString = (
     year: number,
     month: number,
@@ -271,76 +246,55 @@ const BookingCalendar: React.FC = () => {
     ).padStart(2, "0")}`;
   };
 
-  // Format time from 24-hour to 12-hour format
   const formatTime = (time: string): string => {
     const [hour, minute] = time.split(":");
     const hourNum = parseInt(hour, 10);
-
-    if (hourNum === 0) {
-      return `12:${minute}am`;
-    } else if (hourNum === 12) {
-      return `12:${minute}pm`;
-    } else if (hourNum > 12) {
-      return `${hourNum - 12}:${minute}pm`;
-    } else {
-      return `${hourNum}:${minute}am`;
-    }
+    if (hourNum === 0) return `12:${minute}am`;
+    if (hourNum === 12) return `12:${minute}pm`;
+    if (hourNum > 12) return `${hourNum - 12}:${minute}pm`;
+    return `${hourNum}:${minute}am`;
   };
 
-  // Check if a date is available based on expert's availability
   const isDateAvailable = (day: number): boolean => {
     const dateString = formatDateString(selectedYear, selectedMonthIndex, day);
     return availabilityData[dateString] === true;
   };
 
-  // Calendar data
-  const daysOfWeek = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
-
-  // Organize time slots into rows for display
   const organizeTimeSlotsIntoRows = () => {
     const rows = [];
     const slotsPerRow = 4;
-
     for (let i = 0; i < availableTimeSlots.length; i += slotsPerRow) {
       rows.push(availableTimeSlots.slice(i, i + slotsPerRow));
     }
-
     return rows;
   };
 
   const timeSlotRows = organizeTimeSlotsIntoRows();
 
   const handlePrevMonth = () => {
-    if (selectedYear === currentYear && selectedMonthIndex <= currentMonth) {
-      return; // Don't allow going to past months
-    }
-
+    if (selectedYear === currentYear && selectedMonthIndex <= currentMonth)
+      return;
     if (selectedMonthIndex === 0) {
-      // If January, go to December of previous year
       setSelectedMonthIndex(11);
       setSelectedYear((prev) => prev - 1);
     } else {
-      // Otherwise just go to previous month
       setSelectedMonthIndex((prev) => prev - 1);
     }
   };
 
   const handleNextMonth = () => {
     if (selectedMonthIndex === 11) {
-      // If December, go to January of next year
       setSelectedMonthIndex(0);
       setSelectedYear((prev) => prev + 1);
     } else {
-      // Otherwise just go to next month
       setSelectedMonthIndex((prev) => prev + 1);
     }
   };
 
   const handleDateSelect = (day: number) => {
-    // Only allow selecting dates if they're available and not in the past
     if (isDateAvailable(day) && !isDateInPast(day)) {
       setSelectedDate(day);
-      setSelectedTime(null); // Reset time selection when date changes
+      setSelectedTime(null);
     }
   };
 
@@ -349,67 +303,49 @@ const BookingCalendar: React.FC = () => {
   };
 
   const handleBack = () => {
-    navigate(-1); // Go back to the previous page
+    navigate(-1);
   };
 
-  // Handle description change
   const handleDescriptionChange = (
     e: React.ChangeEvent<HTMLTextAreaElement>
   ) => {
     setBookingDescription(e.target.value);
   };
 
-  // Handle location input change
   const handleLocationInputChange = (
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setBookingLocation(e.target.value);
   };
 
-  // Calculate end time
   const calculateEndTime = (startTime: string): string => {
     const [hour, minute] = startTime.split(":").map((num) => parseInt(num, 10));
-
-    // Find the matching time slot to get the actual end time
     const selectedSlot = availableTimeSlots.find(
       (slot) => slot.startTime === startTime
     );
-    if (selectedSlot) {
-      return selectedSlot.endTime;
-    }
-
-    // Fallback: calculate end time as start time + 30 minutes
-    let endHour = hour;
-    let endMinute = minute + 30;
-
+    if (selectedSlot) return selectedSlot.endTime;
+    let endHour = hour,
+      endMinute = minute + 30;
     if (endMinute >= 60) {
       endHour += 1;
       endMinute -= 60;
     }
-
-    if (endHour >= 24) {
-      endHour -= 24;
-    }
-
+    if (endHour >= 24) endHour -= 24;
     return `${endHour.toString().padStart(2, "0")}:${endMinute
       .toString()
       .padStart(2, "0")}`;
   };
 
-  // Format date as YYYY-MM-DD
   const formatDateForAPI = (): string => {
     if (!selectedDate) return "";
-
     const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
-
     return `${year}-${month}-${day}`;
   };
 
   const handleConfirm = async () => {
-    // Validate selected date
     if (!selectedDate) {
       Swal.fire({
         icon: "error",
@@ -420,8 +356,6 @@ const BookingCalendar: React.FC = () => {
       });
       return;
     }
-
-    // Validate selected time
     if (!selectedTime) {
       Swal.fire({
         icon: "error",
@@ -432,8 +366,6 @@ const BookingCalendar: React.FC = () => {
       });
       return;
     }
-
-    // For ON GROUND ASSESSMENT, validate location first
     if (isOnGroundAssessment && !bookingLocation.trim()) {
       Swal.fire({
         icon: "error",
@@ -448,21 +380,12 @@ const BookingCalendar: React.FC = () => {
     setLoading(true);
 
     try {
-      // Get expertId from service or localStorage
       const expertId = service?.expertId || localStorage.getItem("expertid");
-
-      // Get serviceId from service object or localStorage
       const serviceId = service?.serviceid;
-
-      // Get start and end time
       const startTime = selectedTime;
       const endTime = calculateEndTime(selectedTime);
       const formattedDate = formatDateForAPI();
 
-      console.log("Booking date being sent:", formattedDate);
-      console.log("Booking time being sent:", startTime, "to", endTime);
-
-      // Prepare booking data
       const bookingData = {
         expertId: expertId,
         serviceId: serviceId,
@@ -473,10 +396,8 @@ const BookingCalendar: React.FC = () => {
         description: bookingDescription,
       };
 
-      // Get auth token
       const token = localStorage.getItem("token");
 
-      // Make API call
       const response = await fetch(API_BASE_URL, {
         method: "POST",
         headers: {
@@ -498,7 +419,25 @@ const BookingCalendar: React.FC = () => {
           showConfirmButton: false,
         });
       } else {
-        console.log("Booking successful:", data);
+        // Block the slot after successful booking
+        try {
+          await fetch(BLOCK_API_URL, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              date: formattedDate,
+              startTime: startTime,
+              endTime: endTime,
+              reason: "Booked by player",
+            }),
+          });
+        } catch (blockError) {
+          console.error("Failed to block slot after booking", blockError);
+        }
+
         Swal.fire({
           icon: "success",
           title: "Booking Successful!",
@@ -506,7 +445,6 @@ const BookingCalendar: React.FC = () => {
           timer: 3000,
           showConfirmButton: false,
         }).then(() => {
-          // Navigate after the alert is closed or timer expires
           navigate("/player/mybooking");
         });
       }
@@ -524,10 +462,8 @@ const BookingCalendar: React.FC = () => {
     }
   };
 
-  // Format the selected date
   const getFormattedDate = () => {
     if (!selectedDate) return "Select a date";
-
     const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
@@ -537,7 +473,6 @@ const BookingCalendar: React.FC = () => {
     });
   };
 
-  // Check if a date is in the past
   const isDateInPast = (day: number): boolean => {
     if (selectedYear < currentYear) return true;
     if (selectedYear > currentYear) return false;
@@ -546,32 +481,25 @@ const BookingCalendar: React.FC = () => {
     return day < currentDay;
   };
 
-  // Generate array of days for the current month view
   const generateCalendarDays = () => {
     const emptyCells = Array(displayedMonth.firstDayOfWeek).fill(null);
-
     const daysInMonth = Array.from(
       { length: displayedMonth.numberOfDays },
       (_, i) => i + 1
     );
-
     return [...emptyCells, ...daysInMonth];
   };
 
   const calendarDays = generateCalendarDays();
 
-  // Get class name for calendar day
   const getDayClassName = (day: number) => {
     if (day === null) return "";
-
     const isSelected =
       selectedDate === day &&
       selectedMonthIndex === monthNames.indexOf(displayedMonth.name) &&
       selectedYear === displayedMonth.year;
-
     const isPast = isDateInPast(day);
     const isAvailable = isDateAvailable(day);
-
     if (isSelected) {
       return "bg-red-500 text-white font-medium shadow-md";
     } else if (isPast || !isAvailable) {
@@ -596,9 +524,7 @@ const BookingCalendar: React.FC = () => {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-
               <div className="space-y-6">
-                {/* Expert Profile Section */}
                 {service?.expertname && (
                   <div className="flex flex-col items-center mb-6">
                     <img
@@ -607,7 +533,7 @@ const BookingCalendar: React.FC = () => {
                       className="w-20 h-20 rounded-full object-cover mb-2"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = profile; // Default image on error
+                        target.src = profile;
                       }}
                     />
                     <h3 className="text-lg font-semibold text-center">
@@ -615,8 +541,6 @@ const BookingCalendar: React.FC = () => {
                     </h3>
                   </div>
                 )}
-
-                {/* Service Name */}
                 <div className="mb-4">
                   <h3 className="text-lg font-semibold text-gray-800">
                     {service?.name || "Service"}
@@ -625,12 +549,10 @@ const BookingCalendar: React.FC = () => {
                     {service?.description || "Service description"}
                   </p>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-gray-500" />
                   <span className="text-gray-600">30 mins per session</span>
                 </div>
-
                 <div className="flex items-start gap-3">
                   <Video className="h-5 w-5 text-gray-500 mt-1" />
                   <span className="text-gray-600">
@@ -641,7 +563,6 @@ const BookingCalendar: React.FC = () => {
                       : "Session details provided upon booking confirmation"}
                   </span>
                 </div>
-
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-5 w-5 text-gray-500" />
                   <span className="text-gray-600">
@@ -650,13 +571,11 @@ const BookingCalendar: React.FC = () => {
                 </div>
               </div>
             </div>
-
             {/* Right content */}
             <div className="p-6 w-full md:w-2/3 bg-white">
               <h2 className="text-xl font-medium text-center mb-6">
                 Select Date and Time
               </h2>
-
               {/* Month navigation */}
               <div className="flex justify-between items-center mb-6">
                 <button
@@ -674,11 +593,9 @@ const BookingCalendar: React.FC = () => {
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-
                 <h3 className="text-lg font-medium">
                   {displayedMonth.name} {displayedMonth.year}
                 </h3>
-
                 <button
                   onClick={handleNextMonth}
                   className="p-2 rounded-full hover:bg-gray-100"
@@ -686,7 +603,6 @@ const BookingCalendar: React.FC = () => {
                   <ChevronRight className="h-5 w-5" />
                 </button>
               </div>
-
               {/* Calendar with loading state */}
               <div className="mb-6">
                 {loadingAvailability ? (
@@ -695,7 +611,6 @@ const BookingCalendar: React.FC = () => {
                   </div>
                 ) : (
                   <>
-                    {/* Days of week */}
                     <div className="grid grid-cols-7 text-center mb-2">
                       {daysOfWeek.map((day) => (
                         <div
@@ -706,8 +621,6 @@ const BookingCalendar: React.FC = () => {
                         </div>
                       ))}
                     </div>
-
-                    {/* Calendar days */}
                     <div className="grid grid-cols-7 gap-2">
                       {calendarDays.map((day, index) => (
                         <div
@@ -734,20 +647,17 @@ const BookingCalendar: React.FC = () => {
                   </>
                 )}
               </div>
-
               {/* Selected date */}
               <div className="mb-6">
                 <p className="text-gray-700 font-medium">
                   {getFormattedDate()}
                 </p>
               </div>
-
               {/* Time slots with loading state */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Available Time Slots
                 </h3>
-
                 {!selectedDate ? (
                   <p className="text-gray-500 text-sm italic">
                     Select a date to view available time slots
@@ -785,7 +695,6 @@ const BookingCalendar: React.FC = () => {
                   </div>
                 )}
               </div>
-
               {/* Simple Location field - Only for ON GROUND ASSESSMENT */}
               {isOnGroundAssessment && (
                 <div className="mt-6 mb-4">
@@ -810,7 +719,6 @@ const BookingCalendar: React.FC = () => {
                   </p>
                 </div>
               )}
-
               {/* Description field - Added below the calendar and time slots */}
               <div className="mt-6">
                 <Label
@@ -831,7 +739,6 @@ const BookingCalendar: React.FC = () => {
           </div>
         </CardContent>
       </Card>
-
       {/* Confirm button */}
       <div className="flex justify-end items-end mt-6 w-4xl mb-4">
         <Button
