@@ -221,7 +221,12 @@ const AppContent: React.FC = () => {
         <Route path="details-form" element={<Detailsform />} />
         <Route path="book" element={<BookingCalendar />} />
         <Route path="sponsors" element={<PlayerSponsors />} />
-        <Route path="Sponsorinfo" element={<PlayerSponsorInfo />} />
+        <Route path="sponsorinfo" element={<PlayerSponsorInfo />} />
+        <Route path="applicationform" element={<ApplicationForm />} />
+        <Route
+          path="applications"
+          element={<>Players submitted applications</>}
+        />
       </Route>
 
       {/* Expert Outlet */}
@@ -241,8 +246,12 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
-        <Route path="ApplicationForm" element={<ApplicationForm />} />
+        <Route path="applicationform" element={<ApplicationForm />} />
         <Route path="sponsorinfo" element={<SponsorInfo />} />
+        <Route
+          path="applications"
+          element={<>expert submitted applications</>}
+        />
         <Route path="slots" element={<ExpertAvailabilityManager />} />
       </Route>
 

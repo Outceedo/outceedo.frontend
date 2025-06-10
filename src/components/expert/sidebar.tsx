@@ -41,9 +41,15 @@ const expertSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-handshake",
     path: "/expert/sponsors",
   },
-  { id: 6, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
   {
-    id: 7,
+    id: 6,
+    name: "Applications",
+    icon: "fas fa-file",
+    path: "/expert/applications",
+  },
+  { id: 7, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
+  {
+    id: 8,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",
