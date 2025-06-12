@@ -42,7 +42,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { toast } from "sonner";
+import Swal from "sweetalert2";
 import BulkAvailabilityManager from "./Bulkslotmanager";
 
 interface TimeSlot {
@@ -205,7 +205,7 @@ const ExpertAvailabilityManager = () => {
       setAvailabilityPatterns(response.data);
     } catch (error) {
       console.error("Error fetching availability patterns:", error);
-      toast.error("Failed to load availability patterns");
+      Swal.fire("Error", "Failed to load availability patterns", "error");
     } finally {
       setLoadingAvailabilityPatterns(false);
     }
@@ -221,7 +221,7 @@ const ExpertAvailabilityManager = () => {
       setMonthlyAvailability(response.data);
     } catch (error) {
       console.error("Error fetching monthly availability:", error);
-      toast.error("Failed to load monthly availability");
+      Swal.fire("Error", "Failed to load monthly availability", "error");
       generateDummyMonthlyAvailability();
     }
   };
@@ -249,8 +249,7 @@ const ExpertAvailabilityManager = () => {
       setTimeSlots(transformedSlots);
     } catch (error) {
       console.error("Error fetching time slots:", error);
-      toast.error("Failed to load time slots");
-
+      Swal.fire("Error", "Failed to load time slots", "error");
       if (!monthlyAvailability[formattedDate]) {
         setTimeSlots([]);
       } else {
@@ -291,12 +290,11 @@ const ExpertAvailabilityManager = () => {
           setSelectedDayAvailability(false);
           setTimeSlots([]);
         }
-
-        toast.success("Date blocked successfully", {
-          description: `${formatDateForDisplay(
-            date
-          )} has been marked as unavailable.`,
-        });
+        Swal.fire(
+          "Success",
+          `${formatDateForDisplay(date)} has been marked as unavailable.`,
+          "success"
+        );
       } else {
         if (isSameDay(date, selectedDate)) {
           setTimeSlots((prev) =>
@@ -308,50 +306,58 @@ const ExpertAvailabilityManager = () => {
             )
           );
         }
-
-        toast.success("Time slot blocked", {
-          description: `Time slot from ${formatTimeForDisplay(
+        Swal.fire(
+          "Success",
+          `Time slot from ${formatTimeForDisplay(
             timeSlot.startTime
           )} to ${formatTimeForDisplay(timeSlot.endTime)} has been blocked.`,
-        });
+          "success"
+        );
       }
     } catch (error) {
       console.error("Error blocking date:", error);
-      toast.error("Failed to block date or time slot");
+      Swal.fire("Error", "Failed to block date or time slot", "error");
     }
   };
 
+  // MODIFIED: When a slot is added, mark day as available immediately
   const addTimeSlot = async (slot: Omit<TimeSlot, "id" | "available">) => {
     try {
-      // Format the payload with property names in quotations
-      // This is critical for some APIs that require exact JSON format
       const payload = {
-        "availabilities": [
+        availabilities: [
           {
-            "dayOfWeek": dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
-            "startTime": slot.startTime,
-            "endTime": slot.endTime,
+            dayOfWeek: dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
+            startTime: slot.startTime,
+            endTime: slot.endTime,
           },
         ],
       };
 
-      // Use POST method for adding new time slots
       await axiosInstance.post(`${API_BASE_URL}`, payload);
+
+      // If the day was previously unavailable, mark it as available now!
+      setMonthlyAvailability((prev) => ({
+        ...prev,
+        [formatDateString(selectedDate)]: true,
+      }));
+      setSelectedDayAvailability(true);
 
       // Refresh the data
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
 
-      toast.success("Time slot added", {
-        description: `New slot from ${formatTimeForDisplay(
+      Swal.fire(
+        "Success",
+        `New slot from ${formatTimeForDisplay(
           slot.startTime
         )} to ${formatTimeForDisplay(slot.endTime)} added.`,
-      });
+        "success"
+      );
 
       return true;
     } catch (error) {
       console.error("Error adding time slot:", error);
-      toast.error("Failed to add time slot");
+      Swal.fire("Error", "Failed to add time slot", "error");
       return false;
     }
   };
@@ -387,16 +393,18 @@ const ExpertAvailabilityManager = () => {
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
 
-      toast.success("Time slot updated", {
-        description: `Slot updated to ${formatTimeForDisplay(
+      Swal.fire(
+        "Success",
+        `Slot updated to ${formatTimeForDisplay(
           startTime
         )} - ${formatTimeForDisplay(endTime)}.`,
-      });
+        "success"
+      );
 
       return true;
     } catch (error) {
       console.error("Error updating time slot:", error);
-      toast.error("Failed to update time slot");
+      Swal.fire("Error", "Failed to update time slot", "error");
       return false;
     }
   };
@@ -417,23 +425,19 @@ const ExpertAvailabilityManager = () => {
         throw new Error("Could not find matching availability pattern");
       }
 
-      const payload = {
-        ids: [pattern.id],
-      };
+      const payload = { ids: [pattern.id] };
 
       await axiosInstance.delete(`${API_BASE_URL}`, { data: payload });
 
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
 
-      toast.success("Time slot removed", {
-        description: "The time slot has been deleted.",
-      });
+      Swal.fire("Success", "The time slot has been deleted.", "success");
 
       return true;
     } catch (error) {
       console.error("Error deleting time slot:", error);
-      toast.error("Failed to delete time slot");
+      Swal.fire("Error", "Failed to delete time slot", "error");
       return false;
     }
   };
@@ -568,19 +572,26 @@ const ExpertAvailabilityManager = () => {
       setBlockReasonDialogOpen(true);
     } else {
       setSelectedDayAvailability(true);
+      setMonthlyAvailability((prev) => ({
+        ...prev,
+        [formatDateString(selectedDate)]: true,
+      }));
       fetchTimeSlotsForSelectedDate();
-
-      toast.success(`Day marked as available`, {
-        description: `${formatDateString(selectedDate)} has been updated.`,
-      });
+      Swal.fire(
+        "Success",
+        `${formatDateString(selectedDate)} is now marked as available.`,
+        "success"
+      );
     }
   };
 
   const handleBlockTimeSlot = (slot: TimeSlot) => {
     if (!slot.available) {
-      toast.error("Cannot block booked slot", {
-        description: "This time slot is already booked by a player.",
-      });
+      Swal.fire(
+        "Error",
+        "This time slot is already booked by a player.",
+        "error"
+      );
       return;
     }
 
@@ -596,9 +607,11 @@ const ExpertAvailabilityManager = () => {
     if (!blockingDate) return;
 
     if (blockReason.trim() === "") {
-      toast.error("Reason required", {
-        description: "Please provide a reason for blocking this time.",
-      });
+      Swal.fire(
+        "Error",
+        "Please provide a reason for blocking this time.",
+        "error"
+      );
       return;
     }
 
@@ -612,9 +625,7 @@ const ExpertAvailabilityManager = () => {
 
   const handleAddTimeSlot = () => {
     if (newSlotStartTime >= newSlotEndTime) {
-      toast.error("Invalid time range", {
-        description: "End time must be after start time.",
-      });
+      Swal.fire("Error", "End time must be after start time.", "error");
       return;
     }
 
@@ -628,9 +639,11 @@ const ExpertAvailabilityManager = () => {
     });
 
     if (isOverlapping) {
-      toast.error("Time slot overlap", {
-        description: "This time slot overlaps with an existing slot.",
-      });
+      Swal.fire(
+        "Error",
+        "This time slot overlaps with an existing slot.",
+        "error"
+      );
       return;
     }
 
@@ -653,9 +666,11 @@ const ExpertAvailabilityManager = () => {
     const slotToDelete = timeSlots.find((slot) => slot.id === slotId);
 
     if (slotToDelete && !slotToDelete.available) {
-      toast.error("Cannot delete booked slot", {
-        description: "This time slot is already booked by a player.",
-      });
+      Swal.fire(
+        "Error",
+        "This time slot is already booked by a player.",
+        "error"
+      );
       return;
     }
 
@@ -664,9 +679,11 @@ const ExpertAvailabilityManager = () => {
 
   const handleEditTimeSlot = (slot: TimeSlot) => {
     if (!slot.available) {
-      toast.error("Cannot edit booked slot", {
-        description: "This time slot is already booked by a player.",
-      });
+      Swal.fire(
+        "Error",
+        "This time slot is already booked by a player.",
+        "error"
+      );
       return;
     }
 
@@ -679,9 +696,7 @@ const ExpertAvailabilityManager = () => {
     endTime: string
   ) => {
     if (startTime >= endTime) {
-      toast.error("Invalid time range", {
-        description: "End time must be after start time.",
-      });
+      Swal.fire("Error", "End time must be after start time.", "error");
       return;
     }
 
@@ -696,9 +711,11 @@ const ExpertAvailabilityManager = () => {
     });
 
     if (isOverlapping) {
-      toast.error("Time slot overlap", {
-        description: "This time slot overlaps with an existing slot.",
-      });
+      Swal.fire(
+        "Error",
+        "This time slot overlaps with an existing slot.",
+        "error"
+      );
       return;
     }
 

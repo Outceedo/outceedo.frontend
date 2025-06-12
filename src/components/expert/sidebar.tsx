@@ -37,19 +37,14 @@ const expertSidebarMenuItems: MenuItem[] = [
   },
   {
     id: 5,
-    name: "Sponsors",
-    icon: "fas fa-handshake",
-    path: "/expert/sponsors",
+    name: "Calendar",
+    icon: "fas fa-calendar",
+    path: "/expert/slots",
   },
+
+  { id: 6, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
   {
-    id: 6,
-    name: "Applications",
-    icon: "fas fa-file",
-    path: "/expert/applications",
-  },
-  { id: 7, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
-  {
-    id: 8,
+    id: 7,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",
@@ -197,6 +192,10 @@ function MenuItems({ setOpen }: MenuItemsProps) {
                 expertSubProfession.slice(1)
               }`
             : ""}
+        </p>
+        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
+          {currentProfile?.gender?.charAt(0).toUpperCase() +
+            currentProfile?.gender?.slice(1)}
         </p>
 
         {/* Show loading indicator if profile is still loading */}
