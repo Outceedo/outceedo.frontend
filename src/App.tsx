@@ -44,7 +44,7 @@ import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import Expertsponsers from "./expertpages/Expertsponsors";
-import ApplicationForm from "./expertpages/ApplicationForm";
+import ApplicationForm from "./Playerpages/ApplicationForm";
 import ExpertAvailabilityManager from "./expertpages/Slots";
 
 import { authService } from "./store/apiConfig";

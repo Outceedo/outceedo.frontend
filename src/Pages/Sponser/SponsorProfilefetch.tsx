@@ -3,7 +3,7 @@ import sponsor2 from "../../assets/images/avatar.png";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, Star, Search, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import ApplicationForm from "../../expertpages/ApplicationForm";
+
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfiles } from "@/store/profile-slice";
@@ -15,6 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import ApplicationForm from "@/Playerpages/ApplicationForm";
 
 interface SponsorProfile {
   id: string;
@@ -134,6 +135,7 @@ export default function SponsorProfiles() {
   // Open/close modal handlers
   const openReportModal = (sponsor: SponsorProfile) => {
     setActiveSponsor(sponsor);
+    localStorage.setItem("sponsorid", sponsor.id);
     setIsReportOpen(true);
   };
 
@@ -144,6 +146,7 @@ export default function SponsorProfiles() {
   // Navigation to sponsor profile
   const handleViewProfile = (sponsorId: string, username: string) => {
     localStorage.setItem("viewsponsorusername", username);
+
     const role = localStorage.getItem("role");
 
     if (role === "player") {

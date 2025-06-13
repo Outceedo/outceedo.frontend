@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react';
-import { IoIosRefresh } from 'react-icons/io';
-import sponsor2 from '../assets/images/sponsor2.jpg';
-import { Card, CardContent } from '@/components/ui/card';
-import { X, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import ApplicationForm from '../expertpages/ApplicationForm';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { IoIosRefresh } from "react-icons/io";
+import sponsor2 from "../assets/images/sponsor2.jpg";
+import { Card, CardContent } from "@/components/ui/card";
+import { X, Star } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import ApplicationForm from "../Playerpages/ApplicationForm";
+import { useNavigate } from "react-router-dom";
 
 interface SponsorCardProps {
   name: string;
@@ -28,10 +28,10 @@ interface Country {
 
 export default function Sponsors() {
   const [sponsors, setSponsors] = useState<SponsorCardProps[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCountry, setSelectedCountry] = useState('');
-  const [selectedFundingType, setSelectedFundingType] = useState('');
-  const [selectedFundingRange, setSelectedFundingRange] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState("");
+  const [selectedFundingType, setSelectedFundingType] = useState("");
+  const [selectedFundingRange, setSelectedFundingRange] = useState("");
   const [countries, setCountries] = useState<Country[]>([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
 
@@ -41,29 +41,29 @@ export default function Sponsors() {
   const closeReportModal = () => setIsReportOpen(false);
 
   const handleViewProfile = (sponsor: SponsorCardProps) => {
-    navigate('/sponsor/Sponsorinfo', {
+    navigate("/sponsor/Sponsorinfo", {
       state: { sponsor },
     });
   };
 
   useEffect(() => {
     const data = Array(4).fill({
-      name: 'William',
-      company: 'Company Name',
+      name: "William",
+      company: "Company Name",
       description:
-        'I, William, a British citizen residing in London, am sponsoring my cousin Riya Sharma for her UK visit and will provide full financial and accommodation support.',
+        "I, William, a British citizen residing in London, am sponsoring my cousin Riya Sharma for her UK visit and will provide full financial and accommodation support.",
       rating: 4.5,
       sponsoredCount: 10,
       imageUrl: sponsor2,
-      country: 'Canada',
-      fundingType: 'Type A',
-      fundingRange: '10K-50K',
+      country: "Canada",
+      fundingType: "Type A",
+      fundingRange: "10K-50K",
     });
     setSponsors(data);
   }, []);
 
   useEffect(() => {
-    fetch('https://restcountries.com/v3.1/all')
+    fetch("https://restcountries.com/v3.1/all")
       .then((res) => res.json())
       .then((data: Country[]) => {
         const sorted = data.sort((a, b) =>
@@ -74,10 +74,10 @@ export default function Sponsors() {
   }, []);
 
   const handleClear = () => {
-    setSearchTerm('');
-    setSelectedCountry('');
-    setSelectedFundingType('');
-    setSelectedFundingRange('');
+    setSearchTerm("");
+    setSelectedCountry("");
+    setSelectedFundingType("");
+    setSelectedFundingRange("");
   };
 
   const filteredSponsors = sponsors.filter((s) => {
@@ -154,13 +154,17 @@ export default function Sponsors() {
           />
           <CardContent className="flex-1 p-0">
             <h2 className="text-lg font-semibold">{sponsor.name}</h2>
-            <p className="text-sm text-gray-600 dark:text-white">{sponsor.company}</p>
+            <p className="text-sm text-gray-600 dark:text-white">
+              {sponsor.company}
+            </p>
             <p className="text-sm mt-1">{sponsor.description}</p>
             <div className="flex items-center mt-2 text-sm text-gray-700">
               <div className="flex items-center text-yellow-400 mr-2">
-                {Array.from({ length: Math.floor(sponsor.rating) }).map((_, i) => (
-                  <Star key={i} className="w-4 h-4 fill-yellow-400" />
-                ))}
+                {Array.from({ length: Math.floor(sponsor.rating) }).map(
+                  (_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-400" />
+                  )
+                )}
               </div>
               <span className="text-yellow-400 text-lg">{sponsor.rating}</span>
               <span className="ml-2 text-gray-500 dark:text-white">

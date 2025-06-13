@@ -80,13 +80,10 @@ const Matches: React.FC = () => {
   const userId =
     localStorage.getItem("userId") ||
     localStorage.getItem("userid") ||
-    localStorage.getItem("user_id") ||
-    "f15b8a02-7150-4d06-a82e-dc85a8aff892"; // Fallback ID
+    localStorage.getItem("user_id");
 
   // API base URL with proper fallback
-  const API_BASE_URL = `${
-    import.meta.env.VITE_PORT || "https://sportsapp.publicvm.com"
-  }/api/v1/user/matches`;
+  const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/matches`;
 
   const token = localStorage.getItem("token");
   const currentDate = new Date().toISOString().split("T")[0]; // Today's date for the form
