@@ -24,6 +24,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/applications`;
+const sponsorid = localStorage.getItem("userId");
 
 const getBadgeColor = (status: string) => {
   switch (status) {
@@ -54,22 +55,6 @@ const getStatusDot = (status: string) => {
   }
 };
 
-const getStatus = (status: string) => {
-  switch (status) {
-    case "APPROVED":
-    case "ACCEPTED":
-      return "text-green-600 ";
-    case "PENDING":
-    case "SUBMITTED":
-      return "text-yellow-600 ";
-    case "DISAPPROVED":
-    case "REJECTED":
-      return "text-red-600 ";
-    default:
-      return "text-gray-600 ";
-  }
-};
-
 const statusToDisplay = (status: string) => {
   switch (status) {
     case "ACCEPTED":
@@ -96,18 +81,29 @@ const SponsorApplication = () => {
   const [statusFilter, setStatusFilter] = useState<string | undefined>(
     undefined
   );
+  const [actionLoading, setActionLoading] = useState<string | null>(null); // applicationId which is being processed
+  const [actionedIds, setActionedIds] = useState<{ [key: string]: boolean }>(
+    {}
+  );
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    appId: string | null;
+    action: "accept" | "reject" | null;
+  }>({ open: false, appId: null, action: null });
+
   const navigate = useNavigate();
 
   const token = localStorage.getItem("token");
 
   useEffect(() => {
     fetchApplications();
-    // eslint-disable-next-line
+    // Reset actionedIds on filter/page change
+    setActionedIds({});
   }, [page, statusFilter]);
 
   const fetchApplications = async () => {
     try {
-      let url = `${API_BASE_URL}?limit=20&page=${page}`;
+      let url = `${API_BASE_URL}/sponsor/${sponsorid}?limit=10&page=${page}`;
       if (statusFilter) {
         url += `&status=${statusFilter}`;
       }
@@ -146,10 +142,11 @@ const SponsorApplication = () => {
     appId: string,
     action: "accept" | "reject"
   ) => {
+    setActionLoading(appId);
     try {
       const res = await axios.patch(
         `${API_BASE_URL}/${appId}/action`,
-        { action },
+        { action: action },
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -168,6 +165,7 @@ const SponsorApplication = () => {
         timer: 1500,
         showConfirmButton: false,
       });
+      setActionedIds((prev) => ({ ...prev, [appId]: true }));
       fetchApplications();
     } catch (err: any) {
       Swal.fire({
@@ -175,7 +173,31 @@ const SponsorApplication = () => {
         title: "Action Failed",
         text: err?.response?.data?.message || "Something went wrong.",
       });
+    } finally {
+      setActionLoading(null);
+      setConfirmModal({ open: false, appId: null, action: null });
     }
+  };
+
+  const openAcceptConfirm = (appId: string) => {
+    setConfirmModal({ open: true, appId, action: "accept" });
+  };
+
+  const closeConfirmModal = () => {
+    setConfirmModal({ open: false, appId: null, action: null });
+  };
+
+  // Button should be disabled if already actioned OR already in a terminal status
+  const isActionDisabled = (app: any) => {
+    if (actionedIds[app.id]) return true;
+    if (
+      app.status === "ACCEPTED" ||
+      app.status === "APPROVED" ||
+      app.status === "REJECTED" ||
+      app.status === "DISAPPROVED"
+    )
+      return true;
+    return false;
   };
 
   return (
@@ -258,20 +280,19 @@ const SponsorApplication = () => {
                 <TableCell>
                   <div className="flex gap-2">
                     <button
-                      className={`text-sm px-3 py-1 rounded border border-green-500 bg-green-50 text-green-700 font-medium hover:bg-green-100 transition`}
-                      onClick={() => handleApplicationAction(app.id, "accept")}
+                      className={`text-sm px-3 py-1 rounded border border-green-500 bg-green-50 text-green-700 font-medium hover:bg-green-100 transition disabled:opacity-60`}
+                      onClick={() => openAcceptConfirm(app.id)}
                       disabled={
-                        app.status === "ACCEPTED" || app.status === "APPROVED"
+                        isActionDisabled(app) || actionLoading === app.id
                       }
                     >
                       Accept
                     </button>
                     <button
-                      className={`text-sm px-3 py-1 rounded border border-red-500 bg-red-50 text-red-700 font-medium hover:bg-red-100 transition`}
+                      className={`text-sm px-3 py-1 rounded border border-red-500 bg-red-50 text-red-700 font-medium hover:bg-red-100 transition disabled:opacity-60`}
                       onClick={() => handleApplicationAction(app.id, "reject")}
                       disabled={
-                        app.status === "REJECTED" ||
-                        app.status === "DISAPPROVED"
+                        isActionDisabled(app) || actionLoading === app.id
                       }
                     >
                       Reject
@@ -444,6 +465,41 @@ const SponsorApplication = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Accept Confirm Modal */}
+      {confirmModal.open && confirmModal.action === "accept" && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg p-8 w-full max-w-md flex flex-col items-center">
+            <h3 className="text-xl font-bold mb-4 text-center">
+              Confirm Acceptance
+            </h3>
+            <p className="mb-6 text-center">
+              Are you sure you want to{" "}
+              <span className="text-green-700 font-semibold">ACCEPT</span> this
+              application?
+            </p>
+            <div className="flex gap-4 justify-center">
+              <button
+                onClick={() => {
+                  if (confirmModal.appId)
+                    handleApplicationAction(confirmModal.appId, "accept");
+                }}
+                className="px-4 py-2 rounded bg-green-600 text-white font-semibold hover:bg-green-700 transition"
+                disabled={actionLoading !== null}
+              >
+                Yes, Accept
+              </button>
+              <button
+                onClick={closeConfirmModal}
+                className="px-4 py-2 rounded bg-gray-200 text-gray-800 font-semibold hover:bg-gray-300 transition"
+                disabled={actionLoading !== null}
+              >
+                Cancel
+              </button>
             </div>
           </div>
         </div>

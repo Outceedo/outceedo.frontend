@@ -168,7 +168,7 @@ const SponsorApplicationpage = () => {
               <TableHead>Application Date</TableHead>
               <TableHead>Sponsorship Type</TableHead>
               <TableHead>Budget</TableHead>
-              <TableHead>Action</TableHead>
+              
               <TableHead>Status</TableHead>
               <TableHead>Application View</TableHead>
             </TableRow>
@@ -217,19 +217,24 @@ const SponsorApplicationpage = () => {
                 </TableCell>
                 <TableCell>{app.sponsorshipType || "-"}</TableCell>
                 <TableCell>-</TableCell>
-                <TableCell>
-                  <span className="text-gray-700 font-medium">Pending</span>
-                </TableCell>
+                
                 <TableCell>
                   <span
-                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-medium text-sm"
+                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border font-medium text-sm
+      ${
+        app.status === "ACCEPTED"
+          ? "border-green-400 bg-green-50 text-green-700"
+          : app.status === "REJECTED"
+          ? "border-red-400 bg-red-50 text-red-700"
+          : "border-yellow-400 bg-yellow-50 text-yellow-700"
+      }
+    `}
                     style={{
                       minWidth: "92px",
                       justifyContent: "center",
                     }}
                   >
-                    <Circle size={14} className="text-yellow-500" />
-                    Pending
+                    {app.status}
                   </span>
                 </TableCell>
                 <TableCell
