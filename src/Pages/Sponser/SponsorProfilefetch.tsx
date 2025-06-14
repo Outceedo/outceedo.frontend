@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import ApplicationForm from "@/Playerpages/ApplicationForm";
+import ApplicationForm from "./ApplicationForm";
 
 interface SponsorProfile {
   id: string;

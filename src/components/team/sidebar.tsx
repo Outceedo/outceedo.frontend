@@ -38,11 +38,11 @@ const adminSidebarMenuItems: MenuItem[] = [
     path: "/team/sponsors",
   },
   {
-    id: 4,
-    name: "SponsorApplication",
+    id: 5,
+    name: "Applications",
 
     icon: "fas fa-handshake",
-    path: "/team/sponsorsapplication",
+    path: "/team/applications",
   },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
   {

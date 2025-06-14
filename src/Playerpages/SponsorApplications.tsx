@@ -21,7 +21,6 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
-import Swal from "sweetalert2";
 
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/applications`;
 
@@ -40,53 +39,44 @@ const getBadgeColor = (status: string) => {
 
 const getStatusDot = (status: string) => {
   switch (status) {
-    case "APPROVED":
-    case "ACCEPTED":
+    case "SPONSORED":
       return "text-green-600 bg-green-200";
     case "PENDING":
-    case "SUBMITTED":
       return "text-yellow-600 bg-yellow-200";
     case "DISAPPROVED":
-    case "REJECTED":
       return "text-red-600 bg-red-200";
     default:
       return "text-gray-600 bg-gray-200";
   }
 };
 
-const getStatus = (status: string) => {
-  switch (status) {
-    case "APPROVED":
-    case "ACCEPTED":
-      return "text-green-600 ";
-    case "PENDING":
-    case "SUBMITTED":
-      return "text-yellow-600 ";
-    case "DISAPPROVED":
-    case "REJECTED":
-      return "text-red-600 ";
-    default:
-      return "text-gray-600 ";
-  }
-};
-
 const statusToDisplay = (status: string) => {
   switch (status) {
     case "ACCEPTED":
-    case "APPROVED":
-      return "Approved";
+      return "Accepted";
     case "REJECTED":
-    case "DISAPPROVED":
+      return "Rejected";
+    case "SUBMITTED":
+      return "Submitted";
+    default:
+      return status.charAt(0) + status.slice(1).toLowerCase();
+  }
+};
+
+const stateToDisplay = (status: string) => {
+  switch (status) {
+    case "ACCEPTED":
+      return "Sponsored";
+    case "REJECTED":
       return "Disapproved";
     case "SUBMITTED":
-    case "PENDING":
       return "Pending";
     default:
       return status.charAt(0) + status.slice(1).toLowerCase();
   }
 };
 
-const SponsorApplication = () => {
+const SponsorApplicationpage = () => {
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [modalData, setModalData] = useState<any | null>(null);
   const [applications, setApplications] = useState<any[]>([]);
@@ -141,43 +131,6 @@ const SponsorApplication = () => {
     setPage(1);
   };
 
-  // Accept/Reject API logic
-  const handleApplicationAction = async (
-    appId: string,
-    action: "accept" | "reject"
-  ) => {
-    try {
-      const res = await axios.patch(
-        `${API_BASE_URL}/${appId}/action`,
-        { action },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-      Swal.fire({
-        icon: "success",
-        title: `Application ${action === "accept" ? "Accepted" : "Rejected"}`,
-        text:
-          res.data?.message ||
-          `Application has been ${
-            action === "accept" ? "accepted" : "rejected"
-          }.`,
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      fetchApplications();
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Action Failed",
-        text: err?.response?.data?.message || "Something went wrong.",
-      });
-    }
-  };
-
   return (
     <div className="p-6 ">
       <div className="flex gap-4 mb-4">
@@ -200,7 +153,7 @@ const SponsorApplication = () => {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="All">All</SelectItem>
-            <SelectItem value="ACCEPTED">Approved</SelectItem>
+            <SelectItem value="ACCEPTED">Sponsored</SelectItem>
             <SelectItem value="SUBMITTED">Pending</SelectItem>
             <SelectItem value="REJECTED">Disapproved</SelectItem>
           </SelectContent>
@@ -210,17 +163,33 @@ const SponsorApplication = () => {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Applicant Name</TableHead>
+              <TableHead>Application ID</TableHead>
+              <TableHead>Applicant Name and Sponsor Type</TableHead>
               <TableHead>Application Date</TableHead>
               <TableHead>Sponsorship Type</TableHead>
-              <TableHead>Application View</TableHead>
+              <TableHead>Budget</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>Application View</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {applications.map((app) => (
               <TableRow key={app.id}>
+                {/* Clamp ID */}
+                <TableCell
+                  className="max-w-[160px] overflow-hidden text-ellipsis whitespace-nowrap"
+                  title={app.id}
+                  style={{
+                    maxWidth: "160px",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    fontFamily: "monospace",
+                  }}
+                >
+                  {app.id}
+                </TableCell>
                 <TableCell className="flex items-center gap-3">
                   <Avatar>
                     <AvatarImage src={app.user?.photo} />
@@ -230,7 +199,7 @@ const SponsorApplication = () => {
                   </Avatar>
                   <span
                     className="cursor-pointer text-blue-600 hover:underline"
-                    onClick={() => navigate(`/sponsor/Sponsorinfo`)}
+                    onClick={() => navigate(`/team/Sponsorinfo`)}
                   >
                     {app.user
                       ? app.user.firstName + " " + app.user.lastName
@@ -247,6 +216,22 @@ const SponsorApplication = () => {
                     : "-"}
                 </TableCell>
                 <TableCell>{app.sponsorshipType || "-"}</TableCell>
+                <TableCell>-</TableCell>
+                <TableCell>
+                  <span className="text-gray-700 font-medium">Pending</span>
+                </TableCell>
+                <TableCell>
+                  <span
+                    className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-yellow-400 bg-yellow-50 text-yellow-700 font-medium text-sm"
+                    style={{
+                      minWidth: "92px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Circle size={14} className="text-yellow-500" />
+                    Pending
+                  </span>
+                </TableCell>
                 <TableCell
                   className="text-blue-500 hover:underline cursor-pointer"
                   onClick={() => openReportModal(app)}
@@ -254,48 +239,6 @@ const SponsorApplication = () => {
                   {app.user
                     ? `${app.user.firstName}${app.user.lastName}.application`
                     : "View"}
-                </TableCell>
-                <TableCell>
-                  <div className="flex gap-2">
-                    <button
-                      className={`text-sm px-3 py-1 rounded border border-green-500 bg-green-50 text-green-700 font-medium hover:bg-green-100 transition`}
-                      onClick={() => handleApplicationAction(app.id, "accept")}
-                      disabled={
-                        app.status === "ACCEPTED" || app.status === "APPROVED"
-                      }
-                    >
-                      Accept
-                    </button>
-                    <button
-                      className={`text-sm px-3 py-1 rounded border border-red-500 bg-red-50 text-red-700 font-medium hover:bg-red-100 transition`}
-                      onClick={() => handleApplicationAction(app.id, "reject")}
-                      disabled={
-                        app.status === "REJECTED" ||
-                        app.status === "DISAPPROVED"
-                      }
-                    >
-                      Reject
-                    </button>
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span
-                    className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border ${
-                      app.status === "APPROVED" || app.status === "ACCEPTED"
-                        ? "border-green-400 bg-green-50 text-green-700"
-                        : app.status === "DISAPPROVED" ||
-                          app.status === "REJECTED"
-                        ? "border-red-400 bg-red-50 text-red-700"
-                        : "border-yellow-400 bg-yellow-50 text-yellow-700"
-                    } font-medium text-sm`}
-                    style={{
-                      minWidth: "92px",
-                      justifyContent: "center",
-                    }}
-                  >
-                    <Circle size={14} className={getStatusDot(app.status)} />
-                    {statusToDisplay(app.status)}
-                  </span>
                 </TableCell>
               </TableRow>
             ))}
@@ -323,7 +266,6 @@ const SponsorApplication = () => {
         </div>
       </div>
 
-      {/* Modal for Application Details */}
       {isReportOpen && modalData && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
           <div className="relative bg-white dark:bg-gray-800 max-w-3xl w-full rounded-lg shadow-lg overflow-auto max-h-[90vh]">
@@ -452,4 +394,4 @@ const SponsorApplication = () => {
   );
 };
 
-export default SponsorApplication;
+export default SponsorApplicationpage;

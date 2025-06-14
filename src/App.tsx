@@ -43,10 +43,7 @@ import ExpertProfile from "./expertpages/expertdata";
 import ExpertDashboard from "./expertpages/Dashboard";
 import BookingExpertside from "./expertpages/Bookings";
 import ExpertMatches from "./expertpages/ExpertMatches";
-import Expertsponsers from "./expertpages/Expertsponsors";
-import ApplicationForm from "./Playerpages/ApplicationForm";
 import ExpertAvailabilityManager from "./expertpages/Slots";
-
 import { authService } from "./store/apiConfig";
 //sponser pages
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
@@ -56,17 +53,13 @@ import Sponsorplayer from "./SponsorPages/Sponsorplayer";
 import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
 import Sponsorinfo from "./SponsorPages/Sponsorinfo";
-
 //Team pages
 import TeamDetailsForm from "./teampages/teamdetailsform";
 import TeamProfile from "./teampages/teamprofile";
 import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
-
 import TeamSponsor from "./teampages/TeamSponser";
-
 import TeamPlayerInfo from "./SponsorPages/playerinfo";
-
 import SponsorPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorExperts from "./SponsorPages/Expertssponsor";
 import Expertsponsors from "./expertpages/Expertsponsors";
@@ -74,14 +67,13 @@ import SponsorInfo from "./expertpages/sponsorinfo";
 import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
 import TeamSponsorInfo from "./teampages/Sponsorinfo";
 import TeamExperts from "./teampages/expertprofile";
-
 //fan pages
 import FanLayout from "./components/fan/layout";
 import FanPlayers from "./fanpages/Players";
-
 import FanExperts from "./fanpages/Experts";
 import Fanprofile from "./fanpages/FanProfile";
 import Fandetailsform from "./fanpages/Fandetailsform";
+import SponsorApplicationpage from "./Playerpages/SponsorApplications";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -96,17 +88,13 @@ const AppContent: React.FC = () => {
   const [isInitializing, setIsInitializing] = useState(true);
   const hasToken = !!localStorage.getItem("token");
 
-  const navigate = useNavigate(); // Debug logging
+  const navigate = useNavigate();
 
   useEffect(() => {
     const initApp = async () => {
       try {
-        // First initialize from localStorage
         dispatch(initializeFromLocalStorage());
-
-        // Set a short timeout to allow UI to reflect localStorage state first
         if (hasToken) {
-          // Only validate if we actually have a token to validate
           await dispatch(validateToken()).unwrap();
         }
       } catch (error) {
@@ -115,11 +103,9 @@ const AppContent: React.FC = () => {
         setIsInitializing(false);
       }
     };
-
     initApp();
   }, [dispatch, hasToken]);
 
-  // Show loading state during initial authentication check
   if (isInitializing) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -129,7 +115,6 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Effective authentication check (use token presence as backup)
   const effectivelyAuthenticated = isAuthenticated || hasToken;
 
   function handleNav() {
@@ -147,6 +132,7 @@ const AppContent: React.FC = () => {
     }
   }
 
+  // Sorted input routes according to role
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
@@ -200,9 +186,7 @@ const AppContent: React.FC = () => {
       />
       <Route path="/reset-password/:id" element={<ResetPassword />} />
 
-      {/* Protected routes */}
-
-      {/* Player pages */}
+      {/* Player routes */}
       <Route
         path="/player"
         element={
@@ -222,14 +206,10 @@ const AppContent: React.FC = () => {
         <Route path="book" element={<BookingCalendar />} />
         <Route path="sponsors" element={<PlayerSponsors />} />
         <Route path="sponsorinfo" element={<PlayerSponsorInfo />} />
-        <Route path="applicationform" element={<ApplicationForm />} />
-        <Route
-          path="applications"
-          element={<>Players submitted applications</>}
-        />
+        <Route path="applications" element={<SponsorApplicationpage />} />
       </Route>
 
-      {/* Expert Outlet */}
+      {/* Expert routes */}
       <Route
         path="/expert"
         element={
@@ -246,7 +226,6 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<ExpertProfile />} />
         <Route path="playerinfo" element={<ExpertviewProfile />} />
         <Route path="details-form" element={<Detailsform />} />
-        <Route path="applicationform" element={<ApplicationForm />} />
         <Route path="sponsorinfo" element={<SponsorInfo />} />
         <Route
           path="applications"
@@ -255,8 +234,7 @@ const AppContent: React.FC = () => {
         <Route path="slots" element={<ExpertAvailabilityManager />} />
       </Route>
 
-      {/* Sponser routes */}
-
+      {/* Sponsor routes */}
       <Route
         path="/sponsor"
         element={
@@ -266,7 +244,6 @@ const AppContent: React.FC = () => {
         }
       >
         <Route path="dashboard" element={<>Sponser Dashboard</>} />
-
         <Route path="players" element={<Sponsorplayer />} />
         <Route path="experts" element={<Sponsorexperts />} />
         <Route path="application" element={<SponsorApplication />} />
@@ -278,7 +255,7 @@ const AppContent: React.FC = () => {
         <Route path="exdetails" element={<SponsorExperts />} />
       </Route>
 
-      {/* Team Outlet */}
+      {/* Team routes */}
       <Route
         path="/team"
         element={
@@ -291,7 +268,7 @@ const AppContent: React.FC = () => {
         <Route path="players" element={<TeamPlayer />} />
         <Route path="experts" element={<TeamExpert />} />
         <Route path="sponsors" element={<TeamSponsor />} />
-        <Route path="sponsorsapplication" element={<SponsorApplication />} />
+        <Route path="applications" element={<SponsorApplicationpage />} />
         <Route path="profile" element={<TeamProfile />} />
         <Route path="details-form" element={<TeamDetailsForm />} />
         <Route path="exdetails" element={<TeamExperts />} />
@@ -299,6 +276,8 @@ const AppContent: React.FC = () => {
         <Route path="sponsorinfo" element={<TeamSponsorInfo />} />
         <Route path="book" element={<BookingCalendar />} />
       </Route>
+
+      {/* Fan routes */}
       <Route
         path="/fan"
         element={

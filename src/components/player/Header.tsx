@@ -23,6 +23,7 @@ const menuItems = [
   { path: "/player/profile", name: "Profile" },
   { path: "/player/exdetails", name: "Expert Profile" },
   { path: "/player/sponsorinfo", name: "Sponsor Profile" },
+  { path: "/player/applications", name: "Sponsor Applications" },
 ];
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);

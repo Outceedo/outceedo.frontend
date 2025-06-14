@@ -19,7 +19,7 @@ const menuItems = [
   { path: "/team/players", name: "Players" },
   { path: "/team/experts", name: "Experts" },
   { path: "/team/sponsors", name: "Sponsor" },
-  { path: "/team/sponsorsapplication", name: "Sponsors Application" },
+  { path: "/team/applications", name: "Sponsors Application" },
   { path: "/team/profile", name: " Team Profile" },
   { path: "/team/sponsorinfo", name: "Sponsor Profile" },
   { path: "/team/playerinfo", name: "Player Profile" },

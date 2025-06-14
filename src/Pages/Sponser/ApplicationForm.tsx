@@ -78,18 +78,20 @@ const ApplicationForm = () => {
     }
 
     const payload = {
-      "reason": formData.reason,
-      "uniqueFactor": formData.uniqueFactor,
-      "website": formData.website,
-      "sponsorshipType": sponsorshipType,
-      "additionalInfo": formData.additionalInfo,
+      reason: formData.reason,
+      uniqueFactor: formData.uniqueFactor,
+      website: formData.website,
+      sponsorshipType: sponsorshipType,
+      additionalInfo: formData.additionalInfo,
     };
+    const token = localStorage.getItem("token");
 
     try {
       const response = await fetch(`${API_BASE_URL}/${sponsorId}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -106,7 +108,9 @@ const ApplicationForm = () => {
         timer: 2000,
         showConfirmButton: false,
       });
-      navigate("/player/applications");
+      localStorage.getItem("role") === "player"
+        ? navigate("/player/applications")
+        : navigate("/team/applications");
     } catch (err: any) {
       Swal.fire({
         icon: "error",
