@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import {
   Table,
   TableBody,
@@ -43,7 +44,6 @@ import {
   faLink,
   faExclamationTriangle,
   faPager,
-  faFilter,
   faTrash,
   faLaptop,
   faVideoCamera,
@@ -52,9 +52,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
-import { faPage4 } from "@fortawesome/free-brands-svg-icons";
+import Swal from "sweetalert2";
 
-// Updated interfaces to match the new API response format
 interface Expert {
   id: string;
   username: string;
@@ -116,7 +115,6 @@ const BookingExpertside: React.FC = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [filtersApplied, setFiltersApplied] = useState(false);
 
-  // Review modal state
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
@@ -124,27 +122,31 @@ const BookingExpertside: React.FC = () => {
   const [reviewText, setReviewText] = useState("");
   const [submittingReview, setSubmittingReview] = useState(false);
 
-  // Booking details modal state
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  // Reject confirmation modal state
   const [isRejectConfirmOpen, setIsRejectConfirmOpen] = useState(false);
   const [bookingToReject, setBookingToReject] = useState<string | null>(null);
 
-  // Accept confirmation modal state
   const [isAcceptConfirmOpen, setIsAcceptConfirmOpen] = useState(false);
   const [bookingToAccept, setBookingToAccept] = useState<string | null>(null);
 
-  // Video modal state
+  const [isRescheduleModalOpen, setIsRescheduleModalOpen] = useState(false);
+  const [bookingToReschedule, setBookingToReschedule] = useState<string | null>(
+    null
+  );
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleStartTime, setRescheduleStartTime] = useState("");
+  const [rescheduleEndTime, setRescheduleEndTime] = useState("");
+  const [rescheduling, setRescheduling] = useState(false);
+
   const [isFullscreenVideoOpen, setIsFullscreenVideoOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
+  const navigate = useNavigate();
 
-  // Check if any filters are applied
   useEffect(() => {
     setFiltersApplied(
       bookingStatus !== "all" ||
@@ -155,31 +157,21 @@ const BookingExpertside: React.FC = () => {
     );
   }, [bookingStatus, actionFilter, serviceTypeFilter, dateFilter, search]);
 
-  // Helper function to check if a booking is a recorded video assessment
   const isRecordedVideoAssessment = (booking: Booking) => {
     return booking.service?.service?.id === "1" && booking.recordedVideo;
   };
-  console.log(bookings);
 
-  // Get service type based on service ID and attributes
   const getServiceType = (booking: Booking): string => {
-    // Assuming service ID "1" is for recorded video assessment
     if (booking.service?.serviceId === "1") {
       return "recorded-video";
-    }
-    // Check if there's a meet link for online sessions
-    else if (booking.service?.serviceId === "2") {
+    } else if (booking.service?.serviceId === "2") {
       return "online";
-    }
-    // If there's a physical location
-    else if (booking.service?.serviceId === "3") {
+    } else if (booking.service?.serviceId === "3") {
       return "in-person";
     }
-    // Default to other
     return "other";
   };
 
-  // Get friendly name for service type
   const getServiceTypeName = (type: string): string => {
     switch (type) {
       case "recorded-video":
@@ -194,7 +186,6 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  // Get service type icon
   const getServiceTypeIcon = (type: string) => {
     switch (type) {
       case "recorded-video":
@@ -208,7 +199,6 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  // Function to clear all filters
   const clearAllFilters = () => {
     setBookingStatus("all");
     setActionFilter("all");
@@ -217,46 +207,35 @@ const BookingExpertside: React.FC = () => {
     setSearch("");
   };
 
-  // Open fullscreen video modal
   const openFullscreenVideo = (booking: Booking) => {
     if (isRecordedVideoAssessment(booking)) {
-      setVideoError(null); // Reset any previous errors
+      setVideoError(null);
       setCurrentVideoUrl(booking.recordedVideo);
       setIsFullscreenVideoOpen(true);
     }
   };
 
-  // Close fullscreen video modal
   const closeFullscreenVideo = () => {
     setIsFullscreenVideoOpen(false);
     setCurrentVideoUrl(null);
   };
 
-  // Fetch bookings from API
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch(`${API_BASE_URL}/booking`, {
-          method: "GET",
+        const response = await axios.get(`${API_BASE_URL}/booking`, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         });
 
-        if (!response.ok) {
-          throw new Error("Failed to fetch bookings");
-        }
-
-        const data = await response.json();
-        setBookings(data.bookings);
+        setBookings(response.data.bookings);
       } catch (err) {
         console.error("Error fetching bookings:", err);
         setError("Could not load bookings. Using demo data instead.");
-
-        // Use demo data if API fails
         setBookings(getDemoBookings());
       } finally {
         setLoading(false);
@@ -266,14 +245,12 @@ const BookingExpertside: React.FC = () => {
     fetchBookings();
   }, []);
 
-  // Handle video error
   const handleVideoError = () => {
     setVideoError(
       "Failed to load video. The URL might be invalid or the video may no longer be available."
     );
   };
 
-  // Generate demo bookings if API fails
   const getDemoBookings = (): Booking[] => {
     return [
       {
@@ -395,66 +372,78 @@ const BookingExpertside: React.FC = () => {
     ];
   };
 
-  // Open booking details modal
   const openBookingDetails = (booking: Booking) => {
     setSelectedBooking(booking);
-    setVideoError(null); // Reset video error when opening new booking details
+    setVideoError(null);
     setIsBookingDetailsOpen(true);
   };
 
-  // Close booking details modal
   const closeBookingDetails = () => {
     setIsBookingDetailsOpen(false);
     setSelectedBooking(null);
-    setVideoError(null); // Reset video error when closing
+    setVideoError(null);
   };
 
-  // Open reject confirmation dialog
   const openRejectConfirmDialog = (bookingId: string) => {
     setBookingToReject(bookingId);
     setIsRejectConfirmOpen(true);
 
-    // If reject was triggered from booking details modal, keep it open
-    // Otherwise close the booking details modal
     if (selectedBooking?.id !== bookingId) {
       setIsBookingDetailsOpen(false);
     }
   };
 
-  // Close reject confirmation dialog
   const closeRejectConfirmDialog = () => {
     setIsRejectConfirmOpen(false);
     setBookingToReject(null);
   };
 
-  // Open accept confirmation dialog
   const openAcceptConfirmDialog = (bookingId: string) => {
     setBookingToAccept(bookingId);
     setIsAcceptConfirmOpen(true);
 
-    // If accept was triggered from booking details modal, keep it open
-    // Otherwise close the booking details modal
     if (selectedBooking?.id !== bookingId) {
       setIsBookingDetailsOpen(false);
     }
   };
 
-  // Close accept confirmation dialog
   const closeAcceptConfirmDialog = () => {
     setIsAcceptConfirmOpen(false);
     setBookingToAccept(null);
   };
 
-  // Handle accepting a booking
+  const openRescheduleModal = (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (booking) {
+      setBookingToReschedule(bookingId);
+      setRescheduleDate(booking.date.split("T")[0]);
+      setRescheduleStartTime(booking.startTime);
+      setRescheduleEndTime(booking.endTime);
+      setIsRescheduleModalOpen(true);
+
+      if (selectedBooking?.id !== bookingId) {
+        setIsBookingDetailsOpen(false);
+      }
+    }
+  };
+
+  const closeRescheduleModal = () => {
+    setIsRescheduleModalOpen(false);
+    setBookingToReschedule(null);
+    setRescheduleDate("");
+    setRescheduleStartTime("");
+    setRescheduleEndTime("");
+  };
+
   const handleAcceptBooking = async (bookingId: string) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
+      await axios.patch(
         `${API_BASE_URL}/booking/${bookingId}/accept`,
+        {},
         {
-          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -462,11 +451,6 @@ const BookingExpertside: React.FC = () => {
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to accept booking");
-      }
-
-      // Update booking status in the local state
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
@@ -475,36 +459,47 @@ const BookingExpertside: React.FC = () => {
         )
       );
 
-      // Update the selected booking if it's the one being accepted
       if (selectedBooking && selectedBooking.id === bookingId) {
         setSelectedBooking({ ...selectedBooking, status: "ACCEPTED" });
       }
 
-      // Close the accept confirmation dialog
       closeAcceptConfirmDialog();
 
-      // Close the booking details modal if it's open
       if (isBookingDetailsOpen) {
         closeBookingDetails();
       }
+
+      // Success alert
+      await Swal.fire({
+        icon: "success",
+        title: "Booking Accepted!",
+        text: "The booking has been successfully accepted. The player has been notified.",
+        confirmButtonColor: "#10B981",
+        timer: 2500,
+      });
     } catch (error) {
       console.error("Error accepting booking:", error);
-      setError("Failed to accept booking. Please try again.");
+
+      await Swal.fire({
+        icon: "error",
+        title: "Accept Failed",
+        text: "Failed to accept booking. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
     } finally {
       setLoading(false);
     }
   };
-  const navigate = useNavigate();
-  // Handle rejecting a booking
+
   const handleRejectBooking = async (bookingId: string) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
+      await axios.patch(
         `${API_BASE_URL}/booking/${bookingId}/reject`,
+        {},
         {
-          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -512,11 +507,6 @@ const BookingExpertside: React.FC = () => {
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to reject booking");
-      }
-
-      // Update booking status in the local state
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
@@ -525,87 +515,135 @@ const BookingExpertside: React.FC = () => {
         )
       );
 
-      // Update the selected booking if it's the one being rejected
       if (selectedBooking && selectedBooking.id === bookingId) {
         setSelectedBooking({ ...selectedBooking, status: "REJECTED" });
       }
 
-      // Close the reject confirmation dialog
       closeRejectConfirmDialog();
-
-      // Close the booking details modal
       closeBookingDetails();
+
+      // Success alert
+      await Swal.fire({
+        icon: "info",
+        title: "Booking Rejected",
+        text: "The booking has been rejected. The player has been notified.",
+        confirmButtonColor: "#6B7280",
+        timer: 2500,
+      });
     } catch (error) {
       console.error("Error rejecting booking:", error);
-      setError("Failed to reject booking. Please try again.");
 
-      // Close the reject confirmation dialog even if there's an error
+      await Swal.fire({
+        icon: "error",
+        title: "Reject Failed",
+        text: "Failed to reject booking. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+
       closeRejectConfirmDialog();
     } finally {
       setLoading(false);
     }
   };
 
-  // Handle rescheduling a booking
-  const handleRescheduleBooking = async (bookingId: string) => {
+  const handleRescheduleBooking = async () => {
+    if (
+      !bookingToReschedule ||
+      !rescheduleDate ||
+      !rescheduleStartTime ||
+      !rescheduleEndTime
+    ) {
+      Swal.fire({
+        icon: "warning",
+        title: "Missing Information",
+        text: "Please fill in all the required fields.",
+        confirmButtonColor: "#3B82F6",
+      });
+      return;
+    }
+
     try {
-      setLoading(true);
+      setRescheduling(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
-        `${API_BASE_URL}/booking/${bookingId}/reschedule`,
+      const rescheduleData = {
+        date: rescheduleDate,
+        startTime: rescheduleStartTime,
+        endTime: rescheduleEndTime,
+      };
+
+      await axios.patch(
+        `${API_BASE_URL}/booking/${bookingToReschedule}/reschedule`,
+        rescheduleData,
         {
-          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            // You would include new date and time here
-            // For demo, we'll just update the status
-            status: "RESCHEDULED",
-          }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to reschedule booking");
-      }
-
-      // Update booking status in the local state
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
-          booking.id === bookingId
-            ? { ...booking, status: "RESCHEDULED" }
+          booking.id === bookingToReschedule
+            ? {
+                ...booking,
+                status: "RESCHEDULED",
+                date: `${rescheduleDate}T00:00:00.000Z`,
+                startTime: rescheduleStartTime,
+                endTime: rescheduleEndTime,
+              }
             : booking
         )
       );
 
-      // Update the selected booking if it's the one being rescheduled
-      if (selectedBooking && selectedBooking.id === bookingId) {
-        setSelectedBooking({ ...selectedBooking, status: "RESCHEDULED" });
+      if (selectedBooking && selectedBooking.id === bookingToReschedule) {
+        setSelectedBooking({
+          ...selectedBooking,
+          status: "RESCHEDULED",
+          date: `${rescheduleDate}T00:00:00.000Z`,
+          startTime: rescheduleStartTime,
+          endTime: rescheduleEndTime,
+        });
       }
 
-      // Close the booking details modal
+      closeRescheduleModal();
       closeBookingDetails();
+
+      // Success alert
+      await Swal.fire({
+        icon: "success",
+        title: "Booking Rescheduled!",
+        text: "The booking has been successfully rescheduled. The player will be notified of the changes.",
+        confirmButtonColor: "#10B981",
+        timer: 3000,
+        showConfirmButton: true,
+      });
     } catch (error) {
       console.error("Error rescheduling booking:", error);
-      setError("Failed to reschedule booking. Please try again.");
+
+      // Error alert
+      await Swal.fire({
+        icon: "error",
+        title: "Reschedule Failed",
+        text: "Failed to reschedule booking. Please try again or contact support if the problem persists.",
+        confirmButtonColor: "#EF4444",
+        footer: `<small>Error occurred at: ${new Date().toLocaleString()}</small>`,
+      });
     } finally {
-      setLoading(false);
+      setRescheduling(false);
     }
   };
 
-  // Handle completing a booking
   const handleCompleteBooking = async (bookingId: string) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
+      await axios.patch(
         `${API_BASE_URL}/booking/${bookingId}/complete`,
+        {},
         {
-          method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -613,11 +651,6 @@ const BookingExpertside: React.FC = () => {
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to complete booking");
-      }
-
-      // Update booking status in the local state
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
@@ -626,12 +659,10 @@ const BookingExpertside: React.FC = () => {
         )
       );
 
-      // Update the selected booking if it's the one being completed
       if (selectedBooking && selectedBooking.id === bookingId) {
         setSelectedBooking({ ...selectedBooking, status: "COMPLETED" });
       }
 
-      // Close the booking details modal
       closeBookingDetails();
     } catch (error) {
       console.error("Error completing booking:", error);
@@ -641,25 +672,20 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  // Handle opening review modal
   const openReviewModal = (bookingId: string) => {
     const booking = bookings.find((b) => b.id === bookingId);
     setSelectedBookingId(bookingId);
     setReviewText(booking?.review || "");
     setIsReviewModalOpen(true);
-
-    // Close the booking details modal if it's open
     setIsBookingDetailsOpen(false);
   };
 
-  // Handle closing review modal
   const closeReviewModal = () => {
     setIsReviewModalOpen(false);
     setSelectedBookingId(null);
     setReviewText("");
   };
 
-  // Handle submitting the review
   const handleSubmitReview = async () => {
     if (!selectedBookingId) return;
 
@@ -668,23 +694,17 @@ const BookingExpertside: React.FC = () => {
     try {
       const token = localStorage.getItem("token");
 
-      const response = await fetch(
+      await axios.post(
         `${API_BASE_URL}/booking/${selectedBookingId}/review`,
+        { review: reviewText },
         {
-          method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ review: reviewText }),
         }
       );
 
-      if (!response.ok) {
-        throw new Error("Failed to submit review");
-      }
-
-      // Update local state
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === selectedBookingId
@@ -693,7 +713,6 @@ const BookingExpertside: React.FC = () => {
         )
       );
 
-      // Update the selected booking if it's the one being reviewed
       if (selectedBooking && selectedBooking.id === selectedBookingId) {
         setSelectedBooking({ ...selectedBooking, review: reviewText });
       }
@@ -703,7 +722,6 @@ const BookingExpertside: React.FC = () => {
       console.error("Error submitting review:", error);
       setError("Failed to submit review. Please try again.");
 
-      // For demo purposes, still update the UI
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === selectedBookingId
@@ -717,7 +735,6 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  // Get style for action badges
   const getActionBadgeStyle = (status: string) => {
     switch (status) {
       case "ACCEPTED":
@@ -738,7 +755,6 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  // Get style for payment badges
   const getPaymentBadgeStyle = (status: string) => {
     switch (status) {
       case "COMPLETED":
@@ -757,7 +773,6 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  // Format status for display
   const formatStatus = (status: string) => {
     return status
       .replace(/_/g, " ")
@@ -765,7 +780,6 @@ const BookingExpertside: React.FC = () => {
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  // Get payment status from booking status
   const getPaymentStatus = (status: string) => {
     switch (status) {
       case "COMPLETED":
@@ -778,7 +792,6 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  // Format date for display
   const formatDate = (dateStr: string, startTime: string) => {
     const date = new Date(dateStr);
     const formattedDate = date.toLocaleDateString("en-US", {
@@ -787,29 +800,20 @@ const BookingExpertside: React.FC = () => {
       year: "numeric",
     });
 
-    // Format time (convert 24h to 12h format)
     const [hours, minutes] = startTime.split(":");
     let hour = parseInt(hours, 10);
     const ampm = hour >= 12 ? "pm" : "am";
     hour = hour % 12;
-    hour = hour ? hour : 12; // the hour '0' should be '12'
+    hour = hour ? hour : 12;
 
     return `${formattedDate} at ${hour}:${minutes}${ampm}`;
   };
 
-  // Truncate username if it's too long
   const truncateUsername = (username: string, maxLength: number = 15) => {
     if (username.length <= maxLength) return username;
     return `${username.substring(0, maxLength)}...`;
   };
 
-  // Format date for input field value
-  const formatDateForInput = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toISOString().split("T")[0];
-  };
-
-  // Check if a booking matches the date filter
   const matchesDateFilter = (booking: Booking) => {
     if (!dateFilter) return true;
 
@@ -822,13 +826,11 @@ const BookingExpertside: React.FC = () => {
     return bookingDate.getTime() === filterDate.getTime();
   };
 
-  // Check if booking matches the service type filter
   const matchesServiceTypeFilter = (booking: Booking) => {
     if (serviceTypeFilter === "all") return true;
     return getServiceType(booking) === serviceTypeFilter;
   };
 
-  // Filter bookings based on all filters
   const filteredBookings = bookings.filter((booking) => {
     const playerName = booking.player?.username || "";
     const matchesSearch = playerName
@@ -856,16 +858,11 @@ const BookingExpertside: React.FC = () => {
     );
   });
 
-  // Current date and time for display in booking details
-  const currentDateTime = "2025-06-05 05:39:35"; // From user provided data
-  const currentUser = "22951a3363"; // From user provided data
-
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
       <h1 className="text-2xl font-bold mb-6">Your Bookings</h1>
 
       <div className="flex flex-wrap items-center gap-4 mb-4">
-        {/* Search Input with Icon */}
         <div className="relative w-full sm:w-1/5">
           <FontAwesomeIcon
             icon={faSearch}
@@ -880,7 +877,6 @@ const BookingExpertside: React.FC = () => {
           />
         </div>
 
-        {/* Date Filter */}
         <div className="relative sm:w-auto flex min-w-[120px]">
           <FontAwesomeIcon
             icon={faCalendarAlt}
@@ -896,7 +892,6 @@ const BookingExpertside: React.FC = () => {
           />
         </div>
 
-        {/* Booking Status Dropdown */}
         <Select value={bookingStatus} onValueChange={setBookingStatus}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Payment Status" />
@@ -922,7 +917,6 @@ const BookingExpertside: React.FC = () => {
           </SelectContent>
         </Select>
 
-        {/* Service Type Filter - Added */}
         <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Service Type" />
@@ -938,7 +932,6 @@ const BookingExpertside: React.FC = () => {
           </SelectContent>
         </Select>
 
-        {/* Clear Filters Button - Only show when filters are applied */}
         {filtersApplied && (
           <Button
             variant="outline"
@@ -1086,7 +1079,7 @@ const BookingExpertside: React.FC = () => {
                           className="h-8 w-8 text-yellow-600 hover:bg-yellow-100 hover:text-yellow-700"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleRescheduleBooking(booking.id);
+                            openRescheduleModal(booking.id);
                           }}
                           title="Reschedule Booking"
                           disabled={
@@ -1169,7 +1162,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       )}
 
-      {/* Complete Button for Accepted Bookings */}
       <div className="mt-4">
         <h3 className="font-medium mb-2">Active Sessions</h3>
         <div className="space-y-2">
@@ -1232,7 +1224,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       </div>
 
-      {/* Statistics Section */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <h3 className="font-medium text-blue-800">Total Bookings</h3>
@@ -1262,7 +1253,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       </div>
 
-      {/* Upcoming Sessions Section */}
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1320,7 +1310,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       </div>
 
-      {/* Booking Details Modal */}
       {selectedBooking && (
         <Dialog
           open={isBookingDetailsOpen}
@@ -1332,7 +1321,6 @@ const BookingExpertside: React.FC = () => {
             </DialogHeader>
 
             <div className="py-4">
-              {/* Status and Payment */}
               <div className="flex justify-between items-center mb-4">
                 <Badge
                   variant="outline"
@@ -1348,7 +1336,6 @@ const BookingExpertside: React.FC = () => {
                 </Badge>
               </div>
 
-              {/* Player Information */}
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
                   <FontAwesomeIcon
@@ -1381,7 +1368,6 @@ const BookingExpertside: React.FC = () => {
                 </div>
               </div>
 
-              {/* Service Details */}
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-lg font-semibold flex items-center">
@@ -1409,7 +1395,6 @@ const BookingExpertside: React.FC = () => {
                 )}
               </div>
 
-              {/* Session Information */}
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
                   <FontAwesomeIcon
@@ -1474,7 +1459,6 @@ const BookingExpertside: React.FC = () => {
                 )}
               </div>
 
-              {/* Media Section - Updated to display video player for RECORDED VIDEO ASSESSMENT */}
               {(selectedBooking.recordedVideo ||
                 selectedBooking.meetingRecording) && (
                 <div className="mb-5 bg-gray-50 p-4 rounded-lg">
@@ -1490,9 +1474,7 @@ const BookingExpertside: React.FC = () => {
                     <div className="mb-2">
                       <p className="font-medium mb-2">Recorded Video:</p>
 
-                      {/* Check if this is a RECORDED VIDEO ASSESSMENT service type */}
                       {selectedBooking.service?.serviceId === "1" ? (
-                        // Display embedded video player for RECORDED VIDEO ASSESSMENT
                         <div className="w-full rounded-lg overflow-hidden border border-gray-200">
                           {videoError ? (
                             <div className="bg-red-50 p-4 rounded border border-red-200 text-red-700 flex items-center">
@@ -1529,7 +1511,6 @@ const BookingExpertside: React.FC = () => {
                             </p>
                           </div>
 
-                          {/* Video information */}
                           <div className="mt-3 text-sm text-gray-600">
                             <p>
                               Uploaded by: {selectedBooking.player?.username}
@@ -1551,7 +1532,6 @@ const BookingExpertside: React.FC = () => {
                           </div>
                         </div>
                       ) : (
-                        // For other service types, just show the link
                         <a
                           href={selectedBooking.recordedVideo}
                           target="_blank"
@@ -1580,7 +1560,6 @@ const BookingExpertside: React.FC = () => {
                 </div>
               )}
 
-              {/* Review Section */}
               {selectedBooking.review && (
                 <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                   <h3 className="text-lg font-semibold mb-2 flex items-center">
@@ -1602,7 +1581,6 @@ const BookingExpertside: React.FC = () => {
                 </div>
               )}
 
-              {/* Timestamps */}
               <div className="mt-4 text-xs text-gray-500">
                 <p>Booking ID: {selectedBooking.id}</p>
                 <p>
@@ -1617,7 +1595,6 @@ const BookingExpertside: React.FC = () => {
             </div>
 
             <DialogFooter className="flex flex-wrap gap-2 justify-end">
-              {/* Action buttons based on status */}
               {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
                 <>
                   <Button
@@ -1631,7 +1608,7 @@ const BookingExpertside: React.FC = () => {
                   <Button
                     variant="outline"
                     className="border-yellow-500 text-yellow-500 hover:bg-yellow-50"
-                    onClick={() => handleRescheduleBooking(selectedBooking.id)}
+                    onClick={() => openRescheduleModal(selectedBooking.id)}
                   >
                     <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
                     Reschedule
@@ -1651,7 +1628,7 @@ const BookingExpertside: React.FC = () => {
                   <Button
                     variant="outline"
                     className="border-yellow-500 text-yellow-500 hover:bg-yellow-50"
-                    onClick={() => handleRescheduleBooking(selectedBooking.id)}
+                    onClick={() => openRescheduleModal(selectedBooking.id)}
                   >
                     <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
                     Reschedule
@@ -1878,6 +1855,143 @@ const BookingExpertside: React.FC = () => {
               }
             >
               Accept Booking
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog
+        open={isRescheduleModalOpen}
+        onOpenChange={setIsRescheduleModalOpen}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-gray-900 mb-2">
+              Reschedule Booking
+            </DialogTitle>
+            <DialogDescription className="text-gray-600 mb-4">
+              Select a new date and time for this booking session.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {bookingToReschedule && (
+              <div className="bg-gray-50 p-3 rounded-md mb-4">
+                <p className="text-sm">
+                  <span className="font-semibold">Player:</span>{" "}
+                  {
+                    bookings.find((b) => b.id === bookingToReschedule)?.player
+                      ?.username
+                  }
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Service:</span>{" "}
+                  {
+                    bookings.find((b) => b.id === bookingToReschedule)?.service
+                      ?.service?.name
+                  }
+                </p>
+                <p className="text-sm">
+                  <span className="font-semibold">Current Date:</span>{" "}
+                  {bookings.find((b) => b.id === bookingToReschedule) &&
+                    formatDate(
+                      bookings.find((b) => b.id === bookingToReschedule)
+                        ?.date || "",
+                      bookings.find((b) => b.id === bookingToReschedule)
+                        ?.startTime || ""
+                    )}
+                </p>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                New Date
+              </label>
+              <Input
+                type="date"
+                value={rescheduleDate}
+                onChange={(e) => setRescheduleDate(e.target.value)}
+                min={new Date().toISOString().split("T")[0]}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Start Time
+              </label>
+              <Input
+                type="time"
+                value={rescheduleStartTime}
+                onChange={(e) => setRescheduleStartTime(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                End Time
+              </label>
+              <Input
+                type="time"
+                value={rescheduleEndTime}
+                onChange={(e) => setRescheduleEndTime(e.target.value)}
+                className="w-full"
+              />
+            </div>
+
+            {error && (
+              <div className="p-3 bg-red-50 border border-red-200 text-red-700 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="flex gap-2 justify-end mt-6">
+            <Button
+              variant="outline"
+              onClick={closeRescheduleModal}
+              disabled={rescheduling}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleRescheduleBooking}
+              disabled={
+                rescheduling ||
+                !rescheduleDate ||
+                !rescheduleStartTime ||
+                !rescheduleEndTime
+              }
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {rescheduling ? (
+                <>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                  Rescheduling...
+                </>
+              ) : (
+                "Reschedule"
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

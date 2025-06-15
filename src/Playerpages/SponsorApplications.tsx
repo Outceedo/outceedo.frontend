@@ -168,7 +168,6 @@ const SponsorApplicationpage = () => {
               <TableHead>Application Date</TableHead>
               <TableHead>Sponsorship Type</TableHead>
               <TableHead>Budget</TableHead>
-              
               <TableHead>Status</TableHead>
               <TableHead>Application View</TableHead>
             </TableRow>
@@ -217,7 +216,7 @@ const SponsorApplicationpage = () => {
                 </TableCell>
                 <TableCell>{app.sponsorshipType || "-"}</TableCell>
                 <TableCell>-</TableCell>
-                
+
                 <TableCell>
                   <span
                     className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border font-medium text-sm
