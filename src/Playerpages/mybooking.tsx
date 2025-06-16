@@ -621,6 +621,7 @@ const MyBooking: React.FC = () => {
       matchesServiceTypeFilter(booking)
     );
   });
+  console.log(bookings);
 
   const navigate = useNavigate();
 
@@ -1146,17 +1147,17 @@ const MyBooking: React.FC = () => {
                   </h3>
                   <div className="text-lg font-bold text-green-700">
                     <FontAwesomeIcon icon={faMoneyBill} className="mr-1" />$
-                    {selectedBooking.service?.price}
+                    {selectedBooking.service?.price || null}
                   </div>
                 </div>
                 <h4 className="font-medium mb-2 break-words">
-                  {selectedBooking.service?.service?.name}
+                  {selectedBooking.service?.service?.name || null}
                 </h4>
                 <p className="text-sm text-gray-600 mb-2">
                   Type: {getServiceTypeName(getServiceType(selectedBooking))}
                 </p>
                 <p className="text-gray-600 mb-4">
-                  {selectedBooking.service?.service?.description}
+                  {selectedBooking.service?.service?.description || null}
                 </p>
 
                 <div className="space-y-2 text-sm">
@@ -1292,7 +1293,8 @@ const MyBooking: React.FC = () => {
                     <div className="mb-2">
                       <p className="font-medium mb-2">Recorded Video:</p>
 
-                      {selectedBooking.service?.serviceId === "1" ? (
+                      {selectedBooking.service &&
+                      selectedBooking.service?.serviceId === "1" ? (
                         <div className="w-full rounded-lg overflow-hidden border border-gray-200">
                           {videoError ? (
                             <div className="bg-red-50 p-4 rounded border border-red-200 text-red-700 flex items-center">
