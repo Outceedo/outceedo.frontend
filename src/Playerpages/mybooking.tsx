@@ -308,7 +308,7 @@ const MyBooking: React.FC = () => {
       text: "Your booking has been confirmed. You will receive a confirmation email shortly.",
       confirmButtonText: "Great!",
       confirmButtonColor: "#10B981",
-      timer: 5000,
+      timer: 3000,
       timerProgressBar: true,
       showClass: {
         popup: "animate__animated animate__fadeInDown",
@@ -328,6 +328,7 @@ const MyBooking: React.FC = () => {
       text: errorMessage,
       confirmButtonText: "Try Again",
       confirmButtonColor: "#EF4444",
+      timer: 3000,
     });
   };
 
