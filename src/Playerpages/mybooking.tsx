@@ -179,7 +179,7 @@ const MyBooking: React.FC = () => {
 
   // Check if booking is paid
   const isPaid = (booking: Booking) => {
-    return booking.status === "CONFIRMED" || booking.isPaid === true;
+    return booking.status === "SCHEDULED";
   };
 
   const truncateText = (text: string, maxLength: number = 15) => {
@@ -495,6 +495,8 @@ const MyBooking: React.FC = () => {
       booking.status === "WAITING_EXPERT_APPROVAL"
     )
       return true;
+    if (actionFilter === "scheduled" && booking.status === "SCHEDULED")
+      return true;
 
     return false;
   };
@@ -584,6 +586,7 @@ const MyBooking: React.FC = () => {
             <SelectItem value="accepted">Accepted</SelectItem>
             <SelectItem value="rejected">Rejected</SelectItem>
             <SelectItem value="waiting">Waiting Approval</SelectItem>
+            <SelectItem value="scheduled">Scheduled</SelectItem>
           </SelectContent>
         </Select>
 

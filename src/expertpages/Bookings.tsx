@@ -853,6 +853,7 @@ const BookingExpertside: React.FC = () => {
       (actionFilter === "Completed" && booking.status === "COMPLETED") ||
       (actionFilter === "Pending" &&
         booking.status === "WAITING_EXPERT_APPROVAL");
+    actionFilter === "Scheduled" && booking.status === "SCHEDULED";
 
     return (
       matchesSearch &&
