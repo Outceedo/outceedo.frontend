@@ -27,6 +27,7 @@ import AssessmentReport from "../Playerpages/AssessmentReport";
 import { X } from "lucide-react";
 import profile from "../assets/images/avatar.png";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 import {
   Table,
@@ -105,6 +106,8 @@ interface Booking {
   review?: string;
   description?: string | null;
   isPaid?: boolean;
+  paymentIntentId?: string;
+  paymentIntentClientSecret?: string;
 }
 
 const MyBooking: React.FC = () => {
@@ -131,10 +134,7 @@ const MyBooking: React.FC = () => {
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentSuccess, setPaymentSuccess] = useState(false);
   const [isProcessingReschedule, setIsProcessingReschedule] = useState(false);
-  const [rescheduleSuccess, setRescheduleSuccess] = useState(false);
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedBookingForPayment, setSelectedBookingForPayment] =
@@ -142,7 +142,6 @@ const MyBooking: React.FC = () => {
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
-  console.log(bookings);
 
   useEffect(() => {
     setFiltersApplied(
@@ -162,10 +161,14 @@ const MyBooking: React.FC = () => {
     setSearch("");
   };
 
+  const hasPaymentIntent = (booking: Booking) => {
+    return booking.paymentIntentId && booking.paymentIntentId.trim() !== "";
+  };
+
   const canPay = (booking: Booking) => {
     return (
       booking.status === "ACCEPTED" &&
-      !booking.isPaid &&
+      !hasPaymentIntent(booking) &&
       booking.status !== "REJECTED" &&
       booking.status !== "CANCELLED" &&
       booking.status !== "COMPLETED"
@@ -176,7 +179,7 @@ const MyBooking: React.FC = () => {
     return (
       (booking.status === "WAITING_EXPERT_APPROVAL" ||
         booking.status === "ACCEPTED") &&
-      !booking.isPaid &&
+      !hasPaymentIntent(booking) &&
       booking.status !== "REJECTED" &&
       booking.status !== "CANCELLED" &&
       booking.status !== "COMPLETED"
@@ -224,167 +227,6 @@ const MyBooking: React.FC = () => {
     }
   };
 
-  const getDummyBookings = (): Booking[] => {
-    return [
-      {
-        id: "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
-        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        serviceId: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        status: "RESCHEDULE_REQUESTED",
-        date: "2025-05-15T00:00:00.000Z",
-        startTime: "13:30",
-        endTime: "14:30",
-        location: null,
-        meetLink: null,
-        recordedVideo: null,
-        meetingRecording: null,
-        createdAt: "2025-04-29T14:30:00.000Z",
-        updatedAt: "2025-04-29T14:30:00.000Z",
-        expert: {
-          id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          username: "john_coach",
-          photo: "https://i.pravatar.cc/150?u=john",
-        },
-        player: {
-          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          username: "alex_taylor",
-          photo: "https://i.pravatar.cc/150?u=alex",
-        },
-        service: {
-          id: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          serviceId: "1",
-          price: 35,
-          service: {
-            id: "1",
-            name: "Technical Training Session",
-            description: "One-on-one technical skills training",
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-          },
-        },
-        isPaid: false,
-      },
-      {
-        id: "c2b3d4e5-f6g7-8901-hijk-lm2345678901",
-        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        expertId: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-        serviceId: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-        status: "ACCEPTED",
-        date: "2025-05-20T00:00:00.000Z",
-        startTime: "14:00",
-        endTime: "15:00",
-        location: null,
-        meetLink: "https://meet.google.com/abc-defg-hij",
-        recordedVideo: null,
-        meetingRecording: null,
-        createdAt: "2025-04-30T09:15:00.000Z",
-        updatedAt: "2025-05-01T10:20:00.000Z",
-        expert: {
-          id: "e2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-          username: "emma_coach",
-          photo: "https://i.pravatar.cc/150?u=emma",
-        },
-        player: {
-          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          username: "alex_taylor",
-          photo: "https://i.pravatar.cc/150?u=alex",
-        },
-        service: {
-          id: "s2b3c4d5-e6f7-8901-ijkl-mnopqrstu2",
-          serviceId: "2",
-          price: 40,
-          service: {
-            id: "2",
-            name: "Strategy Session",
-            description: "Game strategy and tactical analysis",
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-          },
-        },
-        isPaid: false,
-      },
-      {
-        id: "d3c4e5f6-g7h8-9012-jklm-no3456789012",
-        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        expertId: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-        serviceId: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-        status: "COMPLETED",
-        date: "2025-04-25T00:00:00.000Z",
-        startTime: "09:00",
-        endTime: "10:00",
-        location: "Central Park Field #3",
-        meetLink: null,
-        recordedVideo: "https://example.com/videos/session123.mp4",
-        meetingRecording: null,
-        createdAt: "2025-04-22T11:30:00.000Z",
-        updatedAt: "2025-04-25T10:05:00.000Z",
-        expert: {
-          id: "e3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-          username: "miguel_coach",
-          photo: "https://i.pravatar.cc/150?u=miguel",
-        },
-        player: {
-          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          username: "alex_taylor",
-          photo: "https://i.pravatar.cc/150?u=alex",
-        },
-        service: {
-          id: "s3c4d5e6-f7g8-9012-jklm-nopqrstuv3",
-          serviceId: "3",
-          price: 45,
-          service: {
-            id: "3",
-            name: "Field Training",
-            description: "On-field practice and drills",
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-          },
-        },
-        isPaid: true,
-      },
-      {
-        id: "e4d5f6g7-h8i9-0123-klmn-op4567890123",
-        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        expertId: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-        serviceId: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-        status: "REJECTED",
-        date: "2025-05-10T00:00:00.000Z",
-        startTime: "16:00",
-        endTime: "17:00",
-        location: null,
-        meetLink: null,
-        recordedVideo: null,
-        meetingRecording: null,
-        createdAt: "2025-05-01T08:45:00.000Z",
-        updatedAt: "2025-05-01T12:30:00.000Z",
-        expert: {
-          id: "e4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-          username: "sarah_coach",
-          photo: "https://i.pravatar.cc/150?u=sarah",
-        },
-        player: {
-          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          username: "alex_taylor",
-          photo: "https://i.pravatar.cc/150?u=alex",
-        },
-        service: {
-          id: "s4d5e6f7-g8h9-0123-klmn-opqrstuvw4",
-          serviceId: "4",
-          price: 50,
-          service: {
-            id: "4",
-            name: "Video Analysis",
-            description: "Detailed analysis of gameplay footage",
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-          },
-        },
-        isPaid: false,
-      },
-    ];
-  };
-
   useEffect(() => {
     const fetchBookings = async () => {
       setLoading(true);
@@ -397,17 +239,29 @@ const MyBooking: React.FC = () => {
           },
         });
 
-        const bookingsWithPaymentStatus = response.data.bookings.map(
-          (booking: Booking) => ({
-            ...booking,
-            isPaid: booking.status === "COMPLETED",
-          })
+        const processedBookings = response.data.bookings.map(
+          (booking: Booking) => {
+            const hasPaid =
+              hasPaymentIntent(booking) || booking.status === "COMPLETED";
+            const updatedStatus =
+              hasPaymentIntent(booking) && booking.status === "ACCEPTED"
+                ? "CONFIRMED"
+                : booking.status;
+
+            return {
+              ...booking,
+              isPaid: hasPaid,
+              status: updatedStatus,
+            };
+          }
         );
-        setBookings(bookingsWithPaymentStatus);
+
+        setBookings(processedBookings);
       } catch (err) {
         console.error("Error fetching bookings:", err);
-        setError("Could not connect to server. Showing demo data instead.");
-        setBookings(getDummyBookings());
+        setError(
+          "Could not connect to server. Please try refreshing the page."
+        );
       } finally {
         setLoading(false);
       }
@@ -435,20 +289,21 @@ const MyBooking: React.FC = () => {
       return;
     }
 
-    // Check if the booking has a payment intent client secret
-    // if (!booking.paymentIntentClientSecret) {
-    //   setError(
-    //     "Payment not available for this booking. Please contact support."
-    //   );
-    //   return;
-    // }
+    if (!booking.paymentIntentClientSecret) {
+      setError(
+        "Payment not available for this booking. Please contact support."
+      );
+      return;
+    }
 
     setSelectedBookingForPayment(booking);
     setIsPaymentModalOpen(true);
   };
 
-  const handlePaymentSuccess = (bookingId: string, paymentResult: any) => {
-    // Update booking status locally
+  const handlePaymentSuccess = async (
+    bookingId: string,
+    paymentResult: any
+  ) => {
     setBookings((prevBookings) =>
       prevBookings.map((booking) =>
         booking.id === bookingId
@@ -456,8 +311,7 @@ const MyBooking: React.FC = () => {
               ...booking,
               isPaid: true,
               paymentIntentId: paymentResult.paymentIntent.id,
-              status:
-                booking.status === "ACCEPTED" ? "CONFIRMED" : booking.status,
+              status: "CONFIRMED",
             }
           : booking
       )
@@ -468,24 +322,39 @@ const MyBooking: React.FC = () => {
         ...selectedBooking,
         isPaid: true,
         paymentIntentId: paymentResult.paymentIntent.id,
-        status:
-          selectedBooking.status === "ACCEPTED"
-            ? "CONFIRMED"
-            : selectedBooking.status,
+        status: "CONFIRMED",
       });
     }
 
-    setPaymentSuccess(true);
-    setError(null); // Clear any previous errors
+    setError(null);
 
-    setTimeout(() => {
-      setPaymentSuccess(false);
-    }, 5000);
+    await Swal.fire({
+      icon: "success",
+      title: "Payment Successful!",
+      text: "Your booking has been confirmed. You will receive a confirmation email shortly.",
+      confirmButtonText: "Great!",
+      confirmButtonColor: "#10B981",
+      timer: 5000,
+      timerProgressBar: true,
+      showClass: {
+        popup: "animate__animated animate__fadeInDown",
+      },
+      hideClass: {
+        popup: "animate__animated animate__fadeOutUp",
+      },
+    });
   };
 
-  // Add error handler for payment modal
   const handlePaymentError = (errorMessage: string) => {
     setError(`Payment failed: ${errorMessage}`);
+
+    Swal.fire({
+      icon: "error",
+      title: "Payment Failed",
+      text: errorMessage,
+      confirmButtonText: "Try Again",
+      confirmButtonColor: "#EF4444",
+    });
   };
 
   const handleRescheduleAccept = async (booking: Booking) => {
@@ -523,14 +392,26 @@ const MyBooking: React.FC = () => {
         });
       }
 
-      setRescheduleSuccess(true);
-
-      setTimeout(() => {
-        setRescheduleSuccess(false);
-      }, 3000);
+      await Swal.fire({
+        icon: "success",
+        title: "Reschedule Accepted!",
+        text: "The session has been rescheduled successfully.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#10B981",
+        timer: 3000,
+        timerProgressBar: true,
+      });
     } catch (error) {
       console.error("Reschedule acceptance error:", error);
       setError("Failed to accept reschedule. Please try again.");
+
+      Swal.fire({
+        icon: "error",
+        title: "Reschedule Failed",
+        text: "Failed to accept reschedule. Please try again.",
+        confirmButtonText: "OK",
+        confirmButtonColor: "#EF4444",
+      });
     } finally {
       setIsProcessingReschedule(false);
     }
@@ -588,10 +469,12 @@ const MyBooking: React.FC = () => {
     }
   };
 
-  const getPaymentBadgeStyle = (status: string) => {
-    switch (status) {
-      case "COMPLETED":
-        return "bg-green-100 text-green-800 hover:bg-green-100";
+  const getPaymentBadgeStyle = (booking: Booking) => {
+    if (hasPaymentIntent(booking) || booking.status === "COMPLETED") {
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    }
+
+    switch (booking.status) {
       case "REJECTED":
       case "CANCELLED":
         return "bg-red-100 text-red-800 hover:bg-red-100";
@@ -603,6 +486,26 @@ const MyBooking: React.FC = () => {
         return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    }
+  };
+
+  const getPaymentStatusText = (booking: Booking) => {
+    if (hasPaymentIntent(booking) || booking.status === "COMPLETED") {
+      return "Paid";
+    }
+
+    switch (booking.status) {
+      case "REJECTED":
+      case "CANCELLED":
+        return "Not Paid";
+      case "WAITING_EXPERT_APPROVAL":
+        return "Awaiting Approval";
+      case "RESCHEDULE_REQUESTED":
+        return "Reschedule Pending";
+      case "ACCEPTED":
+        return "Pay Now";
+      default:
+        return "Pending";
     }
   };
 
@@ -624,18 +527,6 @@ const MyBooking: React.FC = () => {
       .replace(/_/g, " ")
       .toLowerCase()
       .replace(/\b\w/g, (c) => c.toUpperCase());
-  };
-
-  const getPaymentStatus = (status: string) => {
-    switch (status) {
-      case "COMPLETED":
-        return "Paid";
-      case "REJECTED":
-      case "CANCELLED":
-        return "Not Paid";
-      default:
-        return "Pending";
-    }
   };
 
   const formatDate = (dateStr: string, startTime: string) => {
@@ -682,6 +573,7 @@ const MyBooking: React.FC = () => {
     if (
       actionFilter === "accepted" &&
       (booking.status === "ACCEPTED" ||
+        booking.status === "CONFIRMED" ||
         booking.status === "RESCHEDULE_ACCEPTED")
     )
       return true;
@@ -709,13 +601,17 @@ const MyBooking: React.FC = () => {
       .includes(search.toLowerCase());
     const matchesStatus =
       bookingStatus === "all" ||
-      (bookingStatus === "PAID" && booking.status === "COMPLETED") ||
+      (bookingStatus === "PAID" &&
+        (hasPaymentIntent(booking) || booking.status === "COMPLETED")) ||
       (bookingStatus === "NOT_PAID" &&
         booking.status === "WAITING_EXPERT_APPROVAL") ||
       (bookingStatus === "PENDING" &&
-        ["ACCEPTED", "RESCHEDULE_REQUESTED", "RESCHEDULE_ACCEPTED"].includes(
-          booking.status
-        ));
+        [
+          "ACCEPTED",
+          "CONFIRMED",
+          "RESCHEDULE_REQUESTED",
+          "RESCHEDULE_ACCEPTED",
+        ].includes(booking.status));
 
     return (
       matchesSearch &&
@@ -817,18 +713,6 @@ const MyBooking: React.FC = () => {
         </div>
       )}
 
-      {paymentSuccess && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md">
-          Payment processed successfully!
-        </div>
-      )}
-
-      {rescheduleSuccess && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-800 rounded-md">
-          Reschedule accepted successfully!
-        </div>
-      )}
-
       {loading ? (
         <div className="text-center py-8">Loading bookings...</div>
       ) : (
@@ -923,17 +807,9 @@ const MyBooking: React.FC = () => {
                     <TableCell>
                       <Badge
                         variant="outline"
-                        className={getPaymentBadgeStyle(booking.status)}
+                        className={getPaymentBadgeStyle(booking)}
                       >
-                        {booking.isPaid
-                          ? "Paid"
-                          : booking.status === "REJECTED"
-                          ? "Not Paid"
-                          : booking.status === "WAITING_EXPERT_APPROVAL"
-                          ? "Awaiting Approval"
-                          : booking.status === "RESCHEDULE_REQUESTED"
-                          ? "Reschedule Pending"
-                          : "Pay Now"}
+                        {getPaymentStatusText(booking)}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
@@ -984,6 +860,7 @@ const MyBooking: React.FC = () => {
             .filter(
               (booking) =>
                 (booking.status === "ACCEPTED" ||
+                  booking.status === "CONFIRMED" ||
                   booking.status === "WAITING_EXPERT_APPROVAL" ||
                   booking.status === "RESCHEDULE_REQUESTED" ||
                   booking.status === "RESCHEDULE_ACCEPTED") &&
@@ -1037,7 +914,11 @@ const MyBooking: React.FC = () => {
                   </div>
                   <Badge
                     variant="outline"
-                    className="bg-blue-50 text-blue-800 whitespace-nowrap"
+                    className={
+                      hasPaymentIntent(booking)
+                        ? "bg-green-50 text-green-800"
+                        : "bg-blue-50 text-blue-800"
+                    }
                   >
                     {formatShortDate(booking.date)}
                   </Badge>
@@ -1060,7 +941,7 @@ const MyBooking: React.FC = () => {
                         ? "Processing..."
                         : "Accept Reschedule"}
                     </Button>
-                  ) : !booking.isPaid && booking.status === "ACCEPTED" ? (
+                  ) : canPay(booking) ? (
                     <Button
                       className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto"
                       onClick={(e) => {
@@ -1071,15 +952,7 @@ const MyBooking: React.FC = () => {
                     >
                       Pay Now
                     </Button>
-                  ) : !booking.isPaid &&
-                    booking.status === "WAITING_EXPERT_APPROVAL" ? (
-                    <Button
-                      className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
-                      disabled
-                    >
-                      Awaiting Approval
-                    </Button>
-                  ) : booking.meetLink ? (
+                  ) : hasPaymentIntent(booking) && booking.meetLink ? (
                     <a
                       href={booking.meetLink}
                       target="_blank"
@@ -1089,6 +962,17 @@ const MyBooking: React.FC = () => {
                     >
                       Join Meeting
                     </a>
+                  ) : hasPaymentIntent(booking) ? (
+                    <Badge className="bg-green-100 text-green-800 text-xs">
+                      Paid ✓
+                    </Badge>
+                  ) : booking.status === "WAITING_EXPERT_APPROVAL" ? (
+                    <Button
+                      className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                      disabled
+                    >
+                      Awaiting Approval
+                    </Button>
                   ) : null}
                 </div>
               </div>
@@ -1097,6 +981,7 @@ const MyBooking: React.FC = () => {
           {bookings.filter(
             (booking) =>
               (booking.status === "ACCEPTED" ||
+                booking.status === "CONFIRMED" ||
                 booking.status === "WAITING_EXPERT_APPROVAL" ||
                 booking.status === "RESCHEDULE_REQUESTED" ||
                 booking.status === "RESCHEDULE_ACCEPTED") &&
@@ -1130,9 +1015,9 @@ const MyBooking: React.FC = () => {
                 </Badge>
                 <Badge
                   variant="outline"
-                  className={getPaymentBadgeStyle(selectedBooking.status)}
+                  className={getPaymentBadgeStyle(selectedBooking)}
                 >
-                  {selectedBooking.isPaid ? "Paid" : "Not Paid"}
+                  {getPaymentStatusText(selectedBooking)}
                 </Badge>
               </div>
 
@@ -1508,11 +1393,17 @@ const MyBooking: React.FC = () => {
                 </p>
                 <p className="text-sm text-gray-600 mt-2">
                   <span className="font-medium">Current Time (UTC):</span>{" "}
-                  2025-06-15 09:52:57
+                  2025-06-16 04:09:22
                 </p>
                 <p className="text-sm text-gray-600">
                   <span className="font-medium">User:</span> 22951a3363
                 </p>
+                {hasPaymentIntent(selectedBooking) && (
+                  <p className="text-sm text-gray-600">
+                    <span className="font-medium">Payment ID:</span>{" "}
+                    {selectedBooking.paymentIntentId}
+                  </p>
+                )}
               </div>
             </div>
 
@@ -1560,38 +1451,9 @@ const MyBooking: React.FC = () => {
                 <Button
                   className="bg-red-500 hover:bg-red-600 text-white"
                   onClick={() => handlePayment(selectedBooking.id)}
-                  disabled={isProcessingPayment}
                 >
-                  {isProcessingPayment ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                      Pay Now (${selectedBooking.service?.price})
-                    </>
-                  )}
+                  <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
+                  Pay Now (${selectedBooking.service?.price})
                 </Button>
               )}
 
@@ -1605,17 +1467,18 @@ const MyBooking: React.FC = () => {
                 </Button>
               )}
 
-              {selectedBooking.meetLink && selectedBooking.isPaid && (
-                <Button
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                  onClick={() =>
-                    window.open(selectedBooking.meetLink, "_blank")
-                  }
-                >
-                  <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                  Join Meeting
-                </Button>
-              )}
+              {selectedBooking.meetLink &&
+                hasPaymentIntent(selectedBooking) && (
+                  <Button
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                    onClick={() =>
+                      window.open(selectedBooking.meetLink, "_blank")
+                    }
+                  >
+                    <FontAwesomeIcon icon={faVideo} className="mr-2" />
+                    Join Meeting
+                  </Button>
+                )}
 
               <Button
                 variant="outline"
