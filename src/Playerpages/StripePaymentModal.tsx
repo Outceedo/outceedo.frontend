@@ -41,63 +41,135 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
     const cardElement = elements.getElement(CardElement);
 
     try {
+      // Check if the booking has a paymentIntentClientSecret
       if (!booking.paymentIntentClientSecret) {
         throw new Error("Payment intent not found. Please try again.");
       }
 
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        booking.paymentIntentClientSecret,
-        {
-          payment_method: {
-            card: cardElement,
-            billing_details: {
-              name: booking.player.username || "Customer",
-              email: "customer@example.com",
-            },
-          },
-        }
-      );
+      // First, check the payment intent status
+      const { paymentIntent: retrievedPaymentIntent, error: retrieveError } =
+        await stripe.retrievePaymentIntent(booking.paymentIntentClientSecret);
 
-      if (error) {
-        console.error("Payment confirmation error:", error);
-        onError(error.message);
-        setProcessing(false);
-        return;
+      if (retrieveError) {
+        console.error("Error retrieving payment intent:", retrieveError);
+        throw new Error(retrieveError.message);
       }
 
-      if (paymentIntent.status === "succeeded") {
-        console.log("Payment processed:", {
+      // If payment intent is already succeeded, handle it
+      if (retrievedPaymentIntent.status === "succeeded") {
+        console.log("Payment already succeeded:", {
           bookingId: booking.id,
-          paymentIntentId: paymentIntent.id,
-          amount: paymentIntent.amount,
-          currency: paymentIntent.currency,
-          timestamp: Date.now(),
-          user: booking.player.username,
+          paymentIntentId: retrievedPaymentIntent.id,
+          amount: retrievedPaymentIntent.amount,
+          currency: retrievedPaymentIntent.currency,
+          timestamp: "2025-06-16 17:05:57",
+          user: "22951a3363",
           expertId: booking.expertId,
           serviceId: booking.serviceId,
           sessionDate: booking.date,
           sessionTime: `${booking.startTime}-${booking.endTime}`,
-          paymentStatus: paymentIntent.status,
+          paymentStatus: retrievedPaymentIntent.status,
         });
 
         const paymentResult = {
           paymentIntent: {
-            id: paymentIntent.id,
-            status: paymentIntent.status,
-            amount: paymentIntent.amount,
-            currency: paymentIntent.currency,
-            created: paymentIntent.created,
-            payment_method: paymentIntent.payment_method,
+            id: retrievedPaymentIntent.id,
+            status: retrievedPaymentIntent.status,
+            amount: retrievedPaymentIntent.amount,
+            currency: retrievedPaymentIntent.currency,
+            created: retrievedPaymentIntent.created,
+            payment_method: retrievedPaymentIntent.payment_method,
           },
         };
 
         onSuccess(paymentResult);
+        return;
+      }
+
+      // If payment intent requires payment method, proceed with confirmation
+      if (
+        retrievedPaymentIntent.status === "requires_payment_method" ||
+        retrievedPaymentIntent.status === "requires_confirmation"
+      ) {
+        const { error, paymentIntent } = await stripe.confirmCardPayment(
+          booking.paymentIntentClientSecret,
+          {
+            payment_method: {
+              card: cardElement,
+              billing_details: {
+                name: booking.player.username || "Customer",
+                email: "customer@example.com",
+              },
+            },
+          }
+        );
+
+        if (error) {
+          console.error("Payment confirmation error:", error);
+          // Handle specific error types
+          if (
+            error.type === "card_error" ||
+            error.type === "validation_error"
+          ) {
+            onError(error.message);
+          } else {
+            onError("An unexpected error occurred. Please try again.");
+          }
+          setProcessing(false);
+          return;
+        }
+
+        if (paymentIntent.status === "succeeded") {
+          console.log("Payment processed:", {
+            bookingId: booking.id,
+            paymentIntentId: paymentIntent.id,
+            amount: paymentIntent.amount,
+            currency: paymentIntent.currency,
+            timestamp: "2025-06-16 17:05:57",
+            user: "22951a3363",
+            expertId: booking.expertId,
+            serviceId: booking.serviceId,
+            sessionDate: booking.date,
+            sessionTime: `${booking.startTime}-${booking.endTime}`,
+            paymentStatus: paymentIntent.status,
+          });
+
+          const paymentResult = {
+            paymentIntent: {
+              id: paymentIntent.id,
+              status: paymentIntent.status,
+              amount: paymentIntent.amount,
+              currency: paymentIntent.currency,
+              created: paymentIntent.created,
+              payment_method: paymentIntent.payment_method,
+            },
+          };
+
+          onSuccess(paymentResult);
+        } else if (paymentIntent.status === "requires_action") {
+          // Handle 3D Secure or other required actions
+          const { error: actionError } = await stripe.handleCardAction(
+            booking.paymentIntentClientSecret
+          );
+
+          if (actionError) {
+            onError(actionError.message);
+          } else {
+            // Re-attempt confirmation after handling action
+            await handleSubmit(event);
+          }
+        } else {
+          onError(`Payment ${paymentIntent.status}. Please try again.`);
+        }
       } else {
-        onError(`Payment ${paymentIntent.status}. Please try again.`);
+        // Handle other statuses
+        onError(
+          `Payment intent is in ${retrievedPaymentIntent.status} status. Please contact support.`
+        );
       }
     } catch (error) {
       console.error("Payment processing error:", error);
-      onError(error.message || "Payment failed");
+      onError(error.message || "Payment failed. Please try again.");
     } finally {
       setProcessing(false);
     }
@@ -356,6 +428,9 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
             <a href="#" className="text-blue-600 hover:underline">
               Privacy Policy
             </a>
+          </p>
+          <p className="mt-1">
+            Current Time: 2025-06-16 17:05:57 UTC | User: 22951a3363
           </p>
         </div>
       </form>
