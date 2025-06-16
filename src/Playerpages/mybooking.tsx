@@ -20,7 +20,6 @@ import {
   faLaptop,
   faVideoCamera,
   faChalkboardTeacher,
-  faCheck,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import AssessmentReport from "../Playerpages/AssessmentReport";
@@ -134,8 +133,6 @@ const MyBooking: React.FC = () => {
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
 
-  const [isProcessingReschedule, setIsProcessingReschedule] = useState(false);
-
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedBookingForPayment, setSelectedBookingForPayment] =
     useState<Booking | null>(null);
@@ -161,33 +158,28 @@ const MyBooking: React.FC = () => {
     setSearch("");
   };
 
+  // Check if payment intent is available (both ID and client secret exist)
   const hasPaymentIntent = (booking: Booking) => {
-    return booking.paymentIntentId && booking.paymentIntentId.trim() !== "";
-  };
-
-  const canPay = (booking: Booking) => {
     return (
-      booking.status === "ACCEPTED" &&
-      !hasPaymentIntent(booking) &&
-      booking.status !== "REJECTED" &&
-      booking.status !== "CANCELLED" &&
-      booking.status !== "COMPLETED"
+      booking.paymentIntentId &&
+      booking.paymentIntentId.trim() !== "" &&
+      booking.paymentIntentClientSecret &&
+      booking.paymentIntentClientSecret.trim() !== ""
     );
   };
 
+  // Check if booking needs payment (has payment intent but not paid yet)
   const needsPayment = (booking: Booking) => {
     return (
-      (booking.status === "WAITING_EXPERT_APPROVAL" ||
-        booking.status === "ACCEPTED") &&
-      !hasPaymentIntent(booking) &&
-      booking.status !== "REJECTED" &&
-      booking.status !== "CANCELLED" &&
-      booking.status !== "COMPLETED"
+      hasPaymentIntent(booking) &&
+      booking.status === "ACCEPTED" &&
+      !booking.isPaid
     );
   };
 
-  const canAcceptReschedule = (booking: Booking) => {
-    return booking.status === "RESCHEDULE_REQUESTED";
+  // Check if booking is paid
+  const isPaid = (booking: Booking) => {
+    return booking.status === "CONFIRMED" || booking.isPaid === true;
   };
 
   const truncateText = (text: string, maxLength: number = 15) => {
@@ -239,24 +231,8 @@ const MyBooking: React.FC = () => {
           },
         });
 
-        const processedBookings = response.data.bookings.map(
-          (booking: Booking) => {
-            const hasPaid =
-              hasPaymentIntent(booking) || booking.status === "COMPLETED";
-            const updatedStatus =
-              hasPaymentIntent(booking) && booking.status === "ACCEPTED"
-                ? "CONFIRMED"
-                : booking.status;
-
-            return {
-              ...booking,
-              isPaid: hasPaid,
-              status: updatedStatus,
-            };
-          }
-        );
-
-        setBookings(processedBookings);
+        // Process bookings - no status changes needed, backend provides correct status
+        setBookings(response.data.bookings);
       } catch (err) {
         console.error("Error fetching bookings:", err);
         setError(
@@ -289,7 +265,7 @@ const MyBooking: React.FC = () => {
       return;
     }
 
-    if (!booking.paymentIntentClientSecret) {
+    if (!hasPaymentIntent(booking)) {
       setError(
         "Payment not available for this booking. Please contact support."
       );
@@ -310,7 +286,6 @@ const MyBooking: React.FC = () => {
           ? {
               ...booking,
               isPaid: true,
-              paymentIntentId: paymentResult.paymentIntent.id,
               status: "CONFIRMED",
             }
           : booking
@@ -321,7 +296,6 @@ const MyBooking: React.FC = () => {
       setSelectedBooking({
         ...selectedBooking,
         isPaid: true,
-        paymentIntentId: paymentResult.paymentIntent.id,
         status: "CONFIRMED",
       });
     }
@@ -355,66 +329,6 @@ const MyBooking: React.FC = () => {
       confirmButtonText: "Try Again",
       confirmButtonColor: "#EF4444",
     });
-  };
-
-  const handleRescheduleAccept = async (booking: Booking) => {
-    setIsProcessingReschedule(true);
-
-    try {
-      const token = localStorage.getItem("token");
-      const rescheduleData = {
-        date: booking.date.split("T")[0],
-        startTime: booking.startTime,
-        endTime: booking.endTime,
-      };
-
-      await axios.patch(
-        `${API_BASE_URL}/${booking.id}/reschedule/accept`,
-        rescheduleData,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setBookings((prevBookings) =>
-        prevBookings.map((b) =>
-          b.id === booking.id ? { ...b, status: "RESCHEDULE_ACCEPTED" } : b
-        )
-      );
-
-      if (selectedBooking?.id === booking.id) {
-        setSelectedBooking({
-          ...selectedBooking,
-          status: "RESCHEDULE_ACCEPTED",
-        });
-      }
-
-      await Swal.fire({
-        icon: "success",
-        title: "Reschedule Accepted!",
-        text: "The session has been rescheduled successfully.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#10B981",
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    } catch (error) {
-      console.error("Reschedule acceptance error:", error);
-      setError("Failed to accept reschedule. Please try again.");
-
-      Swal.fire({
-        icon: "error",
-        title: "Reschedule Failed",
-        text: "Failed to accept reschedule. Please try again.",
-        confirmButtonText: "OK",
-        confirmButtonColor: "#EF4444",
-      });
-    } finally {
-      setIsProcessingReschedule(false);
-    }
   };
 
   const openVideoModal = (id: string, e?: React.MouseEvent) => {
@@ -451,14 +365,10 @@ const MyBooking: React.FC = () => {
     switch (status) {
       case "ACCEPTED":
       case "CONFIRMED":
-      case "RESCHEDULE_ACCEPTED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
       case "REJECTED":
       case "CANCELLED":
         return "bg-red-100 text-red-800 hover:bg-red-100";
-      case "RESCHEDULED":
-      case "RESCHEDULE_REQUESTED":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       case "WAITING_EXPERT_APPROVAL":
       case "PENDING":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
@@ -470,7 +380,7 @@ const MyBooking: React.FC = () => {
   };
 
   const getPaymentBadgeStyle = (booking: Booking) => {
-    if (hasPaymentIntent(booking) || booking.status === "COMPLETED") {
+    if (isPaid(booking)) {
       return "bg-green-100 text-green-800 hover:bg-green-100";
     }
 
@@ -479,18 +389,18 @@ const MyBooking: React.FC = () => {
       case "CANCELLED":
         return "bg-red-100 text-red-800 hover:bg-red-100";
       case "WAITING_EXPERT_APPROVAL":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
       case "ACCEPTED":
-      case "PENDING":
-      case "RESCHEDULE_REQUESTED":
-      case "RESCHEDULE_ACCEPTED":
-        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+        return needsPayment(booking)
+          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+          : "bg-blue-100 text-blue-800 hover:bg-blue-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
   };
 
   const getPaymentStatusText = (booking: Booking) => {
-    if (hasPaymentIntent(booking) || booking.status === "COMPLETED") {
+    if (isPaid(booking)) {
       return "Paid";
     }
 
@@ -500,10 +410,8 @@ const MyBooking: React.FC = () => {
         return "Not Paid";
       case "WAITING_EXPERT_APPROVAL":
         return "Awaiting Approval";
-      case "RESCHEDULE_REQUESTED":
-        return "Reschedule Pending";
       case "ACCEPTED":
-        return "Pay Now";
+        return needsPayment(booking) ? "Pay Now" : "Awaiting Payment Setup";
       default:
         return "Pending";
     }
@@ -572,17 +480,14 @@ const MyBooking: React.FC = () => {
 
     if (
       actionFilter === "accepted" &&
-      (booking.status === "ACCEPTED" ||
-        booking.status === "CONFIRMED" ||
-        booking.status === "RESCHEDULE_ACCEPTED")
+      (booking.status === "ACCEPTED" || booking.status === "CONFIRMED")
     )
       return true;
     if (actionFilter === "rejected" && booking.status === "REJECTED")
       return true;
     if (
       actionFilter === "waiting" &&
-      (booking.status === "WAITING_EXPERT_APPROVAL" ||
-        booking.status === "RESCHEDULE_REQUESTED")
+      booking.status === "WAITING_EXPERT_APPROVAL"
     )
       return true;
 
@@ -601,17 +506,11 @@ const MyBooking: React.FC = () => {
       .includes(search.toLowerCase());
     const matchesStatus =
       bookingStatus === "all" ||
-      (bookingStatus === "PAID" &&
-        (hasPaymentIntent(booking) || booking.status === "COMPLETED")) ||
+      (bookingStatus === "PAID" && isPaid(booking)) ||
       (bookingStatus === "NOT_PAID" &&
         booking.status === "WAITING_EXPERT_APPROVAL") ||
       (bookingStatus === "PENDING" &&
-        [
-          "ACCEPTED",
-          "CONFIRMED",
-          "RESCHEDULE_REQUESTED",
-          "RESCHEDULE_ACCEPTED",
-        ].includes(booking.status));
+        ["ACCEPTED", "CONFIRMED"].includes(booking.status));
 
     return (
       matchesSearch &&
@@ -621,9 +520,9 @@ const MyBooking: React.FC = () => {
       matchesServiceTypeFilter(booking)
     );
   });
-  console.log(bookings);
 
   const navigate = useNavigate();
+  console.log(bookings);
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
@@ -670,6 +569,7 @@ const MyBooking: React.FC = () => {
             <SelectItem value="PENDING">Pending</SelectItem>
           </SelectContent>
         </Select>
+
         <Select value={actionFilter} onValueChange={setActionFilter}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Booking Status" />
@@ -683,7 +583,7 @@ const MyBooking: React.FC = () => {
         </Select>
 
         <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
-          <SelectTrigger className=" sm:w-[180px]">
+          <SelectTrigger className="sm:w-[180px]">
             <SelectValue placeholder="Service Type" />
           </SelectTrigger>
           <SelectContent>
@@ -696,10 +596,11 @@ const MyBooking: React.FC = () => {
             <SelectItem value="other">ONLINE ASSESSMENT</SelectItem>
           </SelectContent>
         </Select>
+
         {filtersApplied && (
           <Button
             variant="outline"
-            className=" flex items-center gap-2 text-red-600 border-red-600 hover:text-red-600 "
+            className="flex items-center gap-2 text-red-600 border-red-600 hover:text-red-600"
             onClick={clearAllFilters}
           >
             <FontAwesomeIcon icon={faTrash} />
@@ -764,7 +665,8 @@ const MyBooking: React.FC = () => {
                         <span
                           className="truncate max-w-[80px]"
                           title={booking.expert?.username || "Unknown Expert"}
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             const expert = booking.expert?.username;
                             localStorage.setItem("viewexpertusername", expert);
                             navigate("/player/exdetails");
@@ -822,7 +724,7 @@ const MyBooking: React.FC = () => {
                         disabled={
                           booking.service
                             ? booking.service.service.id !== "1"
-                            : null
+                            : true
                         }
                       >
                         <FontAwesomeIcon icon={faVideo} />
@@ -866,9 +768,7 @@ const MyBooking: React.FC = () => {
               (booking) =>
                 (booking.status === "ACCEPTED" ||
                   booking.status === "CONFIRMED" ||
-                  booking.status === "WAITING_EXPERT_APPROVAL" ||
-                  booking.status === "RESCHEDULE_REQUESTED" ||
-                  booking.status === "RESCHEDULE_ACCEPTED") &&
+                  booking.status === "WAITING_EXPERT_APPROVAL") &&
                 booking.status !== "REJECTED" &&
                 booking.status !== "CANCELLED"
             )
@@ -906,7 +806,8 @@ const MyBooking: React.FC = () => {
                       <p
                         className="text-sm text-gray-500 truncate"
                         title={`with ${booking.expert?.username || "Expert"}`}
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           const expert = booking.expert?.username;
                           localStorage.setItem("viewexpertusername", expert);
                           navigate("/player/exdetails");
@@ -920,7 +821,7 @@ const MyBooking: React.FC = () => {
                   <Badge
                     variant="outline"
                     className={
-                      hasPaymentIntent(booking)
+                      isPaid(booking)
                         ? "bg-green-50 text-green-800"
                         : "bg-blue-50 text-blue-800"
                     }
@@ -933,20 +834,7 @@ const MyBooking: React.FC = () => {
                     ${booking.service?.price || "N/A"}
                   </span>
 
-                  {canAcceptReschedule(booking) ? (
-                    <Button
-                      className="bg-orange-500 hover:bg-orange-600 text-white text-sm px-3 py-1 h-auto"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleRescheduleAccept(booking);
-                      }}
-                      disabled={isProcessingReschedule}
-                    >
-                      {isProcessingReschedule
-                        ? "Processing..."
-                        : "Accept Reschedule"}
-                    </Button>
-                  ) : canPay(booking) ? (
+                  {needsPayment(booking) ? (
                     <Button
                       className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto"
                       onClick={(e) => {
@@ -957,7 +845,7 @@ const MyBooking: React.FC = () => {
                     >
                       Pay Now
                     </Button>
-                  ) : hasPaymentIntent(booking) && booking.meetLink ? (
+                  ) : isPaid(booking) && booking.meetLink ? (
                     <a
                       href={booking.meetLink}
                       target="_blank"
@@ -967,7 +855,7 @@ const MyBooking: React.FC = () => {
                     >
                       Join Meeting
                     </a>
-                  ) : hasPaymentIntent(booking) ? (
+                  ) : isPaid(booking) ? (
                     <Badge className="bg-green-100 text-green-800 text-xs">
                       Paid ✓
                     </Badge>
@@ -978,7 +866,14 @@ const MyBooking: React.FC = () => {
                     >
                       Awaiting Approval
                     </Button>
-                  ) : null}
+                  ) : (
+                    <Button
+                      className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                      disabled
+                    >
+                      Awaiting Payment Setup
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}
@@ -987,9 +882,7 @@ const MyBooking: React.FC = () => {
             (booking) =>
               (booking.status === "ACCEPTED" ||
                 booking.status === "CONFIRMED" ||
-                booking.status === "WAITING_EXPERT_APPROVAL" ||
-                booking.status === "RESCHEDULE_REQUESTED" ||
-                booking.status === "RESCHEDULE_ACCEPTED") &&
+                booking.status === "WAITING_EXPERT_APPROVAL") &&
               booking.status !== "REJECTED" &&
               booking.status !== "CANCELLED"
           ).length === 0 && (
@@ -1025,68 +918,6 @@ const MyBooking: React.FC = () => {
                   {getPaymentStatusText(selectedBooking)}
                 </Badge>
               </div>
-
-              {selectedBooking.status === "RESCHEDULE_REQUESTED" && (
-                <div className="mb-5 bg-orange-50 p-4 rounded-lg border border-orange-200">
-                  <div className="flex items-start justify-between">
-                    <div className="flex items-start">
-                      <FontAwesomeIcon
-                        icon={faExclamationTriangle}
-                        className="mr-2 mt-1 text-orange-600 flex-shrink-0"
-                      />
-                      <div>
-                        <p className="font-medium text-orange-800">
-                          Reschedule Request
-                        </p>
-                        <p className="text-orange-700 text-sm mt-1">
-                          The expert has requested to reschedule this session to{" "}
-                          {formatDate(
-                            selectedBooking.date,
-                            selectedBooking.startTime
-                          )}
-                          .
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      className="bg-orange-500 hover:bg-orange-600 text-white ml-4"
-                      onClick={() => handleRescheduleAccept(selectedBooking)}
-                      disabled={isProcessingReschedule}
-                    >
-                      {isProcessingReschedule ? (
-                        <>
-                          <svg
-                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                          Accept Reschedule
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
 
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
@@ -1151,17 +982,18 @@ const MyBooking: React.FC = () => {
                   </h3>
                   <div className="text-lg font-bold text-green-700">
                     <FontAwesomeIcon icon={faMoneyBill} className="mr-1" />$
-                    {selectedBooking.service?.price || null}
+                    {selectedBooking.service?.price || "N/A"}
                   </div>
                 </div>
                 <h4 className="font-medium mb-2 break-words">
-                  {selectedBooking.service?.service?.name || null}
+                  {selectedBooking.service?.service?.name || "N/A"}
                 </h4>
                 <p className="text-sm text-gray-600 mb-2">
                   Type: {getServiceTypeName(getServiceType(selectedBooking))}
                 </p>
                 <p className="text-gray-600 mb-4">
-                  {selectedBooking.service?.service?.description || null}
+                  {selectedBooking.service?.service?.description ||
+                    "No description available"}
                 </p>
 
                 <div className="space-y-2 text-sm">
@@ -1271,11 +1103,11 @@ const MyBooking: React.FC = () => {
                     />
                     <div>
                       <p className="font-medium text-amber-800">
-                        Payment Pending Expert Approval
+                        Waiting for Expert Approval
                       </p>
                       <p className="text-amber-700 text-sm mt-1">
-                        You will be able to make a payment once the expert
-                        accepts your booking request.
+                        Your booking request is pending approval from the
+                        expert. You will be able to make payment once approved.
                       </p>
                     </div>
                   </div>
@@ -1397,14 +1229,8 @@ const MyBooking: React.FC = () => {
                   <span className="font-medium">Last Updated:</span>{" "}
                   {new Date(selectedBooking.updatedAt).toLocaleString()}
                 </p>
-                <p className="text-sm text-gray-600 mt-2">
-                  <span className="font-medium">Current Time (UTC):</span>{" "}
-                  2025-06-16 04:09:22
-                </p>
-                <p className="text-sm text-gray-600">
-                  <span className="font-medium">User:</span> 22951a3363
-                </p>
-                {hasPaymentIntent(selectedBooking) && (
+
+                {selectedBooking.paymentIntentId && (
                   <p className="text-sm text-gray-600">
                     <span className="font-medium">Payment ID:</span>{" "}
                     {selectedBooking.paymentIntentId}
@@ -1414,46 +1240,7 @@ const MyBooking: React.FC = () => {
             </div>
 
             <DialogFooter className="flex flex-wrap gap-3 justify-end">
-              {canAcceptReschedule(selectedBooking) && (
-                <Button
-                  className="bg-orange-500 hover:bg-orange-600 text-white"
-                  onClick={() => handleRescheduleAccept(selectedBooking)}
-                  disabled={isProcessingReschedule}
-                >
-                  {isProcessingReschedule ? (
-                    <>
-                      <svg
-                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
-                      </svg>
-                      Processing...
-                    </>
-                  ) : (
-                    <>
-                      <FontAwesomeIcon icon={faCheck} className="mr-2" />
-                      Accept Reschedule
-                    </>
-                  )}
-                </Button>
-              )}
-
-              {canPay(selectedBooking) && (
+              {needsPayment(selectedBooking) && (
                 <Button
                   className="bg-red-500 hover:bg-red-600 text-white"
                   onClick={() => handlePayment(selectedBooking.id)}
@@ -1463,7 +1250,7 @@ const MyBooking: React.FC = () => {
                 </Button>
               )}
 
-              {needsPayment(selectedBooking) && !canPay(selectedBooking) && (
+              {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
                 <Button
                   className="bg-gray-300 text-gray-600 cursor-not-allowed"
                   disabled
@@ -1473,18 +1260,17 @@ const MyBooking: React.FC = () => {
                 </Button>
               )}
 
-              {selectedBooking.meetLink &&
-                hasPaymentIntent(selectedBooking) && (
-                  <Button
-                    className="bg-blue-500 hover:bg-blue-600 text-white"
-                    onClick={() =>
-                      window.open(selectedBooking.meetLink, "_blank")
-                    }
-                  >
-                    <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                    Join Meeting
-                  </Button>
-                )}
+              {selectedBooking.meetLink && isPaid(selectedBooking) && (
+                <Button
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                  onClick={() =>
+                    window.open(selectedBooking.meetLink, "_blank")
+                  }
+                >
+                  <FontAwesomeIcon icon={faVideo} className="mr-2" />
+                  Join Meeting
+                </Button>
+              )}
 
               <Button
                 variant="outline"
