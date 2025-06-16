@@ -41,12 +41,10 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
     const cardElement = elements.getElement(CardElement);
 
     try {
-      // Check if the booking has a paymentIntentClientSecret
       if (!booking.paymentIntentClientSecret) {
         throw new Error("Payment intent not found. Please try again.");
       }
 
-      // First, check the payment intent status
       const { paymentIntent: retrievedPaymentIntent, error: retrieveError } =
         await stripe.retrievePaymentIntent(booking.paymentIntentClientSecret);
 
@@ -55,15 +53,13 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
         throw new Error(retrieveError.message);
       }
 
-      // If payment intent is already succeeded, handle it
       if (retrievedPaymentIntent.status === "succeeded") {
         console.log("Payment already succeeded:", {
           bookingId: booking.id,
           paymentIntentId: retrievedPaymentIntent.id,
           amount: retrievedPaymentIntent.amount,
           currency: retrievedPaymentIntent.currency,
-          timestamp: "2025-06-16 17:05:57",
-          user: "22951a3363",
+          user: booking.player.username,
           expertId: booking.expertId,
           serviceId: booking.serviceId,
           sessionDate: booking.date,
@@ -86,7 +82,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
         return;
       }
 
-      // If payment intent requires payment method, proceed with confirmation
       if (
         retrievedPaymentIntent.status === "requires_payment_method" ||
         retrievedPaymentIntent.status === "requires_confirmation"
@@ -106,7 +101,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
 
         if (error) {
           console.error("Payment confirmation error:", error);
-          // Handle specific error types
           if (
             error.type === "card_error" ||
             error.type === "validation_error"
@@ -125,7 +119,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
             paymentIntentId: paymentIntent.id,
             amount: paymentIntent.amount,
             currency: paymentIntent.currency,
-            timestamp: "2025-06-16 17:05:57",
+            timestamp: "2025-06-16 17:18:41",
             user: "22951a3363",
             expertId: booking.expertId,
             serviceId: booking.serviceId,
@@ -147,7 +141,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
 
           onSuccess(paymentResult);
         } else if (paymentIntent.status === "requires_action") {
-          // Handle 3D Secure or other required actions
           const { error: actionError } = await stripe.handleCardAction(
             booking.paymentIntentClientSecret
           );
@@ -155,14 +148,12 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           if (actionError) {
             onError(actionError.message);
           } else {
-            // Re-attempt confirmation after handling action
             await handleSubmit(event);
           }
         } else {
           onError(`Payment ${paymentIntent.status}. Please try again.`);
         }
       } else {
-        // Handle other statuses
         onError(
           `Payment intent is in ${retrievedPaymentIntent.status} status. Please contact support.`
         );
@@ -178,7 +169,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
   return (
     <div className="max-w-md mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Header Section */}
         <div className="text-center pb-4 border-b border-gray-200">
           <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <FontAwesomeIcon
@@ -194,7 +184,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           </p>
         </div>
 
-        {/* Booking Summary Card */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-gray-800 text-lg">
@@ -255,7 +244,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           </div>
         </div>
 
-        {/* Payment Information */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <label className="block text-sm font-semibold text-gray-700">
@@ -322,7 +310,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           </div>
         </div>
 
-        {/* Security Features */}
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
           <div className="flex items-start space-x-3">
             <FontAwesomeIcon
@@ -353,7 +340,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           </div>
         </div>
 
-        {/* Error Message */}
         {!booking.paymentIntentClientSecret && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
             <div className="flex items-center space-x-2">
@@ -366,7 +352,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           </div>
         )}
 
-        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-3 pt-4">
           <Button
             type="button"
@@ -417,7 +402,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           </Button>
         </div>
 
-        {/* Footer */}
         <div className="text-center text-xs text-gray-500 pt-4 border-t border-gray-200">
           <p>
             By completing this payment, you agree to our{" "}
@@ -430,7 +414,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
             </a>
           </p>
           <p className="mt-1">
-            Current Time: 2025-06-16 17:05:57 UTC | User: 22951a3363
+            Current Time: 2025-06-16 17:18:41 UTC | User: 22951a3363
           </p>
         </div>
       </form>
