@@ -750,6 +750,8 @@ const BookingExpertside: React.FC = () => {
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
       case "COMPLETED":
         return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+      case "SCHEDULED":
+        return "bg-green-100 text-green-800 hover:bg-green-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
@@ -758,6 +760,7 @@ const BookingExpertside: React.FC = () => {
   const getPaymentBadgeStyle = (status: string) => {
     switch (status) {
       case "COMPLETED":
+      case "SCHEDULED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
       case "REJECTED":
       case "CANCELLED":
@@ -787,6 +790,8 @@ const BookingExpertside: React.FC = () => {
       case "REJECTED":
       case "CANCELLED":
         return "Not Paid";
+      case "SCHEDULED":
+        return "Paid";
       default:
         return "Pending";
     }

@@ -286,7 +286,7 @@ const MyBooking: React.FC = () => {
           ? {
               ...booking,
               isPaid: true,
-              status: "CONFIRMED",
+              status: "SCHEDULED",
             }
           : booking
       )
@@ -296,7 +296,7 @@ const MyBooking: React.FC = () => {
       setSelectedBooking({
         ...selectedBooking,
         isPaid: true,
-        status: "CONFIRMED",
+        status: "SCHEDULED",
       });
     }
 
@@ -365,7 +365,7 @@ const MyBooking: React.FC = () => {
   const getActionBadgeStyle = (status: string) => {
     switch (status) {
       case "ACCEPTED":
-      case "CONFIRMED":
+      case "SCHEDULED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
       case "REJECTED":
       case "CANCELLED":
@@ -395,6 +395,8 @@ const MyBooking: React.FC = () => {
         return needsPayment(booking)
           ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
           : "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case "SCHEDULED":
+        return "bg-green-100 text-green-800 hover:bg-green-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
@@ -413,6 +415,8 @@ const MyBooking: React.FC = () => {
         return "Awaiting Approval";
       case "ACCEPTED":
         return needsPayment(booking) ? "Pay Now" : "Awaiting Payment Setup";
+      case "SCHEDULED":
+        return "Paid";
       default:
         return "Pending";
     }
