@@ -819,7 +819,11 @@ const MyBooking: React.FC = () => {
                         size="icon"
                         className="h-8 w-8 cursor-pointer"
                         onClick={(e) => openVideoModal(booking.id, e)}
-                        disabled={booking.service.service.id !== "1"}
+                        disabled={
+                          booking.service
+                            ? booking.service.service.id !== "1"
+                            : null
+                        }
                       >
                         <FontAwesomeIcon icon={faVideo} />
                       </Button>
