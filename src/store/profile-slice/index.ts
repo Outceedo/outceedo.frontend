@@ -1,46 +1,72 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
-import { userService, usersService } from "../apiConfig";
-import { RootState } from "../store";
+import { userService } from "../apiConfig";
 
-// Define Role type instead of importing from Prisma
 type Role = "player" | "expert" | "admin";
 
-// Define types
+interface SocialLinks {
+  linkedin?: string;
+  facebook?: string;
+  instagram?: string;
+  twitter?: string;
+}
+
+interface Document {
+  [key: string]: any;
+}
+
+interface Upload {
+  [key: string]: any;
+}
+
+interface Review {
+  [key: string]: any;
+}
+
 interface Profile {
   id: string;
   username: string;
   role: Role;
   firstName?: string;
   lastName?: string;
-  age?: number;
-  gender?: string;
-  phone?: string;
-  country?: string;
-  city?: string;
-  height?: number;
-  weight?: number;
-  profession?: string;
-  subProfession?: string;
-  bio?: string;
-  photo?: string;
-  language?: string[];
-  company?: string;
-  socialLinks?: {
-    linkedin?: string;
-    facebook?: string;
-    instagram?: string;
-    twitter?: string;
-  };
-  interests?: string[];
-  certificates?: Array<{ name: string; organization: string }>;
-  awards?: string[];
-  experience?: string;
-  responseTime: string;
-  travelLimit: string;
-  certificationLevel: string;
-  skills?: string[];
-
-  [key: string]: any; // For additional fields based on role
+  age?: number | null;
+  birthYear?: number | null;
+  gender?: string | null;
+  phone?: string | null;
+  country?: string | null;
+  city?: string | null;
+  height?: number | null;
+  weight?: number | null;
+  profession?: string | null;
+  subProfession?: string | null;
+  bio?: string | null;
+  photo?: string | null;
+  language?: string[] | null;
+  company?: string | null;
+  club?: string | null;
+  address?: string | null;
+  socialLinks?: SocialLinks | null;
+  interests?: string[] | null;
+  certificates?: Array<{ name: string; organization: string }> | null;
+  awards?: string[] | null;
+  experience?: string | null;
+  responseTime?: string | null;
+  travelLimit?: string | null;
+  certificationLevel?: string | null;
+  skills?: string[] | null;
+  budgetRange?: string | null;
+  sponsorType?: string | null;
+  sponsorshipCountryPreferred?: string | null;
+  sponsorshipType?: string | null;
+  sport?: string | null;
+  skinColor?: string | null;
+  companyLink?: string | null;
+  createdAt?: string | null;
+  updatedAt?: string | null;
+  documents?: Document[] | null;
+  uploads?: Upload[] | null;
+  reviewsReceived?: Review[] | null;
+  services?: any[];
+  [key: string]: any;
 }
 
 interface Service {
@@ -89,7 +115,6 @@ const initialState: ProfileState = {
   error: null,
 };
 
-// Helper function to get role from localStorage
 const getRoleFromStorage = (): Role | null => {
   const role = localStorage.getItem("role") as Role;
   if (role && ["player", "expert", "admin"].includes(role)) {
@@ -98,18 +123,15 @@ const getRoleFromStorage = (): Role | null => {
   return null;
 };
 
-// Helper function to get username from localStorage
 const getUsernameFromStorage = (): string | null => {
   const username = localStorage.getItem("username");
   return username;
 };
 
-// Helper function to get auth token from localStorage
 const getAuthToken = (): string | null => {
   return localStorage.getItem("token");
 };
 
-// Create profile thunk
 export const createProfile = createAsyncThunk(
   "profile/createProfile",
   async (
@@ -146,7 +168,6 @@ export const createProfile = createAsyncThunk(
   }
 );
 
-// Update profile thunk
 export const updateProfile = createAsyncThunk(
   "profile/updateProfile",
   async (data: any, { rejectWithValue }) => {
@@ -166,22 +187,18 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
-// Get profile thunk
 export const getProfile = createAsyncThunk(
   "profile/getProfile",
   async (username: string, { rejectWithValue }) => {
     try {
       const token = getAuthToken();
-      console.log(`Fetching profile for username: ${username}`);
       const response = await userService.get(`/profile/${username}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       });
-      console.log("Profile fetch response:", response.data);
       return response.data;
     } catch (error: any) {
-      console.error("Profile fetch error:", error.response?.data || error);
       return rejectWithValue(
         error.response?.data?.error || "Failed to get profile"
       );
@@ -189,7 +206,6 @@ export const getProfile = createAsyncThunk(
   }
 );
 
-// Get profiles thunk
 export const getProfiles = createAsyncThunk(
   "profile/getProfiles",
   async (
@@ -213,7 +229,6 @@ export const getProfiles = createAsyncThunk(
   }
 );
 
-// Update profile photo thunk
 export const updateProfilePhoto = createAsyncThunk(
   "profile/updateProfilePhoto",
   async (photoFile: File, { rejectWithValue }) => {
@@ -237,7 +252,6 @@ export const updateProfilePhoto = createAsyncThunk(
   }
 );
 
-// Get platform services thunk
 export const getPlatformServices = createAsyncThunk(
   "profile/getPlatformServices",
   async (_, { rejectWithValue }) => {
@@ -257,7 +271,6 @@ export const getPlatformServices = createAsyncThunk(
   }
 );
 
-// Add expert service thunk
 export const addExpertService = createAsyncThunk(
   "profile/addExpertService",
   async (
@@ -270,12 +283,11 @@ export const addExpertService = createAsyncThunk(
   ) => {
     try {
       const token = getAuthToken();
-      // The serviceId is passed as a URL parameter
       const response = await userService.post(
         `/profile/service/${serviceId}`,
         {
-          price, // Price is required in the body
-          additionalDetails, // Optional additional details
+          price,
+          additionalDetails,
         },
         {
           headers: {
@@ -292,7 +304,6 @@ export const addExpertService = createAsyncThunk(
   }
 );
 
-// Update expert service thunk
 export const updateExpertService = createAsyncThunk(
   "profile/updateExpertService",
   async (
@@ -308,7 +319,7 @@ export const updateExpertService = createAsyncThunk(
       const response = await userService.patch(
         `/profile/service/${serviceId}`,
         {
-          price, // Price might be optional in update
+          price,
           additionalDetails,
         },
         {
@@ -326,7 +337,6 @@ export const updateExpertService = createAsyncThunk(
   }
 );
 
-// Delete expert service thunk
 export const deleteExpertService = createAsyncThunk(
   "profile/deleteExpertService",
   async (serviceId: string, { rejectWithValue }) => {
@@ -349,7 +359,6 @@ export const deleteExpertService = createAsyncThunk(
   }
 );
 
-// Get expert services thunk
 export const getExpertServices = createAsyncThunk(
   "profile/getExpertServices",
   async (expertId: string, { rejectWithValue }) => {
@@ -372,7 +381,6 @@ export const getExpertServices = createAsyncThunk(
   }
 );
 
-// Create the profile slice
 const profileSlice = createSlice({
   name: "profile",
   initialState,
@@ -384,7 +392,6 @@ const profileSlice = createSlice({
       state.status = "idle";
       state.error = null;
     },
-    // Add action to set current profile from localStorage
     setCurrentProfileFromStorage: (state) => {
       const role = getRoleFromStorage();
       if (state.currentProfile && role) {
@@ -394,7 +401,6 @@ const profileSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      // Create profile
       .addCase(createProfile.pending, (state) => {
         state.status = "loading";
       })
@@ -403,7 +409,6 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.currentProfile = action.payload;
-          // Store role in localStorage
           localStorage.setItem("role", action.payload.role);
         }
       )
@@ -411,8 +416,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Update profile
       .addCase(updateProfile.pending, (state) => {
         state.status = "loading";
       })
@@ -421,11 +424,9 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.currentProfile = action.payload;
-          // Update role in localStorage if it changed
           if (action.payload.role) {
             localStorage.setItem("role", action.payload.role);
           }
-          // If the viewed profile is the same as the current profile, update it as well
           if (
             state.viewedProfile &&
             state.viewedProfile.id === action.payload.id
@@ -438,8 +439,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Get profile
       .addCase(getProfile.pending, (state) => {
         state.status = "loading";
       })
@@ -448,8 +447,6 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.viewedProfile = action.payload;
-
-          // If this is the current user's profile, also update currentProfile
           const currentUsername = localStorage.getItem("username");
           if (currentUsername && action.payload.username === currentUsername) {
             state.currentProfile = action.payload;
@@ -460,8 +457,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Get profiles
       .addCase(getProfiles.pending, (state) => {
         state.status = "loading";
       })
@@ -473,8 +468,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Update profile photo
       .addCase(updateProfilePhoto.pending, (state) => {
         state.status = "loading";
       })
@@ -483,7 +476,6 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
           state.currentProfile = action.payload;
-          // If the viewed profile is the same as the current profile, update it as well
           if (
             state.viewedProfile &&
             state.viewedProfile.id === action.payload.id
@@ -496,8 +488,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Get platform services
       .addCase(getPlatformServices.pending, (state) => {
         state.status = "loading";
       })
@@ -512,8 +502,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Add expert service
       .addCase(addExpertService.pending, (state) => {
         state.status = "loading";
       })
@@ -528,8 +516,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Update expert service
       .addCase(updateExpertService.pending, (state) => {
         state.status = "loading";
       })
@@ -549,8 +535,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Delete expert service
       .addCase(deleteExpertService.pending, (state) => {
         state.status = "loading";
       })
@@ -564,8 +548,6 @@ const profileSlice = createSlice({
         state.status = "failed";
         state.error = action.payload as string;
       })
-
-      // Get expert services
       .addCase(getExpertServices.pending, (state) => {
         state.status = "loading";
       })

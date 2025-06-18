@@ -16,13 +16,10 @@ interface AuthState {
   tokenValidationInProgress: boolean;
 }
 
-// IMPORTANT: Initialize auth state immediately on load
-// Check if token exists in localStorage on initialization
 const token = localStorage.getItem("token");
 const username = localStorage.getItem("username");
 const role = localStorage.getItem("role");
 
-// Create initial user object right away if we have the data
 const initialUser =
   token && username
     ? {
@@ -36,10 +33,9 @@ const initialUser =
     : null;
 
 const initialState: AuthState = {
-  // Set isAuthenticated based on token presence IMMEDIATELY
   isAuthenticated: !!token,
   isLoading: false,
-  // Set user based on localStorage data IMMEDIATELY
+
   user: initialUser,
   registrationSuccess: false,
   error: null,
@@ -51,12 +47,10 @@ const initialState: AuthState = {
   tokenValidationInProgress: !!token, // Track validation status
 };
 
-// If token exists, set it in axios defaults immediately
 if (token) {
   authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 }
 
-// Define a type for the thunk API
 interface ThunkApiConfig {
   rejectValue: string;
 }
@@ -173,11 +167,8 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
         return rejectWithValue("No token found");
       }
 
-      // Set authorization header
       authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      // Before making the API call, set a basic user object from localStorage
-      // to prevent flashing of login screen
       const username = localStorage.getItem("username");
       const role = localStorage.getItem("role");
       const userId = localStorage.getItem("userId");
@@ -185,7 +176,6 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
       const firstName = localStorage.getItem("firstName");
       const lastName = localStorage.getItem("lastName");
 
-      // If we have user data in localStorage, dispatch a setUser action
       if (username && role) {
         dispatch(
           setUser({
@@ -201,10 +191,8 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
         );
       }
 
-      // Now proceed with actual token validation
       const response = await authService.get("/validate");
 
-      // If validation is successful, update user data in localStorage
       if (response.data && response.data.user) {
         const user = response.data.user;
         localStorage.setItem("username", user.username || "");
@@ -220,7 +208,6 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
 
-      // Don't clear auth data on network errors - only on actual authentication failures
       const status = error.response?.status;
       if (status === 401 || status === 403) {
         localStorage.removeItem("token");
@@ -240,7 +227,6 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
   }
 );
 
-// Reconstruct user from localStorage (for page reloads)
 export const reconstructUserFromStorage = createAsyncThunk<
   any,
   void,
@@ -255,10 +241,8 @@ export const reconstructUserFromStorage = createAsyncThunk<
   const lastName = localStorage.getItem("lastName");
 
   if (token) {
-    // Set token in axios headers
     authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-    // Return user object from localStorage while token validation is in progress
     return {
       user: {
         username,
@@ -365,12 +349,10 @@ const authSlice = createSlice({
       const lastName = localStorage.getItem("lastName");
 
       if (token) {
-        // Set authorization header
         authService.defaults.headers.common[
           "Authorization"
         ] = `Bearer ${token}`;
 
-        // Update authentication state
         state.isAuthenticated = true;
         state.user = {
           username,
@@ -381,13 +363,11 @@ const authSlice = createSlice({
           lastName: lastName || undefined,
         };
       } else {
-        // No token, so not authenticated
         state.isAuthenticated = false;
         state.user = null;
       }
     },
     clearAuth: (state) => {
-      // Clear all authentication data
       localStorage.removeItem("token");
       localStorage.removeItem("username");
       localStorage.removeItem("role");
@@ -498,13 +478,9 @@ const authSlice = createSlice({
         }
       })
       .addCase(validateToken.rejected, (state, action) => {
-        // Important: On token validation failure, we need to be careful
-        // Only reset authentication state if the error is actually related to auth
         state.isLoading = false;
         state.tokenValidationInProgress = false;
 
-        // The error might be a network error or something unrelated to auth
-        // Check if the error explicitly mentions auth failure
         const errorMsg = action.payload as string;
         if (
           errorMsg &&
@@ -519,13 +495,10 @@ const authSlice = createSlice({
           state.isAuthenticated = false;
           state.error = errorMsg;
         } else {
-          // For other errors, maintain the auth state but set the error
           state.error = errorMsg;
-          // Keep isAuthenticated and user as they were
         }
       })
 
-      // Reconstruct user from localStorage
       .addCase(reconstructUserFromStorage.fulfilled, (state, action) => {
         if (action.payload.user) {
           state.user = action.payload.user;
