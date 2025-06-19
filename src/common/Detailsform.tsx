@@ -24,8 +24,9 @@ interface Country {
   dialCode: string;
 }
 
-interface CityResponse {
-  data: { country: string; cities: string[] }[];
+interface City {
+  name: string;
+  country: string;
 }
 
 interface Certificate {
@@ -33,17 +34,17 @@ interface Certificate {
   name?: string;
   organization?: string;
   file?: File;
-  uploadedDocId?: string; // To track uploaded document ID
-  imageUrl?: string; // To display certificate image
+  uploadedDocId?: string;
+  imageUrl?: string;
 }
 
 interface Award {
   id: number;
   name?: string;
-  organization?: string; // Added organization field to match Certificate interface
+  organization?: string;
   file?: File;
-  uploadedDocId?: string; // To track uploaded document ID
-  imageUrl?: string; // To display award image
+  uploadedDocId?: string;
+  imageUrl?: string;
 }
 
 interface Media {
@@ -53,31 +54,26 @@ interface Media {
   type: string;
 }
 
-// Valid gender options as expected by the backend
 type GenderType = "male" | "female" | "other" | "prefer_not_to_say";
 
 const Detailsform: React.FC = () => {
   const profileData = useAppSelector((state) => state.profile.viewedProfile);
   const navigate = useNavigate();
-  const dispatch = useAppDispatch(); // Use Redux dispatch
-  // Get profile data from Redux
+  const dispatch = useAppDispatch();
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isExpert, setIsExpert] = useState(false);
 
-  // State to keep track of existing profile image
   const [existingProfilePhoto, setExistingProfilePhoto] = useState<
     string | null
   >(null);
   const [profilePhotoChanged, setProfilePhotoChanged] = useState(false);
 
-  // Form data
   const [formData, setFormData] = useState({
     photo: "",
     phone: "",
-    // email = "",
     firstName: "",
     lastName: "",
     profession: "",
@@ -91,8 +87,8 @@ const Detailsform: React.FC = () => {
     country: "",
     city: "",
     footballClub: "",
-    sport: "", // New field for sport
-    club: "", // New field for club
+    sport: "",
+    club: "",
     countryCode: "",
     phoneNumber: "",
     bio: "",
@@ -100,18 +96,16 @@ const Detailsform: React.FC = () => {
     facebook: "",
     instagram: "",
     twitter: "",
-    responseTime: "", // Added for expert role
-    travelLimit: "", // Added for expert role
-    certificationLevel: "", // New field for certification level
-    skills: [] as string[], // New field for skills array
+    responseTime: "",
+    travelLimit: "",
+    certificationLevel: "",
+    skills: [] as string[],
   });
 
-  // Form validation errors
   const [validationErrors, setValidationErrors] = useState<
     Record<string, string>
   >({});
 
-  // Files
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
   const [professionalPhoto, setProfessionalPhoto] = useState<File | null>(null);
   const [certificates, setCertificates] = useState<Certificate[]>([{ id: 1 }]);
@@ -119,9 +113,8 @@ const Detailsform: React.FC = () => {
   const [uploadedMedia, setUploadedMedia] = useState<Media[]>([]);
   const [skillInput, setSkillInput] = useState<string>("");
 
-  // Country & city data
   const [countries, setCountries] = useState<Country[]>([]);
-  const [cities, setCities] = useState<string[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [citySearchTerm, setCitySearchTerm] = useState<string>("");
@@ -129,22 +122,18 @@ const Detailsform: React.FC = () => {
     useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
 
-  // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
-  // Get auth token from localStorage
   const getAuthToken = (): string | null => {
     return localStorage.getItem("token");
   };
   const username = localStorage.getItem("username");
 
-  // Check if user is an expert
   useEffect(() => {
     const role = localStorage.getItem("role");
     setIsExpert(role === "expert");
   }, []);
 
-  // Fetch profile data when component mounts
   useEffect(() => {
     if (username) {
       dispatch(getProfile(username));
@@ -153,17 +142,14 @@ const Detailsform: React.FC = () => {
     }
   }, [dispatch, username]);
 
-  // Populate form with profile data when available
   useEffect(() => {
     if (profileData) {
       console.log("Prefilling form with profile data:", profileData);
 
-      // Save existing profile photo if available
       if (profileData.photo) {
         setExistingProfilePhoto(profileData.photo);
       }
 
-      // Map the profile data to form data structure
       setFormData((prevData) => ({
         ...prevData,
         photo: profileData.photo || "",
@@ -171,8 +157,8 @@ const Detailsform: React.FC = () => {
         lastName: profileData.lastName || "",
         profession: profileData.profession || "",
         subProfession: profileData.subProfession || "",
-        sport: profileData.sport || "", // Add sport field
-        club: profileData.club || "", // Add club field
+        sport: profileData.sport || "",
+        club: profileData.club || "",
         age: profileData.age?.toString() || "",
         birthYear: profileData.birthYear?.toString() || "",
         gender: (profileData.gender as GenderType) || ("" as GenderType),
@@ -186,14 +172,12 @@ const Detailsform: React.FC = () => {
         footballClub: profileData.company || "",
         bio: profileData.bio || "",
 
-        // Handle expert-specific fields only if user is an expert
         responseTime: isExpert ? profileData.responseTime || "" : "",
         travelLimit: isExpert ? profileData.travelLimit?.toString() || "" : "",
         certificationLevel: isExpert
           ? profileData.certificationLevel || ""
           : "",
 
-        // Fix for skills data
         skills: isExpert
           ? Array.isArray(profileData.skills)
             ? profileData.skills.map((skill: any) =>
@@ -204,17 +188,14 @@ const Detailsform: React.FC = () => {
             : []
           : [],
 
-        // Handle social links
         linkedin: profileData.socialLinks?.linkedin || "",
         facebook: profileData.socialLinks?.facebook || "",
         instagram: profileData.socialLinks?.instagram || "",
         twitter: profileData.socialLinks?.twitter || "",
       }));
 
-      // Set search terms for country and city
       if (profileData.country) {
         setSearchTerm(profileData.country);
-        // Find and set the selected country object
         const country = countries.find(
           (c) => c.name.toLowerCase() === profileData.country?.toLowerCase()
         );
@@ -227,9 +208,7 @@ const Detailsform: React.FC = () => {
         setCitySearchTerm(profileData.city);
       }
 
-      // Check for existing certificates and awards in documents
       if (profileData.documents && Array.isArray(profileData.documents)) {
-        // Extract certificates
         const existingCertificates = profileData.documents
           .filter((doc: any) => doc.type === "certificate")
           .map((cert: any, index: number) => ({
@@ -237,22 +216,21 @@ const Detailsform: React.FC = () => {
             name: cert.title || "",
             organization: cert.issuedBy || "",
             uploadedDocId: cert.id || "",
-            imageUrl: cert.imageUrl || "", // Add image URL
+            imageUrl: cert.imageUrl || "",
           }));
 
         if (existingCertificates.length > 0) {
           setCertificates(existingCertificates);
         }
 
-        // Extract awards
         const existingAwards = profileData.documents
           .filter((doc: any) => doc.type === "award")
           .map((award: any, index: number) => ({
             id: index + 1,
             name: award.title || "",
-            organization: award.issuedBy || "", // Added organization mapping for awards
+            organization: award.issuedBy || "",
             uploadedDocId: award.id || "",
-            imageUrl: award.imageUrl || "", // Add image URL
+            imageUrl: award.imageUrl || "",
           }));
 
         if (existingAwards.length > 0) {
@@ -262,7 +240,6 @@ const Detailsform: React.FC = () => {
     }
   }, [profileData, isExpert, countries]);
 
-  // Helper to create axios instance with auth header
   const createAuthAxios = () => {
     const token = getAuthToken();
     return axios.create({
@@ -274,7 +251,6 @@ const Detailsform: React.FC = () => {
     });
   };
 
-  // Navigation functions
   const nextStep = () => {
     if (validateCurrentStep()) {
       setStep((prev) => Math.min(prev + 1, 4));
@@ -287,7 +263,6 @@ const Detailsform: React.FC = () => {
     window.scrollTo(0, 0);
   };
 
-  // Validation for each step
   const validateCurrentStep = (): boolean => {
     setError(null);
     const errors: Record<string, string> = {};
@@ -312,12 +287,7 @@ const Detailsform: React.FC = () => {
       if (!formData.city) {
         errors.city = "City is required";
       }
-      // You can add validation for sport field if needed
-      // if (!formData.sport) {
-      //   errors.sport = "Sport is required";
-      // }
 
-      // Validate expert-specific fields if user is an expert
       if (isExpert) {
         if (!formData.responseTime) {
           errors.responseTime = "Response time is required for experts";
@@ -327,7 +297,6 @@ const Detailsform: React.FC = () => {
         }
       }
     } else if (step === 3) {
-      // Validate certificates
       for (let i = 0; i < certificates.length; i++) {
         const cert = certificates[i];
         if (cert.file && !cert.name) {
@@ -335,7 +304,6 @@ const Detailsform: React.FC = () => {
         }
       }
 
-      // Validate awards
       for (let i = 0; i < awards.length; i++) {
         const award = awards[i];
         if (award.file && !award.name) {
@@ -353,7 +321,6 @@ const Detailsform: React.FC = () => {
     return true;
   };
 
-  // Handle form input changes
   const handleInputChange = (
     e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
@@ -361,7 +328,6 @@ const Detailsform: React.FC = () => {
 
     setFormData((prev) => ({ ...prev, [name]: value }));
 
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -371,7 +337,6 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Upload media file to server
   const uploadMediaFile = async (
     file: File,
     type: string
@@ -396,7 +361,6 @@ const Detailsform: React.FC = () => {
 
       console.log(`${type} photo uploaded:`, response.data);
 
-      // Add to uploaded media
       if (response.data && response.data.id) {
         setUploadedMedia((prev) => [
           ...prev,
@@ -418,7 +382,6 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Handle file uploads
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: "profile" | "professional" | "certificate" | "award",
@@ -434,27 +397,22 @@ const Detailsform: React.FC = () => {
 
     try {
       if (type === "profile") {
-        // Store the file locally and mark that profile photo has changed
         setProfilePhoto(file);
         setProfilePhotoChanged(true);
       } else if (type === "professional") {
         setProfessionalPhoto(file);
         await uploadMediaFile(file, "professional");
       } else if (type === "certificate" && id !== undefined) {
-        // Create a temporary object URL for previewing the file
         const imageUrl = URL.createObjectURL(file);
 
-        // Update certificate with file and preview URL
         setCertificates((prev) =>
           prev.map((cert) =>
             cert.id === id ? { ...cert, file, imageUrl } : cert
           )
         );
       } else if (type === "award" && id !== undefined) {
-        // Create a temporary object URL for previewing the file
         const imageUrl = URL.createObjectURL(file);
 
-        // Update award with file and preview URL
         setAwards((prev) =>
           prev.map((award) =>
             award.id === id ? { ...award, file, imageUrl } : award
@@ -469,7 +427,6 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Upload document (certificate/award)
   const uploadDocument = async (
     file: File,
     title: string,
@@ -478,7 +435,6 @@ const Detailsform: React.FC = () => {
     description: string = ""
   ): Promise<string | null> => {
     try {
-      // Validate required fields
       if (!file) {
         throw new Error(`File is required for ${type} upload`);
       }
@@ -493,11 +449,9 @@ const Detailsform: React.FC = () => {
       formData.append("type", type);
       formData.append("issuedBy", issuedBy.trim());
 
-      // Add current date as issue date
       const today = new Date().toISOString().split("T")[0];
       formData.append("issuedDate", today);
 
-      // Add description field
       formData.append("description", description || "");
 
       const token = getAuthToken();
@@ -525,13 +479,10 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Upload all certificates and awards
   const uploadAllDocuments = async (): Promise<boolean> => {
     try {
-      // Upload certificates
       for (const cert of certificates) {
         if (cert.file && cert.name && !cert.uploadedDocId) {
-          // Only upload if we have both a file and a name, and it's not already uploaded
           const docId = await uploadDocument(
             cert.file,
             cert.name,
@@ -540,7 +491,6 @@ const Detailsform: React.FC = () => {
           );
 
           if (docId) {
-            // Update certificate with uploaded ID
             setCertificates((prev) =>
               prev.map((c) =>
                 c.id === cert.id ? { ...c, uploadedDocId: docId } : c
@@ -550,19 +500,16 @@ const Detailsform: React.FC = () => {
         }
       }
 
-      // Upload awards
       for (const award of awards) {
         if (award.file && award.name && !award.uploadedDocId) {
-          // Only upload if we have both a file and a name, and it's not already uploaded
           const docId = await uploadDocument(
             award.file,
             award.name,
-            award.organization || "", // Use organization field for awards now
+            award.organization || "",
             "award"
           );
 
           if (docId) {
-            // Update award with uploaded ID
             setAwards((prev) =>
               prev.map((a) =>
                 a.id === award.id ? { ...a, uploadedDocId: docId } : a
@@ -579,21 +526,18 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Add skill to the skills array
   const addSkill = () => {
     if (skillInput.trim() === "") return;
 
-    // Add the skill only if it doesn't already exist in the array
     if (!formData.skills.includes(skillInput.trim())) {
       setFormData((prev) => ({
         ...prev,
         skills: [...prev.skills, skillInput.trim()],
       }));
     }
-    setSkillInput(""); // Clear input after adding
+    setSkillInput("");
   };
 
-  // Remove skill from the skills array
   const removeSkill = (skillToRemove: string) => {
     setFormData((prev) => ({
       ...prev,
@@ -601,22 +545,18 @@ const Detailsform: React.FC = () => {
     }));
   };
 
-  // Certificate functions
   const addCertificate = () => {
     setCertificates([...certificates, { id: Date.now() }]);
   };
 
   const removeCertificate = async (id: number) => {
-    // Don't allow removing the last certificate
     if (certificates.length <= 1) {
       return;
     }
 
-    // Find the certificate
     const cert = certificates.find((c) => c.id === id);
     if (!cert) return;
 
-    // If the certificate was uploaded, delete it from the server
     if (cert.uploadedDocId) {
       try {
         const token = getAuthToken();
@@ -632,11 +572,10 @@ const Detailsform: React.FC = () => {
       } catch (error) {
         console.error(`Error deleting certificate ${id}:`, error);
         setError("Failed to delete certificate. Please try again.");
-        return; // Don't proceed if server deletion failed
+        return;
       }
     }
 
-    // Remove from local state
     setCertificates(certificates.filter((cert) => cert.id !== id));
   };
 
@@ -645,10 +584,8 @@ const Detailsform: React.FC = () => {
     field: "name" | "organization",
     value: string
   ) => {
-    // Find the certificate
     const cert = certificates.find((c) => c.id === id);
 
-    // Don't update if it's already uploaded
     if (cert && cert.uploadedDocId) {
       return;
     }
@@ -659,7 +596,6 @@ const Detailsform: React.FC = () => {
       )
     );
 
-    // Clear validation error for this certificate
     if (field === "name" && validationErrors[`certificate_${id}_name`]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -669,22 +605,18 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Award functions
   const addAward = () => {
     setAwards([...awards, { id: Date.now() }]);
   };
 
   const removeAward = async (id: number) => {
-    // Don't allow removing the last award
     if (awards.length <= 1) {
       return;
     }
 
-    // Find the award
     const award = awards.find((a) => a.id === id);
     if (!award) return;
 
-    // If the award was uploaded, delete it from the server
     if (award.uploadedDocId) {
       try {
         const token = getAuthToken();
@@ -700,24 +632,20 @@ const Detailsform: React.FC = () => {
       } catch (error) {
         console.error(`Error deleting award ${id}:`, error);
         setError("Failed to delete award. Please try again.");
-        return; // Don't proceed if server deletion failed
+        return;
       }
     }
 
-    // Remove from local state
     setAwards(awards.filter((award) => award.id !== id));
   };
 
-  // Updated handleAwardChange to match handleCertificateChange
   const handleAwardChange = (
     id: number,
     field: "name" | "organization",
     value: string
   ) => {
-    // Find the award
     const award = awards.find((a) => a.id === id);
 
-    // Don't update if it's already uploaded
     if (award && award.uploadedDocId) {
       return;
     }
@@ -728,7 +656,6 @@ const Detailsform: React.FC = () => {
       )
     );
 
-    // Clear validation error for this award
     if (field === "name" && validationErrors[`award_${id}_name`]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -738,7 +665,6 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Handle country selection
   const handleCountrySelect = (country: Country) => {
     setSelectedCountry(country);
     setFormData((prev) => ({
@@ -750,14 +676,12 @@ const Detailsform: React.FC = () => {
     setShowCountryDropdown(false);
   };
 
-  // Handle city selection
   const handleCitySelect = (city: string) => {
     setFormData((prev) => ({ ...prev, city }));
     setCitySearchTerm(city);
     setShowCityDropdown(false);
   };
 
-  // Final submit function
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
 
@@ -765,28 +689,23 @@ const Detailsform: React.FC = () => {
     setError(null);
 
     try {
-      // First upload all certificates and awards
       const documentsUploaded = await uploadAllDocuments();
 
       if (!documentsUploaded) {
         throw new Error("Failed to upload some documents");
       }
 
-      // Find professional photo ID
       const professionalPhotoMedia = uploadedMedia.find(
         (m) => m.type === "professional"
       );
 
-      // Convert languages to array
       let languageArray: string[] = [];
       if (formData.languages && formData.languages.trim()) {
-        // Split by comma and trim whitespace from each entry
         languageArray = formData.languages
           .split(",")
           .map((lang) => lang.charAt(0).toUpperCase() + lang.slice(1));
       }
 
-      // Prepare the profile data to match the schema exactly
       const profileUpdateData = {
         firstName:
           formData.firstName.charAt(0).toUpperCase() +
@@ -811,18 +730,17 @@ const Detailsform: React.FC = () => {
           instagram: formData.instagram || "",
           twitter: formData.twitter || "",
         },
-        interests: [], // Not collected in the form
+        interests: [],
         profession:
           formData.profession.charAt(0).toUpperCase() +
             formData.profession.slice(1) || null,
         subProfession:
           formData.subProfession.charAt(0).toUpperCase() +
-            formData.subProfession.slice(1) || null, // Ensure subProfession is sent correctly
-        sport: formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1), // Add sport field
-        club: formData.club || null, // Add club field
-        company: formData.footballClub || null, // Keep existing footballClub field for backward compatibility
+            formData.subProfession.slice(1) || null,
+        sport: formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1),
+        club: formData.club || null,
+        company: formData.footballClub || null,
 
-        // Include expert-specific fields only if user is an expert
         ...(isExpert && {
           certificationLevel:
             formData.certificationLevel.charAt(0).toUpperCase() +
@@ -841,17 +759,13 @@ const Detailsform: React.FC = () => {
 
       console.log("Submitting profile data:", profileUpdateData);
 
-      // Use the updateProfile thunk instead of direct API call
       const resultAction = await dispatch(updateProfile(profileUpdateData));
 
       if (updateProfile.fulfilled.match(resultAction)) {
         console.log("Profile updated successfully:", resultAction.payload);
 
-        // After profile is updated, update the profile photo using the Redux thunk
-        // Only upload new profile photo if it was changed
         if (profilePhoto && profilePhotoChanged) {
           try {
-            // Dispatch the updateProfilePhoto action
             const photoResultAction = await dispatch(
               updateProfilePhoto(profilePhoto)
             );
@@ -866,13 +780,11 @@ const Detailsform: React.FC = () => {
             }
           } catch (photoError) {
             console.error("Error uploading profile photo:", photoError);
-            // Don't fail the whole process if photo upload fails
           }
         }
 
         setSuccess("Profile updated successfully!");
 
-        // Redirect to appropriate dashboard based on user role
         setTimeout(() => {
           const userRole = localStorage.getItem("role");
           if (userRole === "player") {
@@ -890,7 +802,6 @@ const Detailsform: React.FC = () => {
             "Failed to update profile. Please try again."
         );
 
-        // Handle structured validation errors if available
         if (resultAction.payload && typeof resultAction.payload === "object") {
           setValidationErrors(resultAction.payload as Record<string, string>);
         }
@@ -906,59 +817,90 @@ const Detailsform: React.FC = () => {
     }
   };
 
-  // Fetch countries data
   useEffect(() => {
     const fetchCountries = async (): Promise<void> => {
       try {
-        const response = await fetch("https://restcountries.com/v3.1/all");
+        const response = await fetch(
+          "https://countriesnow.space/api/v0.1/countries/flag/images"
+        );
         if (!response.ok) throw new Error("Failed to fetch countries");
 
         const data = await response.json();
-        setCountries(
-          data.map((country: any) => ({
-            name: country.name.common,
-            iso2: country.cca2,
-            flag: country.flags.svg,
-            dialCode: country.idd.root
-              ? `${country.idd.root}${
-                  country.idd.suffixes ? country.idd.suffixes[0] : ""
-                }`
-              : "+1",
-          }))
-        );
+        if (data.error === false && data.data) {
+          const formattedCountries = data.data.map((country: any) => ({
+            name: country.name,
+            iso2: country.iso2 || "",
+            flag: country.flag,
+            dialCode: "+1",
+          }));
+          setCountries(formattedCountries);
+        }
       } catch (error) {
         console.error("Error fetching countries:", error);
+
+        const fallbackCountries = [
+          { name: "United States", iso2: "US", flag: "🇺🇸", dialCode: "+1" },
+          { name: "United Kingdom", iso2: "GB", flag: "🇬🇧", dialCode: "+44" },
+          { name: "Canada", iso2: "CA", flag: "🇨🇦", dialCode: "+1" },
+          { name: "Australia", iso2: "AU", flag: "🇦🇺", dialCode: "+61" },
+          { name: "Germany", iso2: "DE", flag: "🇩🇪", dialCode: "+49" },
+          { name: "France", iso2: "FR", flag: "🇫🇷", dialCode: "+33" },
+          { name: "India", iso2: "IN", flag: "🇮🇳", dialCode: "+91" },
+          { name: "Japan", iso2: "JP", flag: "🇯🇵", dialCode: "+81" },
+          { name: "China", iso2: "CN", flag: "🇨🇳", dialCode: "+86" },
+          { name: "Brazil", iso2: "BR", flag: "🇧🇷", dialCode: "+55" },
+        ];
+        setCountries(fallbackCountries);
       }
     };
     fetchCountries();
   }, []);
 
-  // Fetch cities when country is selected
   useEffect(() => {
     if (!selectedCountry) return;
 
     const fetchCities = async () => {
       try {
         const response = await fetch(
-          "https://countriesnow.space/api/v0.1/countries"
+          `https://countriesnow.space/api/v0.1/countries/cities`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              country: selectedCountry.name,
+            }),
+          }
         );
+
         if (!response.ok) throw new Error("Failed to fetch cities");
 
-        const cityData: CityResponse = await response.json();
-        const countryCities = cityData.data.find(
-          (c) => c.country.toLowerCase() === selectedCountry.name.toLowerCase()
-        );
-
-        setCities(countryCities ? countryCities.cities : []);
+        const cityData = await response.json();
+        if (cityData.error === false && cityData.data) {
+          const cityList = cityData.data.map((city: string) => ({
+            name: city,
+            country: selectedCountry.name,
+          }));
+          setCities(cityList);
+        }
       } catch (error) {
         console.error("Error fetching cities:", error);
+
+        const fallbackCities = [
+          { name: "New York", country: selectedCountry.name },
+          { name: "Los Angeles", country: selectedCountry.name },
+          { name: "Chicago", country: selectedCountry.name },
+          { name: "Houston", country: selectedCountry.name },
+          { name: "Phoenix", country: selectedCountry.name },
+        ];
+        setCities(fallbackCities);
       }
     };
 
     fetchCities();
   }, [selectedCountry]);
 
-  // Define states to store user data
   const [userData, setUserData] = useState({
     email: "",
     id: "",
@@ -975,7 +917,6 @@ const Detailsform: React.FC = () => {
 
         const response = await axios.get(
           `${API_BASE_URL}/auth/user/${localStorage.getItem("username")}`,
-
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -986,31 +927,24 @@ const Detailsform: React.FC = () => {
         const data = response.data;
         setUserData(data);
         if (data.mobileNumber) {
-          // Extract country code - assuming format like "+91 6302445751"
           const parts = data.mobileNumber.split(" ");
           if (parts.length === 2) {
-            setCountryCode(parts[0]); // "+91"
-            setPhoneNumber(parts[1]); // "6302445751"
+            setCountryCode(parts[0]);
+            setPhoneNumber(parts[1]);
           } else {
-            // If format is different, store full number as is
             setPhoneNumber(data.mobileNumber);
           }
         }
-
-        
       } catch (error) {
         console.error("Error fetching user data:", error);
       }
     };
 
-    // Parse mobile number to extract country code and number
-
     fetchUserData();
-  });
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg">
-      {/* Status messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-semibold">Error</p>
@@ -1032,10 +966,8 @@ const Detailsform: React.FC = () => {
         </div>
       )}
 
-      {/* Step progress */}
       <div className="flex flex-col items-center mb-12">
         <div className="flex w-full max-w-lg items-center relative">
-          {/* Step indicators */}
           {[1, 2, 3, 4].map((stepNum) => (
             <React.Fragment key={stepNum}>
               <div className="relative flex flex-col items-center w-1/4">
@@ -1061,7 +993,6 @@ const Detailsform: React.FC = () => {
           ))}
         </div>
 
-        {/* Step labels */}
         <div className="flex w-full max-w-lg justify-between mt-2">
           <div className="w-1/4 text-center text-sm font-medium">
             Personal Details
@@ -1076,7 +1007,6 @@ const Detailsform: React.FC = () => {
         </div>
       </div>
 
-      {/* Step 1: Personal Details */}
       {step === 1 && (
         <div>
           <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
@@ -1119,7 +1049,6 @@ const Detailsform: React.FC = () => {
             </button>
           </div>
 
-          {/* Modified row with First Name, Last Name, and Email */}
           <div className="flex space-x-4 mb-2">
             <div className="w-1/3">
               <label className="block text-black mb-1">First Name *</label>
@@ -1171,7 +1100,6 @@ const Detailsform: React.FC = () => {
             </div>
           </div>
 
-          {/* Modified row with Profession, SubProfession, Country Code and Phone Number */}
           <div className="flex space-x-4 mb-2">
             <div className="w-1/3">
               <label className="block text-black mb-1">Profession *</label>
@@ -1217,15 +1145,6 @@ const Detailsform: React.FC = () => {
                 <option value="midfielder">Midfielder</option>
               </select>
             </div>
-            {/* <div className="w-1/6">
-              <label className="block text-black mb-1">Country Code</label>
-              <input
-                type="text"
-                value={countryCode}
-                className="border p-2 w-full rounded bg-gray-100"
-                readOnly
-              />
-            </div> */}
             <div className="w-1/3">
               <label className="block text-black mb-1">Phone</label>
               <input
@@ -1339,7 +1258,6 @@ const Detailsform: React.FC = () => {
         </div>
       )}
 
-      {/* Step 2: More Details */}
       {step === 2 && (
         <div className="w-5xl">
           <h2 className="text-xl font-semibold mb-2">More Details</h2>
@@ -1367,7 +1285,6 @@ const Detailsform: React.FC = () => {
             </button>
           </div>
 
-          {/* Add Sport Field */}
           <div className="flex space-x-4 mb-2">
             <div className="w-1/2">
               <label className="block text-black mb-1">Sport</label>
@@ -1395,7 +1312,6 @@ const Detailsform: React.FC = () => {
             </div>
           </div>
 
-          {/* Certification Level - Only for Experts */}
           {isExpert && (
             <div className="w-full mb-4">
               <label className="block text-black mb-1">
@@ -1410,7 +1326,6 @@ const Detailsform: React.FC = () => {
             </div>
           )}
 
-          {/* Skills Section - Only for Experts */}
           {isExpert && (
             <div className="w-full mb-4">
               <label className="block text-black mb-1">Skills</label>
@@ -1437,7 +1352,6 @@ const Detailsform: React.FC = () => {
                 </button>
               </div>
 
-              {/* Display added skills */}
               <div className="flex flex-wrap gap-2 mt-2">
                 {formData.skills.map((skill, index) => (
                   <div
@@ -1484,15 +1398,17 @@ const Detailsform: React.FC = () => {
                 <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
                   {cities
                     .filter((city) =>
-                      city.toLowerCase().includes(citySearchTerm.toLowerCase())
+                      city.name
+                        .toLowerCase()
+                        .includes(citySearchTerm.toLowerCase())
                     )
                     .map((city, index) => (
                       <li
                         key={index}
-                        onClick={() => handleCitySelect(city)}
+                        onClick={() => handleCitySelect(city.name)}
                         className="px-4 py-2 cursor-pointer hover:bg-gray-200"
                       >
-                        {city}
+                        {city.name}
                       </li>
                     ))}
                 </ul>
@@ -1533,11 +1449,6 @@ const Detailsform: React.FC = () => {
                         onClick={() => handleCountrySelect(country)}
                         className="px-4 py-2 cursor-pointer hover:bg-gray-200 flex items-center"
                       >
-                        <img
-                          src={country.flag}
-                          alt={country.name}
-                          className="w-6 h-4 mr-2"
-                        />
                         {country.name}
                       </li>
                     ))}
@@ -1546,7 +1457,6 @@ const Detailsform: React.FC = () => {
             </div>
           </div>
 
-          {/* Expert-specific fields */}
           {isExpert && (
             <div className="flex space-x-4 mb-4">
               <div className="w-1/2">
@@ -1614,7 +1524,6 @@ const Detailsform: React.FC = () => {
         </div>
       )}
 
-      {/* Step 3: Certificates and Awards */}
       {step === 3 && (
         <div className="w-5xl">
           <h2 className="text-xl font-semibold mb-4">Certification</h2>
@@ -1633,7 +1542,6 @@ const Detailsform: React.FC = () => {
                 </button>
               )}
 
-              {/* Display certificate image in circular format if it exists */}
               {(cert.uploadedDocId || cert.imageUrl) && (
                 <div className="mb-4 flex items-center">
                   <div className="w-12 h-12 rounded-full overflow-hidden mr-3 border-2 border-gray-200">
@@ -1749,7 +1657,6 @@ const Detailsform: React.FC = () => {
                 </button>
               )}
 
-              {/* Display award image in circular format if it exists */}
               {(award.uploadedDocId || award.imageUrl) && (
                 <div className="mb-4 flex items-center">
                   <div className="w-12 h-12 rounded-full overflow-hidden mr-3 border-2 border-gray-200">
@@ -1817,7 +1724,6 @@ const Detailsform: React.FC = () => {
                   {validationErrors[`award_${award.id}_name`]}
                 </p>
               )}
-              {/* Added Issued By field for awards to match certificates */}
               <label className="block text-black mb-1">Issued By</label>
               <input
                 type="text"
