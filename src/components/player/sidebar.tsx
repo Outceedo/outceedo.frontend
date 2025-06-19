@@ -198,8 +198,10 @@ function MenuItems({ setOpen }: MenuItemsProps) {
             : ""}
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {currentProfile?.gender.charAt(0).toUpperCase() +
-            currentProfile?.gender.slice(1)}
+          {currentProfile?.gender
+            ? currentProfile?.gender.charAt(0).toUpperCase() +
+              currentProfile?.gender.slice(1)
+            : null}
         </p>
 
         {/* Show loading indicator if profile is still loading */}
