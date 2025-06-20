@@ -48,6 +48,16 @@ interface UserData {
   username: string;
 }
 
+interface Country {
+  name: string;
+  iso2: string;
+}
+
+interface City {
+  name: string;
+  country: string;
+}
+
 export default function Fandetailsform() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,13 +72,20 @@ export default function Fandetailsform() {
     Record<string, string>
   >({});
 
-  // User data from API
   const [userData, setUserData] = useState<UserData | null>(null);
   const [countryCode, setCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redux hooks
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [citySearchTerm, setCitySearchTerm] = useState<string>("");
+  const [showCountryDropdown, setShowCountryDropdown] =
+    useState<boolean>(false);
+  const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
+
   const dispatch = useAppDispatch();
   const profileState = useAppSelector((state) => state.profile);
 
@@ -87,7 +104,7 @@ export default function Fandetailsform() {
   const navigate = useNavigate();
 
   const goBack = () => {
-    navigate(-1); // goes to previous page
+    navigate(-1);
   };
 
   const [form, setForm] = useState<FormData>({
@@ -109,16 +126,111 @@ export default function Fandetailsform() {
     },
   });
 
-  // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
   const profileData = useAppSelector((state) => state.profile.viewedProfile);
 
-  // Get auth token from localStorage
   const getAuthToken = (): string | null => {
     return localStorage.getItem("token");
   };
 
-  // Fetch user data from API
+  useEffect(() => {
+    const fetchCountries = async (): Promise<void> => {
+      try {
+        const response = await fetch(
+          "https://countriesnow.space/api/v0.1/countries/flag/images"
+        );
+        if (!response.ok) throw new Error("Failed to fetch countries");
+
+        const data = await response.json();
+        if (data.error === false && data.data) {
+          const formattedCountries = data.data.map((country: any) => ({
+            name: country.name,
+            iso2: country.iso2 || "",
+          }));
+          setCountries(formattedCountries);
+        }
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+
+        const fallbackCountries = [
+          { name: "United States", iso2: "US" },
+          { name: "United Kingdom", iso2: "GB" },
+          { name: "Canada", iso2: "CA" },
+          { name: "Australia", iso2: "AU" },
+          { name: "Germany", iso2: "DE" },
+          { name: "France", iso2: "FR" },
+          { name: "India", iso2: "IN" },
+          { name: "Japan", iso2: "JP" },
+          { name: "China", iso2: "CN" },
+          { name: "Brazil", iso2: "BR" },
+        ];
+        setCountries(fallbackCountries);
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCountry) return;
+
+    const fetchCities = async () => {
+      try {
+        const response = await fetch(
+          `https://countriesnow.space/api/v0.1/countries/cities`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              country: selectedCountry.name,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch cities");
+
+        const cityData = await response.json();
+        if (cityData.error === false && cityData.data) {
+          const cityList = cityData.data.map((city: string) => ({
+            name: city,
+            country: selectedCountry.name,
+          }));
+          setCities(cityList);
+        }
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+
+        const fallbackCities = [
+          { name: "New York", country: selectedCountry.name },
+          { name: "Los Angeles", country: selectedCountry.name },
+          { name: "Chicago", country: selectedCountry.name },
+          { name: "Houston", country: selectedCountry.name },
+          { name: "Phoenix", country: selectedCountry.name },
+        ];
+        setCities(fallbackCities);
+      }
+    };
+
+    fetchCities();
+  }, [selectedCountry]);
+
+  const handleCountrySelect = (country: Country) => {
+    setSelectedCountry(country);
+    setForm((prev) => ({
+      ...prev,
+      country: country.name,
+    }));
+    setSearchTerm(country.name);
+    setShowCountryDropdown(false);
+  };
+
+  const handleCitySelect = (city: string) => {
+    setForm((prev) => ({ ...prev, city }));
+    setCitySearchTerm(city);
+    setShowCityDropdown(false);
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -139,24 +251,19 @@ export default function Fandetailsform() {
           }
         );
 
-        // Extract data from response
         const data = response.data;
         setUserData(data);
 
-        // Parse mobile number to extract country code and number
         if (data.mobileNumber) {
-          // Extract country code - assuming format like "+91 6302445751"
           const parts = data.mobileNumber.split(" ");
           if (parts.length === 2) {
-            setCountryCode(parts[0]); // "+91"
-            setPhoneNumber(parts[1]); // "6302445751"
+            setCountryCode(parts[0]);
+            setPhoneNumber(parts[1]);
           } else {
-            // If format is different, store full number as is
             setPhoneNumber(data.mobileNumber);
           }
         }
 
-        // Pre-fill the email field
         setForm((prev) => ({
           ...prev,
           email: data.email || "",
@@ -174,7 +281,6 @@ export default function Fandetailsform() {
     fetchUserData();
   }, [API_BASE_URL]);
 
-  // Validation for each step
   const validateCurrentStep = (): boolean => {
     setError(null);
     const errors: Record<string, string> = {};
@@ -186,8 +292,6 @@ export default function Fandetailsform() {
       if (!form.city) {
         errors.city = "City is required";
       }
-
-      // Skip email validation since it's now read-only
     }
 
     setValidationErrors(errors);
@@ -199,7 +303,6 @@ export default function Fandetailsform() {
     return true;
   };
 
-  // Helper to create axios instance with auth header
   const createAuthAxios = () => {
     const token = getAuthToken();
     return axios.create({
@@ -211,7 +314,6 @@ export default function Fandetailsform() {
     });
   };
 
-  // Handle file uploads
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -221,7 +323,6 @@ export default function Fandetailsform() {
       return;
     }
 
-    // Store the file locally and mark that profile photo has changed
     setProfilePhoto(file);
     setProfilePhotoChanged(true);
     setError(null);
@@ -233,7 +334,6 @@ export default function Fandetailsform() {
     >
   ) => {
     const { name, value } = e.target;
-    // Handling nested socialLinks
     if (name.startsWith("socialLinks.")) {
       const socialKey = name.split(".")[1];
       setForm((prev) => ({
@@ -247,7 +347,6 @@ export default function Fandetailsform() {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
 
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -256,6 +355,7 @@ export default function Fandetailsform() {
       });
     }
   };
+
   const username = localStorage.getItem("username");
   useEffect(() => {
     if (username) {
@@ -265,15 +365,26 @@ export default function Fandetailsform() {
     }
   }, [dispatch, username]);
 
-  // Fetch profile data if editing existing profile
   useEffect(() => {
     if (profileData) {
-      // Save existing profile photo if available
       if (profileData.photo) {
         setExistingProfilePhoto(profileData.photo);
       }
 
-      // Map the profile data to form data structure
+      if (profileData.country) {
+        setSearchTerm(profileData.country);
+        const country = countries.find(
+          (c) => c.name.toLowerCase() === profileData.country?.toLowerCase()
+        );
+        if (country) {
+          setSelectedCountry(country);
+        }
+      }
+
+      if (profileData.city) {
+        setCitySearchTerm(profileData.city);
+      }
+
       setForm({
         FirstName: profileData.firstName || "",
         LastName: profileData.lastName || "",
@@ -293,9 +404,8 @@ export default function Fandetailsform() {
         },
       });
     }
-  }, [profileData, userData, countryCode, phoneNumber]);
+  }, [profileData, userData, countryCode, phoneNumber, countries]);
 
-  // Watch for changes in profileState status
   useEffect(() => {
     if (profileState.status === "failed" && profileState.error) {
       setError(profileState.error);
@@ -314,7 +424,6 @@ export default function Fandetailsform() {
       [name]: value,
     }));
 
-    // Clear validation error for this field
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -331,19 +440,14 @@ export default function Fandetailsform() {
     setError(null);
 
     try {
-      // First upload profile photo if it's changed
       let photoUrl = existingProfilePhoto;
 
       if (profilePhoto && profilePhotoChanged) {
         try {
-          // Dispatch updateProfilePhoto action and wait for the result
           const resultAction = await dispatch(updateProfilePhoto(profilePhoto));
 
-          // Check if the action was fulfilled
           if (updateProfilePhoto.fulfilled.match(resultAction)) {
-            // Extract the updated profile from the action payload
             const updatedProfile = resultAction.payload;
-            // Get the photo URL from the updated profile
             photoUrl = updatedProfile.photo || photoUrl;
           } else if (updateProfilePhoto.rejected.match(resultAction)) {
             throw new Error("Failed to upload profile photo.");
@@ -356,11 +460,10 @@ export default function Fandetailsform() {
         }
       }
 
-      // Prepare the data for API submission
       const fanData = {
-        SportsInterest: form.SportsInterest,
-        FirstName: form.FirstName.trim(),
-        LastName: form.LastName.trim(),
+        sport: form.SportsInterest,
+        firstName: form.FirstName.trim(),
+        lastName: form.LastName.trim(),
         city: form.city,
         country: form.country,
         address: form.address,
@@ -374,13 +477,11 @@ export default function Fandetailsform() {
         },
       };
 
-      // Update profile using Redux action
       const updateProfileResult = await dispatch(updateProfile(fanData));
 
       if (updateProfile.fulfilled.match(updateProfileResult)) {
         setSuccess("Fan details saved successfully!");
 
-        // Redirect to appropriate page after submission
         setTimeout(() => {
           navigate("/fan/profile");
         }, 1500);
@@ -390,11 +491,9 @@ export default function Fandetailsform() {
     } catch (error: any) {
       console.error("Error submitting fan data:", error);
 
-      // Handle API error responses
       if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else if (error.response?.data?.errors) {
-        // Handle validation errors
         const apiErrors = error.response.data.errors;
         const formattedErrors: Record<string, string> = {};
 
@@ -414,7 +513,6 @@ export default function Fandetailsform() {
     }
   };
 
-  // Display loading spinner while fetching data
   if (isLoading) {
     return (
       <div className="w-full h-screen flex justify-center items-center dark:bg-gray-900">
@@ -426,7 +524,6 @@ export default function Fandetailsform() {
 
   return (
     <div className="w-full px-20 mx-auto dark:bg-gray-900">
-      {/* Status messages */}
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-semibold">Error</p>
@@ -454,7 +551,7 @@ export default function Fandetailsform() {
       >
         <ArrowLeft className="w-5 h-5 mr-1" />
       </button>
-      {/* Step Indicator */}
+
       <div className="flex flex-col items-center mb-12">
         <div className="flex w-full max-w-lg items-center relative">
           {[1, 2].map((stepNum) => (
@@ -489,14 +586,13 @@ export default function Fandetailsform() {
           </div>
         </div>
       </div>
-      {/* Step 1: Profile Details */}
+
       {step === 1 && (
         <>
           <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
           <Label className="text-sm text-gray-400 mb-1">PROFILE PICTURE</Label>
           <Card className="border-dashed border border-gray-300 p-4 w-5/6 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              {/* Display existing profile photo if available */}
               {existingProfilePhoto && !profilePhoto && (
                 <img
                   src={existingProfilePhoto}
@@ -563,15 +659,19 @@ export default function Fandetailsform() {
               />
             </div>
 
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Country*
               </label>
               <Input
                 name="country"
-                value={form.country}
-                onChange={handleChange}
-                placeholder="Enter country"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowCountryDropdown(true);
+                }}
+                onFocus={() => setShowCountryDropdown(true)}
+                placeholder="Search country"
                 className={validationErrors.country ? "border-red-500" : ""}
                 required
               />
@@ -580,17 +680,40 @@ export default function Fandetailsform() {
                   {validationErrors.country}
                 </p>
               )}
+              {showCountryDropdown && (
+                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+                  {countries
+                    .filter((country) =>
+                      country.name
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                    )
+                    .map((country, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleCountrySelect(country)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200 flex items-center"
+                      >
+                        {country.name}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
 
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 City*
               </label>
               <Input
                 name="city"
-                value={form.city}
-                onChange={handleChange}
-                placeholder="Enter city"
+                value={citySearchTerm}
+                onChange={(e) => {
+                  setCitySearchTerm(e.target.value);
+                  setShowCityDropdown(true);
+                }}
+                onFocus={() => setShowCityDropdown(true)}
+                placeholder="Search city"
                 className={validationErrors.city ? "border-red-500" : ""}
                 required
               />
@@ -598,6 +721,25 @@ export default function Fandetailsform() {
                 <p className="text-red-500 text-xs mt-1">
                   {validationErrors.city}
                 </p>
+              )}
+              {showCityDropdown && selectedCountry && (
+                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+                  {cities
+                    .filter((city) =>
+                      city.name
+                        .toLowerCase()
+                        .includes(citySearchTerm.toLowerCase())
+                    )
+                    .map((city, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleCitySelect(city.name)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                      >
+                        {city.name}
+                      </li>
+                    ))}
+                </ul>
               )}
             </div>
 
@@ -614,7 +756,6 @@ export default function Fandetailsform() {
             </div>
 
             <div className="flex gap-4 items-end">
-              {/* Phone Number */}
               <div className="w-full">
                 <label className="text-sm font-medium text-gray-900 dark:text-white">
                   Phone Number
@@ -654,7 +795,7 @@ export default function Fandetailsform() {
           </div>
         </>
       )}
-      {/* Step 2: More Details */}
+
       {step === 2 && (
         <>
           <h2 className="text-xl font-semibold mb-4 dark:text-white">
@@ -720,7 +861,7 @@ export default function Fandetailsform() {
               </div>
             ))}
           </div>
-          {/* Navigation Buttons */}
+
           <div className="flex justify-end mt-6">
             <Button
               onClick={prevStep}
