@@ -18,14 +18,13 @@ const User: React.FC = () => {
     { name: "Experts", icon: faChalkboardTeacher, role: "expert" },
     { name: "Teams", icon: faUsers, role: "team" },
     { name: "Sponsors", icon: faHandshake, role: "sponsor" },
-    { name: "Fans/Followers", icon: faTrophy, role: "fan" },
+    { name: "Fans/Followers", icon: faTrophy, role: "user" },
   ];
 
-  // Function to store role and navigate to signup page
   const handleUserSelection = (role: string) => {
     const lowerCaseRole = role.toLowerCase();
-    localStorage.setItem("selectedRole", lowerCaseRole); // Store role in localStorage
-    navigate("/signup"); // Redirect to signup page
+    localStorage.setItem("selectedRole", lowerCaseRole);
+    navigate("/signup");
   };
 
   return (

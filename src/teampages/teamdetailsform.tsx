@@ -49,6 +49,16 @@ interface UserData {
   username: string;
 }
 
+interface Country {
+  name: string;
+  iso2: string;
+}
+
+interface City {
+  name: string;
+  country: string;
+}
+
 export default function TeamDetailsForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -66,7 +76,15 @@ export default function TeamDetailsForm() {
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redux hooks
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [citySearchTerm, setCitySearchTerm] = useState<string>("");
+  const [showCountryDropdown, setShowCountryDropdown] =
+    useState<boolean>(false);
+  const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
+
   const dispatch = useAppDispatch();
   const profileState = useAppSelector((state) => state.profile);
 
@@ -108,16 +126,111 @@ export default function TeamDetailsForm() {
     },
   });
 
-  // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
   const profileData = useAppSelector((state) => state.profile.viewedProfile);
 
-  // Get auth token from localStorage
   const getAuthToken = (): string | null => {
     return localStorage.getItem("token");
   };
 
-  // Fetch user data from API
+  useEffect(() => {
+    const fetchCountries = async (): Promise<void> => {
+      try {
+        const response = await fetch(
+          "https://countriesnow.space/api/v0.1/countries/flag/images"
+        );
+        if (!response.ok) throw new Error("Failed to fetch countries");
+
+        const data = await response.json();
+        if (data.error === false && data.data) {
+          const formattedCountries = data.data.map((country: any) => ({
+            name: country.name,
+            iso2: country.iso2 || "",
+          }));
+          setCountries(formattedCountries);
+        }
+      } catch (error) {
+        console.error("Error fetching countries:", error);
+
+        const fallbackCountries = [
+          { name: "United States", iso2: "US" },
+          { name: "United Kingdom", iso2: "GB" },
+          { name: "Canada", iso2: "CA" },
+          { name: "Australia", iso2: "AU" },
+          { name: "Germany", iso2: "DE" },
+          { name: "France", iso2: "FR" },
+          { name: "India", iso2: "IN" },
+          { name: "Japan", iso2: "JP" },
+          { name: "China", iso2: "CN" },
+          { name: "Brazil", iso2: "BR" },
+        ];
+        setCountries(fallbackCountries);
+      }
+    };
+    fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    if (!selectedCountry) return;
+
+    const fetchCities = async () => {
+      try {
+        const response = await fetch(
+          `https://countriesnow.space/api/v0.1/countries/cities`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              country: selectedCountry.name,
+            }),
+          }
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch cities");
+
+        const cityData = await response.json();
+        if (cityData.error === false && cityData.data) {
+          const cityList = cityData.data.map((city: string) => ({
+            name: city,
+            country: selectedCountry.name,
+          }));
+          setCities(cityList);
+        }
+      } catch (error) {
+        console.error("Error fetching cities:", error);
+
+        const fallbackCities = [
+          { name: "New York", country: selectedCountry.name },
+          { name: "Los Angeles", country: selectedCountry.name },
+          { name: "Chicago", country: selectedCountry.name },
+          { name: "Houston", country: selectedCountry.name },
+          { name: "Phoenix", country: selectedCountry.name },
+        ];
+        setCities(fallbackCities);
+      }
+    };
+
+    fetchCities();
+  }, [selectedCountry]);
+
+  const handleCountrySelect = (country: Country) => {
+    setSelectedCountry(country);
+    setForm((prev) => ({
+      ...prev,
+      country: country.name,
+    }));
+    setSearchTerm(country.name);
+    setShowCountryDropdown(false);
+  };
+
+  const handleCitySelect = (city: string) => {
+    setForm((prev) => ({ ...prev, city }));
+    setCitySearchTerm(city);
+    setShowCityDropdown(false);
+  };
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -138,18 +251,16 @@ export default function TeamDetailsForm() {
           }
         );
 
-        // Extract data from response
         const data = response.data;
         setUserData(data);
 
-        // Parse mobile number to extract country code and number
         if (data.mobileNumber) {
           const parts = data.mobileNumber.split(" ");
           if (parts.length === 2) {
             setForm((prev) => ({
               ...prev,
-              countryCode: parts[0], // "+91"
-              phone: parts[1], // "6302445751"
+              countryCode: parts[0],
+              phone: parts[1],
             }));
           } else {
             setForm((prev) => ({
@@ -159,7 +270,6 @@ export default function TeamDetailsForm() {
           }
         }
 
-        // Pre-fill the email field
         setForm((prev) => ({
           ...prev,
           email: data.email || "",
@@ -175,7 +285,6 @@ export default function TeamDetailsForm() {
     fetchUserData();
   }, [API_BASE_URL]);
 
-  // Validation for each step
   const validateCurrentStep = (): boolean => {
     setError(null);
     const errors: Record<string, string> = {};
@@ -204,7 +313,6 @@ export default function TeamDetailsForm() {
     return true;
   };
 
-  // Handle file uploads
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -254,11 +362,24 @@ export default function TeamDetailsForm() {
     }
   }, [dispatch, username]);
 
-  // Fetch team data if editing existing team
   useEffect(() => {
     if (profileData) {
       if (profileData.photo) {
         setExistingProfilePhoto(profileData.photo);
+      }
+
+      if (profileData.country) {
+        setSearchTerm(profileData.country);
+        const country = countries.find(
+          (c) => c.name.toLowerCase() === profileData.country?.toLowerCase()
+        );
+        if (country) {
+          setSelectedCountry(country);
+        }
+      }
+
+      if (profileData.city) {
+        setCitySearchTerm(profileData.city);
       }
 
       setForm({
@@ -267,7 +388,6 @@ export default function TeamDetailsForm() {
           ? profileData.profession.toLowerCase()
           : "",
         sport: profileData.sport ? profileData.sport.toLowerCase() : "",
-
         clubName: profileData.club || "",
         city: profileData.city || "",
         country: profileData.country || "",
@@ -284,7 +404,7 @@ export default function TeamDetailsForm() {
         },
       });
     }
-  }, [profileData, userData]);
+  }, [profileData, userData, countries]);
 
   useEffect(() => {
     if (profileState.status === "failed" && profileState.error) {
@@ -589,15 +709,19 @@ export default function TeamDetailsForm() {
                 </p>
               )}
             </div>
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Country*
               </label>
               <Input
                 name="country"
-                value={form.country}
-                onChange={handleChange}
-                placeholder="Enter country"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setShowCountryDropdown(true);
+                }}
+                onFocus={() => setShowCountryDropdown(true)}
+                placeholder="Search country"
                 className={validationErrors.country ? "border-red-500" : ""}
               />
               {validationErrors.country && (
@@ -605,22 +729,64 @@ export default function TeamDetailsForm() {
                   {validationErrors.country}
                 </p>
               )}
+              {showCountryDropdown && (
+                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+                  {countries
+                    .filter((country) =>
+                      country.name
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                    )
+                    .map((country, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleCountrySelect(country)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200 flex items-center"
+                      >
+                        {country.name}
+                      </li>
+                    ))}
+                </ul>
+              )}
             </div>
-            <div>
+            <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 City*
               </label>
               <Input
                 name="city"
-                value={form.city}
-                onChange={handleChange}
-                placeholder="Enter city"
+                value={citySearchTerm}
+                onChange={(e) => {
+                  setCitySearchTerm(e.target.value);
+                  setShowCityDropdown(true);
+                }}
+                onFocus={() => setShowCityDropdown(true)}
+                placeholder="Search city"
                 className={validationErrors.city ? "border-red-500" : ""}
               />
               {validationErrors.city && (
                 <p className="text-red-500 text-xs mt-1">
                   {validationErrors.city}
                 </p>
+              )}
+              {showCityDropdown && selectedCountry && (
+                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+                  {cities
+                    .filter((city) =>
+                      city.name
+                        .toLowerCase()
+                        .includes(citySearchTerm.toLowerCase())
+                    )
+                    .map((city, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleCitySelect(city.name)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                      >
+                        {city.name}
+                      </li>
+                    ))}
+                </ul>
               )}
             </div>
             <div>

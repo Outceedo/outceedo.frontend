@@ -74,7 +74,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
           return <Navigate to="/sponsor/dashboard" replace />;
         case "team":
           return <Navigate to="/team/dashboard" replace />;
-        case "fan":
+        case "user":
           return <Navigate to="/fan/dashboard" replace />;
         default:
           // If role is unknown, redirect to a safe default
@@ -91,7 +91,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       player: ["/player", "/", "/public"],
       sponsor: ["/sponsor", "/", "/public"],
       team: ["/team", "/", "/public"],
-      fan: ["/fan", "/", "/public"],
+      user: ["/fan", "/", "/public"],
     };
 
     // Check if current path is allowed for the user's role

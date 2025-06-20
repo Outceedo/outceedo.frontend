@@ -8,7 +8,7 @@ import { RootState } from "../../store/store";
 import Swal from "sweetalert2";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
-type Role = "expert" | "player" | "team" | "sponser" | "fan";
+type Role = "expert" | "player" | "team" | "sponser" | "user";
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
@@ -118,7 +118,7 @@ const Signup: React.FC = () => {
     const selectedRole = localStorage.getItem("selectedRole") as Role | null;
     if (
       !selectedRole ||
-      !["expert", "player", "team", "sponsor", "fan"].includes(selectedRole)
+      !["expert", "player", "team", "sponsor", "user"].includes(selectedRole)
     ) {
       setFieldErrors((prev) => ({
         ...prev,
