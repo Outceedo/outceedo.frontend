@@ -19,7 +19,7 @@ import ResetPassword from "./Pages/Auth/Resetpassword";
 import Profile from "./Playerpages/playerprofile";
 import Dashboard from "./Playerpages/dashboard";
 import Matches from "./Playerpages/matches";
-import MyBooking from "./Playerpages/mybooking";
+import MyBooking from "./Playerpages/bookings/mybooking";
 import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
 import AssessmentReport from "./Playerpages/AssessmentReport";
