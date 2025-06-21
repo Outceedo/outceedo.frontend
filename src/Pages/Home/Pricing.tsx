@@ -24,24 +24,24 @@ const plans = [
 ];
 
 export default function PricingPlans() {
-  const [selectedPlan, setSelectedPlan] = useState(null);
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
 
   return (
     <div
       className="flex flex-col items-center py-10 px-4 md:px-10 mt-10"
       id="pricing"
     >
-      <div className="flex flex-col md:flex-row items-center space-y-8 md:space-y-0 md:space-x-8 justify-start mb-24 w-4/5 md:w-2/3 ">
+      <div className="flex flex-col md:flex-row items-center space-y-8 md:space-y-0 md:space-x-8 justify-start mb-24 w-full max-w-6xl">
         {plans.map((plan, index) => (
           <div
             key={index}
-            className={`relative border-2 border-black p-6 rounded-lg transition-all w-full md:w-80 text-left ${
+            className={`relative border-2 border-black p-6 rounded-lg transition-all w-full text-left ${
               plan.popular ? "border-red-500" : ""
             }`}
             onClick={() => setSelectedPlan(plan.name)}
           >
             {plan.popular && (
-              <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-2 text-center rounded-lg mb-8">
+              <div className="absolute top-0 left-0 right-0 bg-red-500 text-white py-2 text-center rounded mb-8">
                 Popular
               </div>
             )}

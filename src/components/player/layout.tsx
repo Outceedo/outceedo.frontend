@@ -8,10 +8,16 @@ function PlayerLayout() {
 
   return (
     <div className="flex min-h-screen w-full dark:bg-gray-900">
+      {/* Sidebar component - appears on left for desktop, slides in for mobile */}
       <PlayerSideBar open={openSidebar} setOpen={setOpenSidebar} />
-      <div className="flex flex-1 flex-col ">
+      
+      {/* Main content container */}
+      <div className="flex flex-1 flex-col w-full">
+        {/* Header - always at top */}
         <PlayerHeader setOpen={setOpenSidebar} />
-        <main className="flex-1 flex-col flex bg-muted/40 p-4 md:p-6">
+        
+        {/* Main content area with responsive padding */}
+        <main className="flex-1 flex-col flex bg-muted/40 p-2 sm:p-4 md:p-6 overflow-x-hidden">
           <Outlet />
         </main>
       </div>

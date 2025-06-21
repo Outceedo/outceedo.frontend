@@ -13,6 +13,7 @@ import { useLocation } from "react-router-dom";
 interface PlayerHeaderProps {
   setOpen: (open: boolean) => void;
 }
+
 const menuItems = [
   { path: "/player/details-form", name: "Edit Profile" },
   { path: "/player/dashboard", name: "Dashboard" },
@@ -25,6 +26,7 @@ const menuItems = [
   { path: "/player/sponsorinfo", name: "Sponsor Profile" },
   { path: "/player/applications", name: "Sponsor Applications" },
 ];
+
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
 
@@ -32,6 +34,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const currentTitle =
     menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??
     "Dashboard";
+    
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode");
     if (savedMode === "enabled") {
@@ -55,47 +58,57 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 bg-background dark:bg-slate-950">
+    <header className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 bg-background dark:bg-slate-950">
       {/* Left Section: Menu Button + Page Title */}
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <Button
           onClick={() => setOpen(true)}
-          className="lg:hidden sm:block bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600"
+          className="lg:hidden bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600 p-2"
+          size="sm"
         >
-          <AlignJustify />
+          <AlignJustify className="h-5 w-5" />
           <span className="sr-only">Toggle Menu</span>
         </Button>
 
-        {/* Show current page title on all screen sizes */}
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
+        {/* Show current page title truncated if needed */}
+        <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white truncate max-w-[150px] sm:max-w-xs md:max-w-md">
           {currentTitle}
         </h2>
       </div>
 
       {/* Right Section: Premium Button, Notifications, Theme Toggle */}
-      <div className="flex justify-end gap-3 items-center w-full">
-        <Button className="h-12 w-48 md:w-56 p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors">
+      <div className="flex flex-nowrap justify-end gap-2 items-center">
+        {/* Premium button - adaptive size and hidden text on smallest screens */}
+        <Button className="h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors">
           <FontAwesomeIcon
             icon={faGem}
-            className="text-blue-700 dark:text-blue-400 text-xl"
+            className="text-blue-700 dark:text-blue-400 text-lg sm:text-xl"
           />
-          <p className="text-gray-800 font-Opensans dark:text-white">
+          <p className="text-gray-800 font-Opensans dark:text-white text-xs sm:text-sm hidden xs:inline">
             Upgrade to Premium
           </p>
         </Button>
-        <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
+        
+        {/* Notification button with adaptive size */}
+        <Button 
+          className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-2 sm:p-3 h-10 w-10"
+          size="sm"
+        >
           <FontAwesomeIcon
             icon={faBell}
-            className="text-black dark:text-white text-xl"
+            className="text-black dark:text-white text-lg sm:text-xl"
           />
         </Button>
+        
+        {/* Theme toggle with adaptive size */}
         <Button
           onClick={toggleTheme}
-          className="p-4 rounded-full dark:bg-slate-950 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+          className="p-2 sm:p-3 rounded-full dark:bg-slate-950 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors h-10 w-10"
+          size="sm"
         >
           <FontAwesomeIcon
             icon={isDarkMode ? faMoon : faSun}
-            className="text-gray-600 dark:text-white text-xl"
+            className="text-gray-600 dark:text-white text-lg sm:text-xl"
           />
         </Button>
       </div>
