@@ -9,12 +9,12 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    environment: Slack
     steps:
       - name: Send Slack Notification
         uses: slackapi/slack-github-action@v2.1.0
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
+          webhook-url: ${{ vars.SLACK_WEBHOOK_URL }}
           payload: |
             {
               "text": "${{ github.event_name == 'push' && format('🚀 New push to main branch!\n*Repository:* {0}\n*Commit:* {1}\n*Author:* {2}', github.repository, github.event.head_commit.message, github.event.head_commit.author.name) || format('📋 Pull request {0}!\n*Repository:* {1}\n*PR:* {2}\n*Author:* {3}', github.event.action, github.repository, github.event.pull_request.title, github.event.pull_request.user.login) }}"
