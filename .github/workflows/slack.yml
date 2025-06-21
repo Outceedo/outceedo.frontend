@@ -17,7 +17,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "A new push or pull request event has occurred on the repository!"
+              "text": "${{ github.event_name == 'push' && format('A new push has occurred!\n*Commit message:* {0}', github.event.head_commit.message) || format('A pull request event has occurred!\n*PR title:* {0}', github.event.pull_request.title) }}"
             }
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
