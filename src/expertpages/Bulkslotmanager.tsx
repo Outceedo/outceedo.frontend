@@ -11,7 +11,7 @@ import {
   Save,
   Copy,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,7 +55,7 @@ interface TimeSlot {
   startTime: string;
   endTime: string;
   active?: boolean;
-  deleted?: boolean;  // Track if slot was deleted
+  deleted?: boolean; // Track if slot was deleted
 }
 
 const BulkAvailabilityManager = () => {
@@ -71,19 +71,53 @@ const BulkAvailabilityManager = () => {
   const shortDayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const timeOptions = [
-    "06:00", "06:30", "07:00", "07:30", "08:00", "08:30", "09:00", "09:30", 
-    "10:00", "10:30", "11:00", "11:30", "12:00", "12:30", "13:00", "13:30",
-    "14:00", "14:30", "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-    "18:00", "18:30", "19:00", "19:30", "20:00", "20:30", "21:00", "21:30"
+    "06:00",
+    "06:30",
+    "07:00",
+    "07:30",
+    "08:00",
+    "08:30",
+    "09:00",
+    "09:30",
+    "10:00",
+    "10:30",
+    "11:00",
+    "11:30",
+    "12:00",
+    "12:30",
+    "13:00",
+    "13:30",
+    "14:00",
+    "14:30",
+    "15:00",
+    "15:30",
+    "16:00",
+    "16:30",
+    "17:00",
+    "17:30",
+    "18:00",
+    "18:30",
+    "19:00",
+    "19:30",
+    "20:00",
+    "20:30",
+    "21:00",
+    "21:30",
   ];
 
   const [activeTab, setActiveTab] = useState("weekly");
-  const [weeklyAvailability, setWeeklyAvailability] = useState<DayAvailability[]>([]);
-  const [availabilityPatterns, setAvailabilityPatterns] = useState<AvailabilityPattern[]>([]);
+  const [weeklyAvailability, setWeeklyAvailability] = useState<
+    DayAvailability[]
+  >([]);
+  const [availabilityPatterns, setAvailabilityPatterns] = useState<
+    AvailabilityPattern[]
+  >([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [addSlotDialogOpen, setAddSlotDialogOpen] = useState(false);
-  const [selectedDayForNewSlot, setSelectedDayForNewSlot] = useState<number | null>(null);
+  const [selectedDayForNewSlot, setSelectedDayForNewSlot] = useState<
+    number | null
+  >(null);
   const [newSlotStartTime, setNewSlotStartTime] = useState("09:00");
   const [newSlotEndTime, setNewSlotEndTime] = useState("17:00");
   const [selectedDay, setSelectedDay] = useState(1); // Monday default
@@ -91,20 +125,27 @@ const BulkAvailabilityManager = () => {
   const [copySourceDay, setCopySourceDay] = useState<number | null>(null);
   const [copyTargetDays, setCopyTargetDays] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
-  const [deletedSlots, setDeletedSlots] = useState<{dayOfWeek: number, startTime: string, endTime: string}[]>([]);
+  const [deletedSlots, setDeletedSlots] = useState<
+    { dayOfWeek: number; startTime: string; endTime: string }[]
+  >([]);
 
   // Constants and configuration
   const CURRENT_DATE = "2025-06-08 15:13:15"; // Using the provided date/time
-  const API_BASE_URL = `${import.meta.env.VITE_PORT || "https://sportsapp.publicvm.com"}/api/v1/user/availability`;
-  const BLOCK_API_URL = `${import.meta.env.VITE_PORT || "https://sportsapp.publicvm.com"}/api/v1/user/availability/block`;
-  
-  const userId = localStorage.getItem("userId") ||
+  const API_BASE_URL = `${
+    import.meta.env.VITE_PORT || "https://sportsapp.publicvm.com"
+  }/api/v1/user/availability`;
+  const BLOCK_API_URL = `${
+    import.meta.env.VITE_PORT || "https://sportsapp.publicvm.com"
+  }/api/v1/user/availability/block`;
+
+  const userId =
+    localStorage.getItem("userId") ||
     localStorage.getItem("userid") ||
     localStorage.getItem("user_id") ||
     "22951a3363"; // Using the provided login as fallback
-  
+
   const token = localStorage.getItem("token");
-  
+
   // Create axios instance with authentication
   const axiosInstance = axios.create({
     headers: {
@@ -140,16 +181,20 @@ const BulkAvailabilityManager = () => {
     setLoading(true);
     setError(null);
     try {
-      console.log(`Fetching availability patterns from: ${API_BASE_URL}/${userId}`);
+      console.log(
+        `Fetching availability patterns from: ${API_BASE_URL}/${userId}`
+      );
       const response = await axiosInstance.get(`${API_BASE_URL}/${userId}`);
       console.log("API Response:", response.data);
       setAvailabilityPatterns(response.data);
-      
+
       // Reset deleted slots when refreshing data
       setDeletedSlots([]);
     } catch (error) {
       console.error("Error fetching availability patterns:", error);
-      setError("Failed to load availability patterns. Please check your connection.");
+      setError(
+        "Failed to load availability patterns. Please check your connection."
+      );
       toast.error("Failed to load availability patterns");
     } finally {
       setLoading(false);
@@ -200,41 +245,51 @@ const BulkAvailabilityManager = () => {
     const currentDate = new Date(CURRENT_DATE);
     const currentDay = currentDate.getDay();
     const daysToAdd = (dayOfWeek - currentDay + 7) % 7;
-    
+
     const targetDate = new Date(currentDate);
     targetDate.setDate(currentDate.getDate() + daysToAdd);
-    
-    return targetDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+
+    return targetDate.toISOString().split("T")[0]; // Format as YYYY-MM-DD
   };
 
   // Block a specific time slot
-  const blockTimeSlot = async (dayOfWeek: number, startTime: string, endTime: string) => {
+  const blockTimeSlot = async (
+    dayOfWeek: number,
+    startTime: string,
+    endTime: string
+  ) => {
     try {
       // Get the next occurrence of this day of week
       const dateToBlock = getNextDayOccurrence(dayOfWeek);
-      
+
       // Create the block payload
       const blockPayload = JSON.stringify({
         date: dateToBlock,
         startTime: startTime,
         endTime: endTime,
-        reason: "Manually removed from schedule"
+        reason: "Manually removed from schedule",
       });
-      
-      console.log(`Blocking slot on ${dayNames[dayOfWeek]}: ${startTime}-${endTime}`, blockPayload);
-      
+
+      console.log(
+        `Blocking slot on ${dayNames[dayOfWeek]}: ${startTime}-${endTime}`,
+        blockPayload
+      );
+
       // Call the block API endpoint
       const response = await axiosInstance.patch(BLOCK_API_URL, blockPayload, {
         headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`
-        }
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
       });
-      
+
       console.log("Block response:", response.data);
       return true;
     } catch (error) {
-      console.error(`Error blocking time slot on ${dayNames[dayOfWeek]}:`, error);
+      console.error(
+        `Error blocking time slot on ${dayNames[dayOfWeek]}:`,
+        error
+      );
       return false;
     }
   };
@@ -250,7 +305,7 @@ const BulkAvailabilityManager = () => {
         startTime: string;
         endTime: string;
       }[] = [];
-      
+
       // Collect IDs to delete
       const availabilitiesToDelete: string[] = [];
 
@@ -286,70 +341,70 @@ const BulkAvailabilityManager = () => {
       console.log("Data to save:", {
         toAdd: availabilitiesToAdd,
         toDelete: availabilitiesToDelete,
-        toBlock: deletedSlots
+        toBlock: deletedSlots,
       });
 
       // 1. Handle additions if there are any
       if (availabilitiesToAdd.length > 0) {
         console.log("Adding availabilities:", availabilitiesToAdd);
-        
+
         // Create the exact payload format required by the API
         const addPayload = JSON.stringify({
-          availabilities: availabilitiesToAdd.map(a => ({
+          availabilities: availabilitiesToAdd.map((a) => ({
             dayOfWeek: a.dayOfWeek,
             startTime: a.startTime,
-            endTime: a.endTime
-          }))
+            endTime: a.endTime,
+          })),
         });
-        
+
         console.log("POST payload:", addPayload);
-        
+
         // Make the API call with the exact payload format
         const addResponse = await axiosInstance.post(API_BASE_URL, addPayload, {
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
-          }
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         });
-        
+
         console.log("Add response:", addResponse.data);
       }
 
       // 2. Handle deletions if there are any
       if (availabilitiesToDelete.length > 0) {
         console.log("Deleting availability IDs:", availabilitiesToDelete);
-        
+
         // Create the delete payload
         const deletePayload = JSON.stringify({ ids: availabilitiesToDelete });
         console.log("DELETE payload:", deletePayload);
-        
+
         // Make the delete API call
         const deleteResponse = await axiosInstance.delete(API_BASE_URL, {
           headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
-          data: deletePayload
+          data: deletePayload,
         });
-        
+
         console.log("Delete response:", deleteResponse.data);
       }
-      
+
       // 3. Handle blocking for any deleted slots
       if (deletedSlots.length > 0) {
         console.log("Blocking deleted slots:", deletedSlots);
-        
+
         // Block each deleted slot
         for (const slot of deletedSlots) {
           await blockTimeSlot(slot.dayOfWeek, slot.startTime, slot.endTime);
         }
-        
+
         // Clear the deleted slots after processing
         setDeletedSlots([]);
       }
 
       toast.success("Availability schedule saved successfully");
-      
+
       // Refresh data
       fetchAvailabilityPatterns();
     } catch (error: any) {
@@ -365,26 +420,26 @@ const BulkAvailabilityManager = () => {
     const updatedAvailability = [...weeklyAvailability];
     const previouslyActive = updatedAvailability[dayIndex].active;
     updatedAvailability[dayIndex].active = !previouslyActive;
-    
+
     // If day is being deactivated, track deleted slots
     if (previouslyActive) {
       const slotsToDelete = updatedAvailability[dayIndex].slots;
-      
+
       // Add to deletedSlots list for blocking
-      slotsToDelete.forEach(slot => {
+      slotsToDelete.forEach((slot) => {
         if (slot.id) {
-          setDeletedSlots(prev => [
-            ...prev, 
+          setDeletedSlots((prev) => [
+            ...prev,
             {
               dayOfWeek: dayIndex,
               startTime: slot.startTime,
-              endTime: slot.endTime
-            }
+              endTime: slot.endTime,
+            },
           ]);
         }
       });
     }
-    
+
     setWeeklyAvailability(updatedAvailability);
   };
 
@@ -403,11 +458,12 @@ const BulkAvailabilityManager = () => {
 
     const isOverlapping = dayAvailability.slots.some((slot) => {
       return (
-        !slot.deleted && (
-          (newSlotStartTime >= slot.startTime && newSlotStartTime < slot.endTime) ||
+        !slot.deleted &&
+        ((newSlotStartTime >= slot.startTime &&
+          newSlotStartTime < slot.endTime) ||
           (newSlotEndTime > slot.startTime && newSlotEndTime <= slot.endTime) ||
-          (newSlotStartTime <= slot.startTime && newSlotEndTime >= slot.endTime)
-        )
+          (newSlotStartTime <= slot.startTime &&
+            newSlotEndTime >= slot.endTime))
       );
     });
 
@@ -439,23 +495,23 @@ const BulkAvailabilityManager = () => {
   const deleteTimeSlot = (dayIndex: number, slotIndex: number) => {
     const updatedAvailability = [...weeklyAvailability];
     const slotToDelete = updatedAvailability[dayIndex].slots[slotIndex];
-    
+
     // If the slot has an ID (exists in database), track it for blocking
     if (slotToDelete.id) {
       // Add to deletedSlots list
-      setDeletedSlots(prev => [
+      setDeletedSlots((prev) => [
         ...prev,
         {
           dayOfWeek: dayIndex,
           startTime: slotToDelete.startTime,
-          endTime: slotToDelete.endTime
-        }
+          endTime: slotToDelete.endTime,
+        },
       ]);
-      
+
       // Mark as deleted instead of removing from array
       slotToDelete.deleted = true;
     }
-    
+
     // Remove from the UI
     updatedAvailability[dayIndex].slots.splice(slotIndex, 1);
     setWeeklyAvailability(updatedAvailability);
@@ -466,29 +522,29 @@ const BulkAvailabilityManager = () => {
     if (!copyTargetDays.length) return;
 
     const updatedAvailability = [...weeklyAvailability];
-    
+
     // Filter out deleted slots
     const sourceSlots = weeklyAvailability[copySourceDay].slots.filter(
-      slot => !slot.deleted
+      (slot) => !slot.deleted
     );
 
     copyTargetDays.forEach((targetDay) => {
       // For each target day that's getting copied to, track any existing slots for deletion
       if (updatedAvailability[targetDay].slots.length > 0) {
-        updatedAvailability[targetDay].slots.forEach(slot => {
+        updatedAvailability[targetDay].slots.forEach((slot) => {
           if (slot.id) {
-            setDeletedSlots(prev => [
+            setDeletedSlots((prev) => [
               ...prev,
               {
                 dayOfWeek: targetDay,
                 startTime: slot.startTime,
-                endTime: slot.endTime
-              }
+                endTime: slot.endTime,
+              },
             ]);
           }
         });
       }
-      
+
       // Now copy the source slots to the target day
       updatedAvailability[targetDay].slots = sourceSlots.map((slot) => ({
         startTime: slot.startTime,
@@ -524,21 +580,21 @@ const BulkAvailabilityManager = () => {
 
   const clearAllSlots = (dayIndex: number) => {
     const updatedAvailability = [...weeklyAvailability];
-    
+
     // Track all slots for deletion
-    updatedAvailability[dayIndex].slots.forEach(slot => {
+    updatedAvailability[dayIndex].slots.forEach((slot) => {
       if (slot.id) {
-        setDeletedSlots(prev => [
+        setDeletedSlots((prev) => [
           ...prev,
           {
             dayOfWeek: dayIndex,
             startTime: slot.startTime,
-            endTime: slot.endTime
-          }
+            endTime: slot.endTime,
+          },
         ]);
       }
     });
-    
+
     // Clear the slots from the UI
     updatedAvailability[dayIndex].slots = [];
     setWeeklyAvailability(updatedAvailability);
@@ -570,14 +626,6 @@ const BulkAvailabilityManager = () => {
           </Button>
         </div>
 
-        {/* Debug Info */}
-        <div className="bg-blue-50 p-3 rounded-md mb-2 text-xs">
-          <p className="font-medium mb-1 text-blue-800">Configuration:</p>
-          <p className="text-blue-700">User ID: <span className="font-mono bg-blue-100 px-1 rounded">{userId || "Not found"}</span></p>
-          <p className="text-blue-700">API URL: <span className="font-mono bg-blue-100 px-1 rounded">{API_BASE_URL}</span></p>
-          <p className="text-blue-700">Current DateTime: <span className="font-mono bg-blue-100 px-1 rounded">{CURRENT_DATE}</span></p>
-        </div>
-
         {/* Error Message */}
         {error && (
           <div className="bg-red-50 p-4 rounded-md mb-4 flex items-start">
@@ -585,9 +633,9 @@ const BulkAvailabilityManager = () => {
             <div>
               <h3 className="font-medium text-red-800">Error</h3>
               <p className="text-red-700 text-sm">{error}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 className="mt-2 border-red-300 text-red-600"
                 onClick={() => setError(null)}
               >
@@ -769,7 +817,7 @@ const BulkAvailabilityManager = () => {
                         ) : (
                           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                             {day.slots
-                              .filter(slot => !slot.deleted) // Only show non-deleted slots
+                              .filter((slot) => !slot.deleted) // Only show non-deleted slots
                               .map((slot, slotIndex) => (
                                 <div
                                   key={`slot-${dayIndex}-${slotIndex}`}
