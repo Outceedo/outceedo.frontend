@@ -10,9 +10,8 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
-    environment: Slack
     steps:
-      - name: Slack: Send to Slack
+      - name: Send Slack Notification
         uses: slackapi/slack-github-action@v2.1.0
         with:
           payload: |
