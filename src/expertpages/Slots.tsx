@@ -12,6 +12,8 @@ import {
   ChevronRight,
   AlertCircle,
   Info,
+  Clock as ClockIcon,
+  // ClockOff as ClockOffIcon,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,20 +55,18 @@ interface TimeSlot {
   available: boolean;
   reason?: string;
 }
-
 interface AvailabilityPattern {
   id?: string;
   dayOfWeek: number;
   startTime: string;
   endTime: string;
 }
-
 interface DailyAvailability {
   [date: string]: boolean;
 }
 
 const ExpertAvailabilityManager = () => {
-  const currentDate = new Date("2025-06-08 08:16:50");
+  const currentDate = new Date();
   const [activeTab, setActiveTab] = useState("calendar");
   const [selectedDate, setSelectedDate] = useState(new Date(currentDate));
   const [currentMonth, setCurrentMonth] = useState(currentDate.getMonth());
@@ -92,6 +92,10 @@ const ExpertAvailabilityManager = () => {
     startTime: string;
     endTime: string;
   } | null>(null);
+  // For calendar time slot icons
+  const [calendarTimeSlots, setCalendarTimeSlots] = useState<
+    Record<string, TimeSlot[]>
+  >({});
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/availability`;
   const monthNames = [
@@ -181,6 +185,7 @@ const ExpertAvailabilityManager = () => {
 
   useEffect(() => {
     fetchMonthlyAvailability();
+    fetchCalendarSlotsForMonth();
   }, [currentMonth, currentYear]);
 
   useEffect(() => {
@@ -198,13 +203,35 @@ const ExpertAvailabilityManager = () => {
     }
   }, [monthlyAvailability, selectedDate]);
 
+  // Fetch all time slots for the month for calendar icons
+  const fetchCalendarSlotsForMonth = async () => {
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    let newCalendarSlots: Record<string, TimeSlot[]> = {};
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dateObj = new Date(currentYear, currentMonth, day);
+      const formattedDate = formatDateString(dateObj);
+      try {
+        const response = await axiosInstance.get(
+          `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}`
+        );
+        if (response.data && response.data.length > 0) {
+          newCalendarSlots[formattedDate] = response.data;
+        } else {
+          newCalendarSlots[formattedDate] = [];
+        }
+      } catch {
+        newCalendarSlots[formattedDate] = [];
+      }
+    }
+    setCalendarTimeSlots(newCalendarSlots);
+  };
+
   const fetchAvailabilityPatterns = async () => {
     setLoadingAvailabilityPatterns(true);
     try {
       const response = await axiosInstance.get(`${API_BASE_URL}/${expertId}`);
       setAvailabilityPatterns(response.data);
     } catch (error) {
-      console.error("Error fetching availability patterns:", error);
       Swal.fire("Error", "Failed to load availability patterns", "error");
     } finally {
       setLoadingAvailabilityPatterns(false);
@@ -220,7 +247,6 @@ const ExpertAvailabilityManager = () => {
       );
       setMonthlyAvailability(response.data);
     } catch (error) {
-      console.error("Error fetching monthly availability:", error);
       Swal.fire("Error", "Failed to load monthly availability", "error");
       generateDummyMonthlyAvailability();
     }
@@ -228,15 +254,12 @@ const ExpertAvailabilityManager = () => {
 
   const fetchTimeSlotsForSelectedDate = async () => {
     if (!selectedDate) return;
-
     setLoading(true);
     const formattedDate = formatDateString(selectedDate);
-
     try {
       const response = await axiosInstance.get(
         `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}`
       );
-
       const transformedSlots: TimeSlot[] = response.data.map((slot: any) => ({
         id: slot.id || generateId(),
         date: formattedDate,
@@ -245,10 +268,8 @@ const ExpertAvailabilityManager = () => {
         available: slot.available,
         reason: slot.reason,
       }));
-
       setTimeSlots(transformedSlots);
     } catch (error) {
-      console.error("Error fetching time slots:", error);
       Swal.fire("Error", "Failed to load time slots", "error");
       if (!monthlyAvailability[formattedDate]) {
         setTimeSlots([]);
@@ -268,24 +289,17 @@ const ExpertAvailabilityManager = () => {
     const formattedDate = formatDateString(date);
 
     try {
-      const payload: any = {
-        date: formattedDate,
-        reason: reason,
-      };
-
+      const payload: any = { date: formattedDate, reason: reason };
       if (timeSlot) {
         payload.startTime = timeSlot.startTime;
         payload.endTime = timeSlot.endTime;
       }
-
       await axiosInstance.patch(`${API_BASE_URL}/block`, payload);
-
       if (!timeSlot) {
         setMonthlyAvailability((prev) => ({
           ...prev,
           [formattedDate]: false,
         }));
-
         if (isSameDay(date, selectedDate)) {
           setSelectedDayAvailability(false);
           setTimeSlots([]);
@@ -315,12 +329,10 @@ const ExpertAvailabilityManager = () => {
         );
       }
     } catch (error) {
-      console.error("Error blocking date:", error);
       Swal.fire("Error", "Failed to block date or time slot", "error");
     }
   };
 
-  // MODIFIED: When a slot is added, mark day as available immediately
   const addTimeSlot = async (slot: Omit<TimeSlot, "id" | "available">) => {
     try {
       const payload = {
@@ -332,20 +344,15 @@ const ExpertAvailabilityManager = () => {
           },
         ],
       };
-
       await axiosInstance.post(`${API_BASE_URL}`, payload);
-
-      // If the day was previously unavailable, mark it as available now!
       setMonthlyAvailability((prev) => ({
         ...prev,
         [formatDateString(selectedDate)]: true,
       }));
       setSelectedDayAvailability(true);
-
-      // Refresh the data
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
-
+      fetchCalendarSlotsForMonth();
       Swal.fire(
         "Success",
         `New slot from ${formatTimeForDisplay(
@@ -353,10 +360,8 @@ const ExpertAvailabilityManager = () => {
         )} to ${formatTimeForDisplay(slot.endTime)} added.`,
         "success"
       );
-
       return true;
     } catch (error) {
-      console.error("Error adding time slot:", error);
       Swal.fire("Error", "Failed to add time slot", "error");
       return false;
     }
@@ -374,11 +379,7 @@ const ExpertAvailabilityManager = () => {
           p.startTime === editingSlot?.startTime &&
           p.endTime === editingSlot?.endTime
       );
-
-      if (!pattern?.id) {
-        throw new Error("Could not find matching availability pattern");
-      }
-
+      if (!pattern?.id) throw new Error("Could not find matching pattern");
       const payload = [
         {
           id: pattern.id,
@@ -387,12 +388,10 @@ const ExpertAvailabilityManager = () => {
           endTime: endTime,
         },
       ];
-
       await axiosInstance.patch(`${API_BASE_URL}`, payload);
-
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
-
+      fetchCalendarSlotsForMonth();
       Swal.fire(
         "Success",
         `Slot updated to ${formatTimeForDisplay(
@@ -400,10 +399,8 @@ const ExpertAvailabilityManager = () => {
         )} - ${formatTimeForDisplay(endTime)}.`,
         "success"
       );
-
       return true;
     } catch (error) {
-      console.error("Error updating time slot:", error);
       Swal.fire("Error", "Failed to update time slot", "error");
       return false;
     }
@@ -413,30 +410,21 @@ const ExpertAvailabilityManager = () => {
     try {
       const slot = timeSlots.find((s) => s.id === slotId);
       if (!slot) return false;
-
       const pattern = availabilityPatterns.find(
         (p) =>
           p.dayOfWeek === selectedDate.getDay() &&
           p.startTime === slot.startTime &&
           p.endTime === slot.endTime
       );
-
-      if (!pattern?.id) {
-        throw new Error("Could not find matching availability pattern");
-      }
-
+      if (!pattern?.id) throw new Error("Could not find matching pattern");
       const payload = { ids: [pattern.id] };
-
       await axiosInstance.delete(`${API_BASE_URL}`, { data: payload });
-
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
-
+      fetchCalendarSlotsForMonth();
       Swal.fire("Success", "The time slot has been deleted.", "success");
-
       return true;
     } catch (error) {
-      console.error("Error deleting time slot:", error);
       Swal.fire("Error", "Failed to delete time slot", "error");
       return false;
     }
@@ -445,14 +433,12 @@ const ExpertAvailabilityManager = () => {
   const generateDummyMonthlyAvailability = () => {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const availability: DailyAvailability = {};
-
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(currentYear, currentMonth, day);
       const dayOfWeek = date.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       availability[formatDateString(date)] = !isWeekend;
     }
-
     setMonthlyAvailability(availability);
   };
 
@@ -461,7 +447,6 @@ const ExpertAvailabilityManager = () => {
     const dayOfWeek = date.getDay();
     let startHour = 9;
     let endHour = 17;
-
     if (dayOfWeek === 1) {
       startHour = 10;
       endHour = 16;
@@ -469,25 +454,20 @@ const ExpertAvailabilityManager = () => {
       startHour = 9;
       endHour = 15;
     }
-
     const dummySlots: TimeSlot[] = [];
-
     for (let hour = startHour; hour < endHour; hour++) {
       for (let minutes of ["00", "30"]) {
         const startTime = `${hour.toString().padStart(2, "0")}:${minutes}`;
         let endHour = hour;
         let endMinutes = parseInt(minutes) + 30;
-
         if (endMinutes >= 60) {
           endHour += 1;
           endMinutes -= 60;
         }
-
         const endTime = `${endHour.toString().padStart(2, "0")}:${endMinutes
           .toString()
           .padStart(2, "0")}`;
         const isAvailable = Math.random() > 0.3;
-
         dummySlots.push({
           id: generateId(),
           date: formattedDate,
@@ -497,7 +477,6 @@ const ExpertAvailabilityManager = () => {
         });
       }
     }
-
     setTimeSlots(dummySlots);
   };
 
@@ -519,7 +498,6 @@ const ExpertAvailabilityManager = () => {
   const formatTimeForDisplay = (time: string): string => {
     const [hour, minute] = time.split(":");
     const hourNum = parseInt(hour, 10);
-
     if (hourNum === 0) {
       return `12:${minute}am`;
     } else if (hourNum === 12) {
@@ -541,6 +519,12 @@ const ExpertAvailabilityManager = () => {
 
   const generateId = (): string => {
     return Math.random().toString(36).substring(2, 11);
+  };
+
+  const isPastDay = (day: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return day < today;
   };
 
   const handlePrevMonth = () => {
@@ -594,7 +578,6 @@ const ExpertAvailabilityManager = () => {
       );
       return;
     }
-
     setBlockingDate(new Date(selectedDate));
     setBlockingTimeSlot({
       startTime: slot.startTime,
@@ -605,7 +588,6 @@ const ExpertAvailabilityManager = () => {
 
   const handleConfirmBlock = () => {
     if (!blockingDate) return;
-
     if (blockReason.trim() === "") {
       Swal.fire(
         "Error",
@@ -614,9 +596,7 @@ const ExpertAvailabilityManager = () => {
       );
       return;
     }
-
     blockDate(blockingDate, blockReason, blockingTimeSlot || undefined);
-
     setBlockReasonDialogOpen(false);
     setBlockReason("");
     setBlockingDate(null);
@@ -628,7 +608,6 @@ const ExpertAvailabilityManager = () => {
       Swal.fire("Error", "End time must be after start time.", "error");
       return;
     }
-
     const isOverlapping = timeSlots.some((slot) => {
       return (
         (newSlotStartTime >= slot.startTime &&
@@ -637,7 +616,6 @@ const ExpertAvailabilityManager = () => {
         (newSlotStartTime <= slot.startTime && newSlotEndTime >= slot.endTime)
       );
     });
-
     if (isOverlapping) {
       Swal.fire(
         "Error",
@@ -646,13 +624,11 @@ const ExpertAvailabilityManager = () => {
       );
       return;
     }
-
     const newSlot = {
       date: formatDateString(selectedDate),
       startTime: newSlotStartTime,
       endTime: newSlotEndTime,
     };
-
     addTimeSlot(newSlot).then((success) => {
       if (success) {
         setNewSlotStartTime("09:00");
@@ -664,7 +640,6 @@ const ExpertAvailabilityManager = () => {
 
   const handleDeleteTimeSlot = (slotId: string) => {
     const slotToDelete = timeSlots.find((slot) => slot.id === slotId);
-
     if (slotToDelete && !slotToDelete.available) {
       Swal.fire(
         "Error",
@@ -673,7 +648,6 @@ const ExpertAvailabilityManager = () => {
       );
       return;
     }
-
     deleteTimeSlot(slotId);
   };
 
@@ -686,7 +660,6 @@ const ExpertAvailabilityManager = () => {
       );
       return;
     }
-
     setEditingSlot(slot);
   };
 
@@ -699,17 +672,14 @@ const ExpertAvailabilityManager = () => {
       Swal.fire("Error", "End time must be after start time.", "error");
       return;
     }
-
     const isOverlapping = timeSlots.some((slot) => {
       if (slot.id === slotId) return false;
-
       return (
         (startTime >= slot.startTime && startTime < slot.endTime) ||
         (endTime > slot.startTime && endTime <= slot.endTime) ||
         (startTime <= slot.startTime && endTime >= slot.endTime)
       );
     });
-
     if (isOverlapping) {
       Swal.fire(
         "Error",
@@ -718,7 +688,6 @@ const ExpertAvailabilityManager = () => {
       );
       return;
     }
-
     updateTimeSlot(slotId, startTime, endTime).then((success) => {
       if (success) {
         setEditingSlot(null);
@@ -736,29 +705,20 @@ const ExpertAvailabilityManager = () => {
     const daysInMonth = lastDayOfMonth.getDate();
     const firstDayOfWeek = firstDayOfMonth.getDay();
     const days = [];
-
-    for (let i = 0; i < firstDayOfWeek; i++) {
-      days.push(null);
-    }
-
+    for (let i = 0; i < firstDayOfWeek; i++) days.push(null);
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(new Date(currentYear, currentMonth, day));
     }
-
     return days;
   };
 
   const groupTimeSlotsByHour = () => {
     const groupedSlots: { [hour: string]: TimeSlot[] } = {};
-
     timeSlots.forEach((slot) => {
       const hour = slot.startTime.split(":")[0];
-      if (!groupedSlots[hour]) {
-        groupedSlots[hour] = [];
-      }
+      if (!groupedSlots[hour]) groupedSlots[hour] = [];
       groupedSlots[hour].push(slot);
     });
-
     return groupedSlots;
   };
 
@@ -769,13 +729,12 @@ const ExpertAvailabilityManager = () => {
     <div className="container mx-auto py-6">
       <div className="flex flex-col space-y-6">
         <h1 className="text-2xl font-bold">Manage Your Availability</h1>
-
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
             <TabsTrigger value="list">List View</TabsTrigger>
+            <TabsTrigger value="bulk">Bulk Edit</TabsTrigger>
           </TabsList>
-
           <TabsContent value="calendar" className="space-y-6">
             <Card>
               <CardHeader>
@@ -818,7 +777,6 @@ const ExpertAvailabilityManager = () => {
                     </div>
                   ))}
                 </div>
-
                 <div className="grid grid-cols-7 gap-1">
                   {calendarDays.map((day, index) => {
                     if (day === null) {
@@ -826,24 +784,53 @@ const ExpertAvailabilityManager = () => {
                         <div key={`empty-${index}`} className="h-14 p-1"></div>
                       );
                     }
-
                     const formattedDate = formatDateString(day);
                     const isAvailable = monthlyAvailability[formattedDate];
                     const isSelected = isSameDay(day, selectedDate);
-
+                    const slotsForDay = calendarTimeSlots[formattedDate] || [];
+                    const hasSlots = slotsForDay.length > 0;
+                    const isPast = isPastDay(day);
                     return (
                       <div
                         key={formattedDate}
-                        onClick={() => handleDateSelect(day)}
+                        onClick={() => {
+                          if (!isPast) handleDateSelect(day);
+                        }}
                         className={`
-                          h-14 p-1 border rounded-md flex flex-col justify-between cursor-pointer
+                          h-14 p-1 border rounded-md flex flex-col justify-between cursor-pointer relative
                           ${
                             isSelected
                               ? "border-red-500 bg-red-50"
                               : "border-gray-200 hover:border-gray-300"
                           }
+                          ${isPast ? "opacity-50 cursor-not-allowed" : ""}
                         `}
+                        style={{
+                          pointerEvents: isPast ? "none" : undefined,
+                          background: isSelected
+                            ? "#fef2f2"
+                            : isPast
+                            ? "#f9fafb"
+                            : undefined,
+                        }}
+                        aria-disabled={isPast}
                       >
+                        {/* Top left icon for time slots */}
+                        <div className="absolute top-1 left-1">
+                          {isAvailable === true ? (
+                            hasSlots ? (
+                              <ClockIcon
+                                className="h-4 w-4 text-green-500"
+                                title="Time slots added"
+                              />
+                            ) : (
+                              <ClockIcon
+                                className="h-4 w-4 text-red-500"
+                                title="No time slots for available day"
+                              />
+                            )
+                          ) : null}
+                        </div>
                         <div className="text-right text-sm font-medium">
                           {day.getDate()}
                         </div>
@@ -869,6 +856,22 @@ const ExpertAvailabilityManager = () => {
                   })}
                 </div>
               </CardContent>
+              <div className="h-12 flex flex-col justify-between items-end px-3">
+                <div className="flex w-36 justify-between items-center">
+                  <ClockIcon
+                    className="h-4 w-4 text-green-500"
+                    title="Time slots added"
+                  />
+                  <p>Added time slots</p>
+                </div>
+                <div className="flex w-36 gap-2 items-center">
+                  <ClockIcon
+                    className="h-4 w-4 text-red-500"
+                    title="No time slots for available day"
+                  />
+                  <p>No time slots</p>
+                </div>
+              </div>
             </Card>
 
             <Card>
@@ -1123,12 +1126,77 @@ const ExpertAvailabilityManager = () => {
                                     </span>
 
                                     {!slot.available && (
-                                      <Badge
-                                        variant="outline"
-                                        className="ml-2 bg-blue-50 text-blue-600 text-xs"
-                                      >
-                                        Booked
-                                      </Badge>
+                                      <>
+                                        <Badge
+                                          variant="outline"
+                                          className="ml-2 bg-blue-50 text-blue-600 text-xs"
+                                        >
+                                          blocked
+                                        </Badge>
+                                        <div className="flex space-x-1">
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-7 w-7"
+                                                  onClick={() =>
+                                                    handleEditTimeSlot(slot)
+                                                  }
+                                                >
+                                                  <Edit className="h-4 w-4" />
+                                                </Button>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>Edit time slot</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-7 w-7 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
+                                                  onClick={() =>
+                                                    handleBlockTimeSlot(slot)
+                                                  }
+                                                >
+                                                  <AlertCircle className="h-4 w-4" />
+                                                </Button>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>Block time slot</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <Button
+                                                  variant="ghost"
+                                                  size="icon"
+                                                  className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                  onClick={() =>
+                                                    handleDeleteTimeSlot(
+                                                      slot.id || ""
+                                                    )
+                                                  }
+                                                >
+                                                  <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                              </TooltipTrigger>
+                                              <TooltipContent>
+                                                <p>Delete time slot</p>
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        </div>
+                                      </>
                                     )}
 
                                     {slot.reason && (
@@ -1276,6 +1344,9 @@ const ExpertAvailabilityManager = () => {
               </CardContent>
             </Card>
           </TabsContent>
+          {/* <TabsContent value="bulk" className="space-y-6">
+            <BulkAvailabilityManager/>
+          </TabsContent> */}
         </Tabs>
       </div>
 
