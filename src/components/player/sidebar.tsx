@@ -268,7 +268,7 @@ function PlayerSideBar({ open, setOpen }: PlayerSideBarProps) {
     <Fragment>
       {/* Mobile sidebar */}
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="left" className="w-[80%] p-0 overflow-y-auto">
+        <SheetContent side="left" className="w-56 p-0 overflow-y-auto">
           <div className="flex flex-col h-full">
             <MenuItems setOpen={setOpen} />
           </div>
@@ -276,7 +276,7 @@ function PlayerSideBar({ open, setOpen }: PlayerSideBarProps) {
       </Sheet>
 
       {/* Desktop sidebar - fixed position */}
-      <aside className="hidden lg:flex fixed top-0 left-0 h-full w-1/2 flex-col border-r bg-background dark:bg-slate-950 z-40">
+      <aside className="hidden lg:flex fixed top-0 left-0 h-full w-64 flex-col border-r bg-background dark:bg-slate-950 z-40">
         <MenuItems />
       </aside>
 
