@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import axios from "axios";
 import {
   Calendar,
@@ -13,7 +13,8 @@ import {
   AlertCircle,
   Info,
   Clock as ClockIcon,
-  // ClockOff as ClockOffIcon,
+  HelpCircle,
+  Switch,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
+import { Switch as SwitchComponent } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,8 @@ interface DailyAvailability {
   [date: string]: boolean;
 }
 
+const GUIDE_CARDS_KEY = "expert_availability_guide_dismissed";
+
 const ExpertAvailabilityManager = () => {
   const currentDate = new Date();
   const [activeTab, setActiveTab] = useState("calendar");
@@ -92,10 +95,20 @@ const ExpertAvailabilityManager = () => {
     startTime: string;
     endTime: string;
   } | null>(null);
-  // For calendar time slot icons
   const [calendarTimeSlots, setCalendarTimeSlots] = useState<
     Record<string, TimeSlot[]>
   >({});
+
+  // Popper guide state and refs
+  const [guideStep, setGuideStep] = useState<number>(0);
+  const [showGuide, setShowGuide] = useState<boolean>(false);
+
+  // Button refs for popper positioning
+  const prevMonthBtnRef = useRef<HTMLButtonElement>(null);
+  const nextMonthBtnRef = useRef<HTMLButtonElement>(null);
+  const helpBtnRef = useRef<HTMLButtonElement>(null);
+  const addSlotBtnRef = useRef<HTMLButtonElement>(null);
+  const switchWrapperRef = useRef<HTMLDivElement>(null);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/availability`;
   const monthNames = [
@@ -181,11 +194,18 @@ const ExpertAvailabilityManager = () => {
 
   useEffect(() => {
     fetchAvailabilityPatterns();
+    // On mount, show guide if not dismissed
+    if (!localStorage.getItem(GUIDE_CARDS_KEY)) {
+      setShowGuide(true);
+      setGuideStep(0);
+    }
+    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
     fetchMonthlyAvailability();
     fetchCalendarSlotsForMonth();
+    // eslint-disable-next-line
   }, [currentMonth, currentYear]);
 
   useEffect(() => {
@@ -202,6 +222,178 @@ const ExpertAvailabilityManager = () => {
       }
     }
   }, [monthlyAvailability, selectedDate]);
+
+  const handleNextStep = () => {
+    if (guideStep < guideSteps.length - 1) {
+      setGuideStep(guideStep + 1);
+    } else {
+      setShowGuide(false);
+      localStorage.setItem(GUIDE_CARDS_KEY, "true");
+    }
+  };
+
+  const handleCloseGuide = () => {
+    setShowGuide(false);
+    localStorage.setItem(GUIDE_CARDS_KEY, "true");
+  };
+
+  const guideSteps = [
+    {
+      title: "Help & Guide",
+      icon: <HelpCircle className="h-7 w-7 text-blue-600" />,
+      description:
+        "Click the Help button (blue question mark) any time to see this step-by-step guide again.",
+      focusRef: helpBtnRef,
+      buttonLabel: "Next",
+    },
+    {
+      title: "Previous Month",
+      icon: <ChevronLeft className="h-7 w-7 text-gray-600" />,
+      description:
+        "Click this button to view the previous month in the calendar.",
+      focusRef: prevMonthBtnRef,
+      buttonLabel: "Next",
+    },
+    {
+      title: "Next Month",
+      icon: <ChevronRight className="h-7 w-7 text-gray-600" />,
+      description: "Click this button to view the next month in the calendar.",
+      focusRef: nextMonthBtnRef,
+      buttonLabel: "Next",
+    },
+    {
+      title: "Mark Day as Available",
+      icon: <SwitchComponent className="h-7 w-7 text-green-600" />,
+      description:
+        "Use this switch to mark a day as available or unavailable. Unavailable days cannot have slots.",
+      focusRef: switchWrapperRef,
+      buttonLabel: "Next",
+    },
+    {
+      title: "Add Time Slot",
+      icon: <Plus className="h-7 w-7 text-red-600" />,
+      description:
+        "Click here to add a new time slot for the selected day. You can add multiple slots per day.",
+      focusRef: addSlotBtnRef,
+      buttonLabel: "Finish",
+    },
+  ];
+
+  const GuidePopper = ({
+    stepCard,
+    onNext,
+    onClose,
+  }: {
+    stepCard: (typeof guideSteps)[number];
+    onNext: () => void;
+    onClose: () => void;
+  }) => {
+    const [style, setStyle] = useState<React.CSSProperties>({});
+
+    useEffect(() => {
+      if (stepCard.focusRef?.current) {
+        const rect = stepCard.focusRef.current.getBoundingClientRect();
+        const popperWidth = 360;
+        const popperHeight = 150; // Approximate height
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        // Calculate optimal position
+        let top = rect.bottom + 12;
+        let left = rect.left + rect.width / 2 - popperWidth / 2;
+
+        // Adjust if popper would go off-screen horizontally
+        if (left < 10) {
+          left = 10;
+        } else if (left + popperWidth > viewportWidth - 10) {
+          left = viewportWidth - popperWidth - 10;
+        }
+
+        // Adjust if popper would go off-screen vertically
+        if (top + popperHeight > viewportHeight - 10) {
+          top = rect.top - popperHeight - 12; // Show above the element
+        }
+
+        // Special positioning for specific buttons
+        if (stepCard.focusRef === nextMonthBtnRef) {
+          // Position to the left of the next month button
+          left = rect.left - popperWidth - 12;
+          top = rect.top - 60;
+
+          // If that would go off-screen, position below
+          if (left < 10) {
+            left = rect.left + rect.width / 2 - popperWidth / 2;
+            top = rect.bottom + 12;
+          }
+        }
+
+        if (stepCard.focusRef === addSlotBtnRef) {
+          // Position to the left of the add slot button
+          left = rect.left - popperWidth - 12;
+          top = rect.top - 60;
+
+          // If that would go off-screen, position below
+          if (left < 10) {
+            left = rect.left + rect.width / 2 - popperWidth / 2;
+            top = rect.bottom + 12;
+          }
+        }
+
+        setStyle({
+          position: "fixed",
+          top: Math.max(10, top),
+          left: Math.max(10, left),
+          minWidth: 320,
+          maxWidth: popperWidth,
+          zIndex: 9999,
+        });
+      }
+    }, [stepCard.focusRef, showGuide, guideStep]);
+
+    useEffect(() => {
+      if (stepCard.focusRef?.current) {
+        stepCard.focusRef.current.scrollIntoView({
+          behavior: "smooth",
+          block: "center",
+        });
+        // Add a highlight effect
+        stepCard.focusRef.current.style.boxShadow =
+          "0 0 0 3px rgba(59, 130, 246, 0.5)";
+        stepCard.focusRef.current.style.borderRadius = "6px";
+
+        // Remove highlight after 3 seconds
+        setTimeout(() => {
+          if (stepCard.focusRef?.current) {
+            stepCard.focusRef.current.style.boxShadow = "";
+          }
+        }, 3000);
+      }
+    }, [stepCard.focusRef, showGuide, guideStep]);
+
+    if (!stepCard.focusRef?.current) return null;
+
+    return (
+      <div
+        style={style}
+        className="shadow-lg rounded-lg bg-white border border-gray-200 p-5 animate-fade-in"
+      >
+        <div className="flex gap-3 items-center mb-2">
+          {stepCard.icon}
+          <span className="text-lg font-bold">{stepCard.title}</span>
+        </div>
+        <div className="text-gray-700 mb-3 text-sm">{stepCard.description}</div>
+        <div className="flex justify-between">
+          <Button variant="ghost" size="sm" onClick={onClose}>
+            Skip Guide
+          </Button>
+          <Button size="sm" onClick={onNext}>
+            {stepCard.buttonLabel}
+            <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    );
+  };
 
   // Fetch all time slots for the month for calendar icons
   const fetchCalendarSlotsForMonth = async () => {
@@ -268,6 +460,7 @@ const ExpertAvailabilityManager = () => {
         available: slot.available,
         reason: slot.reason,
       }));
+      console.log(transformedSlots);
       setTimeSlots(transformedSlots);
     } catch (error) {
       Swal.fire("Error", "Failed to load time slots", "error");
@@ -727,6 +920,13 @@ const ExpertAvailabilityManager = () => {
 
   return (
     <div className="container mx-auto py-6">
+      {showGuide && (
+        <GuidePopper
+          stepCard={guideSteps[guideStep]}
+          onNext={handleNextStep}
+          onClose={handleCloseGuide}
+        />
+      )}
       <div className="flex flex-col space-y-6">
         <h1 className="text-2xl font-bold">Manage Your Availability</h1>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -742,9 +942,23 @@ const ExpertAvailabilityManager = () => {
                   <div className="flex items-center space-x-4">
                     <Calendar className="h-5 w-5 text-gray-500" />
                     <CardTitle>Monthly Availability</CardTitle>
+                    <Button
+                      ref={helpBtnRef}
+                      variant="ghost"
+                      className="px-1"
+                      onClick={() => {
+                        setShowGuide(true);
+                        setGuideStep(0);
+                        localStorage.removeItem(GUIDE_CARDS_KEY);
+                      }}
+                      aria-label="Show Help Guide"
+                    >
+                      <HelpCircle className="h-5 w-5 text-blue-500" />
+                    </Button>
                   </div>
                   <div className="flex items-center">
                     <Button
+                      ref={prevMonthBtnRef}
                       variant="outline"
                       size="icon"
                       onClick={handlePrevMonth}
@@ -756,6 +970,7 @@ const ExpertAvailabilityManager = () => {
                       {monthNames[currentMonth]} {currentYear}
                     </span>
                     <Button
+                      ref={nextMonthBtnRef}
                       variant="outline"
                       size="icon"
                       onClick={handleNextMonth}
@@ -895,14 +1110,17 @@ const ExpertAvailabilityManager = () => {
               </CardHeader>
               <CardContent>
                 <div className="mb-4 flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
+                  <div
+                    className="flex items-center space-x-2"
+                    ref={switchWrapperRef}
+                  >
                     <Label
                       htmlFor="day-availability"
                       className="text-sm font-medium"
                     >
                       Mark day as available
                     </Label>
-                    <Switch
+                    <SwitchComponent
                       id="day-availability"
                       checked={selectedDayAvailability}
                       onCheckedChange={handleDayAvailabilityToggle}
@@ -915,6 +1133,7 @@ const ExpertAvailabilityManager = () => {
                   >
                     <DialogTrigger asChild>
                       <Button
+                        ref={addSlotBtnRef}
                         variant="outline"
                         size="sm"
                         className="flex items-center"
@@ -1344,9 +1563,9 @@ const ExpertAvailabilityManager = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          {/* <TabsContent value="bulk" className="space-y-6">
-            <BulkAvailabilityManager/>
-          </TabsContent> */}
+          <TabsContent value="bulk" className="space-y-6">
+            <BulkAvailabilityManager />
+          </TabsContent>
         </Tabs>
       </div>
 

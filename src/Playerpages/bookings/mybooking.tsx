@@ -20,22 +20,21 @@ import {
   faLaptop,
   faVideoCamera,
   faChalkboardTeacher,
+  faPlay,
+  faExpand,
+  faCompress,
+  faMicrophone,
+  faMicrophoneSlash,
+  faVideoSlash,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
-import AssessmentReport from "../Playerpages/AssessmentReport";
+import AssessmentReport from "../../Playerpages/AssessmentReport";
 import { X } from "lucide-react";
-import profile from "../assets/images/avatar.png";
+import profile from "../../assets/images/avatar.png";
 import axios from "axios";
 import Swal from "sweetalert2";
+import BookingsTable from "./Table";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -55,7 +54,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
-import StripePaymentModal from "./StripePaymentModal";
+import StripePaymentModal from "../StripePaymentModal";
+import AgoraVideoModal from "./AgoraVideoModal";
 
 interface Expert {
   id: string;
@@ -84,6 +84,12 @@ interface Service {
   service: ServiceDetails;
 }
 
+interface AgoraCredentials {
+  channel: string;
+  token: string;
+  uid: number;
+}
+
 interface Booking {
   id: string;
   playerId: string;
@@ -107,6 +113,7 @@ interface Booking {
   isPaid?: boolean;
   paymentIntentId?: string;
   paymentIntentClientSecret?: string;
+  agora?: AgoraCredentials;
 }
 
 const MyBooking: React.FC = () => {
@@ -137,6 +144,9 @@ const MyBooking: React.FC = () => {
   const [selectedBookingForPayment, setSelectedBookingForPayment] =
     useState<Booking | null>(null);
 
+  const [isAgoraModalOpen, setIsAgoraModalOpen] = useState(false);
+  const [activeVideoCall, setActiveVideoCall] = useState<Booking | null>(null);
+
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
 
@@ -158,7 +168,6 @@ const MyBooking: React.FC = () => {
     setSearch("");
   };
 
-  // Check if payment intent is available (both ID and client secret exist)
   const hasPaymentIntent = (booking: Booking) => {
     return (
       booking.paymentIntentId &&
@@ -168,7 +177,6 @@ const MyBooking: React.FC = () => {
     );
   };
 
-  // Check if booking needs payment (has payment intent but not paid yet)
   const needsPayment = (booking: Booking) => {
     return (
       hasPaymentIntent(booking) &&
@@ -177,9 +185,101 @@ const MyBooking: React.FC = () => {
     );
   };
 
-  // Check if booking is paid
   const isPaid = (booking: Booking) => {
     return booking.status === "SCHEDULED";
+  };
+
+  const canGoLive = (booking: Booking) => {
+    if (!isPaid(booking)) return false;
+
+    // Use local time - Date.now() automatically detects user's timezone
+    const now = new Date();
+    const sessionDate = new Date(booking.date);
+    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
+
+    // Create session start time in local timezone
+    const sessionStart = new Date(sessionDate);
+    sessionStart.setHours(startHours, startMinutes, 0, 0);
+
+    // Create session end time in local timezone
+    const sessionEnd = new Date(sessionDate);
+    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
+    sessionEnd.setHours(endHours, endMinutes, 0, 0);
+
+    // Allow going live 10 minutes before session starts
+    const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
+
+    console.log(`Booking ${booking.id}:`, {
+      now: now.toISOString(),
+      nowLocal: now.toLocaleString(),
+      sessionStart: sessionStart.toISOString(),
+      sessionStartLocal: sessionStart.toLocaleString(),
+      sessionEnd: sessionEnd.toISOString(),
+      sessionEndLocal: sessionEnd.toLocaleString(),
+      goLiveTime: goLiveTime.toISOString(),
+      goLiveTimeLocal: goLiveTime.toLocaleString(),
+      canGoLive: now >= goLiveTime && now <= sessionEnd,
+      userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    });
+
+    return now >= goLiveTime && now <= sessionEnd;
+  };
+
+  const isUpcomingSession = (booking: Booking) => {
+    if (!isPaid(booking)) return false;
+
+    const now = new Date();
+    const sessionDate = new Date(booking.date);
+    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
+
+    const sessionStart = new Date(sessionDate);
+    sessionStart.setUTCHours(startHours, startMinutes, 0, 0);
+
+    // Show sessions that are within next 7 days (extended from 24 hours)
+    const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    return sessionStart >= now && sessionStart <= next7Days;
+  };
+
+  const isSessionToday = (booking: Booking) => {
+    const today = new Date();
+    const sessionDate = new Date(booking.date);
+
+    // Compare dates in UTC
+    const todayUTC = new Date(
+      today.getTime() + today.getTimezoneOffset() * 60000
+    );
+    const sessionDateUTC = new Date(
+      sessionDate.getTime() + sessionDate.getTimezoneOffset() * 60000
+    );
+
+    return (
+      todayUTC.getUTCFullYear() === sessionDateUTC.getUTCFullYear() &&
+      todayUTC.getUTCMonth() === sessionDateUTC.getUTCMonth() &&
+      todayUTC.getUTCDate() === sessionDateUTC.getUTCDate()
+    );
+  };
+
+  const getTimeUntilGoLive = (booking: Booking) => {
+    const now = new Date();
+    const sessionDate = new Date(booking.date);
+    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
+
+    const sessionStart = new Date(sessionDate);
+    sessionStart.setUTCHours(startHours, startMinutes, 0, 0);
+
+    const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
+    const timeDiff = goLiveTime.getTime() - now.getTime();
+
+    if (timeDiff <= 0) return null;
+
+    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}m`;
+    }
+    return `${minutes}m`;
   };
 
   const truncateText = (text: string, maxLength: number = 15) => {
@@ -231,7 +331,6 @@ const MyBooking: React.FC = () => {
           },
         });
 
-        // Process bookings - no status changes needed, backend provides correct status
         setBookings(response.data.bookings);
       } catch (err) {
         console.error("Error fetching bookings:", err);
@@ -330,6 +429,40 @@ const MyBooking: React.FC = () => {
       confirmButtonColor: "#EF4444",
       timer: 3000,
     });
+  };
+
+  const handleGoLive = (booking: Booking) => {
+    if (!booking.agora) {
+      Swal.fire({
+        icon: "error",
+        title: "Meeting Setup Error",
+        text: "Meeting credentials are not available. Please contact support.",
+        confirmButtonColor: "#EF4444",
+      });
+      return;
+    }
+
+    if (!canGoLive(booking)) {
+      const timeUntil = getTimeUntilGoLive(booking);
+      Swal.fire({
+        icon: "info",
+        title: "Meeting Not Available Yet",
+        text: timeUntil
+          ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts.`
+          : "This meeting is no longer available.",
+        confirmButtonColor: "#3B82F6",
+      });
+      return;
+    }
+
+    setActiveVideoCall(booking);
+    setIsAgoraModalOpen(true);
+    setIsBookingDetailsOpen(false);
+  };
+
+  const handleEndCall = () => {
+    setIsAgoraModalOpen(false);
+    setActiveVideoCall(null);
   };
 
   const openVideoModal = (id: string, e?: React.MouseEvent) => {
@@ -468,6 +601,19 @@ const MyBooking: React.FC = () => {
     });
   };
 
+  const formatTimeRange = (startTime: string, endTime: string) => {
+    const formatTime = (time: string) => {
+      const [hours, minutes] = time.split(":");
+      let hour = parseInt(hours, 10);
+      const ampm = hour >= 12 ? "PM" : "AM";
+      hour = hour % 12;
+      hour = hour ? hour : 12;
+      return `${hour}:${minutes} ${ampm}`;
+    };
+
+    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+  };
+
   const matchesDateFilter = (booking: Booking) => {
     if (!dateFilter) return true;
 
@@ -528,8 +674,23 @@ const MyBooking: React.FC = () => {
     );
   });
 
+  const upcomingPaidSessions = bookings
+    .filter((booking) => {
+      return (
+        isPaid(booking) &&
+        isUpcomingSession(booking) &&
+        booking.status !== "REJECTED" &&
+        booking.status !== "CANCELLED" &&
+        booking.status !== "COMPLETED"
+      );
+    })
+    .sort((a, b) => {
+      const dateA = new Date(`${a.date} ${a.startTime}`);
+      const dateB = new Date(`${b.date} ${b.startTime}`);
+      return dateA.getTime() - dateB.getTime();
+    });
+
   const navigate = useNavigate();
-  console.log(bookings);
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
@@ -626,276 +787,158 @@ const MyBooking: React.FC = () => {
       {loading ? (
         <div className="text-center py-8">Loading bookings...</div>
       ) : (
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">ID</TableHead>
-                <TableHead className="w-[140px]">Expert</TableHead>
-                <TableHead className="w-[120px]">Date</TableHead>
-                <TableHead className="w-[140px]">Service</TableHead>
-                <TableHead className="w-[80px]">Price</TableHead>
-                <TableHead className="w-[120px]">Status</TableHead>
-                <TableHead className="w-[100px]">Payment</TableHead>
-                <TableHead className="text-center w-[70px]">Video</TableHead>
-                <TableHead className="text-center w-[70px]">Report</TableHead>
-                <TableHead className="text-center w-[70px]">View</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredBookings.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={10} className="text-center py-4">
-                    No bookings found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredBookings.map((booking) => (
-                  <TableRow
-                    key={booking.id}
-                    className="cursor-pointer hover:bg-gray-50"
-                    onClick={() => openBookingDetails(booking)}
-                  >
-                    <TableCell className="font-medium">
-                      {booking.id.substring(0, 6)}...
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <img
-                          src={booking.expert?.photo || profile}
-                          alt={booking.expert?.username}
-                          className="w-8 h-8 rounded-full object-cover"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = profile;
-                          }}
-                        />
-                        <span
-                          className="truncate max-w-[80px]"
-                          title={booking.expert?.username || "Unknown Expert"}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const expert = booking.expert?.username;
-                            localStorage.setItem("viewexpertusername", expert);
-                            navigate("/player/exdetails");
-                          }}
-                        >
-                          {truncateText(
-                            booking.expert?.username || "Unknown Expert",
-                            12
-                          )}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatShortDate(booking.date)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <FontAwesomeIcon
-                          icon={getServiceTypeIcon(getServiceType(booking))}
-                          className="text-gray-500"
-                        />
-                        <span
-                          className="truncate block max-w-[100px]"
-                          title={
-                            booking.service?.service?.name || "Unknown Service"
-                          }
-                        >
-                          {booking.service?.service?.name || "Unknown Service"}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>${booking.service?.price || "N/A"}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={getActionBadgeStyle(booking.status)}
-                      >
-                        {formatStatus(booking.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={getPaymentBadgeStyle(booking)}
-                      >
-                        {getPaymentStatusText(booking)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 cursor-pointer"
-                        onClick={(e) => openVideoModal(booking.id, e)}
-                        disabled={
-                          booking.service
-                            ? booking.service.service.id !== "1"
-                            : true
-                        }
-                      >
-                        <FontAwesomeIcon icon={faVideo} />
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 cursor-pointer"
-                        onClick={(e) => openReportModal(booking.id, e)}
-                      >
-                        <FontAwesomeIcon icon={faFileAlt} />
-                      </Button>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={(e) => toggleVisibility(booking.id, e)}
-                      >
-                        <FontAwesomeIcon
-                          icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
-                        />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <BookingsTable
+          bookings={filteredBookings}
+          visibilityMap={visibilityMap}
+          onOpenBookingDetails={openBookingDetails}
+          onOpenVideoModal={openVideoModal}
+          onOpenReportModal={openReportModal}
+          onToggleVisibility={toggleVisibility}
+        />
       )}
 
       <div className="mt-6">
-        <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
+        <h2 className="text-xl font-semibold mb-4">Upcoming Paid Sessions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bookings
-            .filter(
-              (booking) =>
-                (booking.status === "ACCEPTED" ||
-                  booking.status === "CONFIRMED" ||
-                  booking.status === "WAITING_EXPERT_APPROVAL") &&
-                booking.status !== "REJECTED" &&
-                booking.status !== "CANCELLED"
-            )
-            .slice(0, 3)
-            .map((booking) => (
-              <div
-                key={`upcoming-${booking.id}`}
-                className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer"
-                onClick={() => openBookingDetails(booking)}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="max-w-[70%]">
-                    <div className="flex items-center gap-2 mb-1">
-                      <FontAwesomeIcon
-                        icon={getServiceTypeIcon(getServiceType(booking))}
-                        className="text-gray-500"
-                      />
-                      <h3
-                        className="font-medium truncate"
-                        title={booking.service?.service?.name || "Service"}
-                      >
-                        {booking.service?.service?.name || "Service"}
-                      </h3>
-                    </div>
-                    <div className="flex items-center gap-2 mt-2">
-                      <img
-                        src={booking.expert?.photo || profile}
-                        alt={booking.expert?.username}
-                        className="w-6 h-6 rounded-full object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = profile;
-                        }}
-                      />
-                      <p
-                        className="text-sm text-gray-500 truncate"
-                        title={`with ${booking.expert?.username || "Expert"}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const expert = booking.expert?.username;
-                          localStorage.setItem("viewexpertusername", expert);
-                          navigate("/player/exdetails");
-                        }}
-                      >
-                        with{" "}
-                        {truncateText(booking.expert?.username || "Expert", 15)}
-                      </p>
-                    </div>
+          {upcomingPaidSessions.slice(0, 6).map((booking) => (
+            <div
+              key={`upcoming-${booking.id}`}
+              className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer transition-shadow"
+              onClick={() => openBookingDetails(booking)}
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div className="max-w-[70%]">
+                  <div className="flex items-center gap-2 mb-1">
+                    <FontAwesomeIcon
+                      icon={getServiceTypeIcon(getServiceType(booking))}
+                      className="text-gray-500"
+                    />
+                    <h3
+                      className="font-medium truncate"
+                      title={booking.service?.service?.name || "Service"}
+                    >
+                      {booking.service?.service?.name || "Service"}
+                    </h3>
                   </div>
-                  <Badge
-                    variant="outline"
-                    className={
-                      isPaid(booking)
-                        ? "bg-green-50 text-green-800"
-                        : "bg-blue-50 text-blue-800"
-                    }
-                  >
-                    {formatShortDate(booking.date)}
-                  </Badge>
-                </div>
-                <div className="mt-4 flex justify-between items-center">
-                  <span className="text-gray-600">
-                    ${booking.service?.price || "N/A"}
-                  </span>
-
-                  {needsPayment(booking) ? (
-                    <Button
-                      className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto"
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={booking.expert?.photo || profile}
+                      alt={booking.expert?.username}
+                      className="w-6 h-6 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = profile;
+                      }}
+                    />
+                    <p
+                      className="text-sm text-gray-500 truncate"
+                      title={`with ${booking.expert?.username || "Expert"}`}
                       onClick={(e) => {
                         e.stopPropagation();
-                        handlePayment(booking.id);
-                        setIsBookingDetailsOpen(false);
+                        const expert = booking.expert?.username;
+                        localStorage.setItem("viewexpertusername", expert);
+                        navigate("/player/exdetails");
                       }}
                     >
-                      Pay Now
-                    </Button>
-                  ) : isPaid(booking) && booking.meetLink ? (
-                    <a
-                      href={booking.meetLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-blue-600 hover:text-blue-800"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      Join Meeting
-                    </a>
-                  ) : isPaid(booking) ? (
-                    <Badge className="bg-green-100 text-green-800 text-xs">
-                      Paid ✓
+                      with{" "}
+                      {truncateText(booking.expert?.username || "Expert", 15)}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <Badge className="bg-green-100 text-green-800 text-xs mb-1">
+                    Paid ✓
+                  </Badge>
+                  <div className="text-xs text-gray-500">
+                    {formatShortDate(booking.date)}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mb-3">
+                <div className="text-sm text-gray-600 flex items-center gap-1 mb-1">
+                  <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
+                  {formatTimeRange(booking.startTime, booking.endTime)}
+                </div>
+                <div className="flex items-center gap-2">
+                  {isSessionToday(booking) && (
+                    <Badge className="bg-blue-100 text-blue-800 text-xs">
+                      Today
                     </Badge>
-                  ) : booking.status === "WAITING_EXPERT_APPROVAL" ? (
-                    <Button
-                      className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
-                      disabled
-                    >
-                      Awaiting Approval
-                    </Button>
-                  ) : (
-                    <Button
-                      className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
-                      disabled
-                    >
-                      Awaiting Payment Setup
-                    </Button>
+                  )}
+                  {canGoLive(booking) && (
+                    <Badge className="bg-green-100 text-green-800 text-xs animate-pulse">
+                      Live Now
+                    </Badge>
                   )}
                 </div>
               </div>
-            ))}
 
-          {bookings.filter(
-            (booking) =>
-              (booking.status === "ACCEPTED" ||
-                booking.status === "CONFIRMED" ||
-                booking.status === "WAITING_EXPERT_APPROVAL") &&
-              booking.status !== "REJECTED" &&
-              booking.status !== "CANCELLED"
-          ).length === 0 && (
-            <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-4 text-gray-500">
-              No upcoming sessions
+              <div className="flex justify-between items-center">
+                <span className="text-gray-600 font-medium">
+                  ${booking.service?.price || "N/A"}
+                </span>
+
+                {canGoLive(booking) ? (
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto flex items-center gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleGoLive(booking);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
+                    Go Live
+                  </Button>
+                ) : booking.agora ? (
+                  <div className="text-right">
+                    <Button
+                      className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                      disabled
+                    >
+                      <FontAwesomeIcon
+                        icon={faClock}
+                        className="w-3 h-3 mr-1"
+                      />
+                      {getTimeUntilGoLive(booking) || "Not Available"}
+                    </Button>
+                    {getTimeUntilGoLive(booking) && (
+                      <div className="text-xs text-gray-500 mt-1">
+                        Available in {getTimeUntilGoLive(booking)}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Button
+                    className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                    disabled
+                  >
+                    Setup Pending
+                  </Button>
+                )}
+              </div>
+
+              {isSessionToday(booking) &&
+                !canGoLive(booking) &&
+                booking.agora && (
+                  <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                    <FontAwesomeIcon icon={faInfoCircle} className="mr-1" />
+                    Meeting will be available 10 minutes before session starts
+                  </div>
+                )}
+            </div>
+          ))}
+
+          {upcomingPaidSessions.length === 0 && (
+            <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-8 text-gray-500">
+              <FontAwesomeIcon
+                icon={faCalendarAlt}
+                className="w-12 h-12 mb-3 text-gray-300"
+              />
+              <p className="text-lg">No upcoming paid sessions</p>
+              <p className="text-sm">
+                Your confirmed sessions will appear here
+              </p>
             </div>
           )}
         </div>
@@ -926,6 +969,108 @@ const MyBooking: React.FC = () => {
                   {getPaymentStatusText(selectedBooking)}
                 </Badge>
               </div>
+
+              {isPaid(selectedBooking) && selectedBooking.agora && (
+                <div
+                  className={`mb-5 p-4 rounded-lg border ${
+                    canGoLive(selectedBooking)
+                      ? "bg-green-50 border-green-200"
+                      : isSessionToday(selectedBooking)
+                      ? "bg-blue-50 border-blue-200"
+                      : "bg-gray-50 border-gray-200"
+                  }`}
+                >
+                  <div className="flex items-start">
+                    <FontAwesomeIcon
+                      icon={
+                        canGoLive(selectedBooking)
+                          ? faPlay
+                          : isSessionToday(selectedBooking)
+                          ? faInfoCircle
+                          : faClock
+                      }
+                      className={`mr-2 mt-1 flex-shrink-0 ${
+                        canGoLive(selectedBooking)
+                          ? "text-green-600"
+                          : isSessionToday(selectedBooking)
+                          ? "text-blue-600"
+                          : "text-gray-600"
+                      }`}
+                    />
+                    <div className="flex-1">
+                      <p
+                        className={`font-medium ${
+                          canGoLive(selectedBooking)
+                            ? "text-green-800"
+                            : isSessionToday(selectedBooking)
+                            ? "text-blue-800"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        {canGoLive(selectedBooking)
+                          ? "Session is Live Now!"
+                          : isSessionToday(selectedBooking)
+                          ? "Session Today"
+                          : "Upcoming Session"}
+                      </p>
+                      <p
+                        className={`text-sm mt-1 ${
+                          canGoLive(selectedBooking)
+                            ? "text-green-700"
+                            : isSessionToday(selectedBooking)
+                            ? "text-blue-700"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {canGoLive(selectedBooking)
+                          ? "Your session is currently live. You can join the video call now."
+                          : isSessionToday(selectedBooking)
+                          ? `Your session starts at ${formatTimeRange(
+                              selectedBooking.startTime,
+                              selectedBooking.endTime
+                            )}. Video call will be available 10 minutes before the session.`
+                          : `Session scheduled for ${formatDate(
+                              selectedBooking.date,
+                              selectedBooking.startTime
+                            )}`}
+                      </p>
+
+                      <div className="mt-3">
+                        {canGoLive(selectedBooking) ? (
+                          <Button
+                            className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 h-auto flex items-center gap-2"
+                            onClick={() => handleGoLive(selectedBooking)}
+                          >
+                            <FontAwesomeIcon
+                              icon={faPlay}
+                              className="w-4 h-4"
+                            />
+                            Go Live Now
+                          </Button>
+                        ) : getTimeUntilGoLive(selectedBooking) ? (
+                          <Button
+                            className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                            disabled
+                          >
+                            <FontAwesomeIcon
+                              icon={faClock}
+                              className="w-4 h-4 mr-2"
+                            />
+                            Available in {getTimeUntilGoLive(selectedBooking)}
+                          </Button>
+                        ) : (
+                          <Button
+                            className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                            disabled
+                          >
+                            Session Not Available
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
@@ -1045,6 +1190,11 @@ const MyBooking: React.FC = () => {
                         selectedBooking.startTime
                       )}
                     </p>
+                    {isSessionToday(selectedBooking) && (
+                      <Badge className="bg-blue-100 text-blue-800 text-xs mt-1">
+                        Today
+                      </Badge>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-start mb-2">
@@ -1055,7 +1205,10 @@ const MyBooking: React.FC = () => {
                   <div className="flex-1">
                     <p className="font-medium">Duration:</p>
                     <p className="text-gray-600">
-                      {selectedBooking.startTime} - {selectedBooking.endTime}
+                      {formatTimeRange(
+                        selectedBooking.startTime,
+                        selectedBooking.endTime
+                      )}
                     </p>
                     {selectedBooking.description && (
                       <>
@@ -1087,16 +1240,37 @@ const MyBooking: React.FC = () => {
                       icon={faLink}
                       className="mr-2 mt-1 text-gray-600 flex-shrink-0"
                     />
-                    <div>
+                    <div className="flex-1">
                       <p className="font-medium">Meeting Link:</p>
-                      <a
-                        href={selectedBooking.meetLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline break-all"
-                      >
-                        {selectedBooking.meetLink}
-                      </a>
+                      <div className="flex items-center gap-2 mt-1">
+                        <a
+                          href={selectedBooking.meetLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:underline break-all text-sm"
+                        >
+                          {selectedBooking.meetLink}
+                        </a>
+                        {isPaid(selectedBooking) && (
+                          <Button
+                            size="sm"
+                            className="bg-blue-500 hover:bg-blue-600 text-white text-xs px-2 py-1 h-auto"
+                            onClick={() =>
+                              window.open(
+                                selectedBooking.meetLink,
+                                "_blank",
+                                "noopener,noreferrer"
+                              )
+                            }
+                          >
+                            <FontAwesomeIcon
+                              icon={faVideo}
+                              className="w-3 h-3 mr-1"
+                            />
+                            Open
+                          </Button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1248,6 +1422,18 @@ const MyBooking: React.FC = () => {
             </div>
 
             <DialogFooter className="flex flex-wrap gap-3 justify-end">
+              {isPaid(selectedBooking) &&
+                canGoLive(selectedBooking) &&
+                selectedBooking.agora && (
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
+                    onClick={() => handleGoLive(selectedBooking)}
+                  >
+                    <FontAwesomeIcon icon={faPlay} />
+                    Go Live Now
+                  </Button>
+                )}
+
               {needsPayment(selectedBooking) && (
                 <Button
                   className="bg-red-500 hover:bg-red-600 text-white"
@@ -1265,18 +1451,6 @@ const MyBooking: React.FC = () => {
                 >
                   <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
                   Awaiting Expert Approval
-                </Button>
-              )}
-
-              {selectedBooking.meetLink && isPaid(selectedBooking) && (
-                <Button
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                  onClick={() =>
-                    window.open(selectedBooking.meetLink, "_blank")
-                  }
-                >
-                  <FontAwesomeIcon icon={faVideo} className="mr-2" />
-                  Join Meeting
                 </Button>
               )}
 
@@ -1393,6 +1567,14 @@ const MyBooking: React.FC = () => {
           onSuccess={handlePaymentSuccess}
           onError={handlePaymentError}
           stripePromise={stripePromise}
+        />
+      )}
+
+      {activeVideoCall && (
+        <AgoraVideoModal
+          isOpen={isAgoraModalOpen}
+          onClose={handleEndCall}
+          booking={activeVideoCall}
         />
       )}
     </div>
