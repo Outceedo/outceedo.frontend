@@ -14,7 +14,7 @@ import {
   Info,
   Clock as ClockIcon,
   HelpCircle,
-  Switch,
+  Unlock,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,7 @@ interface TimeSlot {
   endTime: string;
   available: boolean;
   reason?: string;
+  blockid: string;
 }
 interface AvailabilityPattern {
   id?: string;
@@ -194,18 +195,15 @@ const ExpertAvailabilityManager = () => {
 
   useEffect(() => {
     fetchAvailabilityPatterns();
-    // On mount, show guide if not dismissed
     if (!localStorage.getItem(GUIDE_CARDS_KEY)) {
       setShowGuide(true);
       setGuideStep(0);
     }
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
     fetchMonthlyAvailability();
     fetchCalendarSlotsForMonth();
-    // eslint-disable-next-line
   }, [currentMonth, currentYear]);
 
   useEffect(() => {
@@ -294,33 +292,27 @@ const ExpertAvailabilityManager = () => {
       if (stepCard.focusRef?.current) {
         const rect = stepCard.focusRef.current.getBoundingClientRect();
         const popperWidth = 360;
-        const popperHeight = 150; // Approximate height
+        const popperHeight = 150;
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        // Calculate optimal position
         let top = rect.bottom + 12;
         let left = rect.left + rect.width / 2 - popperWidth / 2;
 
-        // Adjust if popper would go off-screen horizontally
         if (left < 10) {
           left = 10;
         } else if (left + popperWidth > viewportWidth - 10) {
           left = viewportWidth - popperWidth - 10;
         }
 
-        // Adjust if popper would go off-screen vertically
         if (top + popperHeight > viewportHeight - 10) {
-          top = rect.top - popperHeight - 12; // Show above the element
+          top = rect.top - popperHeight - 12;
         }
 
-        // Special positioning for specific buttons
         if (stepCard.focusRef === nextMonthBtnRef) {
-          // Position to the left of the next month button
           left = rect.left - popperWidth - 12;
           top = rect.top - 60;
 
-          // If that would go off-screen, position below
           if (left < 10) {
             left = rect.left + rect.width / 2 - popperWidth / 2;
             top = rect.bottom + 12;
@@ -328,14 +320,21 @@ const ExpertAvailabilityManager = () => {
         }
 
         if (stepCard.focusRef === addSlotBtnRef) {
-          // Position to the left of the add slot button
           left = rect.left - popperWidth - 12;
           top = rect.top - 60;
 
-          // If that would go off-screen, position below
           if (left < 10) {
             left = rect.left + rect.width / 2 - popperWidth / 2;
             top = rect.bottom + 12;
+          }
+        }
+        if (stepCard.focusRef === switchWrapperRef) {
+          left = rect.left;
+          top = rect.top - 90;
+
+          if (left < 10) {
+            left = rect.left + rect.width / 2 - popperWidth / 2;
+            top = rect.bottom;
           }
         }
 
@@ -356,12 +355,10 @@ const ExpertAvailabilityManager = () => {
           behavior: "smooth",
           block: "center",
         });
-        // Add a highlight effect
         stepCard.focusRef.current.style.boxShadow =
           "0 0 0 3px rgba(59, 130, 246, 0.5)";
         stepCard.focusRef.current.style.borderRadius = "6px";
 
-        // Remove highlight after 3 seconds
         setTimeout(() => {
           if (stepCard.focusRef?.current) {
             stepCard.focusRef.current.style.boxShadow = "";
@@ -395,7 +392,6 @@ const ExpertAvailabilityManager = () => {
     );
   };
 
-  // Fetch all time slots for the month for calendar icons
   const fetchCalendarSlotsForMonth = async () => {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let newCalendarSlots: Record<string, TimeSlot[]> = {};
@@ -457,8 +453,9 @@ const ExpertAvailabilityManager = () => {
         date: formattedDate,
         startTime: slot.startTime,
         endTime: slot.endTime,
-        available: slot.available,
+        available: slot.isAvailable,
         reason: slot.reason,
+        blockid: slot.blockId,
       }));
       console.log(transformedSlots);
       setTimeSlots(transformedSlots);
@@ -474,6 +471,7 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
+  // Updated blockDate function with immediate state updates
   const blockDate = async (
     date: Date,
     reason: string,
@@ -487,8 +485,14 @@ const ExpertAvailabilityManager = () => {
         payload.startTime = timeSlot.startTime;
         payload.endTime = timeSlot.endTime;
       }
-      await axiosInstance.patch(`${API_BASE_URL}/block`, payload);
+
+      const response = await axiosInstance.patch(
+        `${API_BASE_URL}/block`,
+        payload
+      );
+
       if (!timeSlot) {
+        // Blocking entire day
         setMonthlyAvailability((prev) => ({
           ...prev,
           [formattedDate]: false,
@@ -503,16 +507,46 @@ const ExpertAvailabilityManager = () => {
           "success"
         );
       } else {
+        // Blocking specific time slot - update state immediately
         if (isSameDay(date, selectedDate)) {
           setTimeSlots((prev) =>
-            prev.map((slot) =>
-              slot.startTime === timeSlot.startTime &&
-              slot.endTime === timeSlot.endTime
-                ? { ...slot, available: false, reason }
-                : slot
-            )
+            prev.map((slot) => {
+              if (
+                slot.startTime === timeSlot.startTime &&
+                slot.endTime === timeSlot.endTime
+              ) {
+                return {
+                  ...slot,
+                  available: false,
+                  reason,
+                  blockid:
+                    response.data?.blockId || slot.blockid || generateId(),
+                };
+              }
+              return slot;
+            })
           );
         }
+
+        // Also update calendar slots for the month view
+        setCalendarTimeSlots((prev) => ({
+          ...prev,
+          [formattedDate]: (prev[formattedDate] || []).map((slot) => {
+            if (
+              slot.startTime === timeSlot.startTime &&
+              slot.endTime === timeSlot.endTime
+            ) {
+              return {
+                ...slot,
+                available: false,
+                reason,
+                blockid: response.data?.blockId || slot.blockid || generateId(),
+              };
+            }
+            return slot;
+          }),
+        }));
+
         Swal.fire(
           "Success",
           `Time slot from ${formatTimeForDisplay(
@@ -623,6 +657,74 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
+  // Updated unblockTimeSlot function with immediate state updates
+  const unblockTimeSlot = async (blockid: string) => {
+    if (!blockid) {
+      Swal.fire("Error", "Block ID is missing for this slot.", "error");
+      return;
+    }
+
+    try {
+      const url = `${API_BASE_URL}/${blockid}/unblock`;
+      await axiosInstance.delete(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Update state immediately
+      const formattedDate = formatDateString(selectedDate);
+
+      // Update timeSlots state
+      setTimeSlots((prev) =>
+        prev.map((slot) => {
+          if (slot.blockid === blockid) {
+            return {
+              ...slot,
+              available: true,
+              reason: undefined,
+              blockid: "",
+            };
+          }
+          return slot;
+        })
+      );
+
+      // Update calendar slots for month view
+      setCalendarTimeSlots((prev) => ({
+        ...prev,
+        [formattedDate]: (prev[formattedDate] || []).map((slot) => {
+          if (slot.blockid === blockid) {
+            return {
+              ...slot,
+              available: true,
+              reason: undefined,
+              blockid: "",
+            };
+          }
+          return slot;
+        }),
+      }));
+
+      Swal.fire(
+        "Success",
+        "Time slot has been unblocked and is now available.",
+        "success"
+      );
+
+      // Optionally refetch data to ensure consistency (but state is already updated)
+      // fetchTimeSlotsForSelectedDate();
+      // fetchCalendarSlotsForMonth();
+    } catch (err: any) {
+      Swal.fire(
+        "Error",
+        err?.response?.data?.message || "Failed to unblock time slot.",
+        "error"
+      );
+    }
+  };
+
   const generateDummyMonthlyAvailability = () => {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const availability: DailyAvailability = {};
@@ -667,6 +769,7 @@ const ExpertAvailabilityManager = () => {
           startTime,
           endTime,
           available: isAvailable,
+          blockid: "",
         });
       }
     }
@@ -821,6 +924,7 @@ const ExpertAvailabilityManager = () => {
       date: formatDateString(selectedDate),
       startTime: newSlotStartTime,
       endTime: newSlotEndTime,
+      blockid: "",
     };
     addTimeSlot(newSlot).then((success) => {
       if (success) {
@@ -1030,7 +1134,6 @@ const ExpertAvailabilityManager = () => {
                         }}
                         aria-disabled={isPast}
                       >
-                        {/* Top left icon for time slots */}
                         <div className="absolute top-1 left-1">
                           {isAvailable === true ? (
                             hasSlots ? (
@@ -1071,7 +1174,7 @@ const ExpertAvailabilityManager = () => {
                   })}
                 </div>
               </CardContent>
-              <div className="h-12 flex flex-col justify-between items-end px-3">
+              <div className="h-12 flex flex-col justify-between items-end px-8">
                 <div className="flex w-36 justify-between items-center">
                   <ClockIcon
                     className="h-4 w-4 text-green-500"
@@ -1344,78 +1447,26 @@ const ExpertAvailabilityManager = () => {
                                       {formatTimeForDisplay(slot.endTime)}
                                     </span>
 
-                                    {!slot.available && (
-                                      <>
-                                        <Badge
-                                          variant="outline"
-                                          className="ml-2 bg-blue-50 text-blue-600 text-xs"
-                                        >
-                                          blocked
-                                        </Badge>
-                                        <div className="flex space-x-1">
-                                          <TooltipProvider>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="icon"
-                                                  className="h-7 w-7"
-                                                  onClick={() =>
-                                                    handleEditTimeSlot(slot)
-                                                  }
-                                                >
-                                                  <Edit className="h-4 w-4" />
-                                                </Button>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                <p>Edit time slot</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
-
-                                          <TooltipProvider>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="icon"
-                                                  className="h-7 w-7 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
-                                                  onClick={() =>
-                                                    handleBlockTimeSlot(slot)
-                                                  }
-                                                >
-                                                  <AlertCircle className="h-4 w-4" />
-                                                </Button>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                <p>Block time slot</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
-
-                                          <TooltipProvider>
-                                            <Tooltip>
-                                              <TooltipTrigger asChild>
-                                                <Button
-                                                  variant="ghost"
-                                                  size="icon"
-                                                  className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                                  onClick={() =>
-                                                    handleDeleteTimeSlot(
-                                                      slot.id || ""
-                                                    )
-                                                  }
-                                                >
-                                                  <Trash2 className="h-4 w-4" />
-                                                </Button>
-                                              </TooltipTrigger>
-                                              <TooltipContent>
-                                                <p>Delete time slot</p>
-                                              </TooltipContent>
-                                            </Tooltip>
-                                          </TooltipProvider>
-                                        </div>
-                                      </>
+                                    {!slot.available && slot.blockid && (
+                                      <TooltipProvider>
+                                        <Tooltip>
+                                          <TooltipTrigger asChild>
+                                            <Button
+                                              variant="ghost"
+                                              size="icon"
+                                              className="h-7 w-7 text-red-600 hover:bg-green-50 ml-2"
+                                              onClick={() =>
+                                                unblockTimeSlot(slot.blockid)
+                                              }
+                                            >
+                                              <Unlock className="h-4 w-4" />
+                                            </Button>
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Unblock time slot</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      </TooltipProvider>
                                     )}
 
                                     {slot.reason && (
