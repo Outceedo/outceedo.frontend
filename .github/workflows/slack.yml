@@ -14,7 +14,7 @@ jobs:
       - name: Send Slack Notification
         uses: slackapi/slack-github-action@v2.1.0
         with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
           payload: |
             {
               "text": "${{ github.event_name == 'push' && format('A new push has occurred!\n*Commit message:* {0}', github.event.head_commit.message) || format('A pull request event has occurred!\n*PR title:* {0}', github.event.pull_request.title) }}"
