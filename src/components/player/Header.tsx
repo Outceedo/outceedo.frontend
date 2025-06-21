@@ -34,7 +34,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const currentTitle =
     menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??
     "Dashboard";
-    
+
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode");
     if (savedMode === "enabled") {
@@ -84,13 +84,13 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
             icon={faGem}
             className="text-blue-700 dark:text-blue-400 text-lg sm:text-xl"
           />
-          <p className="text-gray-800 font-Opensans dark:text-white text-xs sm:text-sm hidden xs:inline">
+          <p className="text-gray-800 font-Opensans dark:text-white text-lg md:block hidden xs:inline">
             Upgrade to Premium
           </p>
         </Button>
-        
+
         {/* Notification button with adaptive size */}
-        <Button 
+        <Button
           className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-2 sm:p-3 h-10 w-10"
           size="sm"
         >
@@ -99,7 +99,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
             className="text-black dark:text-white text-lg sm:text-xl"
           />
         </Button>
-        
+
         {/* Theme toggle with adaptive size */}
         <Button
           onClick={toggleTheme}
