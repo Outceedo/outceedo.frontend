@@ -50,7 +50,7 @@ interface Country {
   cca2: string;
 }
 
-// Pagination Component
+// Enhanced Pagination Component
 const Pagination: React.FC<{
   totalPages: number;
   currentPage: number;
@@ -68,6 +68,9 @@ const Pagination: React.FC<{
     const delta = window.innerWidth < 768 ? 1 : 2;
     const range = [];
     const rangeWithDots = [];
+
+    // Always show first page
+    if (totalPages === 1) return [1];
 
     for (
       let i = Math.max(2, currentPage - delta);
@@ -91,8 +94,10 @@ const Pagination: React.FC<{
       rangeWithDots.push(totalPages);
     }
 
-    return rangeWithDots;
+    return [...new Set(rangeWithDots)]; // Remove duplicates
   };
+
+  if (totalPages <= 1) return null;
 
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
@@ -109,7 +114,7 @@ const Pagination: React.FC<{
       <div className="flex space-x-1 sm:space-x-2">
         {getVisiblePages().map((page, index) => (
           <span
-            key={index}
+            key={`page-${index}-${page}`}
             className={`px-2 py-1 sm:px-3 sm:py-1 rounded-md cursor-pointer text-sm ${
               typeof page === "number" && currentPage === page
                 ? "bg-red-500 text-white"
@@ -139,17 +144,21 @@ const Pagination: React.FC<{
 
 export default function SponsorProfiles() {
   const dispatch = useAppDispatch();
-  const { profiles, status, error, totalPages } = useAppSelector(
-    (state) => state.profile
-  );
+  const { profiles, status, error } = useAppSelector((state) => state.profile);
+
+  // Extract sponsors and pagination info from profiles response
   const sponsorsArray = profiles?.users || [];
+  const totalPages = profiles?.totalPages || 1;
+  const totalSponsors = profiles?.total || 0;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [countries, setCountries] = useState<Country[]>([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(null);
+  const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(
+    null
+  );
 
   const [filters, setFilters] = useState({
     country: "",
@@ -186,19 +195,40 @@ export default function SponsorProfiles() {
     }
   };
 
+  // Fetch sponsors when page, limit, or filters change
   useEffect(() => {
     fetchSponsors();
-    // eslint-disable-next-line
   }, [currentPage, limit, dispatch]);
 
+  // Separate effect for filter changes to reset pagination
+  useEffect(() => {
+    if (currentPage !== 1) {
+      setCurrentPage(1);
+    } else {
+      fetchSponsors();
+    }
+  }, [searchTerm, filters]);
+
   const fetchSponsors = () => {
-    dispatch(
-      getProfiles({
-        page: currentPage,
-        limit,
-        userType: "sponsor",
-      })
-    );
+    const params: any = {
+      page: currentPage,
+      limit,
+      userType: "sponsor",
+    };
+
+    // Add search term if provided
+    if (searchTerm.trim()) {
+      params.search = searchTerm.trim();
+    }
+
+    // Add filters if they have values
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        params[key] = value;
+      }
+    });
+
+    dispatch(getProfiles(params));
   };
 
   useEffect(() => {
@@ -240,7 +270,6 @@ export default function SponsorProfiles() {
       ...prevFilters,
       [stateKey]: value,
     }));
-    setCurrentPage(1);
   };
 
   const clearAllFilters = () => {
@@ -260,6 +289,7 @@ export default function SponsorProfiles() {
     );
   };
 
+  // Extract filter options from current page data
   const extractFilterOptions = (key: keyof SponsorProfile): string[] => {
     const options = new Set<string>();
     sponsorsArray.forEach((sponsor: SponsorProfile) => {
@@ -278,62 +308,26 @@ export default function SponsorProfiles() {
   const defaultSponsorshipTypes = ["Cash", "Card", "Gift", "Professional Fee"];
   const defaultBudgetRanges = ["10K-50K", "50K-100K", "100K-500K", "500K+"];
 
-  const filteredSponsors = sponsorsArray.filter((sponsor: SponsorProfile) => {
-    const fullName = `${sponsor.firstName || ""} ${
-      sponsor.lastName || ""
-    }`.toLowerCase();
-    const companyName = sponsor.company?.toLowerCase() || "";
-    const bio = sponsor.bio?.toLowerCase() || "";
-
-    if (
-      searchTerm &&
-      !fullName.includes(searchTerm.toLowerCase()) &&
-      !companyName.includes(searchTerm.toLowerCase()) &&
-      !bio.includes(searchTerm.toLowerCase())
-    ) {
-      return false;
-    }
-
-    if (
-      filters.country &&
-      sponsor.country &&
-      sponsor.country.toLowerCase() !== filters.country.toLowerCase()
-    ) {
-      return false;
-    }
-
-    if (
-      filters.sponsorType &&
-      sponsor.sponsorType &&
-      sponsor.sponsorType.toLowerCase() !== filters.sponsorType.toLowerCase()
-    ) {
-      return false;
-    }
-
-    if (
-      filters.sponsorshipType &&
-      sponsor.sponsorshipType &&
-      sponsor.sponsorshipType.toLowerCase() !==
-        filters.sponsorshipType.toLowerCase()
-    ) {
-      return false;
-    }
-
-    if (
-      filters.budgetRange &&
-      sponsor.budgetRange &&
-      sponsor.budgetRange.toLowerCase() !== filters.budgetRange.toLowerCase()
-    ) {
-      return false;
-    }
-
-    return true;
-  });
+  // Since we're doing server-side pagination, we don't need client-side filtering
+  const displayedSponsors = sponsorsArray;
 
   const calculateRating = (reviews: any[] = []) => {
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
     return (sum / reviews.length).toFixed(1);
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Handle limit change
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setCurrentPage(1);
   };
 
   return (
@@ -354,13 +348,15 @@ export default function SponsorProfiles() {
 
       {/* Responsive Filters */}
       <div className="w-full mb-4 sm:mb-6">
-        <div className="
+        <div
+          className="
           grid grid-cols-1
           sm:grid-cols-2
           md:grid-cols-3
           lg:grid-cols-5
           gap-3 sm:gap-4 pt-1
-        ">
+        "
+        >
           {/* Country Filter */}
           <div className="w-full">
             <Select
@@ -378,18 +374,24 @@ export default function SponsorProfiles() {
                       </SelectItem>
                     ))
                   : countries.map((c) => (
-                      <SelectItem key={`country-${c.cca2}`} value={c.name.common}>
+                      <SelectItem
+                        key={`country-${c.cca2}`}
+                        value={c.name.common}
+                      >
                         {c.name.common}
                       </SelectItem>
                     ))}
               </SelectContent>
             </Select>
           </div>
+
           {/* Sponsor Type Filter */}
           <div className="w-full">
             <Select
               value={filters.sponsorType}
-              onValueChange={(value) => handleFilterChange(value, "sponsorType")}
+              onValueChange={(value) =>
+                handleFilterChange(value, "sponsorType")
+              }
             >
               <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
                 <SelectValue placeholder="Sponsor Type" />
@@ -409,6 +411,7 @@ export default function SponsorProfiles() {
               </SelectContent>
             </Select>
           </div>
+
           {/* Sponsorship Type Filter */}
           <div className="w-full">
             <Select
@@ -435,11 +438,14 @@ export default function SponsorProfiles() {
               </SelectContent>
             </Select>
           </div>
+
           {/* Budget Range Filter */}
           <div className="w-full">
             <Select
               value={filters.budgetRange}
-              onValueChange={(value) => handleFilterChange(value, "budgetRange")}
+              onValueChange={(value) =>
+                handleFilterChange(value, "budgetRange")
+              }
             >
               <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
                 <SelectValue placeholder="Budget Range" />
@@ -459,6 +465,7 @@ export default function SponsorProfiles() {
               </SelectContent>
             </Select>
           </div>
+
           {/* Clear Filters Button */}
           {hasActiveFilters() && (
             <div className="w-full flex items-center">
@@ -484,7 +491,9 @@ export default function SponsorProfiles() {
       {/* Error State */}
       {status === "failed" && error && (
         <div className="text-center p-4 sm:p-6 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
-          <p className="text-base sm:text-lg font-semibold">Failed to load sponsors</p>
+          <p className="text-base sm:text-lg font-semibold">
+            Failed to load sponsors
+          </p>
           <p className="text-sm sm:text-base">{error}</p>
           <Button
             className="mt-4 bg-red-600 hover:bg-red-700"
@@ -496,7 +505,7 @@ export default function SponsorProfiles() {
       )}
 
       {/* No Sponsors State */}
-      {status === "succeeded" && filteredSponsors.length === 0 && (
+      {status === "succeeded" && displayedSponsors.length === 0 && (
         <div className="text-center p-6 sm:p-10">
           <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
             No sponsors found matching your criteria.
@@ -507,8 +516,8 @@ export default function SponsorProfiles() {
       {/* Sponsor List */}
       <div className="space-y-3 sm:space-y-4">
         {status === "succeeded" &&
-          filteredSponsors.length > 0 &&
-          filteredSponsors.map((sponsor: SponsorProfile) => {
+          displayedSponsors.length > 0 &&
+          displayedSponsors.map((sponsor: SponsorProfile) => {
             const rating = calculateRating(sponsor.reviewsReceived);
             const sponsoredCount = sponsor.reviewsReceived?.length || 0;
             const displayName =
@@ -552,7 +561,10 @@ export default function SponsorProfiles() {
                       {Array.from({
                         length: Math.floor(Number(rating) || 0),
                       }).map((_, i) => (
-                        <Star key={i} className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400" />
+                        <Star
+                          key={i}
+                          className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400"
+                        />
                       ))}
                     </div>
                     <span className="text-yellow-400 text-sm sm:text-lg">
@@ -606,7 +618,9 @@ export default function SponsorProfiles() {
       {isReportOpen && (
         <div className="fixed inset-0 lg:left-[260px] lg:top-0 lg:right-0 lg:bottom-0 z-50 bg-white dark:bg-gray-800 flex flex-col overflow-hidden">
           <div className="sticky top-0 w-full flex justify-between items-center p-3 sm:p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 z-10">
-            <h2 className="text-lg font-semibold dark:text-white">Apply for Sponsorship</h2>
+            <h2 className="text-lg font-semibold dark:text-white">
+              Apply for Sponsorship
+            </h2>
             <button
               onClick={closeReportModal}
               className="flex items-center justify-center h-8 w-8 sm:h-10 sm:w-10 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -635,36 +649,41 @@ export default function SponsorProfiles() {
         </div>
       )}
 
-      {/* Pagination */}
+      {/* Enhanced Pagination Section */}
       {status === "succeeded" && totalPages > 0 && (
-        <div className="flex flex-col items-center mt-6 space-y-4">
+        <div className="flex flex-col items-center mt-8 space-y-4 pb-6">
+          {/* Items per page selector */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Items per page:
             </span>
             <select
               value={limit}
-              onChange={(e) => {
-                setLimit(parseInt(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="border rounded p-1 text-xs sm:text-sm dark:bg-gray-700 dark:text-white min-w-[60px]"
+              onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+              className="border rounded-lg px-3 py-2 text-xs sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 min-w-[80px] focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <option value="4">4</option>
               <option value="8">8</option>
               <option value="12">12</option>
+              <option value="16">16</option>
               <option value="20">20</option>
             </select>
           </div>
 
+          {/* Pagination Controls */}
           <Pagination
             totalPages={totalPages}
             currentPage={currentPage}
-            onPageChange={setCurrentPage}
+            onPageChange={handlePageChange}
           />
 
+          {/* Results Info */}
           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
-            Showing {filteredSponsors.length} of {profiles?.total || 0} sponsors
+            <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+              <span>
+                Page {currentPage} of {totalPages}
+              </span>
+            </div>
           </div>
         </div>
       )}
