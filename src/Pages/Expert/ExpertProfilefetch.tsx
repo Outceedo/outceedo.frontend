@@ -317,7 +317,7 @@ const ExpertProfiles: React.FC = () => {
     "Swimming",
   ];
   const finalSportOptions =
-    sportOptions.length > 0 ? sportOptions : defaultSorts;
+    sportOptions.length > 0 ? sportOptions : defaultSports;
 
   // Generate filter configuration
   const filterConfig = [
