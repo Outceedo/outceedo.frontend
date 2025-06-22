@@ -635,14 +635,10 @@ const ExpertAvailabilityManager = () => {
 
   const deleteTimeSlot = async (slotId: string) => {
     try {
+      console.log(timeSlots);
       const slot = timeSlots.find((s) => s.id === slotId);
       if (!slot) return false;
-      const pattern = availabilityPatterns.find(
-        (p) =>
-          p.dayOfWeek === selectedDate.getDay() &&
-          p.startTime === slot.startTime &&
-          p.endTime === slot.endTime
-      );
+      const pattern = availabilityPatterns.find((p) => (p.ids = slotId));
       if (!pattern?.id) throw new Error("Could not find matching pattern");
       const payload = { ids: [pattern.id] };
       await axiosInstance.delete(`${API_BASE_URL}`, { data: payload });
@@ -945,6 +941,7 @@ const ExpertAvailabilityManager = () => {
       );
       return;
     }
+    console.log(slotId);
     deleteTimeSlot(slotId);
   };
 
@@ -1135,7 +1132,7 @@ const ExpertAvailabilityManager = () => {
                         aria-disabled={isPast}
                       >
                         <div className="absolute top-1 left-1">
-                          {isAvailable === true ? (
+                          {isAvailable === true && !isPast ? (
                             hasSlots ? (
                               <ClockIcon
                                 className="h-4 w-4 text-green-500"
@@ -1153,14 +1150,14 @@ const ExpertAvailabilityManager = () => {
                           {day.getDate()}
                         </div>
                         <div className="flex justify-center">
-                          {isAvailable === false ? (
+                          {isAvailable === false && !isPast ? (
                             <Badge
                               variant="outline"
                               className="bg-gray-100 text-gray-500 text-xs"
                             >
                               Unavailable
                             </Badge>
-                          ) : isAvailable === true ? (
+                          ) : isAvailable === true && !isPast ? (
                             <Badge
                               variant="outline"
                               className="bg-green-50 text-green-600 text-xs"
