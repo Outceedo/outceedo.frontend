@@ -22,8 +22,16 @@ import avatar from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
 import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Button } from "react-day-picker";
-
+import FollowList from "../components/follower/followerlist";
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
   { icon: faFacebook, color: "#3b5998", link: "" },
@@ -465,12 +473,28 @@ const ExpertProfile = () => {
                 )}
               </p>
             </div>
-            <div className="text-center">
-              <p className="text-red-500 text-3xl font-bold">
-                {expertData.followers || 0}
-              </p>
-              <p className="text-gray-500 dark:text-white">Followers</p>
-            </div>
+            <Dialog>
+                  {/* Trigger: the follower count block */}
+                  <DialogTrigger asChild>
+                    <div className="text-center cursor-pointer">
+                      <p className="text-red-500 text-3xl font-bold">
+                        {expertData.followers || 0}
+                      </p>
+                      <p className="text-gray-500 dark:text-white">Followers</p>
+                    </div>
+                  </DialogTrigger>
+
+                  {/* Dialog content that shows the FollowList component */}
+                  <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-lg font-semibold text-center">
+                        People who Follow 
+                      </DialogTitle>
+                    </DialogHeader>
+                    {/* Render the follow list here */}
+                    <FollowList />
+                  </DialogContent>
+                </Dialog>
             <div className="text-center">
               <p className="text-red-500 text-3xl font-bold">
                 {expertData.assessments || 0}
