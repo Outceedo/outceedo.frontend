@@ -22,7 +22,6 @@ import avatar from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
 import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
-import { Button } from "react-day-picker";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
@@ -31,7 +30,6 @@ const icons = [
   { icon: faXTwitter, color: "#0C0B0B", link: "" },
 ];
 
-// StarRating component for review stars
 const StarRating: React.FC<{
   avg: number;
   total?: number;
@@ -91,7 +89,7 @@ const ExpertProfile = () => {
   }, [dispatch]);
 
   useEffect(() => {
-    const navigationTimer = setTimeout(() => {
+    const navigationTimer = setTimeout(async () => {
       const userRole = localStorage.getItem("role");
       const isProfileIncomplete =
         !currentProfile?.age ||
@@ -100,7 +98,19 @@ const ExpertProfile = () => {
         !currentProfile?.weight;
 
       if (isProfileIncomplete) {
-        navigate("/expert/details-form");
+        try {
+          await Swal.fire({
+            icon: "warning",
+            title: "Please enter the Profile details",
+            text: "Redirecting to Details form",
+            timer: 2000,
+            showConfirmButton: false,
+            timerProgressBar: true,
+          });
+          navigate("/expert/details-form");
+        } catch {
+          null;
+        }
       } else {
         if (userRole === "player") {
           navigate("/player/profile");
@@ -110,11 +120,10 @@ const ExpertProfile = () => {
           navigate("/expert/details-form");
         }
       }
-    }, 4000);
+    }, 2000);
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
 
-  // Format the expert data from API response
   const formatExpertData = () => {
     if (!currentProfile)
       return {

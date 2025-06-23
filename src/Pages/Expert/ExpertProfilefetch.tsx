@@ -48,7 +48,6 @@ interface Expert {
   [key: string]: any;
 }
 
-// Enhanced Pagination Component
 const Pagination: React.FC<{
   totalPages: number;
   currentPage: number;
@@ -67,7 +66,6 @@ const Pagination: React.FC<{
     const range = [];
     const rangeWithDots = [];
 
-    // Always show first page
     if (totalPages === 1) return [1];
 
     for (
@@ -92,7 +90,7 @@ const Pagination: React.FC<{
       rangeWithDots.push(totalPages);
     }
 
-    return [...new Set(rangeWithDots)]; // Remove duplicates
+    return [...new Set(rangeWithDots)];
   };
 
   if (totalPages <= 1) return null;
@@ -141,7 +139,6 @@ const Pagination: React.FC<{
 };
 
 const ExpertProfiles: React.FC = () => {
-  // State for search, filters, and pagination
   const [searchQuery, setSearchQuery] = useState("");
   const [filters, setFilters] = useState({
     profession: "",
@@ -157,22 +154,18 @@ const ExpertProfiles: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Get profiles from Redux store
   const { profiles, status, error } = useAppSelector((state) => state.profile);
 
-  // Extract experts array and pagination info from the profiles response
   const expertsArray = profiles?.users || [];
   const totalPages = profiles?.totalPages || 1;
   const totalExperts = profiles?.total || 0;
 
   console.log(expertsArray);
 
-  // Fetch profiles when page, limit changes
   useEffect(() => {
     fetchProfiles();
   }, [currentPage, limit, dispatch]);
 
-  // Separate effect for filter and search changes to reset pagination
   useEffect(() => {
     if (currentPage !== 1) {
       setCurrentPage(1);
@@ -181,7 +174,6 @@ const ExpertProfiles: React.FC = () => {
     }
   }, [searchQuery, filters]);
 
-  // Function to fetch expert profiles
   const fetchProfiles = () => {
     const params: any = {
       page: currentPage,
@@ -189,12 +181,10 @@ const ExpertProfiles: React.FC = () => {
       userType: "expert",
     };
 
-    // Add search term if provided
     if (searchQuery.trim()) {
       params.search = searchQuery.trim();
     }
 
-    // Add filters if they have values
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
         params[key] = value;
@@ -204,7 +194,6 @@ const ExpertProfiles: React.FC = () => {
     dispatch(getProfiles(params));
   };
 
-  // Handle filter changes
   const handleFilterChange = (value: string, filterType: string) => {
     const normalizedKey = filterType.toLowerCase();
     let stateKey = "";
@@ -238,7 +227,6 @@ const ExpertProfiles: React.FC = () => {
     }));
   };
 
-  // Clear all filters
   const clearAllFilters = () => {
     setSearchQuery("");
     setFilters({
@@ -252,17 +240,14 @@ const ExpertProfiles: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Check if any filters are active
   const hasActiveFilters = () => {
     return (
       searchQuery !== "" || Object.values(filters).some((value) => value !== "")
     );
   };
 
-  // Since we're doing server-side pagination, we use the current page data
   const displayedExperts = expertsArray;
 
-  // Extract unique filter values from current page profiles
   const extractFilterOptions = (key: keyof Expert): string[] => {
     const options = new Set<string>();
 
@@ -275,7 +260,6 @@ const ExpertProfiles: React.FC = () => {
           if (lang) options.add(lang);
         });
       } else if (key === "sports" || key === "sport") {
-        // Handle sports (both array and single string formats)
         if (expert.sports && Array.isArray(expert.sports)) {
           expert.sports.forEach((sport) => {
             if (sport) options.add(sport);
@@ -292,20 +276,17 @@ const ExpertProfiles: React.FC = () => {
     return Array.from(options);
   };
 
-  // Get profile filter options
   const professionOptions = extractFilterOptions("profession");
   const cityOptions = extractFilterOptions("city");
   const countryOptions = extractFilterOptions("country");
   const genderOptions = extractFilterOptions("gender");
   const languageOptions = extractFilterOptions("language");
 
-  // Get sport options from expert data
   const sportOptions = [
     ...extractFilterOptions("sports"),
     ...extractFilterOptions("sport"),
   ];
 
-  // If no sports found in data, provide default sports
   const defaultSports = [
     "Football",
     "Basketball",
@@ -319,7 +300,6 @@ const ExpertProfiles: React.FC = () => {
   const finalSportOptions =
     sportOptions.length > 0 ? sportOptions : defaultSports;
 
-  // Generate filter configuration
   const filterConfig = [
     {
       name: "Sport",
@@ -358,7 +338,6 @@ const ExpertProfiles: React.FC = () => {
     },
   ];
 
-  // Handle view expert profile
   const handleViewProfile = (expert: Expert) => {
     const role = localStorage.getItem("role");
     localStorage.setItem("viewexpertusername", expert.username);
@@ -371,14 +350,12 @@ const ExpertProfiles: React.FC = () => {
     }
   };
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top when page changes
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle limit change
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
     setCurrentPage(1);
@@ -493,28 +470,22 @@ const ExpertProfiles: React.FC = () => {
           {status === "succeeded" && displayedExperts.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {displayedExperts.map((expert: Expert, index: number) => {
-                // Create display name from available fields
                 const displayName =
                   `${expert.firstName || ""} ${expert.lastName || ""}`.trim() ||
                   expert.username ||
                   "Expert User";
 
-                // Calculate random rating and reviews count if not available
                 const rating =
                   expert.rating || Math.floor(Math.random() * 2) + 3.5;
-                const reviews =
-                  expert.reviews || Math.floor(Math.random() * 150) + 50;
+                const reviews = expert.reviews || 0;
 
-                // Use photo from profile or fallback to default images
                 const expertImage = expert.photo || avatar;
 
-                // Use verified status if available, or generate randomly
                 const isVerified =
                   expert.verified !== undefined
                     ? expert.verified
                     : Math.random() > 0.5;
 
-                // Get expert sports
                 const expertSports = expert.sports
                   ? Array.isArray(expert.sports)
                     ? expert.sports.join(", ")
@@ -533,7 +504,6 @@ const ExpertProfiles: React.FC = () => {
                         src={expertImage}
                         alt={displayName}
                         onError={(e) => {
-                          // If image fails to load, use default image
                           const target = e.target as HTMLImageElement;
                           target.src =
                             defaultImages[index % defaultImages.length];

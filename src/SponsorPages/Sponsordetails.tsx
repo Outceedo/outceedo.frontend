@@ -59,15 +59,10 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
   const [expanded, setExpanded] = useState(false);
   const [isBioLong, setIsBioLong] = useState(false);
 
-  // Set initial bio from profile data or use fallback
-  const [aboutMe, setAboutMe] = useState(
-    profileData.bio ||
-      "I am from London, UK. A passionate, versatile expert bringing years of experience to help players improve their skills and reach their potential."
-  );
+  const [aboutMe, setAboutMe] = useState(profileData.bio || "");
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Sponsorship State with data from profileData
   const [isEditingSponsorship, setIsEditingSponsorship] = useState(false);
   const [sponsorshipInfo, setSponsorshipInfo] = useState({
     range: profileData.budgetRange || "$4000-5500",
@@ -78,7 +73,6 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
     ...sponsorshipInfo,
   });
 
-  // Check if bio text overflows 3 lines
   useEffect(() => {
     const checkBioLength = () => {
       if (bioTextRef.current) {
@@ -91,7 +85,6 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
       }
     };
 
-    // Check after the component mounts and whenever the bio changes
     checkBioLength();
     window.addEventListener("resize", checkBioLength);
 
@@ -100,15 +93,12 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
     };
   }, [aboutMe, expanded]);
 
-  // Update state when profileData changes
   useEffect(() => {
     if (profileData) {
-      // Update about me text if profileData has bio
       if (profileData.bio) {
         setAboutMe(profileData.bio);
       }
 
-      // Update sponsorship info based on profileData
       setSponsorshipInfo({
         range: profileData.budgetRange || "$4000-5500",
         type: profileData.sponsorshipType || "Cash/ Gift",

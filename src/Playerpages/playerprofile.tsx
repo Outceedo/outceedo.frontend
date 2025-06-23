@@ -53,8 +53,7 @@ const initialStats: Stat[] = [
 ];
 
 const calculateOVR = (stats: Stat[]) => {
-  const total = stats.reduce((sum, stat) => sum + stat.percentage, 0);
-  return (total / stats.length).toFixed(1);
+  return 0;
 };
 
 // StarRating component for review stars
@@ -283,7 +282,7 @@ const Profile: React.FC = () => {
   const playerData = formatProfileData();
 
   useEffect(() => {
-    const navigationTimer = setTimeout(() => {
+    const navigationTimer = setTimeout(async () => {
       const userRole = localStorage.getItem("role");
 
       const isProfileIncomplete =
@@ -293,6 +292,14 @@ const Profile: React.FC = () => {
         !currentProfile?.weight;
 
       if (isProfileIncomplete) {
+        await Swal.fire({
+          icon: "warning",
+          title: "Please enter the Profile details",
+          text: "Redirecting to Details form",
+          timer: 2000,
+          showConfirmButton: false,
+          timerProgressBar: true,
+        });
         navigate("/player/details-form");
       } else {
         if (userRole === "player") {
