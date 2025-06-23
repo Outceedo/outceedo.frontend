@@ -83,8 +83,9 @@ const ExpertAvailabilityManager = () => {
   const [loadingAvailabilityPatterns, setLoadingAvailabilityPatterns] =
     useState(false);
   const [addSlotDialogOpen, setAddSlotDialogOpen] = useState(false);
+  const [updateSlotDialogOpen, setUpdateSlotDialogOpen] = useState(false);
   const [newSlotStartTime, setNewSlotStartTime] = useState("09:00");
-  const [newSlotEndTime, setNewSlotEndTime] = useState("09:30");
+  const [newSlotEndTime, setNewSlotEndTime] = useState("17:00");
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
   const [monthlyAvailability, setMonthlyAvailability] =
     useState<DailyAvailability>({});
@@ -109,6 +110,7 @@ const ExpertAvailabilityManager = () => {
   const nextMonthBtnRef = useRef<HTMLButtonElement>(null);
   const helpBtnRef = useRef<HTMLButtonElement>(null);
   const addSlotBtnRef = useRef<HTMLButtonElement>(null);
+  const updateSlotBtnRef = useRef<HTMLButtonElement>(null);
   const switchWrapperRef = useRef<HTMLDivElement>(null);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/availability`;
@@ -268,10 +270,10 @@ const ExpertAvailabilityManager = () => {
       buttonLabel: "Next",
     },
     {
-      title: "Add Time Slot",
+      title: "Add/Update/Delete Time Slots",
       icon: <Plus className="h-7 w-7 text-red-600" />,
       description:
-        "Click here to add a new time slot for the selected day. You can add multiple slots per day.",
+        "Click here to add time slots by specifying a range. Once slots are added, use the update button to modify the range or delete button to remove all slots.",
       focusRef: addSlotBtnRef,
       buttonLabel: "Finish",
     },
@@ -471,7 +473,7 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  // Updated blockDate function with immediate state updates
+  // Updated blockDate function with immediate state updates and fetchAvailabilityPatterns call
   const blockDate = async (
     date: Date,
     reason: string,
@@ -519,8 +521,7 @@ const ExpertAvailabilityManager = () => {
                   ...slot,
                   available: false,
                   reason,
-                  blockid:
-                    response.data?.blockId || slot.blockid || generateId(),
+                  blockid: response.data?.id || slot.blockid || generateId(),
                 };
               }
               return slot;
@@ -547,6 +548,9 @@ const ExpertAvailabilityManager = () => {
           }),
         }));
 
+        // Fetch availability patterns after blocking a specific time slot
+        fetchAvailabilityPatterns();
+
         Swal.fire(
           "Success",
           `Time slot from ${formatTimeForDisplay(
@@ -560,17 +564,40 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  const addTimeSlot = async (slot: Omit<TimeSlot, "id" | "available">) => {
+  const generateTimeSlots = (
+    startTime: string,
+    endTime: string
+  ): { startTime: string; endTime: string }[] => {
+    // Return a single slot with the exact start and end times selected by the user
+    return [{ startTime, endTime }];
+  };
+
+  // This function works like the original addTimeSlot - adds multiple slots based on range
+  const addTimeSlots = async () => {
     try {
+      const generatedSlots = generateTimeSlots(
+        newSlotStartTime,
+        newSlotEndTime
+      );
+
+      if (generatedSlots.length === 0) {
+        Swal.fire(
+          "Error",
+          "No valid time slots could be generated with the specified range.",
+          "error"
+        );
+        return false;
+      }
+
+      // Use the same logic as the original working version
       const payload = {
-        availabilities: [
-          {
-            dayOfWeek: dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-          },
-        ],
+        availabilities: generatedSlots.map((slot) => ({
+          dayOfWeek: dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        })),
       };
+
       await axiosInstance.post(`${API_BASE_URL}`, payload);
       setMonthlyAvailability((prev) => ({
         ...prev,
@@ -582,78 +609,134 @@ const ExpertAvailabilityManager = () => {
       fetchCalendarSlotsForMonth();
       Swal.fire(
         "Success",
-        `New slot from ${formatTimeForDisplay(
-          slot.startTime
-        )} to ${formatTimeForDisplay(slot.endTime)} added.`,
+        `${
+          generatedSlots.length
+        } time slots (30 minutes each) added from ${formatTimeForDisplay(
+          newSlotStartTime
+        )} to ${formatTimeForDisplay(newSlotEndTime)}.`,
         "success"
       );
       return true;
     } catch (error) {
-      Swal.fire("Error", "Failed to add time slot", "error");
+      Swal.fire("Error", "Failed to add time slots", "error");
       return false;
     }
   };
 
-  const updateTimeSlot = async (
-    slotId: string,
-    startTime: string,
-    endTime: string
-  ) => {
+  // Update time slots - delete existing and add new ones
+  const updateTimeSlots = async () => {
     try {
-      const pattern = availabilityPatterns.find(
-        (p) =>
-          p.dayOfWeek === selectedDate.getDay() &&
-          p.startTime === editingSlot?.startTime &&
-          p.endTime === editingSlot?.endTime
+      // First delete all existing patterns for this day
+      const dayOfWeek = selectedDate.getDay();
+      const patternsToDelete = availabilityPatterns.filter(
+        (pattern) => pattern.dayOfWeek === dayOfWeek
       );
-      if (!pattern?.id) throw new Error("Could not find matching pattern");
-      const payload = [
-        {
-          id: pattern.id,
-          dayOfWeek: pattern.dayOfWeek,
-          startTime: startTime,
-          endTime: endTime,
-        },
-      ];
-      await axiosInstance.patch(`${API_BASE_URL}`, payload);
+
+      if (patternsToDelete.length > 0) {
+        const deletePayload = {
+          ids: patternsToDelete.map((pattern) => pattern.id).filter(Boolean),
+        };
+        await axiosInstance.delete(`${API_BASE_URL}`, { data: deletePayload });
+      }
+
+      // Then add new slots with the updated range
+      const generatedSlots = generateTimeSlots(
+        newSlotStartTime,
+        newSlotEndTime
+      );
+
+      if (generatedSlots.length === 0) {
+        Swal.fire(
+          "Error",
+          "No valid time slots could be generated with the specified range.",
+          "error"
+        );
+        return false;
+      }
+
+      const payload = {
+        availabilities: generatedSlots.map((slot) => ({
+          dayOfWeek: dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+        })),
+      };
+
+      await axiosInstance.post(`${API_BASE_URL}`, payload);
+
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
       fetchCalendarSlotsForMonth();
+
       Swal.fire(
         "Success",
-        `Slot updated to ${formatTimeForDisplay(
-          startTime
-        )} - ${formatTimeForDisplay(endTime)}.`,
+        `Time slots updated! ${
+          generatedSlots.length
+        } slots (30 minutes each) now available from ${formatTimeForDisplay(
+          newSlotStartTime
+        )} to ${formatTimeForDisplay(newSlotEndTime)}.`,
         "success"
       );
       return true;
     } catch (error) {
-      Swal.fire("Error", "Failed to update time slot", "error");
+      Swal.fire("Error", "Failed to update time slots", "error");
       return false;
     }
   };
 
-  const deleteTimeSlot = async (slotId: string) => {
+  // Delete all time slots for the selected day
+  const deleteAllTimeSlots = async () => {
     try {
-      console.log(timeSlots);
-      const slot = timeSlots.find((s) => s.id === slotId);
-      if (!slot) return false;
-      const pattern = availabilityPatterns.find((p) => (p.ids = slotId));
-      if (!pattern?.id) throw new Error("Could not find matching pattern");
-      const payload = { ids: [pattern.id] };
+      const dayOfWeek = selectedDate.getDay();
+      const patternsToDelete = availabilityPatterns.filter(
+        (pattern) => pattern.dayOfWeek === dayOfWeek
+      );
+
+      if (patternsToDelete.length === 0) {
+        Swal.fire(
+          "Info",
+          "No time slots found to delete for this day.",
+          "info"
+        );
+        return false;
+      }
+
+      const result = await Swal.fire({
+        title: "Delete All Time Slots?",
+        text: `This will delete all time slots for ${dayOfWeekReverseMap[dayOfWeek]}s. This action cannot be undone.`,
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#dc2626",
+        cancelButtonColor: "#6b7280",
+        confirmButtonText: "Yes, delete all slots",
+        cancelButtonText: "Cancel",
+      });
+
+      if (!result.isConfirmed) return false;
+
+      const payload = {
+        ids: patternsToDelete.map((pattern) => pattern.id).filter(Boolean),
+      };
+
       await axiosInstance.delete(`${API_BASE_URL}`, { data: payload });
+
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
       fetchCalendarSlotsForMonth();
-      Swal.fire("Success", "The time slot has been deleted.", "success");
+
+      Swal.fire(
+        "Success",
+        "All time slots have been deleted for this day.",
+        "success"
+      );
       return true;
     } catch (error) {
-      Swal.fire("Error", "Failed to delete time slot", "error");
+      Swal.fire("Error", "Failed to delete time slots", "error");
       return false;
     }
   };
 
-  // Updated unblockTimeSlot function with immediate state updates
+  // Updated unblockTimeSlot function with fetchAvailabilityPatterns call
   const unblockTimeSlot = async (blockid: string) => {
     if (!blockid) {
       Swal.fire("Error", "Block ID is missing for this slot.", "error");
@@ -703,15 +786,14 @@ const ExpertAvailabilityManager = () => {
         }),
       }));
 
+      // Fetch availability patterns after unblocking
+      fetchAvailabilityPatterns();
+
       Swal.fire(
         "Success",
         "Time slot has been unblocked and is now available.",
         "success"
       );
-
-      // Optionally refetch data to ensure consistency (but state is already updated)
-      // fetchTimeSlotsForSelectedDate();
-      // fetchCalendarSlotsForMonth();
     } catch (err: any) {
       Swal.fire(
         "Error",
@@ -895,102 +977,48 @@ const ExpertAvailabilityManager = () => {
     setBlockingTimeSlot(null);
   };
 
-  const handleAddTimeSlot = () => {
+  const handleAddTimeSlots = () => {
     if (newSlotStartTime >= newSlotEndTime) {
       Swal.fire("Error", "End time must be after start time.", "error");
       return;
     }
-    const isOverlapping = timeSlots.some((slot) => {
-      return (
-        (newSlotStartTime >= slot.startTime &&
-          newSlotStartTime < slot.endTime) ||
-        (newSlotEndTime > slot.startTime && newSlotEndTime <= slot.endTime) ||
-        (newSlotStartTime <= slot.startTime && newSlotEndTime >= slot.endTime)
-      );
-    });
-    if (isOverlapping) {
-      Swal.fire(
-        "Error",
-        "This time slot overlaps with an existing slot.",
-        "error"
-      );
-      return;
-    }
-    const newSlot = {
-      date: formatDateString(selectedDate),
-      startTime: newSlotStartTime,
-      endTime: newSlotEndTime,
-      blockid: "",
-    };
-    addTimeSlot(newSlot).then((success) => {
+    addTimeSlots().then((success) => {
       if (success) {
         setNewSlotStartTime("09:00");
-        setNewSlotEndTime("09:30");
+        setNewSlotEndTime("17:00");
         setAddSlotDialogOpen(false);
       }
     });
   };
 
-  const handleDeleteTimeSlot = (slotId: string) => {
-    const slotToDelete = timeSlots.find((slot) => slot.id === slotId);
-    if (slotToDelete && !slotToDelete.available) {
-      Swal.fire(
-        "Error",
-        "This time slot is already booked by a player.",
-        "error"
-      );
-      return;
-    }
-    console.log(slotId);
-    deleteTimeSlot(slotId);
-  };
-
-  const handleEditTimeSlot = (slot: TimeSlot) => {
-    if (!slot.available) {
-      Swal.fire(
-        "Error",
-        "This time slot is already booked by a player.",
-        "error"
-      );
-      return;
-    }
-    setEditingSlot(slot);
-  };
-
-  const handleSaveTimeSlot = (
-    slotId: string,
-    startTime: string,
-    endTime: string
-  ) => {
-    if (startTime >= endTime) {
+  const handleUpdateTimeSlots = () => {
+    if (newSlotStartTime >= newSlotEndTime) {
       Swal.fire("Error", "End time must be after start time.", "error");
       return;
     }
-    const isOverlapping = timeSlots.some((slot) => {
-      if (slot.id === slotId) return false;
-      return (
-        (startTime >= slot.startTime && startTime < slot.endTime) ||
-        (endTime > slot.startTime && endTime <= slot.endTime) ||
-        (startTime <= slot.startTime && endTime >= slot.endTime)
-      );
-    });
-    if (isOverlapping) {
-      Swal.fire(
-        "Error",
-        "This time slot overlaps with an existing slot.",
-        "error"
-      );
-      return;
-    }
-    updateTimeSlot(slotId, startTime, endTime).then((success) => {
+    updateTimeSlots().then((success) => {
       if (success) {
-        setEditingSlot(null);
+        setNewSlotStartTime("09:00");
+        setNewSlotEndTime("17:00");
+        setUpdateSlotDialogOpen(false);
       }
     });
   };
 
-  const handleCancelEdit = () => {
-    setEditingSlot(null);
+  const handleDeleteAllTimeSlots = () => {
+    deleteAllTimeSlots();
+  };
+
+  const handleOpenUpdateDialog = () => {
+    // Set current time range based on existing slots
+    if (timeSlots.length > 0) {
+      const sortedSlots = [...timeSlots].sort((a, b) =>
+        a.startTime.localeCompare(b.startTime)
+      );
+      setNewSlotStartTime(sortedSlots[0].startTime);
+      setNewSlotEndTime(sortedSlots[sortedSlots.length - 1].endTime);
+    }
+    setUpdateSlotDialogOpen(true);
   };
 
   const generateCalendarDays = () => {
@@ -1018,6 +1046,7 @@ const ExpertAvailabilityManager = () => {
 
   const calendarDays = generateCalendarDays();
   const groupedTimeSlots = groupTimeSlotsByHour();
+  const hasTimeSlots = timeSlots.length > 0;
 
   return (
     <div className="container mx-auto py-6">
@@ -1031,10 +1060,10 @@ const ExpertAvailabilityManager = () => {
       <div className="flex flex-col space-y-6">
         <h1 className="text-2xl font-bold">Manage Your Availability</h1>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
             <TabsTrigger value="list">List View</TabsTrigger>
-            <TabsTrigger value="bulk">Bulk Edit</TabsTrigger>
+            {/* <TabsTrigger value="bulk">Bulk Edit</TabsTrigger> */}
           </TabsList>
           <TabsContent value="calendar" className="space-y-6">
             <Card>
@@ -1227,89 +1256,129 @@ const ExpertAvailabilityManager = () => {
                     />
                   </div>
 
-                  <Dialog
-                    open={addSlotDialogOpen}
-                    onOpenChange={setAddSlotDialogOpen}
-                  >
-                    <DialogTrigger asChild>
-                      <Button
-                        ref={addSlotBtnRef}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center"
-                        disabled={!selectedDayAvailability}
-                      >
-                        <Plus className="h-4 w-4 mr-1" />
-                        Add Time Slot
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Add New Time Slot</DialogTitle>
-                        <DialogDescription>
-                          Create a new availability slot for{" "}
-                          {selectedDate.toLocaleDateString("en-US", {
-                            weekday: "long",
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          })}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="start-time">Start Time</Label>
-                            <Select
-                              value={newSlotStartTime}
-                              onValueChange={setNewSlotStartTime}
-                            >
-                              <SelectTrigger id="start-time">
-                                <SelectValue placeholder="Select start time" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {timeOptions.map((time) => (
-                                  <SelectItem
-                                    key={`start-${time}`}
-                                    value={time}
-                                  >
-                                    {formatTimeForDisplay(time)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="end-time">End Time</Label>
-                            <Select
-                              value={newSlotEndTime}
-                              onValueChange={setNewSlotEndTime}
-                            >
-                              <SelectTrigger id="end-time">
-                                <SelectValue placeholder="Select end time" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {timeOptions.map((time) => (
-                                  <SelectItem key={`end-${time}`} value={time}>
-                                    {formatTimeForDisplay(time)}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-                      </div>
-                      <DialogFooter>
+                  <div className="flex items-center space-x-2">
+                    {hasTimeSlots ? (
+                      <>
                         <Button
+                          ref={updateSlotBtnRef}
                           variant="outline"
-                          onClick={() => setAddSlotDialogOpen(false)}
+                          size="sm"
+                          className="flex items-center"
+                          disabled={!selectedDayAvailability}
+                          onClick={handleOpenUpdateDialog}
                         >
-                          Cancel
+                          <Edit className="h-4 w-4 mr-1" />
+                          Update Slots
                         </Button>
-                        <Button onClick={handleAddTimeSlot}>Add Slot</Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
+                        <Button
+                          ref={addSlotBtnRef}
+                          variant="destructive"
+                          size="sm"
+                          className="flex items-center"
+                          disabled={!selectedDayAvailability}
+                          onClick={handleDeleteAllTimeSlots}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete All Slots
+                        </Button>
+                      </>
+                    ) : (
+                      <Dialog
+                        open={addSlotDialogOpen}
+                        onOpenChange={setAddSlotDialogOpen}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            ref={addSlotBtnRef}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center"
+                            disabled={!selectedDayAvailability}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add Time Slots
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Add Time Slots</DialogTitle>
+                            <DialogDescription>
+                              Create 30-minute time slots by specifying a range
+                              for{" "}
+                              {selectedDate.toLocaleDateString("en-US", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="start-time">Start Time</Label>
+                                <Select
+                                  value={newSlotStartTime}
+                                  onValueChange={setNewSlotStartTime}
+                                >
+                                  <SelectTrigger id="start-time">
+                                    <SelectValue placeholder="Select start time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem
+                                        key={`start-${time}`}
+                                        value={time}
+                                      >
+                                        {formatTimeForDisplay(time)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="end-time">End Time</Label>
+                                <Select
+                                  value={newSlotEndTime}
+                                  onValueChange={setNewSlotEndTime}
+                                >
+                                  <SelectTrigger id="end-time">
+                                    <SelectValue placeholder="Select end time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem
+                                        key={`end-${time}`}
+                                        value={time}
+                                      >
+                                        {formatTimeForDisplay(time)}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              This will create 30-minute slots between{" "}
+                              {formatTimeForDisplay(newSlotStartTime)} and{" "}
+                              {formatTimeForDisplay(newSlotEndTime)}.
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setAddSlotDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button onClick={handleAddTimeSlots}>
+                              Add Slots
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
                 </div>
 
                 {loading ? (
@@ -1329,7 +1398,7 @@ const ExpertAvailabilityManager = () => {
                     <Clock className="h-10 w-10 mb-2" />
                     <p>No time slots available</p>
                     <p className="text-sm">
-                      Click the "Add Time Slot" button to create slots.
+                      Click the "Add Time Slots" button to create slots.
                     </p>
                   </div>
                 ) : (
@@ -1353,202 +1422,75 @@ const ExpertAvailabilityManager = () => {
                                 }
                               `}
                             >
-                              {editingSlot?.id === slot.id ? (
-                                <div className="flex flex-col space-y-2">
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <Select
-                                      value={editingSlot.startTime}
-                                      onValueChange={(value) =>
-                                        setEditingSlot({
-                                          ...editingSlot,
-                                          startTime: value,
-                                        })
-                                      }
-                                    >
-                                      <SelectTrigger
-                                        id={`edit-start-${slot.id}`}
-                                        className="h-8 text-xs"
-                                      >
-                                        <SelectValue placeholder="Start" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {timeOptions.map((time) => (
-                                          <SelectItem
-                                            key={`edit-start-${slot.id}-${time}`}
-                                            value={time}
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <span className="text-sm font-medium">
+                                    {formatTimeForDisplay(slot.startTime)} -{" "}
+                                    {formatTimeForDisplay(slot.endTime)}
+                                  </span>
+
+                                  {!slot.available && slot.blockid && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-red-600 hover:bg-green-50 ml-2"
+                                            onClick={() =>
+                                              unblockTimeSlot(slot.blockid)
+                                            }
                                           >
-                                            {formatTimeForDisplay(time)}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
+                                            <Unlock className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Unblock time slot</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
 
-                                    <Select
-                                      value={editingSlot.endTime}
-                                      onValueChange={(value) =>
-                                        setEditingSlot({
-                                          ...editingSlot,
-                                          endTime: value,
-                                        })
-                                      }
-                                    >
-                                      <SelectTrigger
-                                        id={`edit-end-${slot.id}`}
-                                        className="h-8 text-xs"
-                                      >
-                                        <SelectValue placeholder="End" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                        {timeOptions.map((time) => (
-                                          <SelectItem
-                                            key={`edit-end-${slot.id}-${time}`}
-                                            value={time}
-                                          >
-                                            {formatTimeForDisplay(time)}
-                                          </SelectItem>
-                                        ))}
-                                      </SelectContent>
-                                    </Select>
-                                  </div>
-
-                                  <div className="flex justify-end space-x-2">
-                                    <Button
-                                      variant="ghost"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={handleCancelEdit}
-                                    >
-                                      <X className="h-4 w-4" />
-                                    </Button>
-                                    <Button
-                                      variant="default"
-                                      size="icon"
-                                      className="h-7 w-7"
-                                      onClick={() =>
-                                        handleSaveTimeSlot(
-                                          slot.id || "",
-                                          editingSlot.startTime,
-                                          editingSlot.endTime
-                                        )
-                                      }
-                                    >
-                                      <Save className="h-4 w-4" />
-                                    </Button>
-                                  </div>
-                                </div>
-                              ) : (
-                                <div className="flex justify-between items-center">
-                                  <div>
-                                    <span className="text-sm font-medium">
-                                      {formatTimeForDisplay(slot.startTime)} -{" "}
-                                      {formatTimeForDisplay(slot.endTime)}
-                                    </span>
-
-                                    {!slot.available && slot.blockid && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-7 w-7 text-red-600 hover:bg-green-50 ml-2"
-                                              onClick={() =>
-                                                unblockTimeSlot(slot.blockid)
-                                              }
-                                            >
-                                              <Unlock className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Unblock time slot</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
-
-                                    {slot.reason && (
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <div className="inline-block ml-1">
-                                              <Info className="h-4 w-4 text-gray-400 inline-block" />
-                                            </div>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Reason: {slot.reason}</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    )}
-                                  </div>
-
-                                  {slot.available && (
-                                    <div className="flex space-x-1">
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-7 w-7"
-                                              onClick={() =>
-                                                handleEditTimeSlot(slot)
-                                              }
-                                            >
-                                              <Edit className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Edit time slot</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-7 w-7 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
-                                              onClick={() =>
-                                                handleBlockTimeSlot(slot)
-                                              }
-                                            >
-                                              <AlertCircle className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Block time slot</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-
-                                      <TooltipProvider>
-                                        <Tooltip>
-                                          <TooltipTrigger asChild>
-                                            <Button
-                                              variant="ghost"
-                                              size="icon"
-                                              className="h-7 w-7 text-red-500 hover:text-red-600 hover:bg-red-50"
-                                              onClick={() =>
-                                                handleDeleteTimeSlot(
-                                                  slot.id || ""
-                                                )
-                                              }
-                                            >
-                                              <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Delete time slot</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      </TooltipProvider>
-                                    </div>
+                                  {slot.reason && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="inline-block ml-1">
+                                            <Info className="h-4 w-4 text-gray-400 inline-block" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Reason: {slot.reason}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
                                   )}
                                 </div>
-                              )}
+
+                                {slot.available && (
+                                  <div className="flex space-x-1">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
+                                            onClick={() =>
+                                              handleBlockTimeSlot(slot)
+                                            }
+                                          >
+                                            <AlertCircle className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Block time slot</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </div>
+                                )}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1616,6 +1558,81 @@ const ExpertAvailabilityManager = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Update Slots Dialog */}
+      <Dialog
+        open={updateSlotDialogOpen}
+        onOpenChange={setUpdateSlotDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Time Slots</DialogTitle>
+            <DialogDescription>
+              Update the time range for 30-minute slots on{" "}
+              {selectedDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="update-start-time">Start Time</Label>
+                <Select
+                  value={newSlotStartTime}
+                  onValueChange={setNewSlotStartTime}
+                >
+                  <SelectTrigger id="update-start-time">
+                    <SelectValue placeholder="Select start time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((time) => (
+                      <SelectItem key={`update-start-${time}`} value={time}>
+                        {formatTimeForDisplay(time)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="update-end-time">End Time</Label>
+                <Select
+                  value={newSlotEndTime}
+                  onValueChange={setNewSlotEndTime}
+                >
+                  <SelectTrigger id="update-end-time">
+                    <SelectValue placeholder="Select end time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((time) => (
+                      <SelectItem key={`update-end-${time}`} value={time}>
+                        {formatTimeForDisplay(time)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="text-sm text-gray-600">
+              This will replace all existing slots with new 30-minute slots
+              between {formatTimeForDisplay(newSlotStartTime)} and{" "}
+              {formatTimeForDisplay(newSlotEndTime)}.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setUpdateSlotDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateTimeSlots}>Update Slots</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={blockReasonDialogOpen}
