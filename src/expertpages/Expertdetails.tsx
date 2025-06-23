@@ -41,10 +41,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
   const dispatch = useAppDispatch();
 
   // About Me state
-  const [aboutMe, setAboutMe] = useState(
-    expertData.about ||
-      "I am from London, UK. A passionate, versatile expert bringing years of experience to help players improve their skills and reach their potential."
-  );
+  const [aboutMe, setAboutMe] = useState(expertData.about || "");
   const [isEditingAbout, setIsEditingAbout] = useState(false);
 
   // State for See More functionality in About Me section

@@ -528,10 +528,8 @@ const PlayerProfiles: React.FC = () => {
                 }`.trim();
 
                 // Calculate rating and reviews count (or use defaults)
-                const rating =
-                  profile.rating || Math.floor(Math.random() * 2) + 3.5;
-                const reviews =
-                  profile.reviews || Math.floor(Math.random() * 150) + 50;
+                const rating = profile.rating || 0;
+                const reviews = profile.reviews || 0;
 
                 // Use photo from profile or fallback to default images
                 const profileImage = profile.photo || avatar;
@@ -553,7 +551,7 @@ const PlayerProfiles: React.FC = () => {
                   >
                     <div className="relative">
                       <img
-                        className="w-full h-40 sm:h-50 p-2 rounded-lg object-cover"
+                        className="w-full h-50 sm:h-56 p-2 rounded-lg object-contain"
                         src={profileImage || avatar}
                         alt={displayName}
                         onError={(e) => {
@@ -562,7 +560,7 @@ const PlayerProfiles: React.FC = () => {
                         }}
                       />
                     </div>
-                    <CardHeader className="p-3 sm:p-4 pb-0">
+                    <CardHeader className="px-3 sm:px-4 pb-0">
                       <h3 className="text-base sm:text-lg font-semibold line-clamp-1">
                         {displayName}
                       </h3>
@@ -588,7 +586,7 @@ const PlayerProfiles: React.FC = () => {
                           : ""}
                       </p>
                     </CardHeader>
-                    <CardContent className="px-2 sm:px-3">
+                    <CardContent className="px-2 sm:px-3 -mt-4">
                       <div className="flex justify-between items-center">
                         <div className="flex items-center">
                           <span className="text-yellow-300 text-sm sm:text-lg">
@@ -610,7 +608,7 @@ const PlayerProfiles: React.FC = () => {
                         </div>
                       </div>
                     </CardContent>
-                    <CardFooter className="p-3 sm:p-4 pt-0">
+                    <CardFooter className="px-3 sm:px-4 pt-0">
                       <Button
                         className="w-full bg-red-600 hover:bg-red-700 text-white cursor-pointer text-xs sm:text-sm py-2"
                         onClick={() => handleViewProfile(profile)}
