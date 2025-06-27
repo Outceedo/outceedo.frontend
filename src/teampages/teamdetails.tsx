@@ -173,91 +173,95 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
   };
 
   return (
-    <div className="space-y-6 mt-6">
-      {/* About Team Card */}
-      <Card className="w-full">
-        <CardContent className="p-4">
-          <div className="flex items-start mb-2">
-            <h2 className="text-md font-semibold">About Team</h2>
+   <div className="space-y-6 mt-6">
+  {/* About Team Card */}
+  <Card className="w-full">
+    <CardContent className="p-4 sm:p-6">
+      {/* Header: Title + Edit Button */}
+      <div className="flex items-start sm:items-center gap-2 sm:gap-4 mb-2 flex-wrap">
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">
+          About Team
+        </h2>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="ml-auto"
+          onClick={() => setIsEditingAbout(true)}
+        >
+          <Pencil className="w-4 h-4" />
+        </Button>
+      </div>
+
+      {/* Editing View */}
+      {isEditingAbout ? (
+        <>
+          <Textarea
+            className="min-h-[100px] w-full"
+            value={aboutTeam}
+            onChange={(e) => setAboutTeam(e.target.value)}
+            disabled={isSubmitting}
+            placeholder="Write about your team..."
+          />
+          <div className="flex flex-wrap justify-end gap-2 mt-3">
             <Button
-              variant="ghost"
-              size="icon"
-              className="ml-auto"
-              onClick={() => setIsEditingAbout(true)}
+              variant="outline"
+              onClick={cancelAboutEdit}
+              disabled={isSubmitting}
             >
-              <Pencil className="w-4 h-4" />
+              <X className="w-4 h-4 mr-1" /> Cancel
+            </Button>
+            <Button
+              onClick={handleSaveAbout}
+              className="bg-red-600 text-white"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
+                  <span>Saving...</span>
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-1" /> Save
+                </>
+              )}
             </Button>
           </div>
-          {isEditingAbout ? (
-            <>
-              <Textarea
-                className="min-h-[100px]"
-                value={aboutTeam}
-                onChange={(e) => setAboutTeam(e.target.value)}
-                disabled={isSubmitting}
-                placeholder="Write about your team..."
-              />
-              <div className="flex justify-end gap-2 mt-2">
-                <Button
-                  variant="outline"
-                  onClick={cancelAboutEdit}
-                  disabled={isSubmitting}
-                >
-                  <X className="w-4 h-4 mr-1" /> Cancel
-                </Button>
-                <Button
-                  onClick={handleSaveAbout}
-                  className="bg-red-600"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin h-4 w-4 mr-2 border-2 border-t-transparent border-white rounded-full"></div>
-                      <span>Saving...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Save className="w-4 h-4 mr-1" /> Save
-                    </>
-                  )}
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="relative">
-              <p
-                ref={bioTextRef}
-                className={`text-sm text-gray-700 ${
-                  !expanded && isBioLong ? "line-clamp-3" : ""
-                }`}
-                style={{ whiteSpace: "pre-line" }}
-              >
-                {aboutTeam || "No team information available."}
-              </p>
+        </>
+      ) : (
+        <div className="relative mt-2">
+          <p
+            ref={bioTextRef}
+            className={`text-sm sm:text-base text-gray-700 dark:text-gray-200 ${
+              !expanded && isBioLong ? "line-clamp-3" : ""
+            }`}
+            style={{ whiteSpace: "pre-line" }}
+          >
+            {aboutTeam || "No team information available."}
+          </p>
 
-              {isBioLong && (
-                <Button
-                  variant="link"
-                  className="mt-1 text-red-600 p-0 h-auto text-sm flex items-center w-full"
-                  onClick={toggleBioExpand}
-                >
-                  {expanded ? (
-                    <>
-                      Read Less <ChevronUp className="ml-1 h-4 w-4" />
-                    </>
-                  ) : (
-                    <>
-                      Read More <ChevronDown className="ml-1 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
+          {isBioLong && (
+            <Button
+              variant="link"
+              className="mt-1 text-red-600 p-0 h-auto text-sm flex items-center w-full"
+              onClick={toggleBioExpand}
+            >
+              {expanded ? (
+                <>
+                  Read Less <ChevronUp className="ml-1 h-4 w-4" />
+                </>
+              ) : (
+                <>
+                  Read More <ChevronDown className="ml-1 h-4 w-4" />
+                </>
               )}
-            </div>
+            </Button>
           )}
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      )}
+    </CardContent>
+  </Card>
+</div>
   );
 };
-
 export default TeamDetails;

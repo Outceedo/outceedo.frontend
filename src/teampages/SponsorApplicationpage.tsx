@@ -124,252 +124,252 @@ const SponsorApplicationpage = () => {
   };
 
   return (
-    <div className="p-6 ">
-      <div className="flex gap-4 mb-4">
-        <div className="relative w-1/3">
-          <FontAwesomeIcon
-            icon={faSearch}
-            className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
-          />
-          <Input
-            placeholder="Application ID | Search "
-            className="pl-10 w-full"
-            value={search}
-            onChange={handleSearchChange}
-          />
-        </div>
-
-        <Select onValueChange={handleStatusChange}>
-          <SelectTrigger className="w-1/3">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="All">All</SelectItem>
-            <SelectItem value="ACCEPTED">Sponsored</SelectItem>
-            <SelectItem value="SUBMITTED">Pending</SelectItem>
-            <SelectItem value="REJECTED">Disapproved</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="dark:bg-gray-800">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Application ID</TableHead>
-              <TableHead>Applicant Name and Sponsor Type</TableHead>
-              <TableHead>Application Date</TableHead>
-              <TableHead>Sponsorship Type</TableHead>
-              <TableHead>Budget</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Application View</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {applications.map((app) => (
-              <TableRow key={app.id}>
-                <TableCell>{app.id}</TableCell>
-                <TableCell className="flex items-center gap-3">
-                  <Avatar>
-                    <AvatarImage src={app.user?.photo} />
-                    <AvatarFallback>
-                      {app.user?.firstName?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span
-                    className="cursor-pointer text-blue-600 hover:underline"
-                    onClick={() => navigate(`/team/Sponsorinfo`)}
-                  >
-                    {app.user
-                      ? app.user.firstName + " " + app.user.lastName
-                      : "-"}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {app.createdAt
-                    ? new Date(app.createdAt).toLocaleDateString("en-GB", {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "-"}
-                </TableCell>
-                <TableCell>{app.sponsorshipType || "-"}</TableCell>
-                <TableCell>-</TableCell>
-                <TableCell>
-                  <span
-                    className={`text-sm px-2 py-1 rounded ${getBadgeColor(
-                      app.status
-                    )}`}
-                  >
-                    {statusToDisplay(app.status)}
-                  </span>
-                </TableCell>
-                <TableCell className="flex items-center gap-2">
-                  <Circle
-                    size={10}
-                    className={getStatusDot(
-                      stateToDisplay(app.status).toUpperCase()
-                    )}
-                  />
-                  <span>{stateToDisplay(app.status)}</span>
-                </TableCell>
-                <TableCell
-                  className="text-blue-500 hover:underline cursor-pointer"
-                  onClick={() => openReportModal(app)}
-                >
-                  {app.user
-                    ? `${app.user.firstName}${app.user.lastName}.application`
-                    : "View"}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        {/* Pagination */}
-        <div className="flex justify-end mt-4 gap-2">
-          <button
-            className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => Math.max(p - 1, 1))}
-          >
-            Previous
-          </button>
-          <span className="px-2 pt-1">
-            {page} / {totalPages}
-          </span>
-          <button
-            className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-          >
-            Next
-          </button>
-        </div>
-      </div>
-
-      {/* Modal for Application Details */}
-      {isReportOpen && modalData && (
-        <div className="fixed inset-0 z-50 bg-white flex flex-col dark:bg-gray-800">
-          <div className="flex justify-end p-4">
-            <button onClick={closeReportModal}>
-              <X className="w-7 h-7 cursor-pointer text-gray-800 hover:text-black dark:text-white" />
-            </button>
-          </div>
-          <div className="flex-1 overflow-auto max-w-2xl mx-auto py-6 px-8">
-            <h2 className="text-2xl font-bold mb-4">Application Details</h2>
-            <div className="mb-4 flex items-center gap-4">
-              <Avatar className="w-16 h-16">
-                <AvatarImage src={modalData.user?.photo} />
-                <AvatarFallback>
-                  {modalData.user?.firstName?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="text-lg font-semibold">
-                  {modalData.user
-                    ? modalData.user.firstName + " " + modalData.user.lastName
-                    : "-"}
-                </div>
-                <div className="text-gray-500">
-                  Username: {modalData.user?.username || "-"}
-                </div>
-                <div className="text-gray-500">
-                  Application ID: {modalData.id}
-                </div>
-                <div className="text-gray-500">
-                  Date:{" "}
-                  {modalData.createdAt
-                    ? new Date(modalData.createdAt).toLocaleDateString(
-                        "en-GB",
-                        {
-                          day: "2-digit",
-                          month: "short",
-                          year: "numeric",
-                        }
-                      )
-                    : "-"}
-                </div>
-              </div>
-            </div>
-            <hr className="mb-4" />
-            <div className="space-y-2">
-              <div>
-                <span className="font-semibold">Sponsorship Type: </span>
-                {modalData.sponsorshipType || "-"}
-              </div>
-              <div>
-                <span className="font-semibold">Reason for Sponsorship: </span>
-                {modalData.reason || "-"}
-              </div>
-              <div>
-                <span className="font-semibold">
-                  What makes you/your team stand out:{" "}
-                </span>
-                {modalData.uniqueFactor || "-"}
-              </div>
-              <div>
-                <span className="font-semibold">Additional Info: </span>
-                {modalData.additionalInfo || "-"}
-              </div>
-              <div>
-                <span className="font-semibold">Profile/Website: </span>
-                <a
-                  href={
-                    modalData.website && !modalData.website.startsWith("http")
-                      ? `https://${modalData.website}`
-                      : modalData.website
-                  }
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 underline break-all"
-                >
-                  {modalData.website || "-"}
-                </a>
-              </div>
-              <div>
-                <span className="font-semibold">Status: </span>
-                <span
-                  className={`inline-block px-2 py-1 rounded ${getBadgeColor(
-                    modalData.status
-                  )}`}
-                >
-                  {statusToDisplay(modalData.status)}
-                </span>
-              </div>
-            </div>
-            <hr className="my-4" />
-            <div className="flex gap-4 items-center">
-              <Avatar className="w-12 h-12">
-                <AvatarImage src={modalData.sponsor?.photo} />
-                <AvatarFallback>
-                  {modalData.sponsor?.firstName?.charAt(0)}
-                </AvatarFallback>
-              </Avatar>
-              <div>
-                <div className="font-semibold">
-                  Sponsor:{" "}
-                  {modalData.sponsor
-                    ? modalData.sponsor.firstName +
-                      " " +
-                      modalData.sponsor.lastName
-                    : "-"}
-                </div>
-                <div className="text-gray-500">
-                  {modalData.sponsor?.username && (
-                    <>
-                      Username: {modalData.sponsor.username}
-                      <br />
-                    </>
-                  )}
-                  Sponsor ID: {modalData.sponsor?.id}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+    <div className="p-4 sm:p-6">
+  {/* Search + Filter */}
+  <div className="flex flex-col sm:flex-row gap-4 mb-4">
+    <div className="relative w-full sm:w-1/3">
+      <FontAwesomeIcon
+        icon={faSearch}
+        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+      />
+      <Input
+        placeholder="Application ID | Search"
+        className="pl-10 w-full"
+        value={search}
+        onChange={handleSearchChange}
+      />
     </div>
+
+    <div className="w-full sm:w-1/3">
+      <Select onValueChange={handleStatusChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="All">All</SelectItem>
+          <SelectItem value="ACCEPTED">Sponsored</SelectItem>
+          <SelectItem value="SUBMITTED">Pending</SelectItem>
+          <SelectItem value="REJECTED">Disapproved</SelectItem>
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+
+  {/* Table */}
+  <div className="dark:bg-gray-800 overflow-x-auto rounded-md">
+    <Table className="min-w-[800px]">
+      <TableHeader>
+        <TableRow>
+          <TableHead>Application ID</TableHead>
+          <TableHead>Applicant Name</TableHead>
+          <TableHead>Application Date</TableHead>
+          <TableHead>Sponsorship Type</TableHead>
+          <TableHead>Budget</TableHead>
+          <TableHead>Action</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Application View</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {applications.map((app) => (
+          <TableRow key={app.id}>
+            <TableCell>{app.id}</TableCell>
+            <TableCell className="flex items-center gap-3">
+              <Avatar>
+                <AvatarImage src={app.user?.photo} />
+                <AvatarFallback>
+                  {app.user?.firstName?.charAt(0)}
+                </AvatarFallback>
+              </Avatar>
+              <span
+                className="cursor-pointer text-blue-600 hover:underline"
+                onClick={() => navigate(`/team/Sponsorinfo`)}
+              >
+                {app.user
+                  ? app.user.firstName + " " + app.user.lastName
+                  : "-"}
+              </span>
+            </TableCell>
+            <TableCell>
+              {app.createdAt
+                ? new Date(app.createdAt).toLocaleDateString("en-GB", {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  })
+                : "-"}
+            </TableCell>
+            <TableCell>{app.sponsorshipType || "-"}</TableCell>
+            <TableCell>-</TableCell>
+            <TableCell>
+              <span
+                className={`text-sm px-2 py-1 rounded ${getBadgeColor(
+                  app.status
+                )}`}
+              >
+                {statusToDisplay(app.status)}
+              </span>
+            </TableCell>
+            <TableCell className="flex items-center gap-2">
+              <Circle
+                size={10}
+                className={getStatusDot(
+                  stateToDisplay(app.status).toUpperCase()
+                )}
+              />
+              <span>{stateToDisplay(app.status)}</span>
+            </TableCell>
+            <TableCell
+              className="text-blue-500 hover:underline cursor-pointer"
+              onClick={() => openReportModal(app)}
+            >
+              {app.user
+                ? `${app.user.firstName}${app.user.lastName}.application`
+                : "View"}
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+
+    {/* Pagination */}
+    <div className="flex justify-end mt-4 gap-2 text-sm">
+      <button
+        className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+        disabled={page <= 1}
+        onClick={() => setPage((p) => Math.max(p - 1, 1))}
+      >
+        Previous
+      </button>
+      <span className="px-2 pt-1">
+        {page} / {totalPages}
+      </span>
+      <button
+        className="px-3 py-1 rounded bg-gray-200 disabled:opacity-50"
+        disabled={page >= totalPages}
+        onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
+      >
+        Next
+      </button>
+    </div>
+  </div>
+
+  {/* Modal */}
+  {isReportOpen && modalData && (
+    <div className="fixed inset-0 z-50 bg-white dark:bg-gray-900 bg-opacity-95 overflow-auto">
+      <div className="max-w-3xl mx-auto p-4 sm:p-6">
+        <div className="flex justify-end">
+          <button onClick={closeReportModal}>
+            <X className="w-6 h-6 text-gray-800 hover:text-black dark:text-white" />
+          </button>
+        </div>
+        <div className="mt-4">
+          <h2 className="text-2xl font-bold mb-4">Application Details</h2>
+          <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center mb-4">
+            <Avatar className="w-16 h-16">
+              <AvatarImage src={modalData.user?.photo} />
+              <AvatarFallback>
+                {modalData.user?.firstName?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="text-sm space-y-1">
+              <div className="font-semibold text-lg">
+                {modalData.user
+                  ? modalData.user.firstName + " " + modalData.user.lastName
+                  : "-"}
+              </div>
+              <div className="text-gray-500">
+                Username: {modalData.user?.username || "-"}
+              </div>
+              <div className="text-gray-500">
+                Application ID: {modalData.id}
+              </div>
+              <div className="text-gray-500">
+                Date:{" "}
+                {modalData.createdAt
+                  ? new Date(modalData.createdAt).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "-"}
+              </div>
+            </div>
+          </div>
+          <hr className="my-4" />
+          <div className="space-y-3 text-sm">
+            <div>
+              <strong>Sponsorship Type:</strong> {modalData.sponsorshipType || "-"}
+            </div>
+            <div>
+              <strong>Reason for Sponsorship:</strong> {modalData.reason || "-"}
+            </div>
+            <div>
+              <strong>What makes you/your team stand out:</strong>{" "}
+              {modalData.uniqueFactor || "-"}
+            </div>
+            <div>
+              <strong>Additional Info:</strong> {modalData.additionalInfo || "-"}
+            </div>
+            <div>
+              <strong>Profile/Website:</strong>{" "}
+              <a
+                href={
+                  modalData.website && !modalData.website.startsWith("http")
+                    ? `https://${modalData.website}`
+                    : modalData.website
+                }
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline break-words"
+              >
+                {modalData.website || "-"}
+              </a>
+            </div>
+            <div>
+              <strong>Status:</strong>{" "}
+              <span
+                className={`inline-block px-2 py-1 rounded ${getBadgeColor(
+                  modalData.status
+                )}`}
+              >
+                {statusToDisplay(modalData.status)}
+              </span>
+            </div>
+          </div>
+          <hr className="my-4" />
+          <div className="flex gap-4 items-center text-sm">
+            <Avatar className="w-12 h-12">
+              <AvatarImage src={modalData.sponsor?.photo} />
+              <AvatarFallback>
+                {modalData.sponsor?.firstName?.charAt(0)}
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <div className="font-semibold">
+                Sponsor:{" "}
+                {modalData.sponsor
+                  ? modalData.sponsor.firstName +
+                    " " +
+                    modalData.sponsor.lastName
+                  : "-"}
+              </div>
+              <div className="text-gray-500">
+                {modalData.sponsor?.username && (
+                  <>
+                    Username: {modalData.sponsor.username}
+                    <br />
+                  </>
+                )}
+                Sponsor ID: {modalData.sponsor?.id}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
   );
 };
 

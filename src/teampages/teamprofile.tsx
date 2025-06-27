@@ -132,152 +132,151 @@ const TeamProfile = () => {
       <>
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
-          <div>
-            <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold dark:text-white">
-                {data?.teamName ||
-                  (data?.firstName && data?.lastName
-                    ? `${data.firstName} ${data.lastName}`
-                    : fallbackData.teamName)}
-              </h1>
-            </div>
+  {/* Left Section: Info */}
+  <div className="w-full md:w-2/3">
+    <div className="flex items-center gap-3">
+      <h1 className="text-2xl font-bold dark:text-white">
+        {data?.teamName ||
+          (data?.firstName && data?.lastName
+            ? `${data.firstName} ${data.lastName}`
+            : fallbackData.teamName)}
+      </h1>
+    </div>
 
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  Sport
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.sport || fallbackData.profession}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  Country
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.country || fallbackData.country}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  City
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.city || fallbackData.city}
-                </span>
-              </div>
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  Type
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.profession || fallbackData.profession}
-                </span>
-              </div>
-            </div>
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
-              <div>
-                <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                  Club
-                </label>
-                <span className="font-semibold dark:text-white">
-                  {data?.club || fallbackData.club}
-                </span>
-              </div>
-            </div>
+    {/* Sport, Country, City, Type */}
+    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm text-gray-600">
+      <div>
+        <label className="block text-sm text-gray-500 dark:text-white mb-1">
+          Sport
+        </label>
+        <span className="font-semibold dark:text-white">
+          {data?.sport || fallbackData.profession}
+        </span>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-500 dark:text-white mb-1">
+          Country
+        </label>
+        <span className="font-semibold dark:text-white">
+          {data?.country || fallbackData.country}
+        </span>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-500 dark:text-white mb-1">
+          City
+        </label>
+        <span className="font-semibold dark:text-white">
+          {data?.city || fallbackData.city}
+        </span>
+      </div>
+      <div>
+        <label className="block text-sm text-gray-500 dark:text-white mb-1">
+          Type
+        </label>
+        <span className="font-semibold dark:text-white">
+          {data?.profession || fallbackData.profession}
+        </span>
+      </div>
+    </div>
 
-            {/* Social Links */}
-            <div className="mt-10 mb-5 flex gap-6">
-              {socialIcons.map(({ icon, link, bg }, index) => (
-                <a
-                  key={index}
-                  href={link !== "#" ? link : undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={
-                    link === "#" ? "opacity-50 cursor-not-allowed" : ""
-                  }
-                >
-                  <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
-                  >
-                    <FontAwesomeIcon
-                      icon={icon}
-                      className="w-6 h-6 text-white"
-                    />
-                  </div>
-                </a>
-              ))}
-            </div>
+    {/* Club */}
+    <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm text-gray-600">
+      <div>
+        <label className="block text-sm text-gray-500 dark:text-white mb-1">
+          Club
+        </label>
+        <span className="font-semibold dark:text-white">
+          {data?.club || fallbackData.club}
+        </span>
+      </div>
+    </div>
 
-            {/* Contact Information */}
-            <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-              {data?.email && (
-                <div>
-                  <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                    Email
-                  </label>
-                  <span className="font-semibold dark:text-white">
-                    {data.email}
-                  </span>
-                </div>
-              )}
-              {data?.phone && (
-                <div>
-                  <label className="block text-sm text-gray-500 dark:text-white mb-1">
-                    Phone
-                  </label>
-                  <span className="font-semibold dark:text-white">
-                    {data.countryCode && `${data.countryCode} `}
-                    {data.phone}
-                  </span>
-                </div>
-              )}
-            </div>
+    {/* Social Icons */}
+    <div className="mt-6 mb-5 flex flex-wrap gap-4">
+      {socialIcons.map(({ icon, link, bg }, index) => (
+        <a
+          key={index}
+          href={link !== "#" ? link : undefined}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={link === "#" ? "opacity-50 cursor-not-allowed" : ""}
+        >
+          <div
+            className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
+          >
+            <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
           </div>
+        </a>
+      ))}
+    </div>
 
-          <div className="rounded-md overflow-hidden mt-6 md:mt-0">
-            <img
-              src={data?.photo || fallbackData.photo}
-              alt="Team Photo"
-              width={350}
-              height={350}
-              className="rounded-md object-cover"
-              onError={(e) => {
-                // Fallback to default image if profile photo fails to load
-                e.currentTarget.src = teamImage;
-              }}
-            />
-          </div>
+    {/* Contact Info */}
+    <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+      {data?.email && (
+        <div>
+          <label className="block text-sm text-gray-500 dark:text-white mb-1">
+            Email
+          </label>
+          <span className="font-semibold dark:text-white">
+            {data.email}
+          </span>
         </div>
-
-        {/* Tabs Section */}
-        <div className="mt-6">
-          <div className="flex gap-4 border-b">
-            {(["details", "media"] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
-                  activeTab === tab
-                    ? "text-red-600 border-red-600"
-                    : "border-transparent text-gray-600 hover:text-red-600"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            {activeTab === "details" && <TeamDetails profileData={data} />}
-            {activeTab === "media" && <Mediaedit Data={data} />}
-          </div>
+      )}
+      {data?.phone && (
+        <div>
+          <label className="block text-sm text-gray-500 dark:text-white mb-1">
+            Phone
+          </label>
+          <span className="font-semibold dark:text-white">
+            {data.countryCode && `${data.countryCode} `}
+            {data.phone}
+          </span>
         </div>
-      </>
+      )}
+    </div>
+  </div>
+
+  {/* Right Section: Photo */}
+  <div className="rounded-md overflow-hidden mt-6 md:mt-0 md:ml-8 w-full md:w-1/3 max-w-xs">
+    <img
+      src={data?.photo || fallbackData.photo}
+      alt="Team Photo"
+      width={350}
+      height={350}
+      className="rounded-md object-cover w-full h-auto"
+      onError={(e) => {
+        e.currentTarget.src = teamImage;
+      }}
+    />
+  </div>
+</div>
+
+{/* Tabs Section */}
+<div className="mt-6">
+  <div className="flex gap-4 border-b overflow-x-auto">
+    {(["details", "media"] as const).map((tab) => (
+      <button
+        key={tab}
+        onClick={() => setActiveTab(tab)}
+        className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+          activeTab === tab
+            ? "text-red-600 border-red-600"
+            : "border-transparent text-gray-600 hover:text-red-600"
+        }`}
+      >
+        {tab}
+      </button>
+    ))}
+  </div>
+
+  <div className="mt-4">
+    {activeTab === "details" && <TeamDetails profileData={data} />}
+    {activeTab === "media" && <Mediaedit Data={data} />}
+  </div>
+</div>
+   </>
     );
   }
-};
+}
 
 export default TeamProfile;

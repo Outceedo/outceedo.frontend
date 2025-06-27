@@ -518,390 +518,394 @@ export default function TeamDetailsForm() {
   }
 
   return (
-    <div className="w-full px-20 mx-auto dark:bg-gray-900">
-      {error && (
-        <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
-          <p className="font-semibold">Error</p>
-          <p>{error}</p>
-          {Object.keys(validationErrors).length > 0 && (
-            <ul className="mt-2 list-disc pl-5">
-              {Object.entries(validationErrors).map(([field, message]) => (
-                <li key={field}>{message}</li>
-              ))}
+   <div className="w-full px-4 sm:px-8 md:px-16 lg:px-20 mx-auto dark:bg-gray-900">
+  {error && (
+    <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
+      <p className="font-semibold">Error</p>
+      <p>{error}</p>
+      {Object.keys(validationErrors).length > 0 && (
+        <ul className="mt-2 list-disc pl-5">
+          {Object.entries(validationErrors).map(([field, message]) => (
+            <li key={field}>{message}</li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )}
+  {success && (
+    <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
+      <p className="font-semibold">Success</p>
+      <p>{success}</p>
+    </div>
+  )}
+
+  <button
+    onClick={goBack}
+    className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
+  >
+    <MoveLeft className="w-5 h-5 mr-1" />
+  </button>
+
+  <div className="flex flex-col items-center mb-12">
+    <div className="flex w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl items-center relative">
+      {[1, 2].map((stepNum) => (
+        <React.Fragment key={stepNum}>
+          <div className="relative flex flex-col items-center w-1/4">
+            <div
+              className={`w-8 h-8 ${
+                step >= stepNum ? "bg-red-500" : "bg-gray-300"
+              } rounded-full flex items-center justify-center text-white font-bold text-sm`}
+            >
+              {stepNum}
+            </div>
+          </div>
+          {stepNum < 2 && (
+            <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-8 relative">
+              <div
+                className={`absolute top-0 left-0 h-1 rounded-full ${
+                  step > stepNum ? "bg-red-500 w-full" : "w-0"
+                } transition-all duration-500`}
+              ></div>
+            </div>
+          )}
+        </React.Fragment>
+      ))}
+    </div>
+    <div className="flex w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl justify-between mt-2">
+      <div className="w-1/4 text-center text-sm font-medium">
+        Profile Details
+      </div>
+      <div className="w-1/4 text-center text-sm font-medium">More Details</div>
+    </div>
+  </div>
+
+  {step === 1 && (
+    <>
+      <h2 className="text-lg sm:text-xl font-semibold mb-2">Profile Details</h2>
+      <Label className="text-sm text-gray-400 mb-1">PROFILE PICTURE</Label>
+      <Card className="border-dashed border border-gray-300 p-4 w-full sm:w-11/12 md:w-5/6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
+          {existingProfilePhoto && !profilePhoto && (
+            <img
+              src={existingProfilePhoto}
+              alt="Current profile"
+              className="h-10 w-10 object-cover rounded-full"
+            />
+          )}
+          <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
+            <span className="text-gray-500 text-xl">🖼️</span>
+          </div>
+          <span className="text-sm text-gray-700">
+            {profilePhoto
+              ? profilePhoto.name
+              : existingProfilePhoto
+              ? "Current profile photo"
+              : "Upload a profile picture. Max size 2MB"}
+          </span>
+          <label className="cursor-pointer px-4 py-2 bg-gray-100 border rounded text-sm text-gray-700 hover:bg-gray-200">
+            Browse
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileUpload}
+            />
+          </label>
+        </div>
+      </Card>
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mt-6">
+        <div>
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Team Name*
+          </label>
+          <Input
+            name="teamName"
+            value={form.teamName}
+            onChange={handleChange}
+            placeholder="Enter team name"
+            className={validationErrors.teamName ? "border-red-500" : ""}
+          />
+          {validationErrors.teamName && (
+            <p className="text-red-500 text-xs mt-1">
+              {validationErrors.teamName}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Sport*
+          </label>
+          <select
+            name="sport"
+            value={form.sport}
+            onChange={handleChange}
+            className={`border p-2 rounded text-sm text-gray-700 w-full ${
+              validationErrors.sport ? "border-red-500" : ""
+            }`}
+          >
+            <option value="">Select Sport</option>
+            <option value="football">Football</option>
+          </select>
+          {validationErrors.sport && (
+            <p className="text-red-500 text-xs mt-1">
+              {validationErrors.sport}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Email
+          </label>
+          <Input
+            name="email"
+            value={userData?.email || ""}
+            className="bg-gray-100 cursor-not-allowed"
+            readOnly
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Phone Number
+          </label>
+          <Input
+            value={userData?.mobileNumber}
+            className="w-full bg-gray-100 cursor-not-allowed"
+            readOnly
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Club Name
+          </label>
+          <Input
+            name="clubName"
+            value={form.clubName}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Type*
+          </label>
+          <select
+            name="type"
+            value={form.type}
+            onChange={handleChange}
+            className={`border p-2 rounded text-sm text-gray-700 w-full ${
+              validationErrors.type ? "border-red-500" : ""
+            }`}
+          >
+            <option value="">Select Type</option>
+            <option value="team">Team</option>
+            <option value="league">League</option>
+            <option value="club">Club</option>
+            <option value="academy">Academy</option>
+            <option value="athleticFacility">Athletic Facility</option>
+          </select>
+          {validationErrors.type && (
+            <p className="text-red-500 text-xs mt-1">
+              {validationErrors.type}
+            </p>
+          )}
+        </div>
+
+        <div className="relative">
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Country*
+          </label>
+          <Input
+            name="country"
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setShowCountryDropdown(true);
+            }}
+            onFocus={() => setShowCountryDropdown(true)}
+            placeholder="Search country"
+            className={validationErrors.country ? "border-red-500" : ""}
+          />
+          {validationErrors.country && (
+            <p className="text-red-500 text-xs mt-1">
+              {validationErrors.country}
+            </p>
+          )}
+          {showCountryDropdown && (
+            <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+              {countries
+                .filter((country) =>
+                  country.name.toLowerCase().includes(searchTerm.toLowerCase())
+                )
+                .map((country, index) => (
+                  <li
+                    key={index}
+                    onClick={() => handleCountrySelect(country)}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-200 flex items-center"
+                  >
+                    {country.name}
+                  </li>
+                ))}
             </ul>
           )}
         </div>
-      )}
-      {success && (
-        <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
-          <p className="font-semibold">Success</p>
-          <p>{success}</p>
+
+        <div className="relative">
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            City*
+          </label>
+          <Input
+            name="city"
+            value={citySearchTerm}
+            onChange={(e) => {
+              setCitySearchTerm(e.target.value);
+              setShowCityDropdown(true);
+            }}
+            onFocus={() => setShowCityDropdown(true)}
+            placeholder="Search city"
+            className={validationErrors.city ? "border-red-500" : ""}
+          />
+          {validationErrors.city && (
+            <p className="text-red-500 text-xs mt-1">
+              {validationErrors.city}
+            </p>
+          )}
+          {showCityDropdown && selectedCountry && (
+            <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+              {cities
+                .filter((city) =>
+                  city.name.toLowerCase().includes(citySearchTerm.toLowerCase())
+                )
+                .map((city, index) => (
+                  <li
+                    key={index}
+                    onClick={() => handleCitySelect(city.name)}
+                    className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                  >
+                    {city.name}
+                  </li>
+                ))}
+            </ul>
+          )}
         </div>
-      )}
-      <button
-        onClick={goBack}
-        className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
-      >
-        <MoveLeft className="w-5 h-5 mr-1" />
-      </button>
-      <div className="flex flex-col items-center mb-12">
-        <div className="flex w-full max-w-lg items-center relative">
-          {[1, 2].map((stepNum) => (
-            <React.Fragment key={stepNum}>
-              <div className="relative flex flex-col items-center w-1/4">
-                <div
-                  className={`w-8 h-8 ${
-                    step >= stepNum ? "bg-red-500" : "bg-gray-300"
-                  } rounded-full flex items-center justify-center text-white font-bold text-sm`}
-                >
-                  {stepNum}
-                </div>
-              </div>
-              {stepNum < 2 && (
-                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-14 relative">
-                  <div
-                    className={`absolute top-0 left-0 h-1 rounded-full ${
-                      step > stepNum ? "bg-red-500 w-full" : "w-0"
-                    } transition-all duration-500`}
-                  ></div>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-        <div className="flex w-full max-w-lg justify-between mt-2 ">
-          <div className="w-1/4 text-center text-sm font-medium">
-            Profile Details
-          </div>
-          <div className="w-1/4 text-center text-sm font-medium">
-            More Details
-          </div>
+
+        <div>
+          <label className="text-sm font-medium text-gray-900 dark:text-white">
+            Address
+          </label>
+          <Input
+            name="address"
+            placeholder="Street no."
+            value={form.address}
+            onChange={handleChange}
+          />
         </div>
       </div>
-      {step === 1 && (
-        <>
-          <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
-          <Label className="text-sm text-gray-400 mb-1">PROFILE PICTURE</Label>
-          <Card className="border-dashed border border-gray-300 p-4 w-5/6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              {existingProfilePhoto && !profilePhoto && (
-                <img
-                  src={existingProfilePhoto}
-                  alt="Current profile"
-                  className="h-10 w-10 object-cover rounded-full"
-                />
-              )}
-              <div className="w-10 h-10 bg-gray-200 rounded flex items-center justify-center">
-                <span className="text-gray-500 text-xl">🖼️</span>
-              </div>
-              <span className="text-sm text-gray-700">
-                {profilePhoto
-                  ? profilePhoto.name
-                  : existingProfilePhoto
-                  ? "Current profile photo"
-                  : "Upload a profile picture. Max size 2MB"}
-              </span>
-              <label className="cursor-pointer px-4 py-2 bg-gray-100 border rounded text-sm text-gray-700 hover:bg-gray-200">
-                Browse
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                />
-              </label>
-            </div>
-          </Card>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Team Name*
-              </label>
-              <Input
-                name="teamName"
-                value={form.teamName}
-                onChange={handleChange}
-                placeholder="Enter team name"
-                className={validationErrors.teamName ? "border-red-500" : ""}
-              />
-              {validationErrors.teamName && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.teamName}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Sport*
-              </label>
-              <select
-                name="sport"
-                value={form.sport}
-                onChange={handleChange}
-                className={`border p-2 rounded text-sm text-gray-700 w-full ${
-                  validationErrors.type ? "border-red-500" : ""
-                }`}
-              >
-                <option value="">Select Sport</option>
-                <option value="football">Football</option>
-              </select>
-              {validationErrors.type && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.type}
-                </p>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Email
-              </label>
-              <Input
-                name="email"
-                value={userData?.email || ""}
-                className="bg-gray-100 cursor-not-allowed"
-                readOnly
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Phone Number
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  value={userData?.mobileNumber}
-                  className="w-full bg-gray-100 cursor-not-allowed"
-                  readOnly
-                />
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Club Name
-              </label>
-              <Input
-                name="clubName"
-                value={form.clubName}
-                onChange={handleChange}
-              />
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Type*
-              </label>
-              <select
-                name="type"
-                value={form.type}
-                onChange={handleChange}
-                className={`border p-2 rounded text-sm text-gray-700 w-full ${
-                  validationErrors.type ? "border-red-500" : ""
-                }`}
-              >
-                <option value="">Select Type</option>
-                <option value="team">Team</option>
-                <option value="league">League</option>
-                <option value="club">Club</option>
-                <option value="academy">Academy</option>
-                <option value="athleticFacility">Athletic Facility</option>
-              </select>
-              {validationErrors.type && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.type}
-                </p>
-              )}
-            </div>
-            <div className="relative">
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Country*
-              </label>
-              <Input
-                name="country"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setShowCountryDropdown(true);
-                }}
-                onFocus={() => setShowCountryDropdown(true)}
-                placeholder="Search country"
-                className={validationErrors.country ? "border-red-500" : ""}
-              />
-              {validationErrors.country && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.country}
-                </p>
-              )}
-              {showCountryDropdown && (
-                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
-                  {countries
-                    .filter((country) =>
-                      country.name
-                        .toLowerCase()
-                        .includes(searchTerm.toLowerCase())
-                    )
-                    .map((country, index) => (
-                      <li
-                        key={index}
-                        onClick={() => handleCountrySelect(country)}
-                        className="px-4 py-2 cursor-pointer hover:bg-gray-200 flex items-center"
-                      >
-                        {country.name}
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-            <div className="relative">
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                City*
-              </label>
-              <Input
-                name="city"
-                value={citySearchTerm}
-                onChange={(e) => {
-                  setCitySearchTerm(e.target.value);
-                  setShowCityDropdown(true);
-                }}
-                onFocus={() => setShowCityDropdown(true)}
-                placeholder="Search city"
-                className={validationErrors.city ? "border-red-500" : ""}
-              />
-              {validationErrors.city && (
-                <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.city}
-                </p>
-              )}
-              {showCityDropdown && selectedCountry && (
-                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
-                  {cities
-                    .filter((city) =>
-                      city.name
-                        .toLowerCase()
-                        .includes(citySearchTerm.toLowerCase())
-                    )
-                    .map((city, index) => (
-                      <li
-                        key={index}
-                        onClick={() => handleCitySelect(city.name)}
-                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                      >
-                        {city.name}
-                      </li>
-                    ))}
-                </ul>
-              )}
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Address
-              </label>
-              <Input
-                name="address"
-                placeholder="Street no."
-                value={form.address}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-          <div className="text-right mt-6">
-            <Button
-              onClick={nextStep}
-              className="bg-yellow-400 text-white hover:bg-amber-500 cursor-pointer"
+
+      <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center mt-6 gap-4">
+        <Button
+          onClick={nextStep}
+          className="bg-yellow-400 text-white hover:bg-amber-500 cursor-pointer"
+        >
+          Save & Next
+        </Button>
+      </div>
+    </>
+  )}
+
+  {step === 2 && (
+    <>
+      <h2 className="text-lg sm:text-xl font-semibold mb-4 dark:text-white">
+        More Details
+      </h2>
+      <label className="text-sm font-medium text-gray-900 dark:text-white">
+        Bio Data
+      </label>
+      <Textarea
+        name="bio"
+        value={form.bio}
+        onChange={handleChange}
+        className="mb-6 mt-2"
+        placeholder="Bio data"
+        maxLength={500}
+      />
+      <Label className="text-md font-semibold mb-2 dark:text-white">
+        Social Media Links
+      </Label>
+      <div className="space-y-4 mt-4 w-full sm:w-2/3 md:w-1/2 lg:w-1/3">
+        {[
+          {
+            icon: faInstagram,
+            name: "instagram",
+            bg: "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600",
+          },
+          {
+            icon: faLinkedinIn,
+            name: "linkedin",
+            bg: "bg-blue-700",
+          },
+          {
+            icon: faFacebookF,
+            name: "facebook",
+            bg: "bg-blue-600",
+          },
+          {
+            icon: faXTwitter,
+            name: "twitter",
+            bg: "bg-black",
+          },
+        ].map((social) => (
+          <div key={social.name} className="flex items-center gap-3">
+            <div
+              className={`w-10 h-10 flex items-center justify-center border rounded ${social.bg}`}
             >
-              Save & Next
-            </Button>
+              <FontAwesomeIcon
+                icon={social.icon}
+                className="w-6 h-6 text-white"
+              />
+            </div>
+            <Input
+              name={`socialLinks.${social.name}`}
+              value={
+                form.socialLinks[social.name as keyof typeof form.socialLinks]
+              }
+              onChange={handleSocialMedia}
+              className="w-full px-4 py-2"
+              placeholder={`Your ${social.name} link`}
+            />
           </div>
-        </>
-      )}
-      {step === 2 && (
-        <>
-          <h2 className="text-xl font-semibold mb-4 dark:text-white">
-            More Details
-          </h2>
-          <label className="text-sm font-medium text-gray-900 dark:text-white">
-            Bio Data
-          </label>
-          <Textarea
-            name="bio"
-            value={form.bio}
-            onChange={handleChange}
-            className="mb-6 mt-2"
-            placeholder="Bio data"
-            maxLength={500}
-          />
-          <Label className="text-md font-semibold mb-2 dark:text-white">
-            Social Media Links
-          </Label>
-          <div className="space-y-4 mt-4 w-1/3">
-            {[
-              {
-                icon: faInstagram,
-                name: "instagram",
-                bg: "bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600",
-              },
-              {
-                icon: faLinkedinIn,
-                name: "linkedin",
-                bg: "bg-blue-700",
-              },
-              {
-                icon: faFacebookF,
-                name: "facebook",
-                bg: "bg-blue-600",
-              },
-              {
-                icon: faXTwitter,
-                name: "twitter",
-                bg: "bg-black",
-              },
-            ].map((social) => (
-              <div key={social.name} className="flex items-center gap-3">
-                <div
-                  className={`w-10 h-10 flex items-center justify-center border rounded ${social.bg}`}
-                >
-                  <FontAwesomeIcon
-                    icon={social.icon}
-                    className="w-6 h-6 text-white"
-                  />
-                </div>
-                <Input
-                  name={`socialLinks.${social.name}`}
-                  value={
-                    form.socialLinks[
-                      social.name as keyof typeof form.socialLinks
-                    ]
-                  }
-                  onChange={handleSocialMedia}
-                  className=" w-full px-4 py-2 "
-                  placeholder={`Your ${social.name} link`}
-                />
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-end mt-6">
-            <Button
-              onClick={prevStep}
-              className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-50 rounded mr-9 cursor-pointer"
-              disabled={isSubmitting}
-              type="button"
-            >
-              Back
-            </Button>
-            <Button
-              onClick={submitForm}
-              className="bg-yellow-400 text-white hover:bg-yellow-500 cursor-pointer"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? (
-                <div className="flex items-center">
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Submitting...
-                </div>
-              ) : (
-                "Submit"
-              )}
-            </Button>
-          </div>
-        </>
-      )}
-    </div>
+        ))}
+      </div>
+      <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center mt-6 gap-4">
+        <Button
+          onClick={prevStep}
+          className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-100 rounded cursor-pointer"
+          disabled={isSubmitting}
+          type="button"
+        >
+          Back
+        </Button>
+        <Button
+          onClick={submitForm}
+          className="bg-yellow-400 text-white hover:bg-yellow-500 cursor-pointer"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+            <div className="flex items-center">
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Submitting...
+            </div>
+          ) : (
+            "Submit"
+          )}
+        </Button>
+      </div>
+    </>
+  )}
+</div>
   );
-}
+};

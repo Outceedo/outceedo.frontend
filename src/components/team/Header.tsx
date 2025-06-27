@@ -55,51 +55,53 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
   };
 
   return (
-    <header className="flex items-center justify-between px-4 py-3 bg-background dark:bg-slate-950">
-      {/* Left Section: Menu Button + Page Title */}
-      <div className="flex items-center gap-4">
-        <Button
-          onClick={() => setOpen(true)}
-          className="lg:hidden sm:block bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600"
-        >
-          <AlignJustify />
-          <span className="sr-only">Toggle Menu</span>
-        </Button>
+  <header className="flex flex-wrap items-center justify-between px-4 py-3 bg-background dark:bg-slate-950 ">
+  {/* Left Section: Menu Button + Page Title */}
+  <div className="flex items-center gap-4 w-full sm:w-auto">
+    <Button
+      onClick={() => setOpen(true)}
+      className="lg:hidden sm:block bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600"
+    >
+      <AlignJustify />
+      <span className="sr-only">Toggle Menu</span>
+    </Button>
 
-        {/* Show current page title on all screen sizes */}
-        <h2 className="text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
-          {currentTitle}
-        </h2>
-      </div>
+    <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-[160px] sm:max-w-sm md:max-w-md lg:max-w-lg">
+      {currentTitle}
+    </h2>
+  </div>
 
-      {/* Right Section: Premium Button, Notifications, Theme Toggle */}
-      <div className="flex justify-end gap-3 items-center w-full">
-        <Button className="h-12 w-48 md:w-56 p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors">
-          <FontAwesomeIcon
-            icon={faGem}
-            className="text-blue-700 dark:text-blue-400 text-xl"
-          />
-          <p className="text-gray-800 font-Opensans dark:text-white">
-            Upgrade to Premium
-          </p>
-        </Button>
-        <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
-          <FontAwesomeIcon
-            icon={faBell}
-            className="text-black dark:text-white text-xl"
-          />
-        </Button>
-        <Button
-          onClick={toggleTheme}
-          className="p-4 rounded-full dark:bg-slate-950 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-        >
-          <FontAwesomeIcon
-            icon={isDarkMode ? faMoon : faSun}
-            className="text-gray-600 dark:text-white text-xl"
-          />
-        </Button>
-      </div>
-    </header>
+  {/* Right Section: Premium Button, Notifications, Theme Toggle */}
+  <div className="flex flex-wrap justify-end gap-3 items-center w-full sm:w-auto mt-4 sm:mt-0">
+    <Button className="h-12 w-full sm:w-48 md:w-56 px-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors">
+      <FontAwesomeIcon
+        icon={faGem}
+        className="text-blue-700 dark:text-blue-400 text-xl"
+      />
+      <p className="text-gray-800 font-Opensans dark:text-white text-sm sm:text-base">
+        Upgrade to Premium
+      </p>
+    </Button>
+
+    <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
+      <FontAwesomeIcon
+        icon={faBell}
+        className="text-black dark:text-white text-xl"
+      />
+    </Button>
+
+    <Button
+      onClick={toggleTheme}
+      className="p-4 rounded-full dark:bg-slate-950 bg-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+    >
+      <FontAwesomeIcon
+        icon={isDarkMode ? faMoon : faSun}
+        className="text-gray-600 dark:text-white text-xl"
+      />
+    </Button>
+  </div>
+</header>
+
   );
 }
 
