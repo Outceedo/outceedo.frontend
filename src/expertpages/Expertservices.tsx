@@ -59,10 +59,10 @@ const CUSTOM_SERVICE_START_ID = 5; // Custom services start from ID 5 (after the
 
 // Service name mapping
 const SERVICE_NAME_MAP: Record<string, string> = {
-  "1": "ONLINE ASSESSMENT",
+  "1": "RECORDED VIDEO ASSESSMENT",
   "2": "ONLINE TRAINING",
   "3": "ON GROUND ASSESSMENT",
-  "4": "RECORDED VIDEO ASSESSMENT",
+  "4": "ONLINE ASSESSMENT",
 };
 
 // Helper function to get service name from ID

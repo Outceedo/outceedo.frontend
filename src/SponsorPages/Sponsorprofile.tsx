@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 // import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import Sponsordetails from "./Sponsordetails";
-import Sponsormedia from "./Sponsormedia";
-import { Pencil, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import Sponsor2 from "../assets/images/avatar.png";
 import {

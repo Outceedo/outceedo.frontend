@@ -1263,7 +1263,10 @@ const BookingExpertside: React.FC = () => {
         <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {bookings
-            .filter((booking) => booking.status === "ACCEPTED")
+            .filter(
+              (booking) =>
+                booking.status === "ACCEPTED" || booking.status === "SCHEDULED"
+            )
             .slice(0, 3)
             .map((booking) => (
               <div
@@ -1307,8 +1310,10 @@ const BookingExpertside: React.FC = () => {
               </div>
             ))}
 
-          {bookings.filter((booking) => booking.status === "ACCEPTED")
-            .length === 0 && (
+          {bookings.filter(
+            (booking) =>
+              booking.status === "ACCEPTED" || booking.status === "SCHEDULED"
+          ).length === 0 && (
             <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-4 text-gray-500">
               No upcoming sessions
             </div>

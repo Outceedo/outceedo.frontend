@@ -275,7 +275,7 @@ const EmailVerification: React.FC = () => {
                   disabled={resendLoading || cooldown > 0}
                   className={`w-full py-2 rounded-lg transition duration-300 text-left ${
                     resendLoading || cooldown > 0
-                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                      ? " text-gray-500 cursor-not-allowed"
                       : " text-red-500 hover:underline"
                   }`}
                 >
