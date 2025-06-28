@@ -691,6 +691,7 @@ const MyBooking: React.FC = () => {
     });
 
   const navigate = useNavigate();
+  console.log(bookings);
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">

@@ -39,16 +39,7 @@ const ApplicationForm = () => {
 
   const validate = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!formData.firstName.trim())
-      newErrors.firstName = "First name is required.";
-    if (!formData.lastName.trim())
-      newErrors.lastName = "Last name is required.";
-    if (!formData.profession.trim())
-      newErrors.profession = "Profession is required.";
-    if (!formData.teamName.trim())
-      newErrors.teamName = "Team/Club name is required.";
-    if (!formData.email.trim()) newErrors.email = "Email is required.";
-    if (!formData.phone.trim()) newErrors.phone = "Phone number is required.";
+
     if (!formData.reason.trim())
       newErrors.reason = "Sponsorship reason is required.";
     if (!formData.uniqueFactor.trim())
@@ -138,110 +129,7 @@ const ApplicationForm = () => {
 
       <form className="space-y-6" onSubmit={handleSubmit}>
         <div>
-          <div className="grid grid-cols-2 gap-4 mt-2">
-            {/* First Name */}
-            <div>
-              <Label htmlFor="firstName" className="text-sm">
-                First Name
-              </Label>
-              <Input
-                id="firstName"
-                placeholder="First"
-                className={`${inputClass("firstName")} w-full md:w-80`}
-                value={formData.firstName}
-                onChange={(e) => handleChange("firstName", e.target.value)}
-              />
-              {errors.firstName && (
-                <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>
-              )}
-            </div>
-
-            {/* Last Name */}
-            <div>
-              <Label htmlFor="lastName" className="text-sm">
-                Last Name
-              </Label>
-              <Input
-                id="lastName"
-                placeholder="Last"
-                className={`${inputClass("lastName")} w-full md:w-80`}
-                value={formData.lastName}
-                onChange={(e) => handleChange("lastName", e.target.value)}
-              />
-              {errors.lastName && (
-                <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Profession & Team */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <Label>Profession:</Label>
-            <Input
-              placeholder="Your profession"
-              className={inputClass("profession")}
-              value={formData.profession}
-              onChange={(e) => handleChange("profession", e.target.value)}
-            />
-            {errors.profession && (
-              <p className="text-red-500 text-sm mt-1">{errors.profession}</p>
-            )}
-          </div>
-          <div>
-            <Label>Team/Club Name:</Label>
-            <Input
-              placeholder="Team or club name"
-              className={inputClass("teamName")}
-              value={formData.teamName}
-              onChange={(e) => handleChange("teamName", e.target.value)}
-            />
-            {errors.teamName && (
-              <p className="text-red-500 text-sm mt-1">{errors.teamName}</p>
-            )}
-          </div>
-        </div>
-
-        {/* Email & Phone */}
-        <div className="grid md:grid-cols-2 gap-4">
-          <div>
-            <Label>E-mail:</Label>
-            <Input
-              placeholder="your@email.com"
-              className={inputClass("email")}
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
-          </div>
-          <div>
-            <Label>Phone Number:</Label>
-            <div className="grid grid-cols-3 gap-2">
-              <select
-                className="border rounded p-2"
-                value={formData.countryCode}
-                onChange={(e) => handleChange("countryCode", e.target.value)}
-              >
-                <option>+91</option>
-                <option>+1</option>
-                <option>+44</option>
-              </select>
-              <div className="col-span-2">
-                <Input
-                  placeholder="Phone number"
-                  className={inputClass("phone")}
-                  value={formData.phone}
-                  onChange={(e) => handleChange("phone", e.target.value)}
-                />
-              </div>
-            </div>
-            {errors.phone && (
-              <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
-            )}
-          </div>
+          <div className="grid grid-cols-2 gap-4 mt-2"></div>
         </div>
 
         {/* Reason */}

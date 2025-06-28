@@ -130,14 +130,11 @@ const SponsorProfile = () => {
     return (
       <>
         {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-5">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold dark:text-white">
-                {data?.companyName ||
-                  (data?.firstName && data?.lastName
-                    ? `${data.firstName} ${data.lastName}`
-                    : fallbackData.companyName)}
+                {data?.company}
               </h1>
             </div>
 
