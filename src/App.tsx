@@ -37,13 +37,13 @@ import ExpertLayout from "./components/expert/layout";
 import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
-import PlayersProfile from "./expertpages/playerProfiles";
-import ExpertviewProfile from "./expertpages/playerinfo";
-import ExpertProfile from "./expertpages/expertdata";
-import ExpertDashboard from "./expertpages/Dashboard";
-import BookingExpertside from "./expertpages/Bookings";
-import ExpertMatches from "./expertpages/ExpertMatches";
-import ExpertAvailabilityManager from "./expertpages/Slots";
+import PlayersProfile from "./Expertpages/playerProfiles";
+import ExpertviewProfile from "./Expertpages/playerinfo";
+import ExpertProfile from "./Expertpages/expertdata";
+import ExpertDashboard from "./Expertpages/Dashboard";
+import BookingExpertside from "./Expertpages/Bookings";
+import ExpertMatches from "./Expertpages/ExpertMatches";
+import ExpertAvailabilityManager from "./Expertpages/Slots";
 import { authService } from "./store/apiConfig";
 //sponser pages
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
@@ -54,29 +54,34 @@ import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
 import Sponsorinfo from "./SponsorPages/Sponsorinfo";
 //Team pages
-import TeamDetailsForm from "./teampages/teamdetailsform";
-import TeamProfile from "./teampages/teamprofile";
-import TeamExpert from "./teampages/experts";
-import TeamPlayer from "./teampages/player";
-import TeamSponsor from "./teampages/TeamSponser";
+import TeamDetailsForm from "./Teampages/teamdetailsform";
+import TeamProfile from "./Teampages/teamprofile";
+import TeamExpert from "./Teampages/experts";
+import TeamPlayer from "./Teampages/player";
+import TeamSponsor from "./Teampages/TeamSponser";
 import TeamPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorExperts from "./SponsorPages/Expertssponsor";
-import Expertsponsors from "./expertpages/Expertsponsors";
-import SponsorInfo from "./expertpages/sponsorinfo";
+import Expertsponsors from "./Expertpages/Expertsponsors";
+import SponsorInfo from "./Expertpages/sponsorinfo";
 import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
-import TeamSponsorInfo from "./teampages/Sponsorinfo";
-import TeamExperts from "./teampages/expertprofile";
+import TeamSponsorInfo from "./Teampages/Sponsorinfo";
+import TeamExperts from "./Teampages/expertprofile";
 //fan pages
 import FanLayout from "./components/fan/layout";
-import FanPlayers from "./fanpages/Players";
-import FanExperts from "./fanpages/Experts";
-import Fanprofile from "./fanpages/FanProfile";
-import Fandetailsform from "./fanpages/Fandetailsform";
+import FanPlayers from "./Fanpages/Players";
+import FanExperts from "./Fanpages/Experts";
+import Fanprofile from "./Fanpages/FanProfile";
+import Fandetailsform from "./Fanpages/Fandetailsform";
 import SponsorApplicationpage from "./Playerpages/SponsorApplications";
 import AdminLayout from "./components/admin/layout";
 import Dashboardadmin from "./components/admin/dashboard";
 import AdminLayoutdefault from "./components/admin/defaultlayout";
+import Playeradmin from "./Adminpages/Player";
+import Expertadmin from "./Adminpages/Expert";
+import Sponsoradmin from "./Adminpages/Sponsor";
+import Teamadmin from "./Adminpages/Team";
+import Fanadmin from "./Adminpages/Fan";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -85,9 +90,7 @@ if (token) {
 
 const AppContent: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { isAuthenticated, user, tokenValidationInProgress } = useAppSelector(
-    (state) => state.auth
-  );
+  const { isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [isInitializing, setIsInitializing] = useState(true);
   const hasToken = !!localStorage.getItem("token");
 
@@ -130,8 +133,12 @@ const AppContent: React.FC = () => {
       navigate("/sponsor/dashboard");
     } else if (role === "team") {
       navigate("/team/dashboard");
-    } else {
+    } else if (role === "fan") {
       navigate("/fan/dashboard");
+    } else if (role === "admin") {
+      navigate("/admin/dashboard");
+    } else {
+      navigate("/");
     }
   }
 
@@ -156,7 +163,9 @@ const AppContent: React.FC = () => {
                   ? "/sponsor/dashboard"
                   : user?.role === "team"
                   ? "/team/dashboard"
-                  : "/fan/dashboard"
+                  : user?.role === "fan"
+                  ? "/fan/dashboard"
+                  : "/admin/dashboard"
               }
             />
           ) : (
@@ -179,7 +188,9 @@ const AppContent: React.FC = () => {
                   ? "/sponsor/dashboard"
                   : user?.role === "team"
                   ? "/team/dashboard"
-                  : "/fan/dashboard"
+                  : user?.role === "fan"
+                  ? "/fan/dashboard"
+                  : "/admin/dashboard"
               }
             />
           ) : (
@@ -302,11 +313,11 @@ const AppContent: React.FC = () => {
       </Route>
 
       <Route path="/admin" element={<AdminLayout />}>
-        <Route path="player" element={<>Player</>} />
-        <Route path="expert" element={<>expert</>} />
-        <Route path="sponsor" element={<>Player</>} />
-        <Route path="team" element={<>Player</>} />
-        <Route path="fan" element={<>Player</>} />
+        <Route path="player" element={<Playeradmin />} />
+        <Route path="expert" element={<Expertadmin />} />
+        <Route path="sponsor" element={<Sponsoradmin />} />
+        <Route path="team" element={<Teamadmin />} />
+        <Route path="fan" element={<Fanadmin />} />
       </Route>
 
       <Route
