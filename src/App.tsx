@@ -204,9 +204,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <PlayerLayout />
-          </CheckAuth>
+         // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
@@ -227,9 +227,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/expert"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+        //  <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <ExpertLayout />
-          </CheckAuth>
+         // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<ExpertDashboard />} />
@@ -252,9 +252,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/sponsor"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+        //  <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <SponserLayout />
-          </CheckAuth>
+        //  </CheckAuth>
         }
       >
         <Route path="dashboard" element={<>Sponser Dashboard</>} />
@@ -273,9 +273,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/team"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+        //  <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <TeamLayout />
-          </CheckAuth>
+        //  </CheckAuth>
         }
       >
         <Route path="dashboard" element={<>Team Dashboard</>} />
@@ -295,9 +295,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/fan"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <FanLayout />
-          </CheckAuth>
+         // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<>Fan dashboard</>} />

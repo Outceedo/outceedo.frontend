@@ -26,7 +26,14 @@ import profile from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
 import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
-
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import FollowList from "../components/follower/followerlist";
 interface Stat {
   label: string;
   percentage: number;
@@ -848,16 +855,35 @@ const Profile: React.FC = () => {
               </Card>
 
               {/* Review stars and count */}
-              <div className="flex items-center gap-2 mt-4">
-                <StarRating avg={avgRating} className="mr-2" />
-                <span className="text-gray-500">
-                  {totalReviews} review{totalReviews !== 1 ? "s" : ""}
-                </span>
-                {totalReviews > 0 && (
-                  <span className="ml-2 text-gray-600 text-sm">
-                    ({avgRating.toFixed(1)} avg)
+            <div className="flex items-center gap-6 mt-4">
+                <div className="flex items-center gap-2">
+                  <StarRating avg={avgRating} className="mr-2" />
+                  <span className="text-gray-500">
+                    {totalReviews} review{totalReviews !== 1 ? "s" : ""}
                   </span>
-                )}
+                  {totalReviews > 0 && (
+                    <span className="ml-2 text-gray-600 text-sm">
+                      ({avgRating.toFixed(1)} avg)
+                    </span>
+                  )}
+                </div>
+                {/* Followers dialog */}
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <div className="flex items-center gap-2 cursor-pointer">
+                      <p className="text-red-500  font-bold">7</p>
+                      <p className="text-gray-500 dark:text-white">Followers</p>
+                    </div>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-lg font-semibold text-center">
+                        People who Follow
+                      </DialogTitle>
+                    </DialogHeader>
+                    <FollowList />
+                  </DialogContent>
+                </Dialog>
               </div>
             </div>
           </div>

@@ -3,6 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Users, User } from "lucide-react";
+import { MoreVertical } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 import follower2 from "../assets/images/avatar.png";
 import follower3 from "../assets/images/avatar.png";
 type UserCardProps = {
@@ -20,30 +27,50 @@ const UserCard: React.FC<UserCardProps> = ({
 }) => {
   return (
     <Card className="w-full max-w-md dark:bg-gray-700">
-      <CardContent className="p-4 flex items-start justify-between gap-4">
-        <div className="flex gap-3">
-          <Avatar>
-            <AvatarImage src={image} />
-            <AvatarFallback>{name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <p className="font-medium">{name}</p>
-            <p className="text-sm text-gray-700 dark:text-white">{role}</p>
-            {description && (
-              <p className="text-xs text-gray-500 mt-1 dark:text-white">
-                {description}
-              </p>
-            )}
-          </div>
-        </div>
-        <Button
-          variant="ghost"
-          className="text-gray-700 font-semibold cursor-default dark:text-white"
-        >
-          Following
-        </Button>
-      </CardContent>
-    </Card>
+  <CardContent className="p-4 flex items-start justify-between gap-4">
+    <div className="flex gap-3">
+      <Avatar>
+        <AvatarImage src={image} />
+        <AvatarFallback>{name.charAt(0)}</AvatarFallback>
+      </Avatar>
+      <div>
+        <p className="font-medium">{name}</p>
+        <p className="text-sm text-gray-700 dark:text-white">{role}</p>
+        {description && (
+          <p className="text-xs text-gray-500 mt-1 dark:text-white">
+            {description}
+          </p>
+        )}
+      </div>
+    </div>
+
+    <div className="flex items-center gap-2">
+      <Button className="bg-red-600 hover:bg-red-700 text-white cursor-pointer">
+        Following
+      </Button>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreVertical className="w-5 h-5 text-gray-600 dark:text-white" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            className="text-red-600 cursor-pointer"
+            onClick={() => {
+               // Call API to unfollow
+              //  Update state to remove from following list
+              console.log("Unfollow clicked for:", name);
+            }}
+          >
+            Unfollow
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  </CardContent>
+</Card>
   );
 };
 
