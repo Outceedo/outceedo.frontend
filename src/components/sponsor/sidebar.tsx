@@ -22,33 +22,33 @@ const sponsorSidebarMenuItems: MenuItem[] = [
     path: "/sponsor/dashboard",
   },
   {
-    id: 0,
+    id: 1,
     name: "Players",
     icon: " fas  fa-user",
     path: "/sponsor/players",
   },
   {
-    id: 1,
+    id: 2,
     name: "Experts",
     icon: "fas fa-user-tie",
     path: "/sponsor/experts",
   },
 
   {
-    id: 2,
+    id: 3,
     name: "Applications",
     icon: "fas fa-handshake",
     path: "/sponsor/application",
   },
   {
-    id: 3,
+    id: 4,
     name: "Profile",
     icon: "fas fa-user",
     path: "/sponsor/profile",
   },
 
   {
-    id: 4,
+    id: 5,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",

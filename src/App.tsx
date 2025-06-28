@@ -52,7 +52,7 @@ import SponsorForm from "./SponsorPages/SponsorForm";
 import Sponsorplayer from "./SponsorPages/Sponsorplayer";
 import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
-import Sponsorinfo from "./SponsorPages/Sponsorinfo";
+
 //Team pages
 import TeamDetailsForm from "./Teampages/teamdetailsform";
 import TeamProfile from "./Teampages/teamprofile";
@@ -73,6 +73,7 @@ import FanPlayers from "./Fanpages/Players";
 import FanExperts from "./Fanpages/Experts";
 import Fanprofile from "./Fanpages/FanProfile";
 import Fandetailsform from "./Fanpages/Fandetailsform";
+
 import SponsorApplicationpage from "./Playerpages/SponsorApplications";
 import AdminLayout from "./components/admin/layout";
 import Dashboardadmin from "./components/admin/dashboard";
@@ -204,9 +205,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <PlayerLayout />
-         // </CheckAuth>
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
@@ -227,9 +228,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/expert"
         element={
-        //  <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <ExpertLayout />
-         // </CheckAuth>
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<ExpertDashboard />} />
@@ -252,9 +253,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/sponsor"
         element={
-        //  <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <SponserLayout />
-        //  </CheckAuth>
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<>Sponser Dashboard</>} />
@@ -264,7 +265,7 @@ const AppContent: React.FC = () => {
         <Route path="profile" element={<Sponsorprofile />} />
         <Route path="details-form" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
-        <Route path="Sponsorinfo" element={<Sponsorinfo />} />
+
         <Route path="playerinfo" element={<SponsorPlayerInfo />} />
         <Route path="exdetails" element={<SponsorExperts />} />
       </Route>
@@ -273,9 +274,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/team"
         element={
-        //  <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <TeamLayout />
-        //  </CheckAuth>
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<>Team Dashboard</>} />
@@ -295,9 +296,9 @@ const AppContent: React.FC = () => {
       <Route
         path="/fan"
         element={
-         // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <FanLayout />
-         // </CheckAuth>
+          </CheckAuth>
         }
       >
         <Route path="dashboard" element={<>Fan dashboard</>} />

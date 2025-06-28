@@ -190,7 +190,7 @@ const BookingCalendar: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch time slots");
 
         const data: TimeSlot[] = await response.json();
-        const availableSlots = data.filter((slot) => slot.available);
+        const availableSlots = data.filter((slot) => slot.isAvailable);
         setAvailableTimeSlots(availableSlots);
 
         if (selectedTime) {
@@ -319,23 +319,21 @@ const BookingCalendar: React.FC = () => {
   };
 
   const calculateEndTime = (startTime: string): string => {
-    const [hour, minute] = startTime.split(":").map((num) => parseInt(num, 10));
-    const selectedSlot = availableTimeSlots.find(
-      (slot) => slot.startTime === startTime
-    );
-    if (selectedSlot) return selectedSlot.endTime;
-    let endHour = hour,
-      endMinute = minute + 30;
+    const [hour, minute] = startTime.split(":").map(Number);
+
+    let endHour = hour;
+    let endMinute = minute + 60;
+
     if (endMinute >= 60) {
-      endHour += 1;
-      endMinute -= 60;
+      endHour += Math.floor(endMinute / 60);
+      endMinute %= 60;
     }
-    if (endHour >= 24) endHour -= 24;
+    if (endHour >= 24) endHour %= 24;
+
     return `${endHour.toString().padStart(2, "0")}:${endMinute
       .toString()
       .padStart(2, "0")}`;
   };
-
   const formatDateForAPI = (): string => {
     if (!selectedDate) return "";
     const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
@@ -551,7 +549,7 @@ const BookingCalendar: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-gray-500" />
-                  <span className="text-gray-600">30 mins per session</span>
+                  <span className="text-gray-600">60 mins per session</span>
                 </div>
                 <div className="flex items-start gap-3">
                   <Video className="h-5 w-5 text-gray-500 mt-1" />
@@ -649,9 +647,14 @@ const BookingCalendar: React.FC = () => {
               </div>
               {/* Selected date */}
               <div className="mb-6">
-                <p className="text-gray-700 font-medium">
+                <p className="text-gray-700 font-medium mb-3">
                   {getFormattedDate()}
                 </p>
+                {selectedTime ? (
+                  <span className="bg-red-500 p-2 rounded-lg text-white">
+                    {selectedTime}
+                  </span>
+                ) : null}
               </div>
               {/* Time slots with loading state */}
               <div className="mb-6">
