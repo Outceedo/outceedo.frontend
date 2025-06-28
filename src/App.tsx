@@ -74,6 +74,9 @@ import FanExperts from "./fanpages/Experts";
 import Fanprofile from "./fanpages/FanProfile";
 import Fandetailsform from "./fanpages/Fandetailsform";
 import SponsorApplicationpage from "./Playerpages/SponsorApplications";
+import AdminLayout from "./components/admin/layout";
+import Dashboardadmin from "./components/admin/dashboard";
+import AdminLayoutdefault from "./components/admin/defaultlayout";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -291,6 +294,19 @@ const AppContent: React.FC = () => {
         <Route path="experts" element={<FanExperts />} />
         <Route path="profile" element={<Fanprofile />} />
         <Route path="details-form" element={<Fandetailsform />} />
+      </Route>
+
+      {/*admin routes*/}
+      <Route path="/admin" element={<AdminLayoutdefault />}>
+        <Route path="dashboard" element={<Dashboardadmin />} />
+      </Route>
+
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route path="player" element={<>Player</>} />
+        <Route path="expert" element={<>expert</>} />
+        <Route path="sponsor" element={<>Player</>} />
+        <Route path="team" element={<>Player</>} />
+        <Route path="fan" element={<>Player</>} />
       </Route>
 
       <Route
