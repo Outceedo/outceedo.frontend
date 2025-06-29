@@ -316,7 +316,7 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
     <div className="p-4 w-full">
       {/* Add Review Button */}
       {!hasUserReviewed() && (
-        <div className="flex justify-end mb-6">
+        <div className="flex justify-center lg:justify-end mb-6">
           <button
             onClick={openAddReviewModal}
             className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white font-medium rounded-md shadow-sm transition-colors"
