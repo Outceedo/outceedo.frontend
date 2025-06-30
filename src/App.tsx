@@ -166,7 +166,9 @@ const AppContent: React.FC = () => {
                   ? "/team/dashboard"
                   : user?.role === "fan"
                   ? "/fan/dashboard"
-                  : "/admin/dashboard"
+                  : user?.role === "admin"
+                  ? "/admin/dashboard"
+                  : "/"
               }
             />
           ) : (

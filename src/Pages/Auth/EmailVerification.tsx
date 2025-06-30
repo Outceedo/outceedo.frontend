@@ -202,10 +202,7 @@ const EmailVerification: React.FC = () => {
         {/* Display server error */}
         {(error || apiError) && (
           <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-            <p>
-              {apiError ||
-                (typeof error === "string" ? error : "An error occurred")}
-            </p>
+            <p>{apiError || (typeof error === "string" ? error : null)}</p>
             {apiError === "OTP should be number" && (
               <p className="mt-2 text-sm">
                 Please enter only numeric digits for the OTP code.
