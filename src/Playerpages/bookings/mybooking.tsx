@@ -695,12 +695,6 @@ const MyBooking: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
-      <button
-              onClick={() => navigate(-1)}
-              className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
-            >
-              <ArrowLeft className="w-5 h-5 mr-1" />
-            </button>
       <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
 
       <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
