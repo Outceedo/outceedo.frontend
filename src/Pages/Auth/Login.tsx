@@ -5,6 +5,7 @@ import football from "../../assets/images/football.jpg";
 import { loginUser, clearError } from "../../store/auth-slice";
 import User from "../Home/user";
 import { FaEye, FaEyeSlash } from "react-icons/fa"; // <-- USE FA ICONS
+import Swal from "sweetalert2";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +27,21 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (error) {
-      if (typeof error === "object") {
+      if (
+        error &&
+        error.error === "An OTP has been sent to mail, please verify!"
+      ) {
+        setFormError(error.error);
+        Swal.fire({
+          icon: "success",
+          title: "Registration Successful!",
+          text: "Please check your email for verification.",
+          timer: 3000,
+          showConfirmButton: false,
+        }).then(() => {
+          navigate("/emailverification");
+        });
+      } else if (typeof error === "object") {
         if (error.message) {
           setFormError(error.message);
         } else {
@@ -126,8 +141,10 @@ const Login: React.FC = () => {
             <p className="text-sm">
               {formError.includes("Invalid Password") ? (
                 <div>Invalid Password</div>
+              ) : formError.includes("OTP") ? (
+                <div>Please Verify Your Email!</div>
               ) : (
-                <>User Not Found</>
+                <div>User Not Found</div>
               )}
             </p>
           </div>
