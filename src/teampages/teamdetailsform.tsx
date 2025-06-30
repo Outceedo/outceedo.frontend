@@ -518,7 +518,7 @@ export default function TeamDetailsForm() {
   }
 
   return (
-    <div className="w-full px-20 mx-auto dark:bg-gray-900">
+    <div className="w-full px-4 sm:px-8 md:px-16 lg:px-20 mx-auto dark:bg-gray-900">
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-semibold">Error</p>
@@ -538,14 +538,16 @@ export default function TeamDetailsForm() {
           <p>{success}</p>
         </div>
       )}
+
       <button
         onClick={goBack}
         className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
       >
         <MoveLeft className="w-5 h-5 mr-1" />
       </button>
+
       <div className="flex flex-col items-center mb-12">
-        <div className="flex w-full max-w-lg items-center relative">
+        <div className="flex w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl items-center relative">
           {[1, 2].map((stepNum) => (
             <React.Fragment key={stepNum}>
               <div className="relative flex flex-col items-center w-1/4">
@@ -558,7 +560,7 @@ export default function TeamDetailsForm() {
                 </div>
               </div>
               {stepNum < 2 && (
-                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-14 relative">
+                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-8 relative">
                   <div
                     className={`absolute top-0 left-0 h-1 rounded-full ${
                       step > stepNum ? "bg-red-500 w-full" : "w-0"
@@ -569,7 +571,7 @@ export default function TeamDetailsForm() {
             </React.Fragment>
           ))}
         </div>
-        <div className="flex w-full max-w-lg justify-between mt-2 ">
+        <div className="flex w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-2xl justify-between mt-2">
           <div className="w-1/4 text-center text-sm font-medium">
             Profile Details
           </div>
@@ -578,12 +580,15 @@ export default function TeamDetailsForm() {
           </div>
         </div>
       </div>
+
       {step === 1 && (
         <>
-          <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
+          <h2 className="text-lg sm:text-xl font-semibold mb-2">
+            Profile Details
+          </h2>
           <Label className="text-sm text-gray-400 mb-1">PROFILE PICTURE</Label>
-          <Card className="border-dashed border border-gray-300 p-4 w-5/6 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <Card className="border-dashed border border-gray-300 p-4 w-full sm:w-11/12 md:w-5/6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3 flex-wrap">
               {existingProfilePhoto && !profilePhoto && (
                 <img
                   src={existingProfilePhoto}
@@ -612,7 +617,8 @@ export default function TeamDetailsForm() {
               </label>
             </div>
           </Card>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mt-6">
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Team Name*
@@ -630,6 +636,7 @@ export default function TeamDetailsForm() {
                 </p>
               )}
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Sport*
@@ -639,18 +646,19 @@ export default function TeamDetailsForm() {
                 value={form.sport}
                 onChange={handleChange}
                 className={`border p-2 rounded text-sm text-gray-700 w-full ${
-                  validationErrors.type ? "border-red-500" : ""
+                  validationErrors.sport ? "border-red-500" : ""
                 }`}
               >
                 <option value="">Select Sport</option>
                 <option value="football">Football</option>
               </select>
-              {validationErrors.type && (
+              {validationErrors.sport && (
                 <p className="text-red-500 text-xs mt-1">
-                  {validationErrors.type}
+                  {validationErrors.sport}
                 </p>
               )}
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Email
@@ -662,18 +670,18 @@ export default function TeamDetailsForm() {
                 readOnly
               />
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Phone Number
               </label>
-              <div className="flex gap-2">
-                <Input
-                  value={userData?.mobileNumber}
-                  className="w-full bg-gray-100 cursor-not-allowed"
-                  readOnly
-                />
-              </div>
+              <Input
+                value={userData?.mobileNumber}
+                className="w-full bg-gray-100 cursor-not-allowed"
+                readOnly
+              />
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Club Name
@@ -684,6 +692,7 @@ export default function TeamDetailsForm() {
                 onChange={handleChange}
               />
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Type*
@@ -709,6 +718,7 @@ export default function TeamDetailsForm() {
                 </p>
               )}
             </div>
+
             <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Country*
@@ -749,6 +759,7 @@ export default function TeamDetailsForm() {
                 </ul>
               )}
             </div>
+
             <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 City*
@@ -789,6 +800,7 @@ export default function TeamDetailsForm() {
                 </ul>
               )}
             </div>
+
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Address
@@ -801,7 +813,8 @@ export default function TeamDetailsForm() {
               />
             </div>
           </div>
-          <div className="text-right mt-6">
+
+          <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center mt-6 gap-4">
             <Button
               onClick={nextStep}
               className="bg-yellow-400 text-white hover:bg-amber-500 cursor-pointer"
@@ -811,9 +824,10 @@ export default function TeamDetailsForm() {
           </div>
         </>
       )}
+
       {step === 2 && (
         <>
-          <h2 className="text-xl font-semibold mb-4 dark:text-white">
+          <h2 className="text-lg sm:text-xl font-semibold mb-4 dark:text-white">
             More Details
           </h2>
           <label className="text-sm font-medium text-gray-900 dark:text-white">
@@ -830,7 +844,7 @@ export default function TeamDetailsForm() {
           <Label className="text-md font-semibold mb-2 dark:text-white">
             Social Media Links
           </Label>
-          <div className="space-y-4 mt-4 w-1/3">
+          <div className="space-y-4 mt-4 w-full sm:w-2/3 md:w-1/2 lg:w-1/3">
             {[
               {
                 icon: faInstagram,
@@ -870,16 +884,16 @@ export default function TeamDetailsForm() {
                     ]
                   }
                   onChange={handleSocialMedia}
-                  className=" w-full px-4 py-2 "
+                  className="w-full px-4 py-2"
                   placeholder={`Your ${social.name} link`}
                 />
               </div>
             ))}
           </div>
-          <div className="flex justify-end mt-6">
+          <div className="flex flex-col sm:flex-row justify-end items-end sm:items-center mt-6 gap-4">
             <Button
               onClick={prevStep}
-              className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-50 rounded mr-9 cursor-pointer"
+              className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-100 rounded cursor-pointer"
               disabled={isSubmitting}
               type="button"
             >

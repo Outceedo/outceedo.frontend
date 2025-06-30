@@ -176,9 +176,12 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
     <div className="space-y-6 mt-6">
       {/* About Team Card */}
       <Card className="w-full">
-        <CardContent className="p-4">
-          <div className="flex items-start mb-2">
-            <h2 className="text-md font-semibold">About Team</h2>
+        <CardContent className="p-4 sm:p-6">
+          {/* Header: Title + Edit Button */}
+          <div className="flex items-start sm:items-center gap-2 sm:gap-4 mb-2 flex-wrap">
+            <h2 className="text-base sm:text-lg font-semibold text-gray-800 dark:text-white">
+              About Team
+            </h2>
             <Button
               variant="ghost"
               size="icon"
@@ -188,16 +191,18 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
               <Pencil className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Editing View */}
           {isEditingAbout ? (
             <>
               <Textarea
-                className="min-h-[100px]"
+                className="min-h-[100px] w-full"
                 value={aboutTeam}
                 onChange={(e) => setAboutTeam(e.target.value)}
                 disabled={isSubmitting}
                 placeholder="Write about your team..."
               />
-              <div className="flex justify-end gap-2 mt-2">
+              <div className="flex flex-wrap justify-end gap-2 mt-3">
                 <Button
                   variant="outline"
                   onClick={cancelAboutEdit}
@@ -207,7 +212,7 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
                 </Button>
                 <Button
                   onClick={handleSaveAbout}
-                  className="bg-red-600"
+                  className="bg-red-600 text-white"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -224,10 +229,10 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
               </div>
             </>
           ) : (
-            <div className="relative">
+            <div className="relative mt-2">
               <p
                 ref={bioTextRef}
-                className={`text-sm text-gray-700 ${
+                className={`text-sm sm:text-base text-gray-700 dark:text-gray-200 ${
                   !expanded && isBioLong ? "line-clamp-3" : ""
                 }`}
                 style={{ whiteSpace: "pre-line" }}
@@ -259,5 +264,4 @@ const TeamDetails: React.FC<{ profileData?: ProfileData }> = ({
     </div>
   );
 };
-
 export default TeamDetails;
