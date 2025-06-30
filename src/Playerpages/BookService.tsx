@@ -190,7 +190,7 @@ const BookingCalendar: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch time slots");
 
         const data: TimeSlot[] = await response.json();
-        const availableSlots = data.filter((slot) => slot.isAvailable);
+        const availableSlots = data.filter((slot) => slot.available);
         setAvailableTimeSlots(availableSlots);
 
         if (selectedTime) {
