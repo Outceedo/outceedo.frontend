@@ -182,7 +182,7 @@ const Sponsorview: React.FC = () => {
   }
 
   return (
-    <div className="w-full min-h-screen dark:bg-gray-900 px-10">
+    <div className="w-full min-h-screen dark:bg-gray-900 px-2 sm:px-4 md:px-10">
       <button
         onClick={goBack}
         className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
@@ -190,12 +190,13 @@ const Sponsorview: React.FC = () => {
         <ArrowLeft className="w-5 h-5 mr-1" />
       </button>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-5">
-        <div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-0 md:p-5">
+        <div className="w-full md:w-3/5">
           <h1 className="text-2xl font-bold dark:text-white">
             {sponsorData.name}
           </h1>
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
+          {/* Responsive grid: sm-2, lg-4 */}
+          <div className="mt-6 md:mt-10 grid grid-cols-2  lg:grid-cols-4 gap-6 lg:gap-8 text-sm text-gray-600">
             <div>
               <label className="block text-sm text-gray-500 dark:text-white mb-1">
                 Sports Interest
@@ -230,7 +231,7 @@ const Sponsorview: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-10 flex gap-6">
+          <div className="mt-6 md:mt-10 flex gap-6">
             {icons.map(({ icon, link, bg }, index) => (
               <a
                 key={index}
@@ -248,7 +249,7 @@ const Sponsorview: React.FC = () => {
             ))}
           </div>
 
-          <div className="mt-10">
+          <div className="mt-6 md:mt-10">
             <label className="block text-sm text-gray-500 dark:text-white mb-1">
               Company Site
             </label>
@@ -273,13 +274,13 @@ const Sponsorview: React.FC = () => {
           </div>
         </div>
 
-        <div className="rounded-md overflow-hidden mt-10 md:mt-0">
+        <div className="rounded-md overflow-hidden mt-8 md:mt-0 w-full max-w-xs mx-auto md:mx-0 md:w-[350px]">
           <img
             src={sponsorData.image}
             alt="Sponsor"
             width={350}
             height={350}
-            className="rounded-md object-cover"
+            className="rounded-md object-cover w-full h-48 sm:h-60 md:h-[350px]"
             onError={(e) => {
               // Fallback to default image if profile photo fails to load
               e.currentTarget.src = Sponsor2;
@@ -306,8 +307,8 @@ const Sponsorview: React.FC = () => {
         </div>
 
         {activeTab === "details" && (
-          <div className="p-4 w-full space-y-6">
-            <Card className="p-6 shadow-sm dark:bg-gray-700">
+          <div className="p-0 sm:p-4 w-full space-y-6">
+            <Card className="p-4 sm:p-6 shadow-sm dark:bg-gray-700">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                 About Me
               </h3>
@@ -315,8 +316,8 @@ const Sponsorview: React.FC = () => {
                 {cleanBio(sponsorData.bio)}
               </p>
             </Card>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card className="p-6 shadow-sm dark:bg-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+              <Card className="p-4 sm:p-6 shadow-sm dark:bg-gray-700">
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Sponsorship
                 </h3>
@@ -335,7 +336,7 @@ const Sponsorview: React.FC = () => {
               </Card>
 
               {viewedProfile?.address && (
-                <Card className="p-6 shadow-sm dark:bg-gray-700">
+                <Card className="p-4 sm:p-6 shadow-sm dark:bg-gray-700">
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                     Address
                   </h3>

@@ -15,12 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Circle, X } from "lucide-react";
+import { Circle, X,ArrowLeft } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+import { Button } from "@/components/ui/button";
 
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/applications`;
 
@@ -132,7 +133,13 @@ const SponsorApplicationpage = () => {
   };
 
   return (
-    <div className="p-6 ">
+    <div className="p-3">
+      <button
+              onClick={() => navigate(-1)}
+              className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
+            >
+              <ArrowLeft className="w-5 h-5 mr-1" />
+            </button>
       <div className="flex gap-4 mb-4">
         <div className="relative w-1/3">
           <FontAwesomeIcon
