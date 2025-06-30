@@ -132,7 +132,8 @@ const TeamProfile = () => {
       <>
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
-          <div>
+          {/* Left Section: Info */}
+          <div className="w-full md:w-2/3">
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold dark:text-white">
                 {data?.teamName ||
@@ -142,7 +143,8 @@ const TeamProfile = () => {
               </h1>
             </div>
 
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
+            {/* Sport, Country, City, Type */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm text-gray-600">
               <div>
                 <label className="block text-sm text-gray-500 dark:text-white mb-1">
                   Sport
@@ -176,7 +178,9 @@ const TeamProfile = () => {
                 </span>
               </div>
             </div>
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
+
+            {/* Club */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm text-gray-600">
               <div>
                 <label className="block text-sm text-gray-500 dark:text-white mb-1">
                   Club
@@ -187,8 +191,8 @@ const TeamProfile = () => {
               </div>
             </div>
 
-            {/* Social Links */}
-            <div className="mt-10 mb-5 flex gap-6">
+            {/* Social Icons */}
+            <div className="mt-6 mb-5 flex flex-wrap gap-4">
               {socialIcons.map(({ icon, link, bg }, index) => (
                 <a
                   key={index}
@@ -211,7 +215,7 @@ const TeamProfile = () => {
               ))}
             </div>
 
-            {/* Contact Information */}
+            {/* Contact Info */}
             <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
               {data?.email && (
                 <div>
@@ -237,15 +241,15 @@ const TeamProfile = () => {
             </div>
           </div>
 
-          <div className="rounded-md overflow-hidden mt-6 md:mt-0">
+          {/* Right Section: Photo */}
+          <div className="rounded-md overflow-hidden mt-6 md:mt-0 md:ml-8 w-full md:w-1/3 max-w-xs">
             <img
               src={data?.photo || fallbackData.photo}
               alt="Team Photo"
               width={350}
               height={350}
-              className="rounded-md object-cover"
+              className="rounded-md object-cover w-full h-auto"
               onError={(e) => {
-                // Fallback to default image if profile photo fails to load
                 e.currentTarget.src = teamImage;
               }}
             />
@@ -254,7 +258,7 @@ const TeamProfile = () => {
 
         {/* Tabs Section */}
         <div className="mt-6">
-          <div className="flex gap-4 border-b">
+          <div className="flex gap-4 border-b overflow-x-auto">
             {(["details", "media"] as const).map((tab) => (
               <button
                 key={tab}
