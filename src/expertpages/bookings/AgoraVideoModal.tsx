@@ -23,6 +23,10 @@ import {
   faComments,
   faPaperPlane,
   faTimes,
+  faStopwatch,
+  faRecordVinyl,
+  faPause,
+  faPlay,
 } from "@fortawesome/free-solid-svg-icons";
 
 interface Booking {
@@ -99,13 +103,15 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     {
       id: "1",
       sender: "System",
-      message: "Connecting to the meeting...",
+      message: "Welcome to the expert session! Connecting to the meeting...",
       timestamp: new Date(),
       isOwn: false,
     },
   ]);
   const [newMessage, setNewMessage] = useState("");
   const [volume, setVolume] = useState(50);
+  const [isRecording, setIsRecording] = useState(false);
+  const [sessionNotes, setSessionNotes] = useState("");
 
   const localVideoRef = useRef<HTMLDivElement>(null);
   const remoteVideoRefs = useRef<{ [uid: string]: HTMLDivElement | null }>({});
@@ -172,8 +178,12 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
       // Create and publish local tracks
       const [microphoneTrack, cameraTrack] = await Promise.all([
-        AgoraRTC.createMicrophoneAudioTrack(),
-        AgoraRTC.createCameraVideoTrack(),
+        AgoraRTC.createMicrophoneAudioTrack({
+          encoderConfig: "high_quality_stereo",
+        }),
+        AgoraRTC.createCameraVideoTrack({
+          encoderConfig: "720p_1",
+        }),
       ]);
 
       setLocalAudioTrack(microphoneTrack);
@@ -191,31 +201,54 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       setIsConnecting(false);
 
       // Add success message
-      addChatMessage("System", "Successfully connected to the meeting!", false);
+      addChatMessage(
+        "System",
+        "Successfully connected to the meeting! Ready to start the expert session.",
+        false
+      );
+
+      // Welcome message to player
+      setTimeout(() => {
+        addChatMessage(
+          "You",
+          `Hello ${booking.player.username}! Welcome to our ${booking.service.service.name} session. I'm here to help you today.`,
+          true
+        );
+      }, 2000);
     } catch (error) {
       console.error("Failed to initialize Agora:", error);
       setConnectionError("Failed to connect to the meeting. Please try again.");
       setIsConnecting(false);
+      addChatMessage(
+        "System",
+        "Connection failed. Please check your internet connection and try again.",
+        false
+      );
     }
   };
 
   const handleUserJoined = (user: any) => {
     console.log("User joined:", user.uid);
-    addChatMessage(
-      "System",
-      `${getUsername(user.uid)} joined the meeting`,
-      false
-    );
+    const username = getUsername(user.uid);
+    addChatMessage("System", `${username} joined the meeting`, false);
+
+    // Send welcome message when player joins
+    if (username === booking.player.username) {
+      setTimeout(() => {
+        addChatMessage(
+          "You",
+          "Great! I can see you've joined. Let's begin our session.",
+          true
+        );
+      }, 1000);
+    }
   };
 
   const handleUserLeft = (user: any) => {
     console.log("User left:", user.uid);
+    const username = getUsername(user.uid);
     setRemoteUsers((prev) => prev.filter((u) => u.uid !== user.uid));
-    addChatMessage(
-      "System",
-      `${getUsername(user.uid)} left the meeting`,
-      false
-    );
+    addChatMessage("System", `${username} left the meeting`, false);
   };
 
   const handleUserPublished = async (
@@ -224,45 +257,63 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   ) => {
     if (!client) return;
 
-    await client.subscribe(user, mediaType);
+    try {
+      await client.subscribe(user, mediaType);
 
-    setRemoteUsers((prev) => {
-      const existingUser = prev.find((u) => u.uid === user.uid);
-      if (existingUser) {
-        return prev.map((u) =>
-          u.uid === user.uid
-            ? {
-                ...u,
-                [mediaType === "video" ? "videoTrack" : "audioTrack"]:
-                  user[`${mediaType}Track`],
-                [mediaType === "video" ? "hasVideo" : "hasAudio"]: true,
-              }
-            : u
+      setRemoteUsers((prev) => {
+        const existingUser = prev.find((u) => u.uid === user.uid);
+        if (existingUser) {
+          return prev.map((u) =>
+            u.uid === user.uid
+              ? {
+                  ...u,
+                  [mediaType === "video" ? "videoTrack" : "audioTrack"]:
+                    user[`${mediaType}Track`],
+                  [mediaType === "video" ? "hasVideo" : "hasAudio"]: true,
+                }
+              : u
+          );
+        } else {
+          return [
+            ...prev,
+            {
+              uid: user.uid,
+              videoTrack: mediaType === "video" ? user.videoTrack : undefined,
+              audioTrack: mediaType === "audio" ? user.audioTrack : undefined,
+              hasVideo: mediaType === "video",
+              hasAudio: mediaType === "audio",
+            },
+          ];
+        }
+      });
+
+      // Play remote tracks
+      if (mediaType === "video" && user.videoTrack) {
+        const remoteVideoContainer = remoteVideoRefs.current[user.uid];
+        if (remoteVideoContainer) {
+          user.videoTrack.play(remoteVideoContainer);
+        }
+      }
+
+      if (mediaType === "audio" && user.audioTrack) {
+        user.audioTrack.play();
+        // Apply current volume setting
+        user.audioTrack.setVolume(volume);
+      }
+
+      // Notify about media changes
+      const username = getUsername(user.uid);
+      if (mediaType === "video") {
+        addChatMessage(
+          "System",
+          `${username} ${
+            user.videoTrack ? "turned on" : "turned off"
+          } their camera`,
+          false
         );
-      } else {
-        return [
-          ...prev,
-          {
-            uid: user.uid,
-            videoTrack: mediaType === "video" ? user.videoTrack : undefined,
-            audioTrack: mediaType === "audio" ? user.audioTrack : undefined,
-            hasVideo: mediaType === "video",
-            hasAudio: mediaType === "audio",
-          },
-        ];
       }
-    });
-
-    // Play remote tracks
-    if (mediaType === "video" && user.videoTrack) {
-      const remoteVideoContainer = remoteVideoRefs.current[user.uid];
-      if (remoteVideoContainer) {
-        user.videoTrack.play(remoteVideoContainer);
-      }
-    }
-
-    if (mediaType === "audio" && user.audioTrack) {
-      user.audioTrack.play();
+    } catch (error) {
+      console.error(`Error subscribing to ${mediaType}:`, error);
     }
   };
 
@@ -281,11 +332,10 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   };
 
   const getUsername = (uid: UID): string => {
-    // In a real app, you'd map UIDs to usernames
     if (uid === booking.agora.uid) {
       return "You";
     }
-    return booking.expert.username || "Expert";
+    return booking.player.username || "Player";
   };
 
   const cleanupAgora = async () => {
@@ -312,6 +362,7 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     setRemoteUsers([]);
     setIsJoined(false);
     setCallDuration(0);
+    setIsRecording(false);
   };
 
   const formatDuration = (seconds: number): string => {
@@ -333,6 +384,12 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     if (localAudioTrack) {
       await localAudioTrack.setEnabled(!isAudioMuted);
       setIsAudioMuted(!isAudioMuted);
+
+      addChatMessage(
+        "System",
+        `You ${!isAudioMuted ? "muted" : "unmuted"} your microphone`,
+        false
+      );
     }
   };
 
@@ -340,6 +397,12 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     if (localVideoTrack) {
       await localVideoTrack.setEnabled(!isVideoMuted);
       setIsVideoMuted(!isVideoMuted);
+
+      addChatMessage(
+        "System",
+        `You ${!isVideoMuted ? "turned off" : "turned on"} your camera`,
+        false
+      );
     }
   };
 
@@ -349,7 +412,9 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     try {
       if (!isScreenSharing) {
         // Start screen sharing
-        const screenTrack = await AgoraRTC.createScreenVideoTrack();
+        const screenTrack = await AgoraRTC.createScreenVideoTrack({
+          encoderConfig: "1080p_1",
+        });
 
         // Replace camera track with screen track
         if (localVideoTrack) {
@@ -366,6 +431,8 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         if (localVideoRef.current) {
           screenTrack.play(localVideoRef.current);
         }
+
+        addChatMessage("System", "You started sharing your screen", false);
       } else {
         // Stop screen sharing and return to camera
         if (localVideoTrack) {
@@ -374,7 +441,9 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           localVideoTrack.close();
         }
 
-        const cameraTrack = await AgoraRTC.createCameraVideoTrack();
+        const cameraTrack = await AgoraRTC.createCameraVideoTrack({
+          encoderConfig: "720p_1",
+        });
         await client.publish(cameraTrack);
         setLocalVideoTrack(cameraTrack);
         setIsScreenSharing(false);
@@ -383,10 +452,27 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         if (localVideoRef.current) {
           cameraTrack.play(localVideoRef.current);
         }
+
+        addChatMessage("System", "You stopped sharing your screen", false);
       }
     } catch (error) {
       console.error("Error toggling screen share:", error);
+      addChatMessage(
+        "System",
+        "Failed to toggle screen sharing. Please try again.",
+        false
+      );
     }
+  };
+
+  const toggleRecording = async () => {
+    // In a real implementation, you would start/stop recording here
+    setIsRecording(!isRecording);
+    addChatMessage(
+      "System",
+      `Session recording ${!isRecording ? "started" : "stopped"}`,
+      false
+    );
   };
 
   const toggleFullscreen = () => {
@@ -420,18 +506,31 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       setNewMessage("");
 
       // In a real app, you'd send this through Agora RTM or your own messaging service
-      // For demo, simulate expert response
-      setTimeout(() => {
-        addChatMessage(
-          booking.expert.username,
-          "Thank you for your message!",
-          false
-        );
-      }, 2000);
+      // For demo, simulate player response occasionally
+      if (Math.random() > 0.7) {
+        setTimeout(() => {
+          const responses = [
+            "Thank you for the explanation!",
+            "That makes sense.",
+            "Could you show me that again?",
+            "I understand now.",
+            "This is very helpful.",
+          ];
+          const randomResponse =
+            responses[Math.floor(Math.random() * responses.length)];
+          addChatMessage(booking.player.username, randomResponse, false);
+        }, 2000 + Math.random() * 3000);
+      }
     }
   };
 
   const handleEndCall = async () => {
+    // Save session notes or send summary
+    if (sessionNotes.trim()) {
+      console.log("Session notes:", sessionNotes);
+      // In a real app, save these notes to the backend
+    }
+
     await cleanupAgora();
     onClose();
   };
@@ -443,7 +542,23 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     }
   };
 
+  const getSessionProgress = () => {
+    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
+    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
+
+    const sessionDurationMinutes =
+      endHours * 60 + endMinutes - (startHours * 60 + startMinutes);
+    const sessionDurationSeconds = sessionDurationMinutes * 60;
+
+    if (sessionDurationSeconds <= 0) return 0;
+
+    const progress = (callDuration / sessionDurationSeconds) * 100;
+    return Math.min(Math.max(progress, 0), 100);
+  };
+
   if (!isOpen) return null;
+
+  const sessionProgress = getSessionProgress();
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
@@ -456,27 +571,40 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         ref={modalRef}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+        <div className="flex items-center justify-between p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
           <div className="flex items-center space-x-4">
             <div className="relative">
               <img
-                src={booking.expert.photo}
-                alt={booking.expert.username}
-                className="w-12 h-12 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+                src={booking.player.photo}
+                alt={booking.player.username}
+                className="w-12 h-12 rounded-full object-cover border-2 border-green-200 shadow-sm"
               />
               <div
                 className={`absolute -bottom-1 -right-1 w-4 h-4 rounded-full border-2 border-white ${
-                  isJoined ? "bg-green-400" : "bg-gray-400"
+                  remoteUsers.length > 0 ? "bg-green-400" : "bg-gray-400"
                 }`}
               ></div>
             </div>
             <div>
               <h3 className="font-semibold text-gray-800 text-lg">
-                {booking.service.service.name}
+                Expert Session: {booking.service.service.name}
               </h3>
-              <p className="text-sm text-blue-600 font-medium">
-                with {booking.expert.username}
+              <p className="text-sm text-green-600 font-medium">
+                with {booking.player.username}
               </p>
+              {sessionProgress > 0 && (
+                <div className="mt-1 flex items-center space-x-2">
+                  <div className="w-24 h-1.5 bg-gray-200 rounded-full">
+                    <div
+                      className="h-full bg-green-500 rounded-full transition-all duration-300"
+                      style={{ width: `${sessionProgress}%` }}
+                    ></div>
+                  </div>
+                  <span className="text-xs text-gray-500">
+                    {Math.round(sessionProgress)}%
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -484,21 +612,30 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             {isJoined && (
               <div className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <FontAwesomeIcon icon={faStopwatch} className="text-xs" />
                 <span>{formatDuration(callDuration)}</span>
+              </div>
+            )}
+
+            {isRecording && (
+              <div className="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-medium flex items-center space-x-2">
+                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <FontAwesomeIcon icon={faRecordVinyl} className="text-xs" />
+                <span>Recording</span>
               </div>
             )}
 
             <div className="flex items-center space-x-2">
               <button
                 onClick={() => setShowChat(!showChat)}
-                className="p-2 rounded-xl bg-white text-blue-600 hover:bg-blue-50 transition-colors shadow-sm border border-blue-100"
+                className="p-2 rounded-xl bg-white text-green-600 hover:bg-green-50 transition-colors shadow-sm border border-green-100"
               >
                 <FontAwesomeIcon icon={faComments} />
               </button>
 
               <button
                 onClick={toggleFullscreen}
-                className="p-2 rounded-xl bg-white text-blue-600 hover:bg-blue-50 transition-colors shadow-sm border border-blue-100"
+                className="p-2 rounded-xl bg-white text-green-600 hover:bg-green-50 transition-colors shadow-sm border border-green-100"
               >
                 <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
               </button>
@@ -520,7 +657,7 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               <div className="flex items-center space-x-3">
                 <div className="animate-spin rounded-full h-5 w-5 border-2 border-blue-600 border-t-transparent"></div>
                 <span className="text-blue-700 font-medium">
-                  Connecting to meeting...
+                  Connecting to expert session...
                 </span>
               </div>
             )}
@@ -542,22 +679,28 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             } flex flex-col relative`}
           >
             {/* Remote Video */}
-            <div className="flex-1 relative bg-gradient-to-br from-blue-100 to-indigo-100">
+            <div className="flex-1 relative bg-gradient-to-br from-green-100 to-emerald-100">
               {remoteUsers.length === 0 ? (
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-24 h-24 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-6">
                       <FontAwesomeIcon
                         icon={faUsers}
-                        className="text-3xl text-blue-500"
+                        className="text-3xl text-green-500"
                       />
                     </div>
                     <h3 className="text-xl font-semibold text-gray-700 mb-2">
-                      Waiting for {booking.expert.username}
+                      Waiting for {booking.player.username}
                     </h3>
                     <p className="text-gray-500">
-                      They will join the meeting shortly...
+                      Your student will join the session shortly...
                     </p>
+                    <div className="mt-4 text-sm text-gray-400">
+                      <p>Session: {booking.service.service.name}</p>
+                      <p>
+                        Time: {booking.startTime} - {booking.endTime}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ) : (
@@ -577,22 +720,30 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         className="w-full h-full"
                       />
                       {!user.hasVideo && (
-                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100">
+                        <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-100 to-emerald-100">
                           <div className="text-center">
-                            <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-4">
-                              <FontAwesomeIcon
-                                icon={faVideo}
-                                className="text-2xl text-blue-500"
-                              />
-                            </div>
+                            <img
+                              src={booking.player.photo}
+                              alt={booking.player.username}
+                              className="w-20 h-20 rounded-full mx-auto mb-4 border-4 border-white shadow-lg"
+                            />
                             <h3 className="text-lg font-semibold text-gray-700">
                               {getUsername(user.uid)}
                             </h3>
+                            <p className="text-sm text-gray-500 mt-1">
+                              Camera is off
+                            </p>
                           </div>
                         </div>
                       )}
-                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm">
-                        {getUsername(user.uid)}
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-sm flex items-center space-x-2">
+                        <span>{getUsername(user.uid)}</span>
+                        {!user.hasAudio && (
+                          <FontAwesomeIcon
+                            icon={faMicrophoneSlash}
+                            className="text-red-400 text-xs"
+                          />
+                        )}
                       </div>
                     </div>
                   ))}
@@ -603,7 +754,7 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               <div className="absolute bottom-6 right-6 w-56 h-40 bg-white rounded-2xl overflow-hidden shadow-xl border-4 border-white">
                 <div
                   ref={localVideoRef}
-                  className="w-full h-full relative bg-gradient-to-br from-blue-200 to-indigo-200"
+                  className="w-full h-full relative bg-gradient-to-br from-green-200 to-emerald-200"
                 >
                   {isVideoMuted && (
                     <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
@@ -619,21 +770,34 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     </div>
                   )}
                 </div>
-                <div className="absolute bottom-1 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs">
-                  You {isScreenSharing && "(Screen)"}
+                <div className="absolute bottom-1 left-2 bg-black bg-opacity-50 text-white px-2 py-1 rounded text-xs flex items-center space-x-1">
+                  <span>You {isScreenSharing && "(Screen)"}</span>
+                  {isAudioMuted && (
+                    <FontAwesomeIcon
+                      icon={faMicrophoneSlash}
+                      className="text-red-400"
+                    />
+                  )}
                 </div>
               </div>
 
-              {/* Participants Count */}
+              {/* Participants Count & Status */}
               <div className="absolute top-6 left-6">
-                <div className="bg-white bg-opacity-90 backdrop-blur text-gray-700 px-4 py-2 rounded-full shadow-lg border border-blue-100">
+                <div className="bg-white bg-opacity-90 backdrop-blur text-gray-700 px-4 py-2 rounded-full shadow-lg border border-green-100">
                   <FontAwesomeIcon
                     icon={faUsers}
-                    className="mr-2 text-blue-500"
+                    className="mr-2 text-green-500"
                   />
                   <span className="font-medium">
                     {remoteUsers.length + 1} participants
                   </span>
+                </div>
+              </div>
+
+              {/* Expert Badge */}
+              <div className="absolute top-6 right-6">
+                <div className="bg-green-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
+                  Expert Mode
                 </div>
               </div>
             </div>
@@ -684,6 +848,21 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   <FontAwesomeIcon icon={faDesktop} />
                 </button>
 
+                {/* Recording Toggle */}
+                <button
+                  onClick={toggleRecording}
+                  disabled={!isJoined}
+                  className={`w-14 h-14 rounded-full transition-all duration-200 shadow-lg ${
+                    isRecording
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <FontAwesomeIcon
+                    icon={isRecording ? faPause : faRecordVinyl}
+                  />
+                </button>
+
                 {/* Volume Control */}
                 <div className="flex items-center space-x-3 bg-white rounded-full px-4 py-2 shadow-lg border-2 border-gray-200">
                   <FontAwesomeIcon
@@ -700,7 +879,7 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     }
                     className="w-20 h-2 bg-gray-200 rounded-full appearance-none cursor-pointer slider"
                     style={{
-                      background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${volume}%, #E5E7EB ${volume}%, #E5E7EB 100%)`,
+                      background: `linear-gradient(to right, #10B981 0%, #10B981 ${volume}%, #E5E7EB ${volume}%, #E5E7EB 100%)`,
                     }}
                   />
                   <FontAwesomeIcon
@@ -727,10 +906,10 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           {showChat && (
             <div className="w-96 bg-white border-l border-gray-200 flex flex-col">
               {/* Chat Header */}
-              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-gray-800 text-lg">
-                    Meeting Chat
+                    Session Chat
                   </h4>
                   <button
                     onClick={() => setShowChat(false)}
@@ -753,7 +932,7 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     <div
                       className={`max-w-xs px-4 py-3 rounded-2xl shadow-sm ${
                         msg.isOwn
-                          ? "bg-blue-500 text-white rounded-br-sm"
+                          ? "bg-green-500 text-white rounded-br-sm"
                           : msg.sender === "System"
                           ? "bg-gray-200 text-gray-700 rounded-bl-sm"
                           : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
@@ -777,6 +956,20 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 <div ref={chatEndRef} />
               </div>
 
+              {/* Session Notes */}
+              <div className="p-4 border-t border-gray-200 bg-green-50">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Session Notes
+                </label>
+                <textarea
+                  value={sessionNotes}
+                  onChange={(e) => setSessionNotes(e.target.value)}
+                  placeholder="Add notes about this session..."
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm resize-none"
+                  rows={3}
+                />
+              </div>
+
               {/* Chat Input */}
               <div className="p-4 border-t border-gray-200 bg-white">
                 <div className="flex space-x-3">
@@ -785,12 +978,12 @@ const AgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     onChange={(e) => setNewMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Type a message..."
-                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50"
+                    className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent bg-gray-50"
                   />
                   <button
                     onClick={sendMessage}
                     disabled={!newMessage.trim()}
-                    className="px-4 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl transition-colors shadow-sm"
+                    className="px-4 py-3 bg-green-500 hover:bg-green-600 disabled:bg-gray-300 text-white rounded-xl transition-colors shadow-sm"
                   >
                     <FontAwesomeIcon icon={faPaperPlane} />
                   </button>

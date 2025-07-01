@@ -41,7 +41,7 @@ interface AvailabilityData {
 interface TimeSlot {
   startTime: string;
   endTime: string;
-  available: boolean;
+  isAvailable: boolean;
 }
 
 const BookingCalendar: React.FC = () => {
@@ -190,7 +190,7 @@ const BookingCalendar: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch time slots");
 
         const data: TimeSlot[] = await response.json();
-        const availableSlots = data.filter((slot) => slot.available);
+        const availableSlots = data.filter((slot) => slot.isAvailable);
         setAvailableTimeSlots(availableSlots);
 
         if (selectedTime) {

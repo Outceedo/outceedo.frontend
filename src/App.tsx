@@ -41,7 +41,7 @@ import PlayersProfile from "./Expertpages/playerProfiles";
 import ExpertviewProfile from "./Expertpages/playerinfo";
 import ExpertProfile from "./Expertpages/expertdata";
 import ExpertDashboard from "./Expertpages/Dashboard";
-import BookingExpertside from "./Expertpages/Bookings";
+import BookingExpertside from "./Expertpages/bookings/Bookings";
 import ExpertMatches from "./Expertpages/ExpertMatches";
 import ExpertAvailabilityManager from "./Expertpages/Slots";
 import { authService } from "./store/apiConfig";
