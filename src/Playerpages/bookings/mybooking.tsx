@@ -203,17 +203,45 @@ const MyBooking: React.FC = () => {
   const canGoLive = (booking: Booking) => {
     if (!isPaid(booking)) return false;
 
+    // Get current local time
     const now = new Date();
+
+    // Parse the booking date (this should be in YYYY-MM-DD format)
     const sessionDate = new Date(booking.date);
+
+    // Parse time correctly
     const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
     const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
 
-    const sessionStart = new Date(sessionDate);
-    sessionStart.setHours(startHours, startMinutes, 0, 0);
+    // Create session start time in local timezone
+    const sessionStart = new Date(
+      sessionDate.getFullYear(),
+      sessionDate.getMonth(),
+      sessionDate.getDate(),
+      startHours,
+      startMinutes,
+      0,
+      0
+    );
 
-    const sessionEnd = new Date(sessionDate);
-    sessionEnd.setHours(endHours, endMinutes, 0, 0);
+    // Create session end time in local timezone
+    const sessionEnd = new Date(
+      sessionDate.getFullYear(),
+      sessionDate.getMonth(),
+      sessionDate.getDate(),
+      endHours,
+      endMinutes,
+      0,
+      0
+    );
 
+    // Handle sessions that cross midnight (like 11:00 PM - 12:00 AM)
+    if (endHours < startHours || (endHours === 0 && startHours > 0)) {
+      // Session crosses midnight, add one day to end time
+      sessionEnd.setDate(sessionEnd.getDate() + 1);
+    }
+
+    // Allow going live 10 minutes before session starts
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
 
     const isSessionOver = now > sessionEnd;
@@ -223,16 +251,37 @@ const MyBooking: React.FC = () => {
     console.log(`Player - Booking ${booking.id}:`, {
       now: now.toISOString(),
       nowLocal: now.toLocaleString(),
+      nowTime: `${now.getHours()}:${now
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`,
       sessionStart: sessionStart.toISOString(),
       sessionStartLocal: sessionStart.toLocaleString(),
+      sessionStartTime: `${sessionStart.getHours()}:${sessionStart
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`,
       sessionEnd: sessionEnd.toISOString(),
       sessionEndLocal: sessionEnd.toLocaleString(),
+      sessionEndTime: `${sessionEnd.getHours()}:${sessionEnd
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`,
       goLiveTime: goLiveTime.toISOString(),
       goLiveTimeLocal: goLiveTime.toLocaleString(),
+      goLiveTimeFormatted: `${goLiveTime.getHours()}:${goLiveTime
+        .getMinutes()
+        .toString()
+        .padStart(2, "0")}`,
       isSessionOver,
       isTooEarly,
       canGoLive: canGoLiveNow,
       userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      crossesMidnight:
+        endHours < startHours || (endHours === 0 && startHours > 0),
+      bookingDate: booking.date,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
     });
 
     return canGoLiveNow;

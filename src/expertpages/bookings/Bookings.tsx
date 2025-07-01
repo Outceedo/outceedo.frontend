@@ -177,24 +177,33 @@ const BookingExpertside: React.FC = () => {
   const canGoLive = (booking: Booking) => {
     if (!isPaid(booking)) return false;
 
-    // Use local time - Date.now() automatically detects user's timezone
     const now = new Date();
     const sessionDate = new Date(booking.date);
+
+    // Parse time correctly
     const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
+    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
 
     // Create session start time in local timezone
     const sessionStart = new Date(sessionDate);
     sessionStart.setHours(startHours, startMinutes, 0, 0);
 
-    // Create session end time in local timezone
+    // Handle sessions that cross midnight (like 11:00 PM - 12:00 AM)
     const sessionEnd = new Date(sessionDate);
-    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
+    if (endHours < startHours) {
+      // Session crosses midnight, add one day to end time
+      sessionEnd.setDate(sessionEnd.getDate() + 1);
+    }
     sessionEnd.setHours(endHours, endMinutes, 0, 0);
 
     // Allow going live 10 minutes before session starts
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
 
-    console.log(`Expert - Booking ${booking.id}:`, {
+    const isSessionOver = now > sessionEnd;
+    const isTooEarly = now < goLiveTime;
+    const canGoLiveNow = !isTooEarly && !isSessionOver;
+
+    console.log(`Player - Booking ${booking.id}:`, {
       now: now.toISOString(),
       nowLocal: now.toLocaleString(),
       sessionStart: sessionStart.toISOString(),
@@ -203,11 +212,14 @@ const BookingExpertside: React.FC = () => {
       sessionEndLocal: sessionEnd.toLocaleString(),
       goLiveTime: goLiveTime.toISOString(),
       goLiveTimeLocal: goLiveTime.toLocaleString(),
-      canGoLive: now >= goLiveTime && now <= sessionEnd,
+      isSessionOver,
+      isTooEarly,
+      canGoLive: canGoLiveNow,
       userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      crossesMidnight: endHours < startHours,
     });
 
-    return now >= goLiveTime && now <= sessionEnd;
+    return canGoLiveNow;
   };
 
   const isUpcomingSession = (booking: Booking) => {
