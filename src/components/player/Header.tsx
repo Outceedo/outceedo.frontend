@@ -9,6 +9,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks";
+import axios from "axios";
 
 interface PlayerHeaderProps {
   setOpen: (open: boolean) => void;
@@ -29,6 +31,7 @@ const menuItems = [
 
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const { currentProfile } = useAppSelector((state) => state.profile);
 
   const location = useLocation();
   const currentTitle =
@@ -57,6 +60,35 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
     }
   };
 
+  const handleUpgrade = async () => {
+    try {
+      const id = currentProfile?.id;
+      if (!id) return;
+
+      const api = `${import.meta.env.VITE_PORT}/api/v1/subscription/${id}`;
+      const token = localStorage.getItem("token");
+      const response = await axios.post(
+        api,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data?.url) {
+        window.open(response.data.url, "_blank");
+      } else {
+        alert("No payment URL returned.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong during upgrade.");
+    }
+  };
+
   return (
     <header className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 bg-background dark:bg-slate-950">
       {/* Left Section: Menu Button + Page Title */}
@@ -79,7 +111,10 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
       {/* Right Section: Premium Button, Notifications, Theme Toggle */}
       <div className="flex flex-nowrap justify-end gap-2 items-center">
         {/* Premium button - adaptive size and hidden text on smallest screens */}
-        <Button className="h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors">
+        <Button
+          className="h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors"
+          onClick={handleUpgrade}
+        >
           <FontAwesomeIcon
             icon={faGem}
             className="text-blue-700 dark:text-blue-400 text-lg sm:text-xl"

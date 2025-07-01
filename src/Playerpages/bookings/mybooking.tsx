@@ -189,27 +189,38 @@ const MyBooking: React.FC = () => {
     return booking.status === "SCHEDULED";
   };
 
+  const isSessionOver = (booking: Booking) => {
+    const now = new Date();
+    const sessionDate = new Date(booking.date);
+    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
+
+    const sessionEnd = new Date(sessionDate);
+    sessionEnd.setHours(endHours, endMinutes, 0, 0);
+
+    return now > sessionEnd;
+  };
+
   const canGoLive = (booking: Booking) => {
     if (!isPaid(booking)) return false;
 
-    // Use local time - Date.now() automatically detects user's timezone
     const now = new Date();
     const sessionDate = new Date(booking.date);
     const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
+    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
 
-    // Create session start time in local timezone
     const sessionStart = new Date(sessionDate);
     sessionStart.setHours(startHours, startMinutes, 0, 0);
 
-    // Create session end time in local timezone
     const sessionEnd = new Date(sessionDate);
-    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
     sessionEnd.setHours(endHours, endMinutes, 0, 0);
 
-    // Allow going live 10 minutes before session starts
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
 
-    console.log(`Booking ${booking.id}:`, {
+    const isSessionOver = now > sessionEnd;
+    const isTooEarly = now < goLiveTime;
+    const canGoLiveNow = !isTooEarly && !isSessionOver;
+
+    console.log(`Player - Booking ${booking.id}:`, {
       now: now.toISOString(),
       nowLocal: now.toLocaleString(),
       sessionStart: sessionStart.toISOString(),
@@ -218,11 +229,13 @@ const MyBooking: React.FC = () => {
       sessionEndLocal: sessionEnd.toLocaleString(),
       goLiveTime: goLiveTime.toISOString(),
       goLiveTimeLocal: goLiveTime.toLocaleString(),
-      canGoLive: now >= goLiveTime && now <= sessionEnd,
+      isSessionOver,
+      isTooEarly,
+      canGoLive: canGoLiveNow,
       userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     });
 
-    return now >= goLiveTime && now <= sessionEnd;
+    return canGoLiveNow;
   };
 
   const isUpcomingSession = (booking: Booking) => {
@@ -233,30 +246,25 @@ const MyBooking: React.FC = () => {
     const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
 
     const sessionStart = new Date(sessionDate);
-    sessionStart.setUTCHours(startHours, startMinutes, 0, 0);
+    sessionStart.setHours(startHours, startMinutes, 0, 0);
 
-    // Show sessions that are within next 7 days (extended from 24 hours)
     const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    return sessionStart >= now && sessionStart <= next7Days;
+    return (
+      sessionStart >= now &&
+      sessionStart <= next7Days &&
+      !isSessionOver(booking)
+    );
   };
 
   const isSessionToday = (booking: Booking) => {
     const today = new Date();
     const sessionDate = new Date(booking.date);
 
-    // Compare dates in UTC
-    const todayUTC = new Date(
-      today.getTime() + today.getTimezoneOffset() * 60000
-    );
-    const sessionDateUTC = new Date(
-      sessionDate.getTime() + sessionDate.getTimezoneOffset() * 60000
-    );
-
     return (
-      todayUTC.getUTCFullYear() === sessionDateUTC.getUTCFullYear() &&
-      todayUTC.getUTCMonth() === sessionDateUTC.getUTCMonth() &&
-      todayUTC.getUTCDate() === sessionDateUTC.getUTCDate()
+      today.getFullYear() === sessionDate.getFullYear() &&
+      today.getMonth() === sessionDate.getMonth() &&
+      today.getDate() === sessionDate.getDate()
     );
   };
 
@@ -266,7 +274,7 @@ const MyBooking: React.FC = () => {
     const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
 
     const sessionStart = new Date(sessionDate);
-    sessionStart.setUTCHours(startHours, startMinutes, 0, 0);
+    sessionStart.setHours(startHours, startMinutes, 0, 0);
 
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
     const timeDiff = goLiveTime.getTime() - now.getTime();
@@ -443,6 +451,16 @@ const MyBooking: React.FC = () => {
     }
 
     if (!canGoLive(booking)) {
+      if (isSessionOver(booking)) {
+        Swal.fire({
+          icon: "info",
+          title: "Session Ended",
+          text: "This session has already ended. Please book a new session if you need further assistance.",
+          confirmButtonColor: "#6B7280",
+        });
+        return;
+      }
+
       const timeUntil = getTimeUntilGoLive(booking);
       Swal.fire({
         icon: "info",
@@ -691,7 +709,6 @@ const MyBooking: React.FC = () => {
     });
 
   const navigate = useNavigate();
-  console.log(bookings);
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
@@ -872,6 +889,11 @@ const MyBooking: React.FC = () => {
                       Live Now
                     </Badge>
                   )}
+                  {isSessionOver(booking) && (
+                    <Badge className="bg-gray-100 text-gray-800 text-xs">
+                      Session Ended
+                    </Badge>
+                  )}
                 </div>
               </div>
 
@@ -880,7 +902,14 @@ const MyBooking: React.FC = () => {
                   ${booking.service?.price || "N/A"}
                 </span>
 
-                {canGoLive(booking) ? (
+                {isSessionOver(booking) ? (
+                  <Button
+                    className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                    disabled
+                  >
+                    Session Ended
+                  </Button>
+                ) : canGoLive(booking) ? (
                   <Button
                     className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto flex items-center gap-1"
                     onClick={(e) => {
@@ -921,6 +950,7 @@ const MyBooking: React.FC = () => {
 
               {isSessionToday(booking) &&
                 !canGoLive(booking) &&
+                !isSessionOver(booking) &&
                 booking.agora && (
                   <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
                     <FontAwesomeIcon icon={faInfoCircle} className="mr-1" />
@@ -971,107 +1001,136 @@ const MyBooking: React.FC = () => {
                 </Badge>
               </div>
 
-              {isPaid(selectedBooking) && selectedBooking.agora && (
-                <div
-                  className={`mb-5 p-4 rounded-lg border ${
-                    canGoLive(selectedBooking)
-                      ? "bg-green-50 border-green-200"
-                      : isSessionToday(selectedBooking)
-                      ? "bg-blue-50 border-blue-200"
-                      : "bg-gray-50 border-gray-200"
-                  }`}
-                >
+              {isSessionOver(selectedBooking) && (
+                <div className="mb-5 p-4 rounded-lg border bg-gray-50 border-gray-200">
                   <div className="flex items-start">
                     <FontAwesomeIcon
-                      icon={
-                        canGoLive(selectedBooking)
-                          ? faPlay
-                          : isSessionToday(selectedBooking)
-                          ? faInfoCircle
-                          : faClock
-                      }
-                      className={`mr-2 mt-1 flex-shrink-0 ${
-                        canGoLive(selectedBooking)
-                          ? "text-green-600"
-                          : isSessionToday(selectedBooking)
-                          ? "text-blue-600"
-                          : "text-gray-600"
-                      }`}
+                      icon={faClock}
+                      className="mr-2 mt-1 flex-shrink-0 text-gray-600"
                     />
                     <div className="flex-1">
-                      <p
-                        className={`font-medium ${
-                          canGoLive(selectedBooking)
-                            ? "text-green-800"
-                            : isSessionToday(selectedBooking)
-                            ? "text-blue-800"
-                            : "text-gray-800"
-                        }`}
-                      >
-                        {canGoLive(selectedBooking)
-                          ? "Session is Live Now!"
-                          : isSessionToday(selectedBooking)
-                          ? "Session Today"
-                          : "Upcoming Session"}
-                      </p>
-                      <p
-                        className={`text-sm mt-1 ${
-                          canGoLive(selectedBooking)
-                            ? "text-green-700"
-                            : isSessionToday(selectedBooking)
-                            ? "text-blue-700"
-                            : "text-gray-700"
-                        }`}
-                      >
-                        {canGoLive(selectedBooking)
-                          ? "Your session is currently live. You can join the video call now."
-                          : isSessionToday(selectedBooking)
-                          ? `Your session starts at ${formatTimeRange(
-                              selectedBooking.startTime,
-                              selectedBooking.endTime
-                            )}. Video call will be available 10 minutes before the session.`
-                          : `Session scheduled for ${formatDate(
-                              selectedBooking.date,
-                              selectedBooking.startTime
-                            )}`}
-                      </p>
-
-                      <div className="mt-3">
-                        {canGoLive(selectedBooking) ? (
-                          <Button
-                            className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 h-auto flex items-center gap-2"
-                            onClick={() => handleGoLive(selectedBooking)}
-                          >
-                            <FontAwesomeIcon
-                              icon={faPlay}
-                              className="w-4 h-4"
-                            />
-                            Go Live Now
-                          </Button>
-                        ) : getTimeUntilGoLive(selectedBooking) ? (
-                          <Button
-                            className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
-                            disabled
-                          >
-                            <FontAwesomeIcon
-                              icon={faClock}
-                              className="w-4 h-4 mr-2"
-                            />
-                            Available in {getTimeUntilGoLive(selectedBooking)}
-                          </Button>
-                        ) : (
-                          <Button
-                            className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
-                            disabled
-                          >
-                            Session Not Available
-                          </Button>
+                      <p className="font-medium text-gray-800">Session Ended</p>
+                      <p className="text-sm mt-1 text-gray-700">
+                        This session ended at{" "}
+                        {formatTimeRange(
+                          selectedBooking.startTime,
+                          selectedBooking.endTime
+                        )}{" "}
+                        on{" "}
+                        {formatDate(
+                          selectedBooking.date,
+                          selectedBooking.startTime
                         )}
-                      </div>
+                        .
+                      </p>
                     </div>
                   </div>
                 </div>
               )}
+
+              {isPaid(selectedBooking) &&
+                selectedBooking.agora &&
+                !isSessionOver(selectedBooking) && (
+                  <div
+                    className={`mb-5 p-4 rounded-lg border ${
+                      canGoLive(selectedBooking)
+                        ? "bg-green-50 border-green-200"
+                        : isSessionToday(selectedBooking)
+                        ? "bg-blue-50 border-blue-200"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-start">
+                      <FontAwesomeIcon
+                        icon={
+                          canGoLive(selectedBooking)
+                            ? faPlay
+                            : isSessionToday(selectedBooking)
+                            ? faInfoCircle
+                            : faClock
+                        }
+                        className={`mr-2 mt-1 flex-shrink-0 ${
+                          canGoLive(selectedBooking)
+                            ? "text-green-600"
+                            : isSessionToday(selectedBooking)
+                            ? "text-blue-600"
+                            : "text-gray-600"
+                        }`}
+                      />
+                      <div className="flex-1">
+                        <p
+                          className={`font-medium ${
+                            canGoLive(selectedBooking)
+                              ? "text-green-800"
+                              : isSessionToday(selectedBooking)
+                              ? "text-blue-800"
+                              : "text-gray-800"
+                          }`}
+                        >
+                          {canGoLive(selectedBooking)
+                            ? "Session is Live Now!"
+                            : isSessionToday(selectedBooking)
+                            ? "Session Today"
+                            : "Upcoming Session"}
+                        </p>
+                        <p
+                          className={`text-sm mt-1 ${
+                            canGoLive(selectedBooking)
+                              ? "text-green-700"
+                              : isSessionToday(selectedBooking)
+                              ? "text-blue-700"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {canGoLive(selectedBooking)
+                            ? "Your session is currently live. You can join the video call now."
+                            : isSessionToday(selectedBooking)
+                            ? `Your session starts at ${formatTimeRange(
+                                selectedBooking.startTime,
+                                selectedBooking.endTime
+                              )}. Video call will be available 10 minutes before the session.`
+                            : `Session scheduled for ${formatDate(
+                                selectedBooking.date,
+                                selectedBooking.startTime
+                              )}`}
+                        </p>
+
+                        <div className="mt-3">
+                          {canGoLive(selectedBooking) ? (
+                            <Button
+                              className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 h-auto flex items-center gap-2"
+                              onClick={() => handleGoLive(selectedBooking)}
+                            >
+                              <FontAwesomeIcon
+                                icon={faPlay}
+                                className="w-4 h-4"
+                              />
+                              Go Live Now
+                            </Button>
+                          ) : getTimeUntilGoLive(selectedBooking) ? (
+                            <Button
+                              className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                              disabled
+                            >
+                              <FontAwesomeIcon
+                                icon={faClock}
+                                className="w-4 h-4 mr-2"
+                              />
+                              Available in {getTimeUntilGoLive(selectedBooking)}
+                            </Button>
+                          ) : (
+                            <Button
+                              className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                              disabled
+                            >
+                              Session Not Available
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
@@ -1425,7 +1484,8 @@ const MyBooking: React.FC = () => {
             <DialogFooter className="flex flex-wrap gap-3 justify-end">
               {isPaid(selectedBooking) &&
                 canGoLive(selectedBooking) &&
-                selectedBooking.agora && (
+                selectedBooking.agora &&
+                !isSessionOver(selectedBooking) && (
                   <Button
                     className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
                     onClick={() => handleGoLive(selectedBooking)}
