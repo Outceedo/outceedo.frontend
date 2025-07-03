@@ -64,10 +64,10 @@ import TeamSponsorInfo from "./teampages/Sponsorinfo";
 import TeamExperts from "./teampages/expertprofile";
 //fan pages
 import FanLayout from "./components/fan/layout";
-import FanPlayers from "./Fanpages/Players";
-import FanExperts from "./Fanpages/Experts";
-import Fanprofile from "./Fanpages/FanProfile";
-import Fandetailsform from "./Fanpages/Fandetailsform";
+import FanPlayers from "./fanpages/Players";
+import FanExperts from "./fanpages/Experts";
+import Fanprofile from "./fanpages/FanProfile";
+import Fandetailsform from "./fanpages/Fandetailsform";
 
 import SponsorApplicationpage from "./Playerpages/SponsorApplications";
 import AdminLayout from "./components/admin/layout";
