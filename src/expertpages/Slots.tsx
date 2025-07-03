@@ -197,6 +197,8 @@ const ExpertAvailabilityManager = () => {
     "22:30",
     "23:00",
     "23:30",
+    "00:00",
+    "00:30",
   ];
 
   useEffect(() => {
