@@ -72,7 +72,7 @@ interface ProfileDetailsProps {
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   playerData = {
-    aboutMe: "I am a passionate player dedicated to improving my skills.",
+    aboutMe: "",
     documents: [],
     socials: {},
   },
