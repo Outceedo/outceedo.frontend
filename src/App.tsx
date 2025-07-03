@@ -37,7 +37,7 @@ import ExpertLayout from "./components/expert/layout";
 import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
-import PlayersProfile from "./Expertpages/playerProfiles";
+
 import ExpertviewProfile from "./Expertpages/playerinfo";
 import ExpertProfile from "./Expertpages/expertdata";
 import ExpertDashboard from "./Expertpages/Dashboard";
@@ -83,6 +83,7 @@ import Expertadmin from "./Adminpages/Expert";
 import Sponsoradmin from "./Adminpages/Sponsor";
 import Teamadmin from "./Adminpages/Team";
 import Fanadmin from "./Adminpages/Fan";
+import PlayersProfile from "./Expertpages/playerProfiles";
 
 const token = localStorage.getItem("token");
 if (token) {
