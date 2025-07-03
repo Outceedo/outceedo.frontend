@@ -50,7 +50,7 @@ interface Match {
   redcards?: string;
 }
 
-const Matches: React.FC = () => {
+const ExpertMatches: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -858,4 +858,4 @@ const Matches: React.FC = () => {
   );
 };
 
-export default Matches;
+export default ExpertMatches;

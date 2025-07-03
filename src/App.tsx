@@ -37,13 +37,8 @@ import ExpertLayout from "./components/expert/layout";
 import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
+import PlayersProfile from "./Expertpages/playerProfiles";
 
-import ExpertviewProfile from "./Expertpages/playerinfo";
-import ExpertProfile from "./Expertpages/expertdata";
-import ExpertDashboard from "./Expertpages/Dashboard";
-import BookingExpertside from "./Expertpages/bookings/Bookings";
-import ExpertMatches from "./Expertpages/ExpertMatches";
-import ExpertAvailabilityManager from "./Expertpages/Slots";
 import { authService } from "./store/apiConfig";
 //sponser pages
 import Sponsorprofile from "./SponsorPages/Sponsorprofile";
@@ -83,7 +78,12 @@ import Expertadmin from "./Adminpages/Expert";
 import Sponsoradmin from "./Adminpages/Sponsor";
 import Teamadmin from "./Adminpages/Team";
 import Fanadmin from "./Adminpages/Fan";
-import PlayersProfile from "./Expertpages/playerProfiles";
+import ExpertDashboard from "./Expertpages/Dashboard";
+import ExpertMatches from "./Expertpages/ExpertMatches";
+import BookingExpertside from "./Expertpages/bookings/Bookings";
+import ExpertProfile from "./Expertpages/expertdata";
+import Playerview from "./Pages/Player/Playerview";
+import ExpertAvailabilityManager from "./Expertpages/Slots";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -242,7 +242,7 @@ const AppContent: React.FC = () => {
         <Route path="viewplayers" element={<PlayersProfile />} />
         <Route path="sponsors" element={<Expertsponsors />} />
         <Route path="profile" element={<ExpertProfile />} />
-        <Route path="playerinfo" element={<ExpertviewProfile />} />
+        <Route path="playerinfo" element={<Playerview />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="sponsorinfo" element={<SponsorInfo />} />
         <Route
