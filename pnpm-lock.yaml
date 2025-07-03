@@ -77,9 +77,6 @@ importers:
       '@tailwindcss/vite':
         specifier: ^4.0.16
         version: 4.1.10(vite@6.3.5(@types/node@22.15.31)(jiti@2.4.2)(lightningcss@1.30.1))
-      agora-rtc-react:
-        specifier: ^2.4.0
-        version: 2.4.0(react@19.1.0)
       agora-rtc-sdk-ng:
         specifier: ^4.23.4
         version: 4.23.4
@@ -1367,12 +1364,6 @@ packages:
     resolution: {integrity: sha512-NZyJarBfL7nWwIq+FDL6Zp/yHEhePMNnnJ0y3qfieCrmNvYct8uvtiV41UvlSe6apAfk0fY1FbWx+NwfmpvtTg==}
     engines: {node: '>=0.4.0'}
     hasBin: true
-
-  agora-rtc-react@2.4.0:
-    resolution: {integrity: sha512-2hNoQiIbRP9pfERILoVb02Eu/7QW3uTiVdsJe7LFnYP/RqI5BBDEXYC2X8hxmmhbWYTuBYR5uYKacbVPt459Jw==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: '>=16.8'
 
   agora-rtc-sdk-ng@4.23.4:
     resolution: {integrity: sha512-WbcGFZ6bpB+GSPFNGTrUwq4rSHkW7pLfr1XLJZm3EDTgfZI0W9ZHFtIqiBq8mBJ0q5S86JFkJmTRTRB7OpQU+w==}
@@ -3543,10 +3534,6 @@ snapshots:
       acorn: 8.15.0
 
   acorn@8.15.0: {}
-
-  agora-rtc-react@2.4.0(react@19.1.0):
-    dependencies:
-      react: 19.1.0
 
   agora-rtc-sdk-ng@4.23.4:
     dependencies:
