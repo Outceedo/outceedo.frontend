@@ -49,19 +49,19 @@ import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
 
 //Team pages
-import TeamDetailsForm from "./Teampages/teamdetailsform";
-import TeamProfile from "./Teampages/teamprofile";
-import TeamExpert from "./Teampages/experts";
-import TeamPlayer from "./Teampages/player";
-import TeamSponsor from "./Teampages/TeamSponser";
+import TeamDetailsForm from "./teampages/teamdetailsform";
+import TeamProfile from "./teampages/teamprofile";
+import TeamExpert from "./teampages/experts";
+import TeamPlayer from "./teampages/player";
+import TeamSponsor from "./teampages/TeamSponser";
 import TeamPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorExperts from "./SponsorPages/Expertssponsor";
 import Expertsponsors from "./Expertpages/Expertsponsors";
 import SponsorInfo from "./Expertpages/sponsorinfo";
 import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
-import TeamSponsorInfo from "./Teampages/Sponsorinfo";
-import TeamExperts from "./Teampages/expertprofile";
+import TeamSponsorInfo from "./teampages/Sponsorinfo";
+import TeamExperts from "./teampages/expertprofile";
 //fan pages
 import FanLayout from "./components/fan/layout";
 import FanPlayers from "./Fanpages/Players";
