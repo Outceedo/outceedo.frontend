@@ -37,7 +37,7 @@ import ExpertLayout from "./components/expert/layout";
 import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
-import PlayersProfile from "./Expertpages/playerProfiles.tsx";
+import PlayersProfile from "./expertpages/playerProfiles";
 
 import { authService } from "./store/apiConfig";
 //sponser pages
@@ -78,12 +78,12 @@ import Expertadmin from "./Adminpages/Expert";
 import Sponsoradmin from "./Adminpages/Sponsor";
 import Teamadmin from "./Adminpages/Team";
 import Fanadmin from "./Adminpages/Fan";
-import ExpertDashboard from "./Expertpages/Dashboard";
-import ExpertMatches from "./Expertpages/ExpertMatches";
-import BookingExpertside from "./Expertpages/bookings/Bookings";
-import ExpertProfile from "./Expertpages/expertdata";
+import ExpertDashboard from "./expertpages/Dashboard";
+import ExpertMatches from "./expertpages/ExpertMatches";
+import BookingExpertside from "./expertpages/bookings/Bookings";
+import ExpertProfile from "./expertpages/expertdata";
 import Playerview from "./Pages/Player/Playerview";
-import ExpertAvailabilityManager from "./Expertpages/Slots";
+import ExpertAvailabilityManager from "./expertpages/Slots";
 
 const token = localStorage.getItem("token");
 if (token) {
