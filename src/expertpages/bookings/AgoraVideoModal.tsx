@@ -404,7 +404,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       setClient(agoraClient);
 
       let joinSuccess = false;
-     
 
       for (let attempt = 0; attempt < 3 && !joinSuccess; attempt++) {
         try {
@@ -770,16 +769,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
   const handleEndCall = () => {
     if (sessionNotes.trim()) {
-      const sessionData = {
-        sessionId: booking.id,
-        expertId: "22951a3363",
-        studentId: booking.player.username,
-        serviceType: booking.service.service.name,
-        duration: callDuration,
-        notes: sessionNotes,
-        endTime: "2025-07-03 08:31:04",
-        sessionDate: "2025-07-03",
-      };
+      
 
       addChatMessage(
         "System",
@@ -988,10 +978,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         <FontAwesomeIcon icon={faClock} className="mr-2" />
                         Time: {booking.startTime} - {booking.endTime}
                       </p>
-                      <p className="flex items-center justify-center mb-1">
-                        <FontAwesomeIcon icon={faFileAlt} className="mr-2" />
-                        Expert ID: 22951a3363
-                      </p>
+
                       {isJoined && (
                         <p className="text-green-600 mt-2 flex items-center justify-center">
                           <FontAwesomeIcon
@@ -1291,9 +1278,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm resize-none"
                   rows={3}
                 />
-                <p className="text-xs text-gray-500 mt-1">
-                  Notes auto-saved when session ends • Expert ID: 22951a3363
-                </p>
+               
               </div>
 
               <div className="p-3 border-t border-gray-200 bg-white">

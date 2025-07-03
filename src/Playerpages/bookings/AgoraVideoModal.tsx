@@ -837,7 +837,7 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
               <div className="absolute top-4 right-4">
                 <div className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
-                  Student View
+                  Player View
                 </div>
               </div>
             </div>
