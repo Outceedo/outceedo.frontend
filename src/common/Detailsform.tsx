@@ -981,7 +981,15 @@ const Detailsform: React.FC = () => {
               </div>
 
               {stepNum < 4 && (
-                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-14 relative">
+                <div
+                  className={`flex-1 h-1 bg-gray-300 rounded-full 
+  ${
+    step === 2
+      ? "-mx-7.5 md:-mx-[10px] lg:-mx-[50px]"
+      : "lg:-mx-[48.5px] -mx-[28px] md:-mx-[48.5px]"
+  } 
+  relative`}
+                >
                   <div
                     className={`absolute top-0 left-0 h-1 rounded-full ${
                       step > stepNum ? "bg-red-500 w-full" : "w-0"
@@ -993,17 +1001,19 @@ const Detailsform: React.FC = () => {
           ))}
         </div>
 
-        <div className="flex w-full max-w-lg justify-between mt-2">
-          <div className="w-1/4 text-center text-sm font-medium">
+        <div className="flex w-full max-w-lg justify-between mt-2 min-w-0">
+          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
             Personal Details
           </div>
-          <div className="w-1/4 text-center text-sm font-medium">
+          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
             More Details
           </div>
-          <div className="w-1/4 text-center text-sm font-medium">
+          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
             Certification/Awards
           </div>
-          <div className="w-1/4 text-center text-sm font-medium">Links</div>
+          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
+            Links
+          </div>
         </div>
       </div>
 
@@ -1012,7 +1022,7 @@ const Detailsform: React.FC = () => {
           <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
 
           <label className="block text-grey mb-1">Profile Picture</label>
-          <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-center">
+          <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start lg:justify-center md:justify-center">
             {existingProfilePhoto && !profilePhoto && (
               <div className="flex items-center">
                 <img
@@ -1020,7 +1030,7 @@ const Detailsform: React.FC = () => {
                   alt="Current profile"
                   className="h-10 w-10 object-cover rounded-full mr-2"
                 />
-                <span className="text-gray-700">Current profile photo</span>
+                <span className="text-gray-500">Current profile photo</span>
               </div>
             )}
             <span
@@ -1049,7 +1059,7 @@ const Detailsform: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex space-x-4 mb-2">
+          <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
               <label className="block text-black mb-1">First Name *</label>
               <input
@@ -1100,7 +1110,7 @@ const Detailsform: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex space-x-4 mb-2">
+          <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
               <label className="block text-black mb-1">Profession *</label>
               <select
@@ -1157,7 +1167,7 @@ const Detailsform: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex space-x-4 mb-2">
+          <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
               <label className="block text-black mb-1">Age</label>
               <input
@@ -1216,7 +1226,7 @@ const Detailsform: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex space-x-4 mb-2">
+          <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
               <label className="block text-black mb-1">Languages</label>
               <input
@@ -1259,11 +1269,11 @@ const Detailsform: React.FC = () => {
       )}
 
       {step === 2 && (
-        <div className="w-5xl">
+        <div className="max-w-full w-full md:w-5xl mx-auto px-2 md:text-xxl text-sm">
           <h2 className="text-xl font-semibold mb-2">More Details</h2>
           <label className="block text-grey mb-1">Professional Picture</label>
-          <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-center">
-            <span className="text-gray-500">
+          <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start text-sm">
+            <span className="text-gray-500 truncate md:text-[16px] text-[12px]">
               {professionalPhoto
                 ? professionalPhoto.name
                 : "Upload a photo here, max size 2MB"}
@@ -1285,8 +1295,8 @@ const Detailsform: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex space-x-4 mb-2">
-            <div className="w-1/2">
+          <div className="flex flex-col md:flex-row md:space-x-4 mb-2 space-y-2 md:space-y-0">
+            <div className="w-full md:w-1/2">
               <label className="block text-black mb-1">Sport</label>
               <select
                 name="sport"
@@ -1299,7 +1309,7 @@ const Detailsform: React.FC = () => {
               </select>
             </div>
 
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
               <label className="block text-black mb-1">Club</label>
               <input
                 type="text"
@@ -1329,13 +1339,13 @@ const Detailsform: React.FC = () => {
           {isExpert && (
             <div className="w-full mb-4">
               <label className="block text-black mb-1">Skills</label>
-              <div className="flex">
+              <div className="flex flex-col sm:flex-row">
                 <input
                   type="text"
                   placeholder="Add a skill"
                   value={skillInput}
                   onChange={(e) => setSkillInput(e.target.value)}
-                  className="border p-2 flex-grow rounded-l"
+                  className="border p-2 flex-grow rounded-t sm:rounded-l sm:rounded-t-none"
                   onKeyPress={(e) => {
                     if (e.key === "Enter") {
                       e.preventDefault();
@@ -1346,7 +1356,7 @@ const Detailsform: React.FC = () => {
                 <button
                   type="button"
                   onClick={addSkill}
-                  className="bg-lightYellow text-white px-4 py-2 rounded-r bg-red-500"
+                  className="bg-lightYellow text-white px-4 py-2 rounded-b sm:rounded-r sm:rounded-b-none bg-red-500"
                 >
                   Add
                 </button>
@@ -1372,8 +1382,8 @@ const Detailsform: React.FC = () => {
             </div>
           )}
 
-          <div className="flex space-x-4 mb-2">
-            <div className="w-1/2 relative">
+          <div className="flex flex-col md:flex-row md:space-x-4 mb-2 space-y-2 md:space-y-0">
+            <div className="w-full md:w-1/2 relative">
               <label className="block text-black mb-1">City *</label>
               <input
                 type="text"
@@ -1414,7 +1424,7 @@ const Detailsform: React.FC = () => {
                 </ul>
               )}
             </div>
-            <div className="w-1/2 relative">
+            <div className="w-full md:w-1/2 relative">
               <label className="block text-black mb-1">Country *</label>
               <input
                 type="text"
@@ -1458,8 +1468,8 @@ const Detailsform: React.FC = () => {
           </div>
 
           {isExpert && (
-            <div className="flex space-x-4 mb-4">
-              <div className="w-1/2">
+            <div className="flex flex-col md:flex-row md:space-x-4 mb-4 space-y-2 md:space-y-0">
+              <div className="w-full md:w-1/2">
                 <label className="block text-black mb-1">
                   Response Time (mins) *
                 </label>
@@ -1480,7 +1490,7 @@ const Detailsform: React.FC = () => {
                   </p>
                 )}
               </div>
-              <div className="w-1/2">
+              <div className="w-full md:w-1/2">
                 <label className="block text-black mb-1">
                   Travel Limit (kms) *
                 </label>
@@ -1525,12 +1535,12 @@ const Detailsform: React.FC = () => {
       )}
 
       {step === 3 && (
-        <div className="w-5xl">
+        <div className="max-w-full w-full md:w-5xl mx-auto px-2 sm:px-6">
           <h2 className="text-xl font-semibold mb-4">Certification</h2>
           {certificates.map((cert, index) => (
             <div
               key={cert.id}
-              className="relative mb-4 border p-4 rounded shadow"
+              className="relative mb-4 border p-4 rounded shadow bg-white"
             >
               {certificates.length > 1 && (
                 <button
@@ -1558,8 +1568,8 @@ const Detailsform: React.FC = () => {
               )}
 
               {!cert.uploadedDocId && (
-                <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center flex-col justify-center">
-                  <span className="text-gray-500">
+                <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start  md:text-xxl text-sm lg:justify-center">
+                  <span className="text-gray-500 mb-2 sm:mb-0 md:text-[16px] text-[12px]">
                     {cert.file ? cert.file.name : "Upload certificate here"}
                   </span>
                   <input
@@ -1645,7 +1655,7 @@ const Detailsform: React.FC = () => {
           {awards.map((award) => (
             <div
               key={award.id}
-              className="relative mb-4 border p-4 rounded shadow"
+              className="relative mb-4 border p-4 rounded shadow bg-white"
             >
               {awards.length > 1 && (
                 <button
@@ -1678,8 +1688,8 @@ const Detailsform: React.FC = () => {
               )}
 
               {!award.uploadedDocId && (
-                <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-center">
-                  <span className="text-gray-500">
+                <div className=" relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start  md:text-xxl text-sm lg:justify-center">
+                  <span className="text-gray-500 mb-2 sm:mb-0 md:text-[16px] text-[13px]">
                     {award.file ? award.file.name : "Upload award image here"}
                   </span>
                   <input
@@ -1759,13 +1769,13 @@ const Detailsform: React.FC = () => {
 
       {/* Step 4: Social Media Links */}
       {step === 4 && (
-        <div className="w-5xl">
+        <div className="max-w-full w-full md:w-5xl mx-auto px-2 sm:px-6">
           <h2 className="text-xl font-semibold mb-4">Social Media Links</h2>
 
-          <div className="flex items-center w-1/2 mb-2">
+          <div className="flex flex-col sm:flex-row items-center w-full sm:w-1/2 mb-2">
             <FontAwesomeIcon
               icon={faLinkedin}
-              className="text-blue-600 text-3xl me-3 cursor-pointer"
+              className="text-blue-600 text-3xl mb-2 sm:mb-0 sm:me-3 mr-0 cursor-pointer"
             />
             <input
               type="text"
@@ -1777,10 +1787,10 @@ const Detailsform: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center w-1/2 mb-2">
+          <div className="flex flex-col sm:flex-row items-center w-full sm:w-1/2 mb-2">
             <FontAwesomeIcon
               icon={faFacebook}
-              className="text-blue-800 text-3xl mr-3 cursor-pointer"
+              className="text-blue-800 text-3xl mb-2 sm:mb-0 sm:mr-3 mr-0 cursor-pointer"
             />
             <input
               type="text"
@@ -1792,10 +1802,10 @@ const Detailsform: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center w-1/2 mb-2">
+          <div className="flex flex-col sm:flex-row items-center w-full sm:w-1/2 mb-2">
             <FontAwesomeIcon
               icon={faInstagram}
-              className="text-pink-600 text-3xl mr-3 cursor-pointer"
+              className="text-pink-600 text-3xl mb-2 sm:mb-0 sm:mr-3 mr-0 cursor-pointer"
             />
             <input
               type="text"
@@ -1807,10 +1817,10 @@ const Detailsform: React.FC = () => {
             />
           </div>
 
-          <div className="flex items-center w-1/2 mb-2">
+          <div className="flex flex-col sm:flex-row items-center w-full sm:w-1/2 mb-2">
             <FontAwesomeIcon
               icon={faXTwitter}
-              className="text-blue-600 text-3xl mr-3 cursor-pointer"
+              className="text-blue-600 text-3xl mb-2 sm:mb-0 sm:mr-3 mr-0 cursor-pointer"
             />
             <input
               type="text"

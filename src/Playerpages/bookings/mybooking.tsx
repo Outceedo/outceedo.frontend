@@ -84,7 +84,7 @@ interface Service {
   service: ServiceDetails;
 }
 
-interface AgoraCredentials {
+interface Agora {
   channel: string;
   token: string;
   uid: number;
@@ -113,7 +113,6 @@ interface Booking {
   isPaid?: boolean;
   paymentIntentId?: string;
   paymentIntentClientSecret?: string;
-  agora?: AgoraCredentials;
 }
 
 const MyBooking: React.FC = () => {
@@ -145,7 +144,8 @@ const MyBooking: React.FC = () => {
     useState<Booking | null>(null);
 
   const [isAgoraModalOpen, setIsAgoraModalOpen] = useState(false);
-  const [activeVideoCall, setActiveVideoCall] = useState<Booking | null>(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [agora, setAgora] = useState<Agora>();
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
@@ -192,10 +192,23 @@ const MyBooking: React.FC = () => {
   const isSessionOver = (booking: Booking) => {
     const now = new Date();
     const sessionDate = new Date(booking.date);
+    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
     const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
+
+    const sessionStart = new Date(sessionDate);
+    sessionStart.setHours(startHours, startMinutes, 0, 0);
 
     const sessionEnd = new Date(sessionDate);
     sessionEnd.setHours(endHours, endMinutes, 0, 0);
+
+    // Handle sessions that cross midnight (e.g., 23:00 to 12:00)
+    if (
+      endHours < startHours ||
+      (endHours === startHours && endMinutes <= startMinutes)
+    ) {
+      // Session crosses midnight, so end time is next day
+      sessionEnd.setDate(sessionEnd.getDate() + 1);
+    }
 
     return now > sessionEnd;
   };
@@ -203,90 +216,34 @@ const MyBooking: React.FC = () => {
   const canGoLive = (booking: Booking) => {
     if (!isPaid(booking)) return false;
 
-    // Get current local time
     const now = new Date();
-
-    // Parse the booking date (this should be in YYYY-MM-DD format)
     const sessionDate = new Date(booking.date);
-
-    // Parse time correctly
     const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
     const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
 
-    // Create session start time in local timezone
-    const sessionStart = new Date(
-      sessionDate.getFullYear(),
-      sessionDate.getMonth(),
-      sessionDate.getDate(),
-      startHours,
-      startMinutes,
-      0,
-      0
-    );
+    const sessionStart = new Date(sessionDate);
+    sessionStart.setHours(startHours, startMinutes, 0, 0);
 
-    // Create session end time in local timezone
-    const sessionEnd = new Date(
-      sessionDate.getFullYear(),
-      sessionDate.getMonth(),
-      sessionDate.getDate(),
-      endHours,
-      endMinutes,
-      0,
-      0
-    );
+    const sessionEnd = new Date(sessionDate);
+    sessionEnd.setHours(endHours, endMinutes, 0, 0);
 
-    // Handle sessions that cross midnight (like 11:00 PM - 12:00 AM)
-    if (endHours < startHours || (endHours === 0 && startHours > 0)) {
-      // Session crosses midnight, add one day to end time
+    // Handle sessions that cross midnight (e.g., 23:00 to 12:00)
+    if (
+      endHours < startHours ||
+      (endHours === startHours && endMinutes <= startMinutes)
+    ) {
+      // Session crosses midnight, so end time is next day
       sessionEnd.setDate(sessionEnd.getDate() + 1);
     }
 
-    // Allow going live 10 minutes before session starts
+    // Allow joining 10 minutes before session starts
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
-
     const isSessionOver = now > sessionEnd;
     const isTooEarly = now < goLiveTime;
     const canGoLiveNow = !isTooEarly && !isSessionOver;
 
-    console.log(`Player - Booking ${booking.id}:`, {
-      now: now.toISOString(),
-      nowLocal: now.toLocaleString(),
-      nowTime: `${now.getHours()}:${now
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`,
-      sessionStart: sessionStart.toISOString(),
-      sessionStartLocal: sessionStart.toLocaleString(),
-      sessionStartTime: `${sessionStart.getHours()}:${sessionStart
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`,
-      sessionEnd: sessionEnd.toISOString(),
-      sessionEndLocal: sessionEnd.toLocaleString(),
-      sessionEndTime: `${sessionEnd.getHours()}:${sessionEnd
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`,
-      goLiveTime: goLiveTime.toISOString(),
-      goLiveTimeLocal: goLiveTime.toLocaleString(),
-      goLiveTimeFormatted: `${goLiveTime.getHours()}:${goLiveTime
-        .getMinutes()
-        .toString()
-        .padStart(2, "0")}`,
-      isSessionOver,
-      isTooEarly,
-      canGoLive: canGoLiveNow,
-      userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      crossesMidnight:
-        endHours < startHours || (endHours === 0 && startHours > 0),
-      bookingDate: booking.date,
-      startTime: booking.startTime,
-      endTime: booking.endTime,
-    });
-
     return canGoLiveNow;
   };
-
   const isUpcomingSession = (booking: Booking) => {
     if (!isPaid(booking)) return false;
 
@@ -390,7 +347,6 @@ const MyBooking: React.FC = () => {
 
         setBookings(response.data.bookings);
       } catch (err) {
-        console.error("Error fetching bookings:", err);
         setError(
           "Could not connect to server. Please try refreshing the page."
         );
@@ -488,48 +444,85 @@ const MyBooking: React.FC = () => {
     });
   };
 
-  const handleGoLive = (booking: Booking) => {
-    if (!booking.agora) {
-      Swal.fire({
-        icon: "error",
-        title: "Meeting Setup Error",
-        text: "Meeting credentials are not available. Please contact support.",
-        confirmButtonColor: "#EF4444",
-      });
-      return;
-    }
+  const handleGoLive = async (booking: Booking) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_BASE_URL}/${booking.id}/agora-token`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    if (!canGoLive(booking)) {
-      if (isSessionOver(booking)) {
+      const agoraCredentials = response.data;
+
+      if (
+        !agoraCredentials ||
+        !agoraCredentials.token ||
+        !agoraCredentials.channel ||
+        !agoraCredentials.uid
+      ) {
         Swal.fire({
-          icon: "info",
-          title: "Session Ended",
-          text: "This session has already ended. Please book a new session if you need further assistance.",
-          confirmButtonColor: "#6B7280",
+          icon: "error",
+          title: "Meeting Setup Error",
+          text: "Meeting credentials are not available. Please contact support.",
+          confirmButtonColor: "#EF4444",
         });
         return;
       }
 
-      const timeUntil = getTimeUntilGoLive(booking);
-      Swal.fire({
-        icon: "info",
-        title: "Meeting Not Available Yet",
-        text: timeUntil
-          ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts.`
-          : "This meeting is no longer available.",
-        confirmButtonColor: "#3B82F6",
-      });
-      return;
-    }
+      if (!canGoLive(booking)) {
+        if (isSessionOver(booking)) {
+          Swal.fire({
+            icon: "info",
+            title: "Session Ended",
+            text: "This session has already ended. Please book a new session if you need further assistance.",
+            confirmButtonColor: "#6B7280",
+          });
+          return;
+        }
 
-    setActiveVideoCall(booking);
-    setIsAgoraModalOpen(true);
-    setIsBookingDetailsOpen(false);
+        const timeUntil = getTimeUntilGoLive(booking);
+        Swal.fire({
+          icon: "info",
+          title: "Meeting Not Available Yet",
+          text: timeUntil
+            ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts.`
+            : "This meeting is no longer available.",
+          confirmButtonColor: "#3B82F6",
+        });
+        return;
+      }
+
+      const playerUID = agoraCredentials.uid;
+
+      const agoraConfig: Agora = {
+        channel: agoraCredentials.channel,
+        token: agoraCredentials.token,
+        uid: playerUID,
+      };
+      console.log(agoraConfig);
+
+      setAgora(agoraConfig);
+      setBooking(booking);
+      setIsAgoraModalOpen(true);
+      setIsBookingDetailsOpen(false);
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Connection Error",
+        text: "Failed to get meeting credentials. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+    }
   };
 
   const handleEndCall = () => {
     setIsAgoraModalOpen(false);
-    setActiveVideoCall(null);
+    setBooking(null);
   };
 
   const openVideoModal = (id: string, e?: React.MouseEvent) => {
@@ -969,7 +962,7 @@ const MyBooking: React.FC = () => {
                     <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
                     Go Live
                   </Button>
-                ) : booking.agora ? (
+                ) : booking.status === "SCHEDULED" ? (
                   <div className="text-right">
                     <Button
                       className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
@@ -1000,7 +993,7 @@ const MyBooking: React.FC = () => {
               {isSessionToday(booking) &&
                 !canGoLive(booking) &&
                 !isSessionOver(booking) &&
-                booking.agora && (
+                booking.status === "SCHEDULED" && (
                   <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
                     <FontAwesomeIcon icon={faInfoCircle} className="mr-1" />
                     Meeting will be available 10 minutes before session starts
@@ -1078,7 +1071,7 @@ const MyBooking: React.FC = () => {
               )}
 
               {isPaid(selectedBooking) &&
-                selectedBooking.agora &&
+                selectedBooking.status === "SCHEDULED" &&
                 !isSessionOver(selectedBooking) && (
                   <div
                     className={`mb-5 p-4 rounded-lg border ${
@@ -1533,7 +1526,7 @@ const MyBooking: React.FC = () => {
             <DialogFooter className="flex flex-wrap gap-3 justify-end">
               {isPaid(selectedBooking) &&
                 canGoLive(selectedBooking) &&
-                selectedBooking.agora &&
+                selectedBooking.status === "SCHEDULED" &&
                 !isSessionOver(selectedBooking) && (
                   <Button
                     className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
@@ -1680,11 +1673,12 @@ const MyBooking: React.FC = () => {
         />
       )}
 
-      {activeVideoCall && (
+      {booking && (
         <AgoraVideoModal
           isOpen={isAgoraModalOpen}
           onClose={handleEndCall}
-          booking={activeVideoCall}
+          booking={booking}
+          agora={agora}
         />
       )}
     </div>

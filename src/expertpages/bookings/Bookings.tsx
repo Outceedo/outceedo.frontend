@@ -26,7 +26,6 @@ import {
   faTimes,
   faCalendarAlt,
   faVideo,
-  faFileAlt,
   faStar,
   faCheckCircle,
   faUser,
@@ -47,7 +46,7 @@ import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import Swal from "sweetalert2";
 import BookingTable from "./table";
-import AgoraVideoModal from "./AgoraVideoModal"; // Import your existing Agora modal
+import AgoraVideoModal from "./AgoraVideoModal";
 
 interface Expert {
   id: string;
@@ -149,9 +148,9 @@ const BookingExpertside: React.FC = () => {
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Agora video call states
   const [isAgoraModalOpen, setIsAgoraModalOpen] = useState(false);
-  const [activeVideoCall, setActiveVideoCall] = useState<Booking | null>(null);
+  const [agora, setAgora] = useState<AgoraCredentials | null>(null);
+  const [booking, setBooking] = useState<Booking | null>(null);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
   const navigate = useNavigate();
@@ -179,45 +178,22 @@ const BookingExpertside: React.FC = () => {
 
     const now = new Date();
     const sessionDate = new Date(booking.date);
-
-    // Parse time correctly
     const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
     const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
 
-    // Create session start time in local timezone
     const sessionStart = new Date(sessionDate);
     sessionStart.setHours(startHours, startMinutes, 0, 0);
 
-    // Handle sessions that cross midnight (like 11:00 PM - 12:00 AM)
     const sessionEnd = new Date(sessionDate);
     if (endHours < startHours) {
-      // Session crosses midnight, add one day to end time
       sessionEnd.setDate(sessionEnd.getDate() + 1);
     }
     sessionEnd.setHours(endHours, endMinutes, 0, 0);
 
-    // Allow going live 10 minutes before session starts
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
-
     const isSessionOver = now > sessionEnd;
     const isTooEarly = now < goLiveTime;
     const canGoLiveNow = !isTooEarly && !isSessionOver;
-
-    console.log(`Player - Booking ${booking.id}:`, {
-      now: now.toISOString(),
-      nowLocal: now.toLocaleString(),
-      sessionStart: sessionStart.toISOString(),
-      sessionStartLocal: sessionStart.toLocaleString(),
-      sessionEnd: sessionEnd.toISOString(),
-      sessionEndLocal: sessionEnd.toLocaleString(),
-      goLiveTime: goLiveTime.toISOString(),
-      goLiveTimeLocal: goLiveTime.toLocaleString(),
-      isSessionOver,
-      isTooEarly,
-      canGoLive: canGoLiveNow,
-      userTimezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-      crossesMidnight: endHours < startHours,
-    });
 
     return canGoLiveNow;
   };
@@ -232,7 +208,6 @@ const BookingExpertside: React.FC = () => {
     const sessionStart = new Date(sessionDate);
     sessionStart.setHours(startHours, startMinutes, 0, 0);
 
-    // Show sessions that are within next 7 days
     const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
     return sessionStart >= now && sessionStart <= next7Days;
@@ -271,38 +246,96 @@ const BookingExpertside: React.FC = () => {
     return `${minutes}m`;
   };
 
-  const handleGoLive = (booking: Booking) => {
-    if (!booking.agora) {
+  const isSessionOver = (booking: Booking) => {
+    const now = new Date();
+    const sessionDate = new Date(booking.date);
+    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
+
+    const sessionEnd = new Date(sessionDate);
+    sessionEnd.setHours(endHours, endMinutes, 0, 0);
+
+    return now > sessionEnd;
+  };
+
+  const handleGoLive = async (booking: Booking) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_BASE_URL}/booking/${booking.id}/agora-token`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const agoraCredentials = response.data;
+
+      if (
+        !agoraCredentials ||
+        !agoraCredentials.token ||
+        !agoraCredentials.channel ||
+        !agoraCredentials.uid
+      ) {
+        Swal.fire({
+          icon: "error",
+          title: "Meeting Setup Error",
+          text: "Meeting credentials are not available. Please contact support.",
+          confirmButtonColor: "#EF4444",
+        });
+        return;
+      }
+
+      if (!canGoLive(booking)) {
+        if (isSessionOver(booking)) {
+          Swal.fire({
+            icon: "info",
+            title: "Session Ended",
+            text: "This session has already ended. Please book a new session if you need further assistance.",
+            confirmButtonColor: "#6B7280",
+          });
+          return;
+        }
+        const timeUntil = getTimeUntilGoLive(booking);
+        Swal.fire({
+          icon: "info",
+          title: "Meeting Not Available Yet",
+          text: timeUntil
+            ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts.`
+            : "This meeting is no longer available.",
+          confirmButtonColor: "#3B82F6",
+        });
+        return;
+      }
+
+      const expertUID = agoraCredentials.uid;
+
+      const agoraConfig: AgoraCredentials = {
+        channel: agoraCredentials.channel,
+        token: agoraCredentials.token,
+        uid: expertUID,
+      };
+      console.log(agoraConfig);
+
+      setAgora(agoraConfig);
+      setBooking(booking);
+      setIsAgoraModalOpen(true);
+      setIsBookingDetailsOpen(false);
+    } catch (error) {
       Swal.fire({
         icon: "error",
-        title: "Meeting Setup Error",
-        text: "Meeting credentials are not available. Please contact support.",
+        title: "Connection Error",
+        text: "Failed to get meeting credentials. Please try again.",
         confirmButtonColor: "#EF4444",
       });
-      return;
     }
-
-    if (!canGoLive(booking)) {
-      const timeUntil = getTimeUntilGoLive(booking);
-      Swal.fire({
-        icon: "info",
-        title: "Meeting Not Available Yet",
-        text: timeUntil
-          ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts.`
-          : "This meeting is no longer available.",
-        confirmButtonColor: "#3B82F6",
-      });
-      return;
-    }
-
-    setActiveVideoCall(booking);
-    setIsAgoraModalOpen(true);
-    setIsBookingDetailsOpen(false);
   };
 
   const handleEndCall = () => {
     setIsAgoraModalOpen(false);
-    setActiveVideoCall(null);
+    setAgora(null);
+    setBooking(null);
   };
 
   const formatTimeRange = (startTime: string, endTime: string) => {
@@ -399,9 +432,8 @@ const BookingExpertside: React.FC = () => {
 
         setBookings(response.data.bookings);
       } catch (err) {
-        console.error("Error fetching bookings:", err);
-        setError("Could not load bookings. Using demo data instead.");
-        setBookings(getDemoBookings());
+        setError("Could not load bookings. Please try refreshing the page.");
+        setBookings([]);
       } finally {
         setLoading(false);
       }
@@ -416,57 +448,6 @@ const BookingExpertside: React.FC = () => {
     );
   };
 
-  const getDemoBookings = (): Booking[] => {
-    return [
-      {
-        id: "b1a2c3d4-e5f6-7890-abcd-ef1234567890",
-        playerId: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        expertId: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        serviceId: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-        status: "WAITING_EXPERT_APPROVAL",
-        date: "2025-07-01T00:00:00.000Z",
-        startTime: "16:00", // 4:00 PM local time for testing
-        endTime: "17:00", // 5:00 PM local time for testing
-        location: null,
-        meetLink: null,
-        recordedVideo: null,
-        meetingRecording: null,
-        createdAt: "2025-06-29T14:30:00.000Z",
-        updatedAt: "2025-06-29T14:30:00.000Z",
-        player: {
-          id: "p1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          username: "alex_taylor",
-          photo: "https://i.pravatar.cc/150?u=alex",
-        },
-        expert: {
-          id: "e1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          username: "john_coach",
-          photo: "https://i.pravatar.cc/150?u=john",
-        },
-        service: {
-          id: "s1a2b3c4-d5e6-7890-fghi-jklmnopqrst1",
-          serviceId: "2", // Online training for video call
-          price: 35,
-          service: {
-            id: "2",
-            name: "Online Training Session",
-            description: "One-on-one online training with video call",
-            createdAt: "2025-01-01T00:00:00.000Z",
-            updatedAt: "2025-01-01T00:00:00.000Z",
-          },
-        },
-        isPaid: true,
-        agora: {
-          channel: "test-channel-123",
-          token: "test-token-456",
-          uid: 12345,
-        },
-      },
-      // Add more demo bookings as needed...
-    ];
-  };
-
-  // Handler functions for BookingTable
   const handleBookingClick = (booking: Booking) => {
     openBookingDetails(booking);
   };
@@ -491,11 +472,9 @@ const BookingExpertside: React.FC = () => {
   const handleVideoClick = (booking: Booking) => {
     if (isRecordedVideoAssessment(booking)) {
       openFullscreenVideo(booking);
-    } else if (booking.agora && canGoLive(booking)) {
-      // Use Agora for live video calls
+    } else if (booking.status === "SCHEDULED" && canGoLive(booking)) {
       handleGoLive(booking);
     } else if (booking.meetLink) {
-      // Fallback to external meeting link
       window.open(booking.meetLink, "_blank");
     }
   };
@@ -504,7 +483,6 @@ const BookingExpertside: React.FC = () => {
     openReviewModal(bookingId);
   };
 
-  // ... (Keep all existing modal and action functions unchanged)
   const openBookingDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setVideoError(null);
@@ -610,8 +588,6 @@ const BookingExpertside: React.FC = () => {
         timer: 2500,
       });
     } catch (error) {
-      console.error("Error accepting booking:", error);
-
       await Swal.fire({
         icon: "error",
         title: "Accept Failed",
@@ -662,8 +638,6 @@ const BookingExpertside: React.FC = () => {
         timer: 2500,
       });
     } catch (error) {
-      console.error("Error rejecting booking:", error);
-
       await Swal.fire({
         icon: "error",
         title: "Reject Failed",
@@ -750,14 +724,11 @@ const BookingExpertside: React.FC = () => {
         showConfirmButton: true,
       });
     } catch (error) {
-      console.error("Error rescheduling booking:", error);
-
       await Swal.fire({
         icon: "error",
         title: "Reschedule Failed",
         text: "Failed to reschedule booking. Please try again or contact support if the problem persists.",
         confirmButtonColor: "#EF4444",
-        footer: `<small>Error occurred at: ${new Date().toLocaleString()}</small>`,
       });
     } finally {
       setRescheduling(false);
@@ -794,7 +765,6 @@ const BookingExpertside: React.FC = () => {
 
       closeBookingDetails();
     } catch (error) {
-      console.error("Error completing booking:", error);
       setError("Failed to complete booking. Please try again.");
     } finally {
       setLoading(false);
@@ -848,9 +818,7 @@ const BookingExpertside: React.FC = () => {
 
       closeReviewModal();
     } catch (error) {
-      console.error("Error submitting review:", error);
       setError("Failed to submit review. Please try again.");
-
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === selectedBookingId
@@ -993,7 +961,6 @@ const BookingExpertside: React.FC = () => {
     );
   });
 
-  // Get upcoming paid sessions for the expert
   const upcomingPaidSessions = bookings
     .filter((booking) => {
       return (
@@ -1009,13 +976,11 @@ const BookingExpertside: React.FC = () => {
       const dateB = new Date(`${b.date} ${b.startTime}`);
       return dateA.getTime() - dateB.getTime();
     });
-  console.log(bookings);
 
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
       <h1 className="text-2xl font-bold mb-6">Your Bookings</h1>
 
-      {/* Filter Controls */}
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="relative w-full sm:w-1/5">
           <FontAwesomeIcon
@@ -1105,7 +1070,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       )}
 
-      {/* BookingTable Component */}
       <BookingTable
         bookings={filteredBookings}
         loading={loading}
@@ -1118,7 +1082,6 @@ const BookingExpertside: React.FC = () => {
         onReviewClick={handleReviewClick}
       />
 
-      {/* Upcoming Live Sessions Section */}
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Upcoming Live Sessions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1221,7 +1184,7 @@ const BookingExpertside: React.FC = () => {
                     <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
                     Go Live
                   </Button>
-                ) : booking.agora ? (
+                ) : booking.status === "SCHEDULED" ? (
                   <div className="text-right">
                     <Button
                       className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
@@ -1251,7 +1214,7 @@ const BookingExpertside: React.FC = () => {
 
               {isSessionToday(booking) &&
                 !canGoLive(booking) &&
-                booking.agora && (
+                booking.status === "SCHEDULED" && (
                   <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
                     <FontAwesomeIcon icon={faInfoCircle} className="mr-1" />
                     Meeting will be available 10 minutes before session starts
@@ -1275,7 +1238,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       </div>
 
-      {/* Active Sessions Section */}
       <div className="mt-4">
         <h3 className="font-medium mb-2">Active Sessions</h3>
         <div className="space-y-2">
@@ -1342,7 +1304,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       </div>
 
-      {/* Statistics Section */}
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <h3 className="font-medium text-blue-800">Total Bookings</h3>
@@ -1372,7 +1333,6 @@ const BookingExpertside: React.FC = () => {
         </div>
       </div>
 
-      {/* Booking Details Modal */}
       {selectedBooking && (
         <Dialog
           open={isBookingDetailsOpen}
@@ -1399,108 +1359,108 @@ const BookingExpertside: React.FC = () => {
                 </Badge>
               </div>
 
-              {/* Live Session Banner */}
-              {isPaid(selectedBooking) && selectedBooking.agora && (
-                <div
-                  className={`mb-5 p-4 rounded-lg border ${
-                    canGoLive(selectedBooking)
-                      ? "bg-green-50 border-green-200"
-                      : isSessionToday(selectedBooking)
-                      ? "bg-blue-50 border-blue-200"
-                      : "bg-gray-50 border-gray-200"
-                  }`}
-                >
-                  <div className="flex items-start">
-                    <FontAwesomeIcon
-                      icon={
-                        canGoLive(selectedBooking)
-                          ? faPlay
-                          : isSessionToday(selectedBooking)
-                          ? faInfoCircle
-                          : faClock
-                      }
-                      className={`mr-2 mt-1 flex-shrink-0 ${
-                        canGoLive(selectedBooking)
-                          ? "text-green-600"
-                          : isSessionToday(selectedBooking)
-                          ? "text-blue-600"
-                          : "text-gray-600"
-                      }`}
-                    />
-                    <div className="flex-1">
-                      <p
-                        className={`font-medium ${
+              {isPaid(selectedBooking) &&
+                selectedBooking.status === "SCHEDULED" && (
+                  <div
+                    className={`mb-5 p-4 rounded-lg border ${
+                      canGoLive(selectedBooking)
+                        ? "bg-green-50 border-green-200"
+                        : isSessionToday(selectedBooking)
+                        ? "bg-blue-50 border-blue-200"
+                        : "bg-gray-50 border-gray-200"
+                    }`}
+                  >
+                    <div className="flex items-start">
+                      <FontAwesomeIcon
+                        icon={
                           canGoLive(selectedBooking)
-                            ? "text-green-800"
+                            ? faPlay
                             : isSessionToday(selectedBooking)
-                            ? "text-blue-800"
-                            : "text-gray-800"
-                        }`}
-                      >
-                        {canGoLive(selectedBooking)
-                          ? "Session is Live Now!"
-                          : isSessionToday(selectedBooking)
-                          ? "Session Today"
-                          : "Upcoming Session"}
-                      </p>
-                      <p
-                        className={`text-sm mt-1 ${
+                            ? faInfoCircle
+                            : faClock
+                        }
+                        className={`mr-2 mt-1 flex-shrink-0 ${
                           canGoLive(selectedBooking)
-                            ? "text-green-700"
+                            ? "text-green-600"
                             : isSessionToday(selectedBooking)
-                            ? "text-blue-700"
-                            : "text-gray-700"
+                            ? "text-blue-600"
+                            : "text-gray-600"
                         }`}
-                      >
-                        {canGoLive(selectedBooking)
-                          ? "Your session is currently live. You can start the video call now."
-                          : isSessionToday(selectedBooking)
-                          ? `Your session starts at ${formatTimeRange(
-                              selectedBooking.startTime,
-                              selectedBooking.endTime
-                            )}. Video call will be available 10 minutes before the session.`
-                          : `Session scheduled for ${formatDate(
-                              selectedBooking.date,
-                              selectedBooking.startTime
-                            )}`}
-                      </p>
+                      />
+                      <div className="flex-1">
+                        <p
+                          className={`font-medium ${
+                            canGoLive(selectedBooking)
+                              ? "text-green-800"
+                              : isSessionToday(selectedBooking)
+                              ? "text-blue-800"
+                              : "text-gray-800"
+                          }`}
+                        >
+                          {canGoLive(selectedBooking)
+                            ? "Session is Live Now!"
+                            : isSessionToday(selectedBooking)
+                            ? "Session Today"
+                            : "Upcoming Session"}
+                        </p>
+                        <p
+                          className={`text-sm mt-1 ${
+                            canGoLive(selectedBooking)
+                              ? "text-green-700"
+                              : isSessionToday(selectedBooking)
+                              ? "text-blue-700"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {canGoLive(selectedBooking)
+                            ? "Your session is currently live. You can start the video call now."
+                            : isSessionToday(selectedBooking)
+                            ? `Your session starts at ${formatTimeRange(
+                                selectedBooking.startTime,
+                                selectedBooking.endTime
+                              )}. Video call will be available 10 minutes before the session.`
+                            : `Session scheduled for ${formatDate(
+                                selectedBooking.date,
+                                selectedBooking.startTime
+                              )}`}
+                        </p>
 
-                      <div className="mt-3">
-                        {canGoLive(selectedBooking) ? (
-                          <Button
-                            className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 h-auto flex items-center gap-2"
-                            onClick={() => handleGoLive(selectedBooking)}
-                          >
-                            <FontAwesomeIcon
-                              icon={faPlay}
-                              className="w-4 h-4"
-                            />
-                            Start Live Session
-                          </Button>
-                        ) : getTimeUntilGoLive(selectedBooking) ? (
-                          <Button
-                            className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
-                            disabled
-                          >
-                            <FontAwesomeIcon
-                              icon={faClock}
-                              className="w-4 h-4 mr-2"
-                            />
-                            Available in {getTimeUntilGoLive(selectedBooking)}
-                          </Button>
-                        ) : (
-                          <Button
-                            className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
-                            disabled
-                          >
-                            Session Not Available
-                          </Button>
-                        )}
+                        <div className="mt-3">
+                          {canGoLive(selectedBooking) ? (
+                            <Button
+                              className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 h-auto flex items-center gap-2"
+                              onClick={() => handleGoLive(selectedBooking)}
+                            >
+                              <FontAwesomeIcon
+                                icon={faPlay}
+                                className="w-4 h-4"
+                              />
+                              Start Live Session
+                            </Button>
+                          ) : getTimeUntilGoLive(selectedBooking) ? (
+                            <Button
+                              className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                              disabled
+                            >
+                              <FontAwesomeIcon
+                                icon={faClock}
+                                className="w-4 h-4 mr-2"
+                              />
+                              Available in {getTimeUntilGoLive(selectedBooking)}
+                            </Button>
+                          ) : (
+                            <Button
+                              className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                              disabled
+                            >
+                              Session Not Available
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
@@ -1589,39 +1549,22 @@ const BookingExpertside: React.FC = () => {
                   </p>
                 )}
                 {selectedBooking.meetLink && (
-                  <>
-                    <p className="mb-1 flex items-start">
-                      <FontAwesomeIcon
-                        icon={faLink}
-                        className="mr-2 mt-1 text-gray-600"
-                      />
-                      <a
-                        href={selectedBooking.meetLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline break-all"
-                      >
-                        {selectedBooking.meetLink}
-                      </a>
-                    </p>
-                  </>
+                  <p className="mb-1 flex items-start">
+                    <FontAwesomeIcon
+                      icon={faLink}
+                      className="mr-2 mt-1 text-gray-600"
+                    />
+                    <a
+                      href={selectedBooking.meetLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline break-all"
+                    >
+                      {selectedBooking.meetLink}
+                    </a>
+                  </p>
                 )}
               </div>
-
-              {selectedBooking.description && (
-                <div className="mb-5 bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2 flex items-center">
-                    <FontAwesomeIcon
-                      icon={faPager}
-                      className="mr-2 text-gray-600"
-                    />
-                    Description
-                  </h3>
-                  <p className="mb-1 flex items-start">
-                    {selectedBooking.description}
-                  </p>
-                </div>
-              )}
 
               {selectedBooking.description && (
                 <div className="mb-5 bg-gray-50 p-4 rounded-lg">
@@ -1756,7 +1699,7 @@ const BookingExpertside: React.FC = () => {
                     onClick={() => openReviewModal(selectedBooking.id)}
                   >
                     Edit Review
-                  </button>
+                  </button>{" "}
                 </div>
               )}
 
@@ -1776,7 +1719,7 @@ const BookingExpertside: React.FC = () => {
             <DialogFooter className="flex flex-wrap gap-2 justify-end">
               {isPaid(selectedBooking) &&
                 canGoLive(selectedBooking) &&
-                selectedBooking.agora && (
+                selectedBooking.status === "SCHEDULED" && (
                   <Button
                     className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
                     onClick={() => handleGoLive(selectedBooking)}
@@ -1869,7 +1812,6 @@ const BookingExpertside: React.FC = () => {
         </Dialog>
       )}
 
-      {/* Review Modal */}
       <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -1929,7 +1871,6 @@ const BookingExpertside: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Reject Confirmation Modal */}
       <Dialog open={isRejectConfirmOpen} onOpenChange={setIsRejectConfirmOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -1988,7 +1929,6 @@ const BookingExpertside: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Accept Confirmation Modal */}
       <Dialog open={isAcceptConfirmOpen} onOpenChange={setIsAcceptConfirmOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -2051,7 +1991,6 @@ const BookingExpertside: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Reschedule Modal */}
       <Dialog
         open={isRescheduleModalOpen}
         onOpenChange={setIsRescheduleModalOpen}
@@ -2190,7 +2129,6 @@ const BookingExpertside: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Fullscreen Video Modal */}
       {isFullscreenVideoOpen &&
         currentVideoUrl &&
         createPortal(
@@ -2258,12 +2196,12 @@ const BookingExpertside: React.FC = () => {
           document.body
         )}
 
-      {/* Agora Video Call Modal */}
-      {activeVideoCall && (
+      {agora && booking && (
         <AgoraVideoModal
           isOpen={isAgoraModalOpen}
           onClose={handleEndCall}
-          booking={activeVideoCall}
+          agora={agora}
+          booking={booking}
         />
       )}
     </div>
