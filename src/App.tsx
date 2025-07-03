@@ -37,7 +37,7 @@ import ExpertLayout from "./components/expert/layout";
 import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
-import PlayersProfile from "./Expertpages/playerProfiles";
+import PlayersProfile from "./Expertpages/playerProfiles.tsx";
 
 import { authService } from "./store/apiConfig";
 //sponser pages
