@@ -268,8 +268,8 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         try {
           await agoraClient.join(
             import.meta.env.VITE_AGORA_APP_ID,
-            "helloworld",
-            "007eJxTYNj26aXXgdL36fuzbqfu+JWywkNePPFy4LK8vD8nrIT/LU5QYDAyNzZIM7OwNDc3tzQxMzVPNEk2sUhKtTRPMU+2MEm2eKaWltEQyMhQb+rPwsgAgSA+F0NGak5Ofnl+UU4KAwMA0nojYQ==",
+            agora.channel,
+            agora.token,
             agora.uid
           );
 
