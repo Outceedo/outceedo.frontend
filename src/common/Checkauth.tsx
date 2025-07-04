@@ -9,7 +9,7 @@ interface CheckAuthProps {
   isAuthenticated: boolean;
   user: User | null;
   children: React.ReactNode;
-  onAuthCheck?: () => void; // Optional callback to trigger auth check
+  onAuthCheck?: () => void;
 }
 
 const CheckAuth: React.FC<CheckAuthProps> = ({
@@ -20,23 +20,19 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
 }) => {
   const location = useLocation();
 
-  // Check if token exists but auth state isn't ready yet
   const token = localStorage.getItem("token");
   const tokenExists = !!token;
   const roleFromStorage = localStorage.getItem("role");
 
-  // If there's a token but Redux state hasn't been updated yet, temporarily consider user as authenticated
   const effectivelyAuthenticated = isAuthenticated || tokenExists;
   const effectiveRole = user?.role || roleFromStorage;
 
-  // Trigger auth check when component mounts if token exists but no user
   useEffect(() => {
     if (tokenExists && !user && onAuthCheck) {
       onAuthCheck();
     }
   }, [tokenExists, user, onAuthCheck]);
 
-  // Handle loading state when we have a token but no user data yet
   if (tokenExists && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -45,9 +41,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     );
   }
 
-  // Handle unauthenticated users
   if (!effectivelyAuthenticated) {
-    // Allow access to public routes
     if (
       location.pathname === "/login" ||
       location.pathname === "/signup" ||
@@ -57,13 +51,11 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       return <>{children}</>;
     }
 
-    // Redirect to login and remember the attempted URL
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Handle authenticated users
   else {
-    // Redirect from login/signup pages based on user role
     if (location.pathname === "/login" || location.pathname === "/signup") {
       switch (effectiveRole) {
         case "expert":
@@ -76,8 +68,9 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
           return <Navigate to="/team/dashboard" replace />;
         case "user":
           return <Navigate to="/fan/dashboard" replace />;
+        case "admin":
+          return <Navigate to="/admin/dashboard" replace />;
         default:
-          // If role is unknown, redirect to a safe default
           return <Navigate to="/" replace />;
       }
     }
@@ -92,6 +85,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       sponsor: ["/sponsor", "/", "/public"],
       team: ["/team", "/", "/public"],
       user: ["/fan", "/", "/public"],
+      admin: ["/admin", "/", "/public"],
     };
 
     // Check if current path is allowed for the user's role

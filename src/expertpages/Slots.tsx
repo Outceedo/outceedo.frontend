@@ -985,7 +985,7 @@ const ExpertAvailabilityManager = () => {
 
   const handleAddTimeSlots = () => {
     if (newSlotStartTime >= newSlotEndTime) {
-      Swal.fire("Error", "End time must be after start time.", "error");
+      Swal.fire({ icon: "error", text: "End time must be after start time." });
       return;
     }
     addTimeSlots().then((success) => {

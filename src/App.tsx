@@ -25,6 +25,8 @@ import Expertspage from "./Playerpages/expertspage";
 import AssessmentReport from "./Playerpages/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
 import PlayerSponsors from "./Playerpages/PlayerSponsors";
+import SponsorApplicationpage from "./Playerpages/SponsorApplications";
+import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
 
 //store
 import { useAppDispatch, useAppSelector } from "./store/hooks";
@@ -38,6 +40,14 @@ import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
 import PlayersProfile from "./expertpages/playerProfiles";
+import ExpertDashboard from "./expertpages/Dashboard";
+import ExpertMatches from "./expertpages/ExpertMatches";
+import BookingExpertside from "./expertpages/bookings/Bookings";
+import ExpertProfile from "./expertpages/expertdata";
+import Playerview from "./Pages/Player/Playerview";
+import ExpertAvailabilityManager from "./expertpages/Slots";
+import Expertsponsors from "./expertpages/Expertsponsors";
+import SponsorInfo from "./expertpages/sponsorinfo";
 
 import { authService } from "./store/apiConfig";
 //sponser pages
@@ -47,6 +57,9 @@ import SponsorForm from "./SponsorPages/SponsorForm";
 import Sponsorplayer from "./SponsorPages/Sponsorplayer";
 import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
+import TeamPlayerInfo from "./SponsorPages/playerinfo";
+import SponsorPlayerInfo from "./SponsorPages/playerinfo";
+import SponsorExperts from "./SponsorPages/Expertssponsor";
 
 //Team pages
 import TeamDetailsForm from "./teampages/teamdetailsform";
@@ -54,12 +67,6 @@ import TeamProfile from "./teampages/teamprofile";
 import TeamExpert from "./teampages/experts";
 import TeamPlayer from "./teampages/player";
 import TeamSponsor from "./teampages/TeamSponser";
-import TeamPlayerInfo from "./SponsorPages/playerinfo";
-import SponsorPlayerInfo from "./SponsorPages/playerinfo";
-import SponsorExperts from "./SponsorPages/Expertssponsor";
-import Expertsponsors from "./expertpages/Expertsponsors";
-import SponsorInfo from "./expertpages/sponsorinfo";
-import PlayerSponsorInfo from "./Playerpages/sponsorinfo";
 import TeamSponsorInfo from "./teampages/Sponsorinfo";
 import TeamExperts from "./teampages/expertprofile";
 //fan pages
@@ -69,7 +76,7 @@ import FanExperts from "./fanpages/Experts";
 import Fanprofile from "./fanpages/FanProfile";
 import Fandetailsform from "./fanpages/Fandetailsform";
 
-import SponsorApplicationpage from "./Playerpages/SponsorApplications";
+//admin pages
 import AdminLayout from "./components/admin/layout";
 import Dashboardadmin from "./components/admin/dashboard";
 import AdminLayoutdefault from "./components/admin/defaultlayout";
@@ -78,12 +85,6 @@ import Expertadmin from "./Adminpages/Expert";
 import Sponsoradmin from "./Adminpages/Sponsor";
 import Teamadmin from "./Adminpages/Team";
 import Fanadmin from "./Adminpages/Fan";
-import ExpertDashboard from "./expertpages/Dashboard";
-import ExpertMatches from "./expertpages/ExpertMatches";
-import BookingExpertside from "./expertpages/bookings/Bookings";
-import ExpertProfile from "./expertpages/expertdata";
-import Playerview from "./Pages/Player/Playerview";
-import ExpertAvailabilityManager from "./expertpages/Slots";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -194,7 +195,9 @@ const AppContent: React.FC = () => {
                   ? "/team/dashboard"
                   : user?.role === "fan"
                   ? "/fan/dashboard"
-                  : "/admin/dashboard"
+                  : user?.role === "admin"
+                  ? "/admin/dashboard"
+                  : "/"
               }
             />
           ) : (
@@ -312,11 +315,25 @@ const AppContent: React.FC = () => {
       </Route>
 
       {/*admin routes*/}
-      <Route path="/admin" element={<AdminLayoutdefault />}>
+      <Route
+        path="/admin"
+        element={
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <AdminLayoutdefault />
+          </CheckAuth>
+        }
+      >
         <Route path="dashboard" element={<Dashboardadmin />} />
       </Route>
 
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route
+        path="/admin"
+        element={
+          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+            <AdminLayout />
+          </CheckAuth>
+        }
+      >
         <Route path="player" element={<Playeradmin />} />
         <Route path="expert" element={<Expertadmin />} />
         <Route path="sponsor" element={<Sponsoradmin />} />
