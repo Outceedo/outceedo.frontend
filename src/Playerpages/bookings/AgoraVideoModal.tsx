@@ -117,6 +117,7 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     "online" | "offline" | "poor"
   >("online");
   const [hasPermissions, setHasPermissions] = useState(false);
+  const [isMessageSending, setIsMessageSending] = useState(false);
 
   const myUIDRef = useRef<number | null>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
@@ -188,7 +189,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     };
   }, [connectionError, agora, isJoined]);
 
-  // Apply volume changes to remote audio tracks
   useEffect(() => {
     remoteUsers.forEach((user) => {
       if (user.audioTrack) {
@@ -211,19 +211,28 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
       await requestPermissions();
 
-      // Create Agora client
       const agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-      // Event handlers
-      agoraClient.on("user-published", async (user, mediaType) => {
-        console.log("User published:", user.uid, mediaType);
+      // Add stream-message event handler for chat functionality
+      agoraClient.on("stream-message", (uid, stream) => {
+        try {
+          const decoder = new TextDecoder();
+          const messageString = decoder.decode(stream);
+          const messageData = JSON.parse(messageString);
 
-        // Don't subscribe to our own media
+          if (messageData.type === "chat" && uid !== myUIDRef.current) {
+            addChatMessage(messageData.sender, messageData.message, false);
+          }
+        } catch (error) {
+          console.error("Error parsing chat message:", error);
+        }
+      });
+
+      agoraClient.on("user-published", async (user, mediaType) => {
         if (user.uid === myUIDRef.current) return;
 
         try {
           await agoraClient.subscribe(user, mediaType);
-          console.log("Successfully subscribed to user:", user.uid, mediaType);
 
           setRemoteUsers((prevUsers) => {
             const existingUserIndex = prevUsers.findIndex(
@@ -231,7 +240,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             );
 
             if (existingUserIndex !== -1) {
-              // Update existing user
               const updatedUsers = [...prevUsers];
               updatedUsers[existingUserIndex] = {
                 ...updatedUsers[existingUserIndex],
@@ -241,7 +249,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               };
               return updatedUsers;
             } else {
-              // Add new user
               return [
                 ...prevUsers,
                 {
@@ -257,7 +264,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             }
           });
 
-          // Play the media
           if (mediaType === "video" && user.videoTrack) {
             setTimeout(() => {
               const remoteVideoContainer =
@@ -287,8 +293,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       });
 
       agoraClient.on("user-unpublished", (user, mediaType) => {
-        console.log("User unpublished:", user.uid, mediaType);
-
         if (user.uid === myUIDRef.current) return;
 
         setRemoteUsers((prevUsers) =>
@@ -315,8 +319,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       });
 
       agoraClient.on("user-joined", (user) => {
-        console.log("User joined:", user.uid);
-
         if (user.uid !== myUIDRef.current) {
           const username = getUsername(user.uid);
           addChatMessage("System", `${username} joined the session`, false);
@@ -334,8 +336,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       });
 
       agoraClient.on("user-left", (user) => {
-        console.log("User left:", user.uid);
-
         if (user.uid !== myUIDRef.current) {
           setRemoteUsers((prevUsers) =>
             prevUsers.filter((u) => u.uid !== user.uid)
@@ -348,8 +348,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       agoraClient.on(
         "connection-state-change",
         (curState, revState, reason) => {
-          console.log("Connection state changed:", curState, revState, reason);
-
           if (curState === "CONNECTED") {
             setConnectionError(null);
             addChatMessage(
@@ -388,9 +386,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
       setClient(agoraClient);
 
-      // Join the channel
-      console.log("Joining channel:", agora.channel, "with UID:", agora.uid);
-
       let joinSuccess = false;
       let currentUID = agora.uid;
 
@@ -403,12 +398,9 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             currentUID
           );
 
-          console.log("Successfully joined channel with UID:", uid);
           myUIDRef.current = uid as number;
           joinSuccess = true;
         } catch (joinError: any) {
-          console.error("Join attempt failed:", joinError);
-
           if (
             joinError.code === "INVALID_TOKEN" ||
             joinError.code === "TOKEN_EXPIRED"
@@ -423,16 +415,13 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             );
             return;
           } else if (joinError.code === "UID_CONFLICT") {
-            // Generate new UID and retry
             currentUID = 22951 + Math.floor(Math.random() * 1000);
-            console.log("UID conflict, retrying with new UID:", currentUID);
           } else if (attempt === 2) {
             throw joinError;
           }
         }
       }
 
-      // Create local tracks
       const tracks = [];
 
       try {
@@ -444,9 +433,7 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         });
         tracks.push(audioTrack);
         setLocalAudioTrack(audioTrack);
-        console.log("Created audio track");
       } catch (audioError) {
-        console.error("Error creating audio track:", audioError);
         addChatMessage(
           "System",
           "Microphone access denied. Audio disabled.",
@@ -462,13 +449,10 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         tracks.push(videoTrack);
         setLocalVideoTrack(videoTrack);
 
-        // Play local video
         if (localVideoRef.current) {
           videoTrack.play(localVideoRef.current);
         }
-        console.log("Created video track");
       } catch (videoError) {
-        console.error("Error creating video track:", videoError);
         addChatMessage(
           "System",
           "Camera access denied. Video disabled.",
@@ -476,10 +460,8 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         );
       }
 
-      // Publish local tracks
       if (tracks.length > 0) {
         await agoraClient.publish(tracks);
-        console.log("Published local tracks:", tracks.length);
       }
 
       setIsJoined(true);
@@ -498,8 +480,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         );
       }, 2000);
     } catch (error: any) {
-      console.error("Error initializing Agora:", error);
-
       if (error.code === "INVALID_VENDOR_KEY") {
         setConnectionError("Invalid App ID. Please contact support.");
       } else if (error.code === "TOKEN_EXPIRED") {
@@ -547,30 +527,44 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         },
       });
 
-      // Stop the test stream
       stream.getTracks().forEach((track) => track.stop());
       setHasPermissions(true);
     } catch (error) {
-      console.error("Error requesting permissions:", error);
       setHasPermissions(false);
     }
   };
 
   const cleanup = async () => {
-    console.log("Cleaning up...");
-
-    // Clear duration interval
     if (durationInterval.current) {
       clearInterval(durationInterval.current);
       durationInterval.current = null;
     }
 
-    // Stop and close local audio track
+    if (client) {
+      try {
+        const tracksToUnpublish = [];
+
+        if (localAudioTrack) {
+          tracksToUnpublish.push(localAudioTrack);
+        }
+
+        if (localVideoTrack) {
+          tracksToUnpublish.push(localVideoTrack);
+        }
+
+        if (tracksToUnpublish.length > 0) {
+          await client.unpublish(tracksToUnpublish);
+        }
+
+        await client.leave();
+      } catch (error) {
+        console.error("Error during cleanup:", error);
+      }
+    }
+
     if (localAudioTrack) {
       try {
-        // Stop the track first (stops the media stream)
         localAudioTrack.stop();
-        // Close the track (releases resources)
         localAudioTrack.close();
       } catch (error) {
         console.error("Error stopping audio track:", error);
@@ -578,12 +572,9 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       setLocalAudioTrack(null);
     }
 
-    // Stop and close local video track
     if (localVideoTrack) {
       try {
-        // Stop the track first (stops the media stream)
         localVideoTrack.stop();
-        // Close the track (releases resources)
         localVideoTrack.close();
       } catch (error) {
         console.error("Error stopping video track:", error);
@@ -591,7 +582,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       setLocalVideoTrack(null);
     }
 
-    // Clean up remote users and their tracks
     remoteUsers.forEach((user) => {
       if (user.audioTrack) {
         try {
@@ -609,42 +599,17 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       }
     });
 
-    // Leave the Agora channel and clean up client
-    if (client) {
-      try {
-        // Unpublish all tracks before leaving
-        if (localAudioTrack || localVideoTrack) {
-          const tracksToUnpublish = [];
-          if (localAudioTrack) tracksToUnpublish.push(localAudioTrack);
-          if (localVideoTrack) tracksToUnpublish.push(localVideoTrack);
-
-          if (tracksToUnpublish.length > 0) {
-            await client.unpublish(tracksToUnpublish);
-          }
-        }
-
-        // Leave the channel
-        await client.leave();
-        console.log("Successfully left Agora channel");
-      } catch (error) {
-        console.error("Error leaving channel:", error);
-      }
-      setClient(null);
-    }
-
-    // Reset all state
+    setClient(null);
     setRemoteUsers([]);
     setIsJoined(false);
     setIsAudioMuted(false);
     setIsVideoMuted(false);
     setConnectionError(null);
     setIsConnecting(false);
+    setIsMessageSending(false);
 
-    // Clear refs
     myUIDRef.current = null;
     isInitializingRef.current = false;
-
-    console.log("Cleanup completed");
   };
 
   const getUsername = (uid: UID): string => {
@@ -657,7 +622,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   const getAllParticipants = () => {
     const allParticipants = [];
 
-    // Add local user (player/student)
     allParticipants.push({
       uid: myUIDRef.current || 0,
       isLocal: true,
@@ -667,7 +631,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       photo: booking.player.photo,
     });
 
-    // Add remote users (experts)
     remoteUsers.forEach((user) => {
       allParticipants.push({
         uid: user.uid,
@@ -706,57 +669,63 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   };
 
   const toggleAudio = async () => {
-    if (localAudioTrack && client) {
+    if (!localAudioTrack || !client) return;
+
+    try {
+      if (!isAudioMuted) {
+        // Currently unmuted, so mute by unpublishing
+        await client.unpublish([localAudioTrack]);
+        setIsAudioMuted(true);
+        addChatMessage("System", "You muted your microphone", false);
+      } else {
+        // Currently muted, so unmute by publishing
+        await client.publish([localAudioTrack]);
+        setIsAudioMuted(false);
+        addChatMessage("System", "You unmuted your microphone", false);
+      }
+    } catch (error) {
+      // Fallback to setEnabled method
       try {
-        if (isAudioMuted) {
-          // Currently muted, unmute by publishing the track
-          await client.publish([localAudioTrack]);
-          setIsAudioMuted(false);
-          addChatMessage("System", "You unmuted your microphone", false);
-        } else {
-          // Currently unmuted, mute by unpublishing the track
-          await client.unpublish([localAudioTrack]);
-          setIsAudioMuted(true);
-          addChatMessage("System", "You muted your microphone", false);
-        }
-      } catch (error) {
-        console.error("Error toggling audio:", error);
-        // Fallback to setEnabled method
-        await localAudioTrack.setEnabled(!isAudioMuted);
+        await localAudioTrack.setEnabled(isAudioMuted);
         setIsAudioMuted(!isAudioMuted);
         addChatMessage(
           "System",
-          `You ${!isAudioMuted ? "muted" : "unmuted"} your microphone`,
+          `You ${isAudioMuted ? "unmuted" : "muted"} your microphone`,
           false
         );
+      } catch (fallbackError) {
+        addChatMessage("System", "Failed to toggle microphone", false);
       }
     }
   };
 
   const toggleVideo = async () => {
-    if (localVideoTrack && client) {
+    if (!localVideoTrack || !client) return;
+
+    try {
+      if (!isVideoMuted) {
+        // Currently unmuted, so mute by unpublishing
+        await client.unpublish([localVideoTrack]);
+        setIsVideoMuted(true);
+        addChatMessage("System", "You turned off your camera", false);
+      } else {
+        // Currently muted, so unmute by publishing
+        await client.publish([localVideoTrack]);
+        setIsVideoMuted(false);
+        addChatMessage("System", "You turned on your camera", false);
+      }
+    } catch (error) {
+      // Fallback to setEnabled method
       try {
-        if (isVideoMuted) {
-          // Currently muted, unmute by publishing the track
-          await client.publish([localVideoTrack]);
-          setIsVideoMuted(false);
-          addChatMessage("System", "You turned on your camera", false);
-        } else {
-          // Currently unmuted, mute by unpublishing the track
-          await client.unpublish([localVideoTrack]);
-          setIsVideoMuted(true);
-          addChatMessage("System", "You turned off your camera", false);
-        }
-      } catch (error) {
-        console.error("Error toggling video:", error);
-        // Fallback to setEnabled method
-        await localVideoTrack.setEnabled(!isVideoMuted);
+        await localVideoTrack.setEnabled(isVideoMuted);
         setIsVideoMuted(!isVideoMuted);
         addChatMessage(
           "System",
-          `You ${!isVideoMuted ? "turned off" : "turned on"} your camera`,
+          `You ${isVideoMuted ? "turned on" : "turned off"} your camera`,
           false
         );
+      } catch (fallbackError) {
+        addChatMessage("System", "Failed to toggle camera", false);
       }
     }
   };
@@ -773,54 +742,37 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   };
 
   const sendMessage = async () => {
-    if (newMessage.trim() && client && isJoined) {
-      const messageToSend = newMessage.trim();
+    if (!newMessage.trim() || !client || !isJoined || isMessageSending) return;
 
-      try {
-        // Send the message through Agora's data stream
-        const messageData = {
-          type: "chat",
-          sender: booking.player.username,
-          message: messageToSend,
-          timestamp: Date.now(),
-          uid: myUIDRef.current,
-        };
+    const messageToSend = newMessage.trim();
+    setIsMessageSending(true);
 
-        // Convert message to buffer and send
-        const encoder = new TextEncoder();
-        const messageBuffer = encoder.encode(JSON.stringify(messageData));
+    try {
+      const messageData = {
+        type: "chat",
+        sender: booking.player.username,
+        message: messageToSend,
+        timestamp: Date.now(),
+        uid: myUIDRef.current,
+      };
 
-        // Send via Agora's sendStreamMessage
-        await client.sendStreamMessage(messageBuffer);
+      const encoder = new TextEncoder();
+      const messageBuffer = encoder.encode(JSON.stringify(messageData));
 
-        // Add to local chat
-        addChatMessage("You", messageToSend, true);
-        setNewMessage("");
-      } catch (error) {
-        console.error("Error sending message:", error);
-        // Fallback: Just add to local chat
-        addChatMessage("You", messageToSend, true);
-        setNewMessage("");
+      await client.sendStreamMessage(messageBuffer);
 
-        // Simulate expert response for fallback
-        if (Math.random() > 0.6) {
-          setTimeout(() => {
-            const responses = [
-              "That's a great question!",
-              "Let me explain that concept further.",
-              "I can see you're making good progress.",
-              "That's exactly right! Well done.",
-              "Let's try a different approach.",
-              "Do you have any questions about this?",
-              "You're doing excellent work!",
-              "That's a common challenge, let me help.",
-            ];
-            const randomResponse =
-              responses[Math.floor(Math.random() * responses.length)];
-            addChatMessage(booking.expert.username, randomResponse, false);
-          }, 1500 + Math.random() * 2500);
-        }
-      }
+      // Only add to local chat if successfully sent
+      addChatMessage("You", messageToSend, true);
+      setNewMessage("");
+    } catch (error) {
+      console.error("Failed to send message:", error);
+      addChatMessage(
+        "System",
+        "Failed to send message. Please try again.",
+        false
+      );
+    } finally {
+      setIsMessageSending(false);
     }
   };
 
@@ -866,7 +818,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             : "w-[95vw] h-[90vh] max-w-7xl rounded-2xl shadow-2xl"
         } bg-white overflow-hidden flex flex-col`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -953,7 +904,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           </div>
         </div>
 
-        {/* Connection Error */}
         {connectionError && (
           <div className="p-3 bg-red-50 border-b border-red-100">
             <div className="flex items-center justify-between">
@@ -972,9 +922,7 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           </div>
         )}
 
-        {/* Main Content */}
         <div className="flex-1 flex bg-gray-50 overflow-hidden">
-          {/* Video Area */}
           <div
             className={`${
               showChat ? "flex-1" : "w-full"
@@ -982,7 +930,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           >
             <div className="flex-1 relative bg-gradient-to-br from-blue-100 to-indigo-100 p-4">
               {allParticipants.length === 1 ? (
-                // Waiting for expert
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-4">
@@ -1022,7 +969,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   </div>
                 </div>
               ) : (
-                // Video grid
                 <div
                   className={`w-full h-full grid ${getGridCols(
                     allParticipants.length
@@ -1034,7 +980,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                       className="relative bg-black rounded-xl overflow-hidden shadow-lg"
                     >
                       {participant.isLocal ? (
-                        // Local video (student)
                         <div
                           ref={localVideoRef}
                           className="w-full h-full relative bg-gradient-to-br from-blue-200 to-indigo-200"
@@ -1057,7 +1002,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                           )}
                         </div>
                       ) : (
-                        // Remote video (expert)
                         <div className="w-full h-full relative">
                           {participant.hasVideo && participant.videoTrack ? (
                             <div
@@ -1090,7 +1034,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         </div>
                       )}
 
-                      {/* Participant info overlay */}
                       <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs flex items-center space-x-1">
                         <FontAwesomeIcon
                           icon={
@@ -1115,7 +1058,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         )}
                       </div>
 
-                      {/* Role labels */}
                       {participant.isLocal ? (
                         <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
                           You (Student)
@@ -1130,7 +1072,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 </div>
               )}
 
-              {/* Participants count */}
               <div className="absolute top-4 left-4">
                 <div className="bg-white bg-opacity-90 backdrop-blur text-gray-700 px-3 py-2 rounded-full shadow-lg border border-blue-100 text-sm">
                   <FontAwesomeIcon
@@ -1143,7 +1084,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 </div>
               </div>
 
-              {/* Student view indicator */}
               <div className="absolute top-4 right-4">
                 <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center space-x-2">
                   <FontAwesomeIcon icon={faGraduationCap} />
@@ -1152,7 +1092,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               </div>
             </div>
 
-            {/* Controls */}
             <div className="p-4 bg-white border-t border-gray-200">
               <div className="flex items-center justify-center space-x-4">
                 <button
@@ -1189,7 +1128,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   />
                 </button>
 
-                {/* Volume control */}
                 <div className="flex items-center space-x-2 bg-white rounded-full px-3 py-2 shadow-lg border-2 border-gray-200">
                   <FontAwesomeIcon
                     icon={faVolumeDown}
@@ -1212,7 +1150,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   />
                 </div>
 
-                {/* End call button */}
                 <button
                   onClick={handleEndCall}
                   className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-200 shadow-lg"
@@ -1226,10 +1163,8 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             </div>
           </div>
 
-          {/* Chat Panel */}
           {showChat && (
             <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
-              {/* Chat header */}
               <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-gray-800 flex items-center">
@@ -1248,7 +1183,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 </div>
               </div>
 
-              {/* Chat messages */}
               <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-gray-50">
                 {chatMessages.map((msg) => (
                   <div
@@ -1288,7 +1222,6 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Message input */}
               <div className="p-3 border-t border-gray-200 bg-white">
                 <div className="flex space-x-2">
                   <input
@@ -1297,16 +1230,21 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     onKeyPress={handleKeyPress}
                     placeholder="Ask a question or share your thoughts..."
                     className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
-                    disabled={!isJoined}
+                    disabled={!isJoined || isMessageSending}
                   />
                   <button
                     onClick={sendMessage}
-                    disabled={!newMessage.trim() || !isJoined}
+                    disabled={
+                      !newMessage.trim() || !isJoined || isMessageSending
+                    }
                     className="px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl transition-colors shadow-sm"
                   >
                     <FontAwesomeIcon icon={faPaperPlane} className="text-sm" />
                   </button>
                 </div>
+                {isMessageSending && (
+                  <p className="text-xs text-gray-500 mt-1">Sending...</p>
+                )}
               </div>
             </div>
           )}

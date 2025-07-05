@@ -179,6 +179,7 @@ const ExpertAvailabilityManager = () => {
     "21:00",
     "22:00",
     "23:00",
+    "23:30",
     "00:00",
   ];
 
