@@ -133,7 +133,9 @@ export default function Dashboardadmin() {
             key={i}
             className={`${cat.color} ${cat.text} flex-1 font-semibold rounded-lg shadow-none`}
             onClick={() => {
-              nav(cat.path);
+              const role = cat.path.split("/")[1]; // Extracts role from path
+              localStorage.setItem("role", role); // Stores it for sidebar to use
+              nav(cat.path); // Navigates to selected dashboard
             }}
             variant="default"
             size="lg"

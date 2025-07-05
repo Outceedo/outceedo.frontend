@@ -8,7 +8,9 @@ import { useLocation } from "react-router-dom";
 interface AdminHeaderProps {
   setOpen: (open: boolean) => void;
 }
+
 const menuItems = [
+  // Admin
   { path: "/admin/dashboard", name: "Dashboard" },
   { path: "/admin/player", name: "Players" },
   { path: "/admin/expert", name: "Experts" },
@@ -17,13 +19,39 @@ const menuItems = [
   { path: "/admin/fan", name: "Fans/Followers" },
   { path: "/admin/details-form", name: "Edit Profile" },
   { path: "/admin/playerinfo", name: "Player Profile" },
+
+  // Player
+  { path: "/player/player", name: "Players" },
+  { path: "/player/booking", name: "Booking" },
+  { path: "/player/sponsorshipapplication", name: "SponsorShip Application" },
+  { path: "/player/certifications&awards", name: "Certifications&Awards" },
+  { path: "/player/reports", name: "Reports" },
+
+  // Expert
+  { path: "/expert/expert", name: "Experts" },
+  { path: "/expert/expertbooking", name: "Booking" },
+  { path: "/expert/expertservices", name: "Services" },
+  { path: "/expert/expertcetification", name: "Certifications&Awards" },
+  { path: "/expert/expertreports", name: "Reports" },
 ];
-function AdminHeader({ setOpen }: AdminHeaderProps) {
+
+function Header({ setOpen }: AdminHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const location = useLocation();
-  const currentTitle =
-    menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??
-    "Dashboard";
+
+  const currentTitle = (() => {
+    // 1. Try exact match first
+    const exactMatch = menuItems.find((item) => location.pathname === item.path);
+    if (exactMatch) return exactMatch.name;
+
+    // 2. Fallback to longest prefix match
+    const prefixMatch = menuItems
+      .filter((item) => location.pathname.startsWith(item.path))
+      .sort((a, b) => b.path.length - a.path.length)[0];
+
+    return prefixMatch?.name ?? "Dashboard";
+  })();
+
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode");
     if (savedMode === "enabled") {
@@ -58,11 +86,13 @@ function AdminHeader({ setOpen }: AdminHeaderProps) {
           <span className="sr-only">Toggle Menu</span>
         </Button>
 
-        {/* Show current page title on all screen sizes */}
+        {/* Page Title */}
         <h2 className="text-xl font-bold text-gray-800 dark:text-white whitespace-nowrap overflow-hidden text-ellipsis max-w-xs sm:max-w-sm md:max-w-md lg:max-w-lg">
           {currentTitle}
         </h2>
       </div>
+
+      {/* Right Section: Bell & Theme Toggle */}
       <div className="flex justify-end gap-3 items-center w-full">
         <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
           <FontAwesomeIcon
@@ -84,4 +114,4 @@ function AdminHeader({ setOpen }: AdminHeaderProps) {
   );
 }
 
-export default AdminHeader;
+export default Header;
