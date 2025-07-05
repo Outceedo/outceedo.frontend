@@ -136,6 +136,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   const callStartTime = useRef<number>(0);
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
   const isInitializingRef = useRef(false);
+  const currentScreenTrackRef = useRef<any>(null);
 
   useEffect(() => {
     if (isOpen && agora && !isInitializingRef.current) {
@@ -199,7 +200,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     };
   }, [connectionError, agora, isJoined]);
 
-  // Apply volume changes to remote audio tracks
   useEffect(() => {
     remoteUsers.forEach((user) => {
       if (user.audioTrack) {
@@ -222,10 +222,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
       await requestPermissions();
 
-      // Create Agora client
       const agoraClient = AgoraRTC.createClient({ mode: "rtc", codec: "vp8" });
 
-      // Set up data stream for chat messaging
       agoraClient.on("stream-message", (uid, stream) => {
         try {
           const decoder = new TextDecoder();
@@ -240,16 +238,11 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         }
       });
 
-      // Event handlers
       agoraClient.on("user-published", async (user, mediaType) => {
-        console.log("User published:", user.uid, mediaType);
-
-        // Don't subscribe to our own media
         if (user.uid === myUIDRef.current) return;
 
         try {
           await agoraClient.subscribe(user, mediaType);
-          console.log("Successfully subscribed to user:", user.uid, mediaType);
 
           setRemoteUsers((prevUsers) => {
             const existingUserIndex = prevUsers.findIndex(
@@ -257,7 +250,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             );
 
             if (existingUserIndex !== -1) {
-              // Update existing user
               const updatedUsers = [...prevUsers];
               updatedUsers[existingUserIndex] = {
                 ...updatedUsers[existingUserIndex],
@@ -267,7 +259,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               };
               return updatedUsers;
             } else {
-              // Add new user
               return [
                 ...prevUsers,
                 {
@@ -283,7 +274,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             }
           });
 
-          // Play the media
           if (mediaType === "video" && user.videoTrack) {
             setTimeout(() => {
               const remoteVideoContainer =
@@ -313,8 +303,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       });
 
       agoraClient.on("user-unpublished", (user, mediaType) => {
-        console.log("User unpublished:", user.uid, mediaType);
-
         if (user.uid === myUIDRef.current) return;
 
         setRemoteUsers((prevUsers) =>
@@ -341,8 +329,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       });
 
       agoraClient.on("user-joined", (user) => {
-        console.log("User joined:", user.uid);
-
         if (user.uid !== myUIDRef.current) {
           const username = getUsername(user.uid);
           addChatMessage("System", `${username} joined the session`, false);
@@ -360,8 +346,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       });
 
       agoraClient.on("user-left", (user) => {
-        console.log("User left:", user.uid);
-
         if (user.uid !== myUIDRef.current) {
           setRemoteUsers((prevUsers) =>
             prevUsers.filter((u) => u.uid !== user.uid)
@@ -374,8 +358,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       agoraClient.on(
         "connection-state-change",
         (curState, revState, reason) => {
-          console.log("Connection state changed:", curState, revState, reason);
-
           if (curState === "CONNECTED") {
             setConnectionError(null);
             addChatMessage(
@@ -414,9 +396,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
       setClient(agoraClient);
 
-      // Join the channel
-      console.log("Joining channel:", agora.channel, "with UID:", agora.uid);
-
       let joinSuccess = false;
       let currentUID = agora.uid;
 
@@ -429,12 +408,9 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             currentUID
           );
 
-          console.log("Successfully joined channel with UID:", uid);
           myUIDRef.current = uid as number;
           joinSuccess = true;
         } catch (joinError: any) {
-          console.error("Join attempt failed:", joinError);
-
           if (
             joinError.code === "INVALID_TOKEN" ||
             joinError.code === "TOKEN_EXPIRED"
@@ -449,16 +425,13 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             );
             return;
           } else if (joinError.code === "UID_CONFLICT") {
-            // Generate new UID and retry
             currentUID = 22951 + Math.floor(Math.random() * 1000);
-            console.log("UID conflict, retrying with new UID:", currentUID);
           } else if (attempt === 2) {
             throw joinError;
           }
         }
       }
 
-      // Create local tracks
       const localTracks = [];
 
       try {
@@ -470,9 +443,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         });
         localTracks.push(audioTrack);
         setLocalAudioTrack(audioTrack);
-        console.log("Created audio track");
       } catch (audioError) {
-        console.error("Error creating audio track:", audioError);
         addChatMessage(
           "System",
           "Microphone access denied. Audio disabled.",
@@ -488,13 +459,10 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         localTracks.push(videoTrack);
         setLocalVideoTrack(videoTrack);
 
-        // Play local video
         if (localVideoRef.current) {
           videoTrack.play(localVideoRef.current);
         }
-        console.log("Created video track");
       } catch (videoError) {
-        console.error("Error creating video track:", videoError);
         addChatMessage(
           "System",
           "Camera access denied. Video disabled.",
@@ -502,10 +470,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         );
       }
 
-      // Publish local tracks
       if (localTracks.length > 0) {
         await agoraClient.publish(localTracks);
-        console.log("Published local tracks:", localTracks.length);
       }
 
       setIsJoined(true);
@@ -524,8 +490,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         );
       }, 2000);
     } catch (error: any) {
-      console.error("Error initializing Agora:", error);
-
       if (error.code === "INVALID_VENDOR_KEY") {
         setConnectionError("Invalid App ID. Please contact support.");
       } else if (error.code === "TOKEN_EXPIRED") {
@@ -564,30 +528,48 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         },
       });
 
-      // Stop the test stream
       stream.getTracks().forEach((track) => track.stop());
       setHasPermissions(true);
     } catch (error) {
-      console.error("Error requesting permissions:", error);
       setHasPermissions(false);
     }
   };
 
   const cleanup = async () => {
-    console.log("Cleaning up...");
-
-    // Clear duration interval
     if (durationInterval.current) {
       clearInterval(durationInterval.current);
       durationInterval.current = null;
     }
 
-    // Stop and close local audio track
+    if (client) {
+      try {
+        const tracksToUnpublish = [];
+
+        if (localAudioTrack) {
+          tracksToUnpublish.push(localAudioTrack);
+        }
+
+        if (localVideoTrack) {
+          tracksToUnpublish.push(localVideoTrack);
+        }
+
+        if (currentScreenTrackRef.current) {
+          tracksToUnpublish.push(currentScreenTrackRef.current);
+        }
+
+        if (tracksToUnpublish.length > 0) {
+          await client.unpublish(tracksToUnpublish);
+        }
+
+        await client.leave();
+      } catch (error) {
+        console.error("Error during cleanup:", error);
+      }
+    }
+
     if (localAudioTrack) {
       try {
-        // Stop the track first (stops the media stream)
         localAudioTrack.stop();
-        // Close the track (releases resources)
         localAudioTrack.close();
       } catch (error) {
         console.error("Error stopping audio track:", error);
@@ -595,12 +577,9 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       setLocalAudioTrack(null);
     }
 
-    // Stop and close local video track
     if (localVideoTrack) {
       try {
-        // Stop the track first (stops the media stream)
         localVideoTrack.stop();
-        // Close the track (releases resources)
         localVideoTrack.close();
       } catch (error) {
         console.error("Error stopping video track:", error);
@@ -608,7 +587,16 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       setLocalVideoTrack(null);
     }
 
-    // Clean up remote users and their tracks
+    if (currentScreenTrackRef.current) {
+      try {
+        currentScreenTrackRef.current.stop();
+        currentScreenTrackRef.current.close();
+      } catch (error) {
+        console.error("Error stopping screen track:", error);
+      }
+      currentScreenTrackRef.current = null;
+    }
+
     remoteUsers.forEach((user) => {
       if (user.audioTrack) {
         try {
@@ -626,30 +614,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       }
     });
 
-    // Leave the Agora channel and clean up client
-    if (client) {
-      try {
-        // Unpublish all tracks before leaving
-        if (localAudioTrack || localVideoTrack) {
-          const tracksToUnpublish = [];
-          if (localAudioTrack) tracksToUnpublish.push(localAudioTrack);
-          if (localVideoTrack) tracksToUnpublish.push(localVideoTrack);
-
-          if (tracksToUnpublish.length > 0) {
-            await client.unpublish(tracksToUnpublish);
-          }
-        }
-
-        // Leave the channel
-        await client.leave();
-        console.log("Successfully left Agora channel");
-      } catch (error) {
-        console.error("Error leaving channel:", error);
-      }
-      setClient(null);
-    }
-
-    // Reset all state
+    setClient(null);
     setRemoteUsers([]);
     setIsJoined(false);
     setIsRecording(false);
@@ -659,11 +624,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     setConnectionError(null);
     setIsConnecting(false);
 
-    // Clear refs
     myUIDRef.current = null;
     isInitializingRef.current = false;
-
-    console.log("Cleanup completed");
   };
 
   const getUsername = (uid: UID): string => {
@@ -676,7 +638,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   const getAllParticipants = () => {
     const allParticipants = [];
 
-    // Add local user (expert)
     allParticipants.push({
       uid: myUIDRef.current || 0,
       isLocal: true,
@@ -686,7 +647,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       photo: booking.expert.photo,
     });
 
-    // Add remote users
     remoteUsers.forEach((user) => {
       allParticipants.push({
         uid: user.uid,
@@ -741,57 +701,63 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   };
 
   const toggleAudio = async () => {
-    if (localAudioTrack && client) {
+    if (!localAudioTrack || !client) return;
+
+    try {
+      if (!isAudioMuted) {
+        // Currently unmuted, so mute by unpublishing
+        await client.unpublish([localAudioTrack]);
+        setIsAudioMuted(true);
+        addChatMessage("System", "Expert muted microphone", false);
+      } else {
+        // Currently muted, so unmute by publishing
+        await client.publish([localAudioTrack]);
+        setIsAudioMuted(false);
+        addChatMessage("System", "Expert unmuted microphone", false);
+      }
+    } catch (error) {
+      // Fallback to setEnabled method
       try {
-        if (isAudioMuted) {
-          // Currently muted, unmute by publishing the track
-          await client.publish([localAudioTrack]);
-          setIsAudioMuted(false);
-          addChatMessage("System", "Expert unmuted microphone", false);
-        } else {
-          // Currently unmuted, mute by unpublishing the track
-          await client.unpublish([localAudioTrack]);
-          setIsAudioMuted(true);
-          addChatMessage("System", "Expert muted microphone", false);
-        }
-      } catch (error) {
-        console.error("Error toggling audio:", error);
-        // Fallback to setEnabled method
-        await localAudioTrack.setEnabled(!isAudioMuted);
+        await localAudioTrack.setEnabled(isAudioMuted);
         setIsAudioMuted(!isAudioMuted);
         addChatMessage(
           "System",
-          `Expert ${!isAudioMuted ? "muted" : "unmuted"} microphone`,
+          `Expert ${isAudioMuted ? "unmuted" : "muted"} microphone`,
           false
         );
+      } catch (fallbackError) {
+        addChatMessage("System", "Failed to toggle microphone", false);
       }
     }
   };
 
   const toggleVideo = async () => {
-    if (localVideoTrack && client) {
+    if (!localVideoTrack || !client) return;
+
+    try {
+      if (!isVideoMuted) {
+        // Currently unmuted, so mute by unpublishing
+        await client.unpublish([localVideoTrack]);
+        setIsVideoMuted(true);
+        addChatMessage("System", "Expert turned off camera", false);
+      } else {
+        // Currently muted, so unmute by publishing
+        await client.publish([localVideoTrack]);
+        setIsVideoMuted(false);
+        addChatMessage("System", "Expert turned on camera", false);
+      }
+    } catch (error) {
+      // Fallback to setEnabled method
       try {
-        if (isVideoMuted) {
-          // Currently muted, unmute by publishing the track
-          await client.publish([localVideoTrack]);
-          setIsVideoMuted(false);
-          addChatMessage("System", "Expert turned on camera", false);
-        } else {
-          // Currently unmuted, mute by unpublishing the track
-          await client.unpublish([localVideoTrack]);
-          setIsVideoMuted(true);
-          addChatMessage("System", "Expert turned off camera", false);
-        }
-      } catch (error) {
-        console.error("Error toggling video:", error);
-        // Fallback to setEnabled method
-        await localVideoTrack.setEnabled(!isVideoMuted);
+        await localVideoTrack.setEnabled(isVideoMuted);
         setIsVideoMuted(!isVideoMuted);
         addChatMessage(
           "System",
-          `Expert ${!isVideoMuted ? "turned off" : "turned on"} camera`,
+          `Expert ${isVideoMuted ? "turned on" : "turned off"} camera`,
           false
         );
+      } catch (fallbackError) {
+        addChatMessage("System", "Failed to toggle camera", false);
       }
     }
   };
@@ -806,13 +772,13 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           optimizationMode: "detail",
         });
 
+        currentScreenTrackRef.current = screenTrack;
+
         if (localVideoTrack) {
-          await client.unpublish(localVideoTrack);
-          localVideoTrack.stop();
-          localVideoTrack.close();
+          await client.unpublish([localVideoTrack]);
         }
 
-        await client.publish(screenTrack);
+        await client.publish([screenTrack]);
         setIsScreenSharing(true);
 
         if (localVideoRef.current) {
@@ -826,31 +792,26 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         );
 
         screenTrack.on("track-ended", async () => {
-          await client.unpublish(screenTrack);
-          screenTrack.stop();
-          screenTrack.close();
-          setIsScreenSharing(false);
-          addChatMessage("System", "Expert stopped screen sharing", false);
-
           try {
-            const cameraTrack = await AgoraRTC.createCameraVideoTrack({
-              encoderConfig: "720p_1",
-              optimizationMode: "detail",
-            });
+            await client.unpublish([screenTrack]);
+            screenTrack.stop();
+            screenTrack.close();
+            currentScreenTrackRef.current = null;
+            setIsScreenSharing(false);
+            addChatMessage("System", "Expert stopped screen sharing", false);
 
-            await client.publish(cameraTrack);
-            setLocalVideoTrack(cameraTrack);
-
-            if (localVideoRef.current) {
-              cameraTrack.play(localVideoRef.current);
+            if (localVideoTrack) {
+              await client.publish([localVideoTrack]);
+              if (localVideoRef.current) {
+                localVideoTrack.play(localVideoRef.current);
+              }
             }
           } catch (error) {
-            console.error("Error restarting camera:", error);
+            console.error("Error ending screen share:", error);
           }
         });
       }
     } catch (error) {
-      console.error("Error sharing screen:", error);
       addChatMessage("System", "Failed to start screen sharing", false);
     }
   };
@@ -877,7 +838,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       const messageToSend = newMessage.trim();
 
       try {
-        // Send the message through Agora's data stream
         const messageData = {
           type: "chat",
           sender: booking.expert.username,
@@ -886,23 +846,17 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           uid: myUIDRef.current,
         };
 
-        // Convert message to buffer and send
         const encoder = new TextEncoder();
         const messageBuffer = encoder.encode(JSON.stringify(messageData));
 
-        // Send via Agora's sendStreamMessage
         await client.sendStreamMessage(messageBuffer);
 
-        // Add to local chat
         addChatMessage("You", messageToSend, true);
         setNewMessage("");
       } catch (error) {
-        console.error("Error sending message:", error);
-        // Fallback: Just add to local chat
         addChatMessage("You", messageToSend, true);
         setNewMessage("");
 
-        // Simulate student response for fallback
         if (Math.random() > 0.7) {
           setTimeout(() => {
             const responses = [
@@ -931,32 +885,10 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
     addChatMessage(
       "System",
-      isExpert
-        ? "Expert session completed. Thank you for teaching!"
-        : "Session ended. Thank you for learning with us!",
+      "Expert session completed. Thank you for teaching!",
       false
     );
 
-    // Immediately stop tracks to turn off camera/microphone indicators
-    if (localAudioTrack) {
-      try {
-        localAudioTrack.stop();
-        localAudioTrack.close();
-      } catch (error) {
-        console.error("Error stopping audio track:", error);
-      }
-    }
-
-    if (localVideoTrack) {
-      try {
-        localVideoTrack.stop();
-        localVideoTrack.close();
-      } catch (error) {
-        console.error("Error stopping video track:", error);
-      }
-    }
-
-    // Short delay for user to see the message, then cleanup and close
     setTimeout(async () => {
       await cleanup();
       onClose();
@@ -993,7 +925,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             : "w-[95vw] h-[90vh] max-w-7xl rounded-2xl shadow-2xl"
         } bg-white overflow-hidden flex flex-col`}
       >
-        {/* Header */}
         <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-100">
           <div className="flex items-center space-x-4">
             <div className="relative">
@@ -1101,7 +1032,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           </div>
         </div>
 
-        {/* Connection Error */}
         {connectionError && (
           <div className="p-3 bg-red-50 border-b border-red-100">
             <div className="flex items-center justify-between">
@@ -1120,9 +1050,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           </div>
         )}
 
-        {/* Main Content */}
         <div className="flex-1 flex bg-gray-50 overflow-hidden">
-          {/* Video Area */}
           <div
             className={`${
               showChat ? "flex-1" : "w-full"
@@ -1130,7 +1058,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           >
             <div className="flex-1 relative bg-gradient-to-br from-green-100 to-emerald-100 p-4">
               {allParticipants.length === 1 ? (
-                // Waiting for participants
                 <div className="w-full h-full flex items-center justify-center">
                   <div className="text-center">
                     <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-4">
@@ -1170,7 +1097,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   </div>
                 </div>
               ) : (
-                // Video grid
                 <div
                   className={`w-full h-full grid ${getGridCols(
                     allParticipants.length
@@ -1182,7 +1108,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                       className="relative bg-black rounded-xl overflow-hidden shadow-lg"
                     >
                       {participant.isLocal ? (
-                        // Local video (expert)
                         <div
                           ref={localVideoRef}
                           className="w-full h-full relative bg-gradient-to-br from-green-200 to-emerald-200"
@@ -1205,7 +1130,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                           )}
                         </div>
                       ) : (
-                        // Remote video (student)
                         <div className="w-full h-full relative">
                           {participant.hasVideo && participant.videoTrack ? (
                             <div
@@ -1238,7 +1162,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         </div>
                       )}
 
-                      {/* Participant info overlay */}
                       <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs flex items-center space-x-1">
                         <FontAwesomeIcon
                           icon={
@@ -1263,7 +1186,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         )}
                       </div>
 
-                      {/* Expert label */}
                       {participant.isLocal && (
                         <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
                           Expert {isScreenSharing && "(Screen)"}
@@ -1274,7 +1196,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 </div>
               )}
 
-              {/* Participants count */}
               <div className="absolute top-4 left-4">
                 <div className="bg-white bg-opacity-90 backdrop-blur text-gray-700 px-3 py-2 rounded-full shadow-lg border border-green-100 text-sm">
                   <FontAwesomeIcon
@@ -1287,7 +1208,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 </div>
               </div>
 
-              {/* Expert mode indicator */}
               <div className="absolute top-4 right-4">
                 <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center space-x-2">
                   <FontAwesomeIcon icon={faStar} />
@@ -1296,7 +1216,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               </div>
             </div>
 
-            {/* Controls */}
             <div className="p-4 bg-white border-t border-gray-200">
               <div className="flex items-center justify-center space-x-4">
                 <button
@@ -1357,7 +1276,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   <FontAwesomeIcon icon={isRecording ? faStop : faPlay} />
                 </button>
 
-                {/* Volume control */}
                 <div className="flex items-center space-x-2 bg-white rounded-full px-3 py-2 shadow-lg border-2 border-gray-200">
                   <FontAwesomeIcon
                     icon={faVolumeDown}
@@ -1380,7 +1298,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   />
                 </div>
 
-                {/* End call button */}
                 <button
                   onClick={handleEndCall}
                   className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-200 shadow-lg"
@@ -1394,10 +1311,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             </div>
           </div>
 
-          {/* Chat Panel */}
           {showChat && (
             <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
-              {/* Chat header */}
               <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-emerald-50">
                 <div className="flex items-center justify-between">
                   <h4 className="font-semibold text-gray-800 flex items-center">
@@ -1416,7 +1331,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 </div>
               </div>
 
-              {/* Chat messages */}
               <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-gray-50">
                 {chatMessages.map((msg) => (
                   <div
@@ -1456,7 +1370,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 <div ref={chatEndRef} />
               </div>
 
-              {/* Session notes */}
               <div className="p-3 border-t border-gray-200 bg-green-50">
                 <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center">
                   <FontAwesomeIcon
@@ -1474,7 +1387,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 />
               </div>
 
-              {/* Message input */}
               <div className="p-3 border-t border-gray-200 bg-white">
                 <div className="flex space-x-2">
                   <input
