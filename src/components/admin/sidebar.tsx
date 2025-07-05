@@ -3,7 +3,6 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Sheet, SheetContent } from "../ui/sheet";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
-
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
 
@@ -16,7 +15,7 @@ interface MenuItem {
   isLogout?: boolean;
 }
 
-const sidebarMenus: Record<string, MenuItem[]> = {
+export const sidebarMenus: Record<string, MenuItem[]> = {
   admin: [
     {
       id: 1,
@@ -26,7 +25,7 @@ const sidebarMenus: Record<string, MenuItem[]> = {
     },
     {
       id: 2,
-      name: "Players",
+      name: "Players ",
       icon: "fas fa-user-tie",
       path: "/admin/viewplayers",
     },
@@ -50,48 +49,79 @@ const sidebarMenus: Record<string, MenuItem[]> = {
   player: [
     {
       id: 1,
-      name: "Dashboard",
-      icon: "fas fa-table-columns",
-      path: "/player/dashboard",
+      name: "Players",
+      icon: "fas fa-user-tie",
+      path: "/player/player",
     },
-    { id: 2, name: "Matches", icon: "fas fa-futbol", path: "/player/matches" },
+    { id: 2, 
+      name: "Bookings", 
+        icon: "fas fa-calendar-check",
+      path: "/player/booking" },
     {
       id: 3,
-      name: "Bookings",
-      icon: "fas fa-calendar-check",
-      path: "/player/bookings",
+      name: "SponsorShip Application ",
+      icon: " fas fa-file-signature",
+      path: "/player/sponsorshipapplication",
     },
-    { id: 4, name: "Profile", icon: "fas fa-user", path: "/player/profile" },
-    {
+    { id: 4,
+       name: "Certifications&Award", 
+       icon: "fas fa-award ", 
+       path: "/player/certifications&awards" 
+      },
+ {
       id: 5,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
+      name: "Reports",
+      icon: "fas fa-file-alt",
+      path: "/player/reports",
     },
+
+       {
+      id: 6,
+      name: "Dashboard",
+      icon: "fas fa-table-columns",
+      path: "/admin/dashboard",
+    },
+    
   ],
   expert: [
     {
       id: 1,
+      name: "Experts",
+      icon: "fas fa-user-tie",
+      path: "/expert/expert",
+    },
+    { 
+      id: 2, 
+      name: "Bookings", 
+      icon: "fas fa-calendar-check",
+      path: "/expert/expertbooking"
+     },
+   
+    { 
+      id: 3, 
+      name: "Services", 
+      icon: "fas fa-hands-helping", 
+      path: "/expert/expertservices" 
+    },
+    { id: 4,
+       name: "Certifications&Awards", 
+       icon: "fas fa-award ", 
+       path: "/expert/expertcetification" 
+      },
+     {
+      id: 5,
+      name: "Reports",
+      icon: "fas fa-file-alt",
+      path: "/expert/expertreports",
+    },
+    
+     {
+      id: 6,
       name: "Dashboard",
       icon: "fas fa-table-columns",
-      path: "/expert/dashboard",
+      path: "/admin/dashboard",
     },
-    { id: 2, name: "Matches", icon: "fas fa-futbol", path: "/expert/matches" },
-    {
-      id: 3,
-      name: "Bookings",
-      icon: "fas fa-calendar-check",
-      path: "/expert/bookings",
-    },
-    { id: 4, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
-    {
-      id: 5,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
-    },
+   
   ],
   sponsor: [
     {
@@ -296,10 +326,11 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
               }`
             : ""}
         </p>
-        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {currentProfile?.gender?.charAt(0).toUpperCase() +
-            currentProfile?.gender?.slice(1)}
-        </p>
+            <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
+              {currentProfile?.gender
+                ? currentProfile.gender.charAt(0).toUpperCase() + currentProfile.gender.slice(1)
+                : ''}
+            </p>
         {status === "loading" && (
           <div className="text-sm text-gray-500">Loading profile...</div>
         )}
@@ -341,6 +372,7 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
         })}
       </div>
     </nav>
+    
   );
 }
 
@@ -348,13 +380,13 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
 interface AdminSideBarProps {
   open: boolean;
   setOpen: (open: boolean) => void;
+  role: string;
 }
 
-function AdminSideBar({ open, setOpen }: AdminSideBarProps) {
-  const location = useLocation();
-  const role = getRoleFromPath(location.pathname);
+function AdminSideBar({ open, setOpen, role }: AdminSideBarProps) {
+ // const location = useLocation();
+  //const role = getRoleFromPath(location.pathname);
   const menuItems = sidebarMenus[role] || sidebarMenus.admin;
-
   return (
     <Fragment>
       {/* Mobile sidebar */}

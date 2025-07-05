@@ -78,8 +78,19 @@ import SponsorApplicationpage from "./Playerpages/SponsorApplications";
 import AdminLayout from "./components/admin/layout";
 import Dashboardadmin from "./components/admin/dashboard";
 import AdminLayoutdefault from "./components/admin/defaultlayout";
-import Playeradmin from "./Adminpages/Player";
-import Expertadmin from "./Adminpages/Expert";
+
+import Player from "./Adminpages/Player/Player";
+import Booking from "./Adminpages/Player/Booking";
+import SponsorShipApplication from "./Adminpages/Player/SponsorShipApplication"
+import Certificates from "./Adminpages/Player/Certifications"
+import Reports from "./Adminpages/Player/Reports"
+
+import Expert from "./Adminpages/Expert/Expert";
+import ExpertBooking from "./Adminpages/Expert/ExpertBooking";
+import ExportReports from "./Adminpages/Expert/ExpertReports"
+import ExpertCetification from "./Adminpages/Expert/ExpertCetification"
+import ExpertServices from "./Adminpages/Expert/ExpertServices"
+
 import Sponsoradmin from "./Adminpages/Sponsor";
 import Teamadmin from "./Adminpages/Team";
 import Fanadmin from "./Adminpages/Fan";
@@ -263,7 +274,7 @@ const AppContent: React.FC = () => {
         <Route path="dashboard" element={<>Sponser Dashboard</>} />
         <Route path="players" element={<Sponsorplayer />} />
         <Route path="experts" element={<Sponsorexperts />} />
-        <Route path="application" element={<SponsorApplication />} />
+        <Route path="application" element={<SponsorApplication />} /> 
         <Route path="profile" element={<Sponsorprofile />} />
         <Route path="details-form" element={<SponsorDetailsForm />} />
         <Route path="SponsorForm" element={<SponsorForm />} />
@@ -315,13 +326,26 @@ const AppContent: React.FC = () => {
         <Route path="dashboard" element={<Dashboardadmin />} />
       </Route>
 
-      <Route path="/admin" element={<AdminLayout />}>
-        <Route path="player" element={<Playeradmin />} />
-        <Route path="expert" element={<Expertadmin />} />
+        <Route path="/:role" element={<AdminLayout />}>
+        {/* Player */}
+        <Route path="player" element={<Player />} />
+        <Route path="booking" element={<Booking />} />
+        <Route path="sponsorshipapplication" element={<SponsorShipApplication />} />
+        <Route path="certifications&awards" element={<Certificates />} />
+        <Route path="reports" element={<Reports />} />
+        {/* Expert */}
+        <Route path="expert" element={<Expert />} />
+        <Route path="expertbooking" element={<ExpertBooking />} />
+        <Route path="expertreports" element={<ExportReports />} />
+        <Route path="expertcetification" element={<ExpertCetification />} />
+        <Route path="expertservices" element={<ExpertServices />} />
+        
         <Route path="sponsor" element={<Sponsoradmin />} />
         <Route path="team" element={<Teamadmin />} />
         <Route path="fan" element={<Fanadmin />} />
       </Route>
+
+      
 
       <Route
         path="/unauthorized"
