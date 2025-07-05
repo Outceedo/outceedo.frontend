@@ -4,7 +4,7 @@ import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import football from "../../assets/images/football.jpg";
 import { loginUser, clearError } from "../../store/auth-slice";
 import User from "../Home/user";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // <-- USE FA ICONS
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Swal from "sweetalert2";
 
 const Login: React.FC = () => {
@@ -18,7 +18,7 @@ const Login: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loginSuccess, setLoginSuccess] = useState(false);
   const [isRedirecting, setIsRedirecting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false); // <-- NEW STATE
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     dispatch(clearError());
@@ -27,21 +27,7 @@ const Login: React.FC = () => {
 
   useEffect(() => {
     if (error) {
-      if (
-        error &&
-        error.error === "An OTP has been sent to mail, please verify!"
-      ) {
-        setFormError(error.error);
-        Swal.fire({
-          icon: "success",
-          title: "Registration Successful!",
-          text: "Please check your email for verification.",
-          timer: 3000,
-          showConfirmButton: false,
-        }).then(() => {
-          navigate("/emailverification");
-        });
-      } else if (typeof error === "object") {
+      if (typeof error === "object") {
         if (error.message) {
           setFormError(error.message);
         } else {
@@ -76,7 +62,25 @@ const Login: React.FC = () => {
       return;
     }
     try {
-      await dispatch(loginUser({ email, password }));
+      const response = await dispatch(loginUser({ email, password }));
+
+      // Check if the response indicates OTP verification is needed
+      if (
+        response.payload &&
+        response.payload.message ===
+          "An OTP has been sent to your email. Please Verify!"
+      ) {
+        Swal.fire({
+          icon: "success",
+          title: "Registration Successful!",
+          text: "Please check your email for verification.",
+          timer: 3000,
+          showConfirmButton: false,
+        }).then(() => {
+          localStorage.setItem("verificationEmail", email);
+          navigate("/emailverification");
+        });
+      }
     } catch (err) {
       console.error("Login error:", err);
     }

@@ -1,6 +1,8 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { AxiosError } from "axios";
 import { authService } from "../apiConfig";
+import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 interface AuthState {
   isAuthenticated: boolean;
