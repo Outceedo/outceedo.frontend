@@ -26,6 +26,7 @@ import {
   faMicrophone,
   faMicrophoneSlash,
   faVideoSlash,
+  faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import AssessmentReport from "../../Playerpages/AssessmentReport";
@@ -113,6 +114,8 @@ interface Booking {
   isPaid?: boolean;
   paymentIntentId?: string;
   paymentIntentClientSecret?: string;
+  expertMarkedComplete?: boolean;
+  playerMarkedComplete?: boolean;
 }
 
 const MyBooking: React.FC = () => {
@@ -186,7 +189,7 @@ const MyBooking: React.FC = () => {
   };
 
   const isPaid = (booking: Booking) => {
-    return booking.status === "SCHEDULED";
+    return booking.status === "SCHEDULED" || booking.status === "COMPLETED";
   };
 
   const isSessionOver = (booking: Booking) => {
@@ -214,6 +217,9 @@ const MyBooking: React.FC = () => {
   };
 
   const canGoLive = (booking: Booking) => {
+    // Only allow Go Live for online training services (serviceId === "2")
+    if (booking.service?.serviceId !== "2") return false;
+
     if (!isPaid(booking)) return false;
 
     const now = new Date();
@@ -227,16 +233,13 @@ const MyBooking: React.FC = () => {
     const sessionEnd = new Date(sessionDate);
     sessionEnd.setHours(endHours, endMinutes, 0, 0);
 
-    // Handle sessions that cross midnight (e.g., 23:00 to 12:00)
     if (
       endHours < startHours ||
       (endHours === startHours && endMinutes <= startMinutes)
     ) {
-      // Session crosses midnight, so end time is next day
       sessionEnd.setDate(sessionEnd.getDate() + 1);
     }
 
-    // Allow joining 10 minutes before session starts
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
     const isSessionOver = now > sessionEnd;
     const isTooEarly = now < goLiveTime;
@@ -262,6 +265,69 @@ const MyBooking: React.FC = () => {
       !isSessionOver(booking)
     );
   };
+
+  const handleCompleteSession = async (bookingId: string) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      await axios.patch(
+        `${API_BASE_URL}/${bookingId}/complete`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, status: "COMPLETED" }
+            : booking
+        )
+      );
+
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "COMPLETED" });
+      }
+
+      closeBookingDetails();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Session Marked Complete!",
+        text: "Thank you for confirming the session completion.",
+        confirmButtonColor: "#10B981",
+        timer: 2500,
+      });
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to mark session as complete. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sessionsToComplete = bookings.filter((booking) => {
+    const isOverAndPaid = isPaid(booking) && isSessionOver(booking);
+
+    const isScheduled = booking.status === "SCHEDULED";
+
+    return (
+      (isOverAndPaid || isScheduled) &&
+      booking.status !== "COMPLETED" &&
+      booking.status !== "REJECTED" &&
+      booking.status !== "CANCELLED" &&
+      !booking.playerMarkedComplete
+    );
+  });
 
   const isSessionToday = (booking: Booking) => {
     const today = new Date();
@@ -588,14 +654,13 @@ const MyBooking: React.FC = () => {
         return needsPayment(booking)
           ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
           : "bg-blue-100 text-blue-800 hover:bg-blue-100";
-      case "SCHEDULED":
-        return "bg-green-100 text-green-800 hover:bg-green-100";
       default:
         return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
   };
 
   const getPaymentStatusText = (booking: Booking) => {
+    // Use the isPaid function for consistency
     if (isPaid(booking)) {
       return "Paid";
     }
@@ -608,8 +673,6 @@ const MyBooking: React.FC = () => {
         return "Awaiting Approval";
       case "ACCEPTED":
         return needsPayment(booking) ? "Pay Now" : "Awaiting Payment Setup";
-      case "SCHEDULED":
-        return "Paid";
       default:
         return "Pending";
     }
@@ -702,6 +765,8 @@ const MyBooking: React.FC = () => {
     )
       return true;
     if (actionFilter === "scheduled" && booking.status === "SCHEDULED")
+      return true;
+    if (actionFilter === "completed" && booking.status === "COMPLETED")
       return true;
 
     return false;
@@ -808,6 +873,7 @@ const MyBooking: React.FC = () => {
             <SelectItem value="rejected">Rejected</SelectItem>
             <SelectItem value="waiting">Waiting Approval</SelectItem>
             <SelectItem value="scheduled">Scheduled</SelectItem>
+            <SelectItem value="completed">Completed</SelectItem>
           </SelectContent>
         </Select>
 
@@ -962,7 +1028,9 @@ const MyBooking: React.FC = () => {
                     <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
                     Go Live
                   </Button>
-                ) : booking.status === "SCHEDULED" ? (
+                ) : booking.service?.serviceId === "2" &&
+                  booking.status === "SCHEDULED" ? (
+                  // Only show timing info for online training
                   <div className="text-right">
                     <Button
                       className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
@@ -985,7 +1053,9 @@ const MyBooking: React.FC = () => {
                     className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
                     disabled
                   >
-                    Setup Pending
+                    {booking.status === "SCHEDULED"
+                      ? "View Details"
+                      : "Setup Pending"}
                   </Button>
                 )}
               </div>
@@ -1017,6 +1087,69 @@ const MyBooking: React.FC = () => {
         </div>
       </div>
 
+      <div className="mt-6">
+        <h2 className="text-xl font-semibold mb-4">Sessions to Complete</h2>
+        <div className="space-y-2">
+          {sessionsToComplete.map((booking) => (
+            <div
+              key={`complete-${booking.id}`}
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
+              onClick={() => openBookingDetails(booking)}
+            >
+              <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                <img
+                  src={booking.expert?.photo || profile}
+                  alt="Expert"
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = profile;
+                  }}
+                />
+                <div>
+                  <p
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const expert = booking.expert?.username;
+                      localStorage.setItem("viewexpertusername", expert || "");
+                      navigate("/player/exdetails");
+                    }}
+                  >
+                    {booking.expert?.username || "Unknown Expert"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {booking.service?.service?.name} -{" "}
+                    {formatDate(booking.date, booking.startTime)}
+                    {isSessionOver(booking) && (
+                      <span className="ml-2 text-red-600 font-medium">
+                        (Session Ended)
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant="outline"
+                className="bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCompleteSession(booking.id);
+                }}
+              >
+                <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                Mark as Completed
+              </Button>
+            </div>
+          ))}
+          {sessionsToComplete.length === 0 && (
+            <p className="text-gray-500 text-center py-2">
+              No sessions to complete
+            </p>
+          )}
+        </div>
+      </div>
+
       {selectedBooking && (
         <Dialog
           open={isBookingDetailsOpen}
@@ -1043,32 +1176,26 @@ const MyBooking: React.FC = () => {
                 </Badge>
               </div>
 
-              {isSessionOver(selectedBooking) && (
-                <div className="mb-5 p-4 rounded-lg border bg-gray-50 border-gray-200">
-                  <div className="flex items-start">
-                    <FontAwesomeIcon
-                      icon={faClock}
-                      className="mr-2 mt-1 flex-shrink-0 text-gray-600"
-                    />
-                    <div className="flex-1">
-                      <p className="font-medium text-gray-800">Session Ended</p>
-                      <p className="text-sm mt-1 text-gray-700">
-                        This session ended at{" "}
-                        {formatTimeRange(
-                          selectedBooking.startTime,
-                          selectedBooking.endTime
-                        )}{" "}
-                        on{" "}
-                        {formatDate(
-                          selectedBooking.date,
-                          selectedBooking.startTime
-                        )}
-                        .
-                      </p>
+              {isSessionOver(selectedBooking) &&
+                selectedBooking.status !== "COMPLETED" && (
+                  <div className="mb-5 p-4 rounded-lg border bg-amber-50 border-amber-200">
+                    <div className="flex items-start">
+                      <FontAwesomeIcon
+                        icon={faExclamationTriangle}
+                        className="mr-2 mt-1 flex-shrink-0 text-amber-600"
+                      />
+                      <div className="flex-1">
+                        <p className="font-medium text-amber-800">
+                          Session Needs Completion
+                        </p>
+                        <p className="text-sm mt-1 text-amber-700">
+                          This session has ended. Please mark it as complete to
+                          finalize your booking.
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {isPaid(selectedBooking) &&
                 selectedBooking.status === "SCHEDULED" &&
@@ -1527,6 +1654,7 @@ const MyBooking: React.FC = () => {
               {isPaid(selectedBooking) &&
                 canGoLive(selectedBooking) &&
                 selectedBooking.status === "SCHEDULED" &&
+                selectedBooking.service?.serviceId === "2" &&
                 !isSessionOver(selectedBooking) && (
                   <Button
                     className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
@@ -1534,6 +1662,20 @@ const MyBooking: React.FC = () => {
                   >
                     <FontAwesomeIcon icon={faPlay} />
                     Go Live Now
+                  </Button>
+                )}
+
+              {(selectedBooking.status === "ACCEPTED" ||
+                selectedBooking.status === "SCHEDULED" ||
+                isSessionOver(selectedBooking)) &&
+                selectedBooking.status !== "COMPLETED" && (
+                  <Button
+                    variant="outline"
+                    className="bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+                    onClick={() => handleCompleteSession(selectedBooking.id)}
+                  >
+                    <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                    Mark as Completed
                   </Button>
                 )}
 
