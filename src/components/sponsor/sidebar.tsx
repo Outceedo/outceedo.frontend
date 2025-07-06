@@ -15,12 +15,12 @@ interface MenuItem {
 }
 
 const sponsorSidebarMenuItems: MenuItem[] = [
-  {
-    id: 0,
-    name: "Dashboard",
-    icon: "fas fa-table-columns",
-    path: "/sponsor/dashboard",
-  },
+  // {
+  //   id: 0,
+  //   name: "Dashboard",
+  //   icon: "fas fa-table-columns",
+  //   path: "/sponsor/dashboard",
+  // },
   {
     id: 1,
     name: "Players",
