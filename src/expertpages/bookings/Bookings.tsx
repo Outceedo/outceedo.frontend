@@ -872,7 +872,6 @@ const BookingExpertside: React.FC = () => {
 
   const getPaymentBadgeStyle = (status: string) => {
     switch (status) {
-      case "COMPLETED":
       case "SCHEDULED":
       case "COMPLETED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
