@@ -897,7 +897,7 @@ const Profile: React.FC = () => {
           </div>
           {/* Tabs Section */}
           <div className="mt-8">
-            <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
+            <div className="flex gap-5 sm:gap-4 border-b overflow-x-auto">
               {(["details", "media", "reviews"] as const).map((tab) => (
                 <button
                   key={tab}

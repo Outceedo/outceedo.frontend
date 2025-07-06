@@ -232,7 +232,7 @@ const MediaUpload: React.FC<{
   };
 
   return (
-    <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg w-[600px] max-h-[80vh] flex flex-col relative">
+    <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-lg md:w-[600px] lg:w-[600px] sm:w-[350px]  max-h-[80vh] flex flex-col relative mx-auto">
       <button
         onClick={handleClose}
         className="absolute top-2 right-2 text-gray-600 dark:text-gray-300 z-10"
@@ -469,3 +469,5 @@ const MediaUpload: React.FC<{
 };
 
 export default MediaUpload;
+
+
