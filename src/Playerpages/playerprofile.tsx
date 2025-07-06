@@ -34,6 +34,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import FollowList from "../components/follower/followerlist";
+
 interface Stat {
   label: string;
   percentage: number;
@@ -60,10 +61,11 @@ const initialStats: Stat[] = [
 ];
 
 const calculateOVR = (stats: Stat[]) => {
-  return 0;
+  if (!stats.length) return 0;
+  const total = stats.reduce((sum, stat) => sum + stat.percentage, 0);
+  return Math.round(total / stats.length);
 };
 
-// StarRating component for review stars
 const StarRating: React.FC<{
   avg: number;
   total?: number;
@@ -533,21 +535,22 @@ const Profile: React.FC = () => {
 
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
-      <div className="flex-1 p-4">
-        <div className="ml-8">
-          <div className="flex flex-col lg:flex-row gap-6 items-start mt-4 relative">
-            {/* Profile Image with Edit Capability */}
-            <div className="relative group">
+      <div className="flex-1 p-2 sm:p-4">
+        <div className="w-full">
+          {/* Hybrid responsive layout for profile image + info */}
+          <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start justify-center lg:justify-start mt-4 relative w-full">
+            {/* Profile Image */}
+            <div className="relative group w-full max-w-[240px] sm:w-60 flex justify-center lg:block">
               {playerData.profileImage ? (
                 <img
                   src={playerData.profileImage || profile}
                   alt={`${playerData.name || "Player"}'s profile`}
-                  className="rounded-lg w-60 h-60 object-cover shadow-md"
+                  className="rounded-lg w-full h-60 sm:w-60 sm:h-60 object-cover shadow-md"
                 />
               ) : (
-                <div className="rounded-lg w-60 h-60 bg-gray-200 flex items-center justify-center shadow-md"></div>
+                <div className="rounded-lg w-full h-60 bg-gray-200 flex items-center justify-center shadow-md"></div>
               )}
-
+              {/* Photo edit overlay */}
               <div
                 onClick={handlePhotoClick}
                 className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center rounded-lg cursor-pointer"
@@ -575,18 +578,25 @@ const Profile: React.FC = () => {
                 </div>
               )}
             </div>
-
             {/* Profile Info */}
-            <div className="relative w-full mt-4">
+            <div className="relative w-full mt-4 lg:mt-0">
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
+                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway break-words">
                   {playerData.name || "Player Profile"}
                 </h2>
                 {/* Basic Info Section with Edit Button */}
-                <div className="mt-5 relative">
-                  <div className="flex justify-between items-start">
+                <div className="mt-5">
+                  <div className="flex justify-between items-start flex-wrap gap-2">
                     {!isEditingBasicInfo ? (
-                      <div></div>
+                      <Button
+                        onClick={enterEditMode}
+                        variant="outline"
+                        size="sm"
+                        className="flex items-center gap-1 text-blue-600"
+                      >
+                        <FontAwesomeIcon icon={faPen} className="text-xs" />
+                        <span>Edit</span>
+                      </Button>
                     ) : (
                       <div className="flex gap-2">
                         <Button
@@ -625,7 +635,7 @@ const Profile: React.FC = () => {
                     )}
                   </div>
                   {!isEditingBasicInfo ? (
-                    <div className="flex flex-wrap gap-x-8 gap-y-2 text-gray-600 font-Opensans dark:text-gray-300">
+                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-Opensans dark:text-gray-300 mt-2">
                       <span>Age: {playerData.age || "Not specified"}</span>
                       <span>
                         Height: {playerData.height || "Not specified"}
@@ -645,7 +655,7 @@ const Profile: React.FC = () => {
                       </span>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
                       {/* Age */}
                       <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -785,7 +795,7 @@ const Profile: React.FC = () => {
                         )}
                       </div>
                       {/* Languages */}
-                      <div>
+                      <div className="sm:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                           Languages (comma-separated)
                         </label>
@@ -811,22 +821,21 @@ const Profile: React.FC = () => {
                   )}
                 </div>
               </div>
-
               {/* OVR Section */}
-              <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit mt-8 relative">
-                <div className="flex flex-wrap gap-6 items-center">
+              <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit mt-8 relative overflow-x-auto">
+                <div className="flex flex-wrap gap-4 md:gap-6 items-center">
                   <div>
-                    <h2 className="text-xl ml-5 text-gray-800 dark:text-white">
-                      <span className="block font-bold font-opensans text-3xl">
+                    <h2 className="text-xl ml-1 md:ml-5 text-gray-800 dark:text-white">
+                      <span className="block font-bold font-opensans text-2xl md:text-3xl">
                         {ovrScore}
                       </span>
-                      <span className="text-xl font-opensans">OVR</span>
+                      <span className="text-lg font-opensans">OVR</span>
                     </h2>
                   </div>
                   {playerData.stats.map((stat, index) => (
                     <div key={index} className="flex flex-col items-center">
                       <div
-                        className="w-20 h-20 relative"
+                        className="w-16 h-16 md:w-20 md:h-20 relative"
                         style={{ transform: "rotate(-90deg)" }}
                       >
                         <CircularProgressbar
@@ -840,22 +849,21 @@ const Profile: React.FC = () => {
                           circleRatio={0.5}
                         />
                         <div
-                          className="absolute inset-0 flex items-center justify-center text-sm ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
+                          className="absolute inset-0 flex items-center justify-center text-xs md:text-sm ml-2 md:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
                           style={{ transform: "rotate(90deg)" }}
                         >
                           {stat.percentage}%
                         </div>
                       </div>
-                      <p className="text-sm -mt-8 font-opensans text-gray-700 dark:text-white">
+                      <p className="text-xs md:text-sm -mt-6 md:-mt-8 font-opensans text-gray-700 dark:text-white">
                         {stat.label}
                       </p>
                     </div>
                   ))}
                 </div>
               </Card>
-
-              {/* Review stars and count */}
-            <div className="flex items-center gap-6 mt-4">
+              {/* Review stars and count, Followers */}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mt-4">
                 <div className="flex items-center gap-2">
                   <StarRating avg={avgRating} className="mr-2" />
                   <span className="text-gray-500">
@@ -875,7 +883,7 @@ const Profile: React.FC = () => {
                       <p className="text-gray-500 dark:text-white">Followers</p>
                     </div>
                   </DialogTrigger>
-                  <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                  <DialogContent className="max-w-xs sm:max-w-md max-h-[80vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle className="text-lg font-semibold text-center">
                         People who Follow
@@ -887,10 +895,9 @@ const Profile: React.FC = () => {
               </div>
             </div>
           </div>
-
           {/* Tabs Section */}
           <div className="mt-8">
-            <div className="flex gap-4 border-b">
+            <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
               {(["details", "media", "reviews"] as const).map((tab) => (
                 <button
                   key={tab}
