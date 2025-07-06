@@ -92,6 +92,7 @@ import ExpertBooking from "./Adminpages/Expert/ExpertBooking";
 import ExportReports from "./Adminpages/Expert/ExpertReports";
 import ExpertCetification from "./Adminpages/Expert/ExpertCetification";
 import ExpertServices from "./Adminpages/Expert/ExpertServices";
+import NotFound from "./common/notfound";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -136,17 +137,17 @@ const AppContent: React.FC = () => {
   function handleNav() {
     const role = localStorage.getItem("role");
     if (role === "player") {
-      navigate("/player/dashboard");
+      navigate("/player/profile");
     } else if (role === "expert") {
-      navigate("/expert/dashboard");
+      navigate("/expert/profile");
     } else if (role === "sponsor") {
-      navigate("/sponsor/dashboard");
+      navigate("/sponsor/profile");
     } else if (role === "team") {
-      navigate("/team/dashboard");
+      navigate("/team/profile");
     } else if (role === "fan") {
-      navigate("/fan/dashboard");
+      navigate("/fan/profile");
     } else if (role === "admin") {
-      navigate("/admin/dashboard");
+      navigate("/admin/profile");
     } else {
       navigate("/");
     }
@@ -166,17 +167,17 @@ const AppContent: React.FC = () => {
             <Navigate
               to={
                 user?.role === "player"
-                  ? "/player/dashboard"
+                  ? "/player/profile"
                   : user?.role === "expert"
-                  ? "/expert/dashboard"
+                  ? "/expert/profile"
                   : user?.role === "sponsor"
-                  ? "/sponsor/dashboard"
+                  ? "/sponsor/profile"
                   : user?.role === "team"
-                  ? "/team/dashboard"
+                  ? "/team/profile"
                   : user?.role === "fan"
-                  ? "/fan/dashboard"
+                  ? "/fan/profile"
                   : user?.role === "admin"
-                  ? "/admin/dashboard"
+                  ? "/admin/profile"
                   : "/"
               }
             />
@@ -193,17 +194,17 @@ const AppContent: React.FC = () => {
             <Navigate
               to={
                 user?.role === "player"
-                  ? "/player/dashboard"
+                  ? "/player/profile"
                   : user?.role === "expert"
-                  ? "/expert/dashboard"
+                  ? "/expert/profile"
                   : user?.role === "sponsor"
-                  ? "/sponsor/dashboard"
+                  ? "/sponsor/profile"
                   : user?.role === "team"
-                  ? "/team/dashboard"
+                  ? "/team/profile"
                   : user?.role === "fan"
-                  ? "/fan/dashboard"
+                  ? "/fan/profile"
                   : user?.role === "admin"
-                  ? "/admin/dashboard"
+                  ? "/admin/profile"
                   : "/"
               }
             />
@@ -223,7 +224,7 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
-        <Route path="dashboard" element={<Dashboard />} />
+        {/* <Route path="dashboard" element={<Dashboard />} /> */}
         <Route path="matches" element={<Matches />} />
         <Route path="mybooking" element={<MyBooking />} />
         <Route path="AssessmentReport" element={<AssessmentReport />} />
@@ -246,7 +247,7 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
-        <Route path="dashboard" element={<ExpertDashboard />} />
+        {/* <Route path="dashboard" element={<ExpertDashboard />} /> */}
         <Route path="matches" element={<ExpertMatches />} />
         <Route path="mybooking" element={<BookingExpertside />} />
         <Route path="viewplayers" element={<PlayersProfile />} />
@@ -271,7 +272,7 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
-        <Route path="dashboard" element={<>Sponser Dashboard</>} />
+        {/* <Route path="dashboard" element={<>Sponser Dashboard</>} /> */}
         <Route path="players" element={<Sponsorplayer />} />
         <Route path="experts" element={<Sponsorexperts />} />
         <Route path="application" element={<SponsorApplication />} />
@@ -292,7 +293,7 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
-        <Route path="dashboard" element={<>Team Dashboard</>} />
+        {/* <Route path="dashboard" element={<>Team Dashboard</>} /> */}
         <Route path="players" element={<TeamPlayer />} />
         <Route path="experts" element={<TeamExpert />} />
         <Route path="sponsors" element={<TeamSponsor />} />
@@ -314,7 +315,7 @@ const AppContent: React.FC = () => {
           </CheckAuth>
         }
       >
-        <Route path="dashboard" element={<>Fan dashboard</>} />
+        {/* <Route path="dashboard" element={<>Fan dashboard</>} /> */}
         <Route path="players" element={<FanPlayers />} />
         <Route path="experts" element={<FanExperts />} />
         <Route path="profile" element={<Fanprofile />} />
@@ -372,6 +373,7 @@ const AppContent: React.FC = () => {
           </div>
         }
       />
+      <Route path="*" element={<NotFound />} />
     </Routes>
   );
 };

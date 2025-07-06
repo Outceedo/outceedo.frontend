@@ -15,12 +15,12 @@ interface MenuItem {
 }
 
 const adminSidebarMenuItems: MenuItem[] = [
-  {
-    id: 0,
-    name: "Dashboard",
-    icon: "fas fa-user",
-    path: "/fan/dashboard",
-  },
+  // {
+  //   id: 0,
+  //   name: "Dashboard",
+  //   icon: "fas fa-user",
+  //   path: "/fan/dashboard",
+  // },
   {
     id: 1,
     name: "Players",

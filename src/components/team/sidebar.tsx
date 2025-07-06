@@ -13,12 +13,12 @@ interface MenuItem {
   isLogout?: boolean;
 }
 const adminSidebarMenuItems: MenuItem[] = [
-  {
-    id: 1,
-    name: "Dashboard",
-    icon: "fas fa-table-columns",
-    path: "/team/dashboard",
-  },
+  // {
+  //   id: 1,
+  //   name: "Dashboard",
+  //   icon: "fas fa-table-columns",
+  //   path: "/team/dashboard",
+  // },
   {
     id: 2,
     name: "Players",

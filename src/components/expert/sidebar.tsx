@@ -16,12 +16,12 @@ interface MenuItem {
 }
 
 const expertSidebarMenuItems: MenuItem[] = [
-  {
-    id: 1,
-    name: "Dashboard",
-    icon: "fas fa-table-columns",
-    path: "/expert/dashboard",
-  },
+  // {
+  //   id: 1,
+  //   name: "Dashboard",
+  //   icon: "fas fa-table-columns",
+  //   path: "/expert/dashboard",
+  // },
   {
     id: 2,
     name: "Players",

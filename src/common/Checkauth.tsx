@@ -59,17 +59,17 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     if (location.pathname === "/login" || location.pathname === "/signup") {
       switch (effectiveRole) {
         case "expert":
-          return <Navigate to="/expert/dashboard" replace />;
+          return <Navigate to="/expert/profile" replace />;
         case "player":
-          return <Navigate to="/player/dashboard" replace />;
+          return <Navigate to="/player/profile" replace />;
         case "sponsor":
-          return <Navigate to="/sponsor/dashboard" replace />;
+          return <Navigate to="/sponsor/profile" replace />;
         case "team":
-          return <Navigate to="/team/dashboard" replace />;
+          return <Navigate to="/team/profile" replace />;
         case "user":
-          return <Navigate to="/fan/dashboard" replace />;
+          return <Navigate to="/fan/profile" replace />;
         case "admin":
-          return <Navigate to="/admin/dashboard" replace />;
+          return <Navigate to="/admin/profile" replace />;
         default:
           return <Navigate to="/" replace />;
       }
