@@ -51,77 +51,79 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
       id: 1,
       name: "Players",
       icon: "fas fa-user-tie",
-      path: "/player/player",
+      path: "/admin/player",
     },
-    { id: 2, 
-      name: "Bookings", 
-        icon: "fas fa-calendar-check",
-      path: "/player/booking" },
+    {
+      id: 2,
+      name: "Bookings",
+      icon: "fas fa-calendar-check",
+      path: "/admin/booking",
+    },
     {
       id: 3,
       name: "SponsorShip Application ",
       icon: " fas fa-file-signature",
-      path: "/player/sponsorshipapplication",
+      path: "/admin/sponsorshipapplication",
     },
-    { id: 4,
-       name: "Certifications&Award", 
-       icon: "fas fa-award ", 
-       path: "/player/certifications&awards" 
-      },
- {
+    {
+      id: 4,
+      name: "Certifications&Award",
+      icon: "fas fa-award ",
+      path: "/admin/certifications&awards",
+    },
+    {
       id: 5,
       name: "Reports",
       icon: "fas fa-file-alt",
-      path: "/player/reports",
+      path: "/admin/reports",
     },
 
-       {
+    {
       id: 6,
       name: "Dashboard",
       icon: "fas fa-table-columns",
       path: "/admin/dashboard",
     },
-    
   ],
   expert: [
     {
       id: 1,
       name: "Experts",
       icon: "fas fa-user-tie",
-      path: "/expert/expert",
+      path: "/admin/expert",
     },
-    { 
-      id: 2, 
-      name: "Bookings", 
+    {
+      id: 2,
+      name: "Bookings",
       icon: "fas fa-calendar-check",
-      path: "/expert/expertbooking"
-     },
-   
-    { 
-      id: 3, 
-      name: "Services", 
-      icon: "fas fa-hands-helping", 
-      path: "/expert/expertservices" 
+      path: "/admin/expertbooking",
     },
-    { id: 4,
-       name: "Certifications&Awards", 
-       icon: "fas fa-award ", 
-       path: "/expert/expertcetification" 
-      },
-     {
+
+    {
+      id: 3,
+      name: "Services",
+      icon: "fas fa-hands-helping",
+      path: "/admin/expertservices",
+    },
+    {
+      id: 4,
+      name: "Certifications&Awards",
+      icon: "fas fa-award ",
+      path: "/admin/expertcetification",
+    },
+    {
       id: 5,
       name: "Reports",
       icon: "fas fa-file-alt",
-      path: "/expert/expertreports",
+      path: "/admin/expertreports",
     },
-    
-     {
+
+    {
       id: 6,
       name: "Dashboard",
       icon: "fas fa-table-columns",
       path: "/admin/dashboard",
     },
-   
   ],
   sponsor: [
     {
@@ -326,11 +328,12 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
               }`
             : ""}
         </p>
-            <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-              {currentProfile?.gender
-                ? currentProfile.gender.charAt(0).toUpperCase() + currentProfile.gender.slice(1)
-                : ''}
-            </p>
+        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
+          {currentProfile?.gender
+            ? currentProfile.gender.charAt(0).toUpperCase() +
+              currentProfile.gender.slice(1)
+            : ""}
+        </p>
         {status === "loading" && (
           <div className="text-sm text-gray-500">Loading profile...</div>
         )}
@@ -372,7 +375,6 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
         })}
       </div>
     </nav>
-    
   );
 }
 
@@ -384,7 +386,7 @@ interface AdminSideBarProps {
 }
 
 function AdminSideBar({ open, setOpen, role }: AdminSideBarProps) {
- // const location = useLocation();
+  // const location = useLocation();
   //const role = getRoleFromPath(location.pathname);
   const menuItems = sidebarMenus[role] || sidebarMenus.admin;
   return (

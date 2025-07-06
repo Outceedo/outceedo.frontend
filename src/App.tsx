@@ -326,15 +326,15 @@ const AppContent: React.FC = () => {
       <Route
         path="/admin"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-            <AdminLayoutdefault />
-          </CheckAuth>
+          // <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+          <AdminLayoutdefault />
+          // </CheckAuth>
         }
       >
         <Route path="dashboard" element={<Dashboardadmin />} />
       </Route>
 
-      <Route path="/:role" element={<AdminLayout />}>
+      <Route path="/admin" element={<AdminLayout />}>
         {/* Player */}
         <Route path="player" element={<Player />} />
         <Route path="booking" element={<Booking />} />
