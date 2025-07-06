@@ -56,20 +56,20 @@ const StarRating: React.FC<{
         <FontAwesomeIcon
           key={`full-${i}`}
           icon={faStarSolid}
-          className="text-yellow-400 text-xl"
+          className="text-yellow-400 text-base sm:text-lg lg:text-xl"
         />
       ))}
       {hasHalfStar && (
         <FontAwesomeIcon
           icon={faStarHalfAlt}
-          className="text-yellow-400 text-xl"
+          className="text-yellow-400 text-base sm:text-lg lg:text-xl"
         />
       )}
       {[...Array(emptyStars)].map((_, i) => (
         <FontAwesomeIcon
           key={`empty-${i}`}
           icon={farStar}
-          className="text-yellow-400 text-xl"
+          className="text-yellow-400 text-base sm:text-lg lg:text-xl"
         />
       ))}
     </span>
@@ -276,15 +276,15 @@ const ExpertProfile = () => {
     totalReviews === 0
       ? 0
       : reviewsArray.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
-        totalReviews;
+      totalReviews;
 
   // Show loading state
   if (status === "loading" && !currentProfile) {
     return (
       <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">
+        <div className="text-center px-4">
+          <div className="animate-spin rounded-full h-12 w-12 sm:h-16 sm:w-16 border-t-2 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-sm sm:text-base text-gray-600 dark:text-gray-300">
             Loading expert profile...
           </p>
         </div>
@@ -295,9 +295,9 @@ const ExpertProfile = () => {
   // Show error state
   if (status === "failed" && error) {
     return (
-      <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center">
-        <div className="text-center text-red-600 p-4 bg-red-100 dark:bg-red-900 dark:text-red-200 rounded-lg">
-          <p>Error loading profile: {error}</p>
+      <div className="flex w-full min-h-screen dark:bg-gray-900 items-center justify-center p-4">
+        <div className="text-center text-red-600 p-4 bg-red-100 dark:bg-red-900 dark:text-red-200 rounded-lg max-w-md">
+          <p className="text-sm sm:text-base">Error loading profile: {error}</p>
           <button
             onClick={() => {
               const username = localStorage.getItem("username");
@@ -305,7 +305,7 @@ const ExpertProfile = () => {
                 dispatch(getProfile(username));
               }
             }}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm sm:text-base"
           >
             Try Again
           </button>
@@ -317,15 +317,16 @@ const ExpertProfile = () => {
   return (
     <div className="flex -mt-6">
       {/* Main Content */}
-      <main className="flex-1 p-6 dark:bg-gray-900 ml-15">
-        <div className="flex justify-between items-start w-full p-4 mx-auto bg-dark:bg-slate-700">
+      <main className="flex-1 p-3 sm:p-4 md:p-6 dark:bg-gray-900 ml-0 sm:ml-15">
+        <div className="flex flex-col lg:flex-row justify-between items-start w-full p-2 sm:p-4 mx-auto bg-dark:bg-slate-700 gap-4 lg:gap-6">
           {/* Left - Expert Info Section */}
-          <div className="flex-1 pr-6">
-            <div className="flex items-center mb-6">
-              <h1 className="text-4xl font-bold dark:text-white">
+          <div className="flex-1 w-full lg:pr-6">
+            {/* Name and Social Icons */}
+            <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4 sm:mb-6 gap-4">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white">
                 {expertData.name}
               </h1>
-              <div className="ml-10 flex gap-4">
+              <div className="flex gap-2 sm:gap-3 lg:gap-4">
                 {icons.map((item, index) =>
                   item.link ? (
                     <a
@@ -337,7 +338,7 @@ const ExpertProfile = () => {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-10 h-10 flex items-center justify-center rounded-full text-white text-xl shadow-lg"
+                      className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-white text-sm sm:text-base lg:text-xl shadow-lg"
                       style={{
                         background:
                           item.icon === faInstagram
@@ -352,75 +353,70 @@ const ExpertProfile = () => {
               </div>
             </div>
 
-            {/* Expert Info - First row */}
-            <div className="grid grid-cols-3 gap-8 mb-6">
+            {/* Expert Info - First row - MODIFIED FOR 2 COLUMNS ON SM */}
+            {/* Expert Info - All fields in one grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6">
               <div>
-                <p className="text-gray-500 dark:text-white text-sm">
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
                   Profession
                 </p>
-                <p className="font-semibold dark:text-white">
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.profession || "Not specified"}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-sm">Club</p>
-                <p className="font-semibold dark:text-white">
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Club</p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.club || "Not specified"}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-sm">
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
                   Languages
                 </p>
-                <p className="font-semibold dark:text-white">
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.language?.length > 0
                     ? expertData.language.slice(0, 3).join(", ")
                     : "Not specified"}
                 </p>
               </div>
-            </div>
-
-            {/* Expert Info - Second row */}
-            <div className="grid grid-cols-3 gap-8 mb-6">
               <div>
-                <p className="text-gray-500 dark:text-white text-sm">
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
                   Location
                 </p>
-                <p className="font-semibold dark:text-white">
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.location || "Not specified"}
                 </p>
               </div>
-
               <div>
-                <p className="text-gray-500 dark:text-white text-sm">
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
                   Certification Level
                 </p>
-                <p className="font-semibold dark:text-white">
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.certificationLevel || "N/A"}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-sm">
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
                   Response Time
                 </p>
-                <p className="font-semibold dark:text-white">
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.responseTime || "N/A"} mins
                 </p>
               </div>
-            </div>
-            <div>
-              <p className="text-gray-500 dark:text-white text-sm">
-                Travel Limit
-              </p>
-              <p className="font-semibold dark:text-white">
-                {expertData.travelLimit.replace("kms", " ")}kms
-                {/* {expertData.travelLimit || "N/A"} kms */}
-              </p>
+              <div>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Travel Limit
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {expertData.travelLimit.replace("kms", " ")}kms
+                </p>
+              </div>
             </div>
           </div>
 
           {/* Right - Profile Picture */}
-          <div className="w-80 h-60 bg-gray-200 rounded-lg overflow-hidden shadow-md relative group flex-shrink-0">
+          <div className="w-full sm:w-80 h-48 sm:h-60 lg:w-80 lg:h-60 bg-gray-200 rounded-lg overflow-hidden shadow-md relative group flex-shrink-0">
             {expertData.profileImage ? (
               <img
                 src={expertData.profileImage}
@@ -440,8 +436,8 @@ const ExpertProfile = () => {
               className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
             >
               <div className="text-white text-center">
-                <FontAwesomeIcon icon={faCamera} size="2x" className="mb-2" />
-                <p className="text-sm font-medium">
+                <FontAwesomeIcon icon={faCamera} className="text-xl sm:text-2xl mb-2" />
+                <p className="text-xs sm:text-sm font-medium">
                   {expertData.profileImage ? "Change Photo" : "Add Photo"}
                 </p>
               </div>
@@ -461,10 +457,9 @@ const ExpertProfile = () => {
                   <FontAwesomeIcon
                     icon={faSpinner}
                     spin
-                    size="2x"
-                    className="mb-2"
+                    className="text-xl sm:text-2xl mb-2"
                   />
-                  <p className="mt-2 text-sm">Uploading...</p>
+                  <p className="mt-2 text-xs sm:text-sm">Uploading...</p>
                 </div>
               </div>
             )}
@@ -472,46 +467,46 @@ const ExpertProfile = () => {
         </div>
 
         {/* Stats */}
-        <div className="border-t border-b py-6 mt-6">
-          <div className="grid grid-cols-3 gap-4">
+        <div className="border-t border-b py-4 sm:py-6 mt-4 sm:mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-4">
             <div className="flex items-center justify-center">
               <StarRating avg={avgRating} />
-              <p className="text-gray-500 dark:text-white ml-2">
+              <p className="text-gray-500 dark:text-white ml-2 text-sm sm:text-base">
                 {totalReviews} review{totalReviews !== 1 ? "s" : ""}
                 {totalReviews > 0 && (
-                  <span className="ml-2 text-gray-600 text-base">
+                  <span className="ml-2 text-gray-600 text-sm sm:text-base">
                     ({avgRating.toFixed(1)} avg)
                   </span>
                 )}
               </p>
             </div>
             <Dialog>
-                  {/* Trigger: the follower count block */}
-                  <DialogTrigger asChild>
-                    <div className="text-center cursor-pointer">
-                      <p className="text-red-500 text-3xl font-bold">
-                        {expertData.followers || 0}
-                      </p>
-                      <p className="text-gray-500 dark:text-white">Followers</p>
-                    </div>
-                  </DialogTrigger>
+              {/* Trigger: the follower count block */}
+              <DialogTrigger asChild>
+                <div className="text-center cursor-pointer">
+                  <p className="text-red-500 text-2xl sm:text-3xl font-bold">
+                    {expertData.followers || 0}
+                  </p>
+                  <p className="text-gray-500 dark:text-white text-sm sm:text-base">Followers</p>
+                </div>
+              </DialogTrigger>
 
-                  {/* Dialog content that shows the FollowList component */}
-                  <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-lg font-semibold text-center">
-                        People who Follow 
-                      </DialogTitle>
-                    </DialogHeader>
-                    {/* Render the follow list here */}
-                    <FollowList />
-                  </DialogContent>
-                </Dialog>
+              {/* Dialog content that shows the FollowList component */}
+              <DialogContent className="max-w-xs sm:max-w-md max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle className="text-base sm:text-lg font-semibold text-center">
+                    People who Follow
+                  </DialogTitle>
+                </DialogHeader>
+                {/* Render the follow list here */}
+                <FollowList />
+              </DialogContent>
+            </Dialog>
             <div className="text-center">
-              <p className="text-red-500 text-3xl font-bold">
+              <p className="text-red-500 text-2xl sm:text-3xl font-bold">
                 {expertData.assessments || 0}
               </p>
-              <p className="text-gray-500 dark:text-white">
+              <p className="text-gray-500 dark:text-white text-sm sm:text-base">
                 Assessments Evaluated
               </p>
             </div>
@@ -519,18 +514,17 @@ const ExpertProfile = () => {
         </div>
 
         {/* Tabs Section */}
-        <div className="mt-8">
-          <div className="flex gap-4 border-b">
+        <div className="mt-6 sm:mt-8">
+          <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
             {(["details", "media", "reviews", "services"] as const).map(
               (tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
-                    activeTab === tab
+                  className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${activeTab === tab
                       ? "text-red-600 border-red-600"
                       : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
-                  }`}
+                    }`}
                 >
                   {tab}
                 </button>
