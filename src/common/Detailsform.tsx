@@ -788,11 +788,11 @@ const Detailsform: React.FC = () => {
         setTimeout(() => {
           const userRole = localStorage.getItem("role");
           if (userRole === "player") {
-            navigate("/player/dashboard");
+            navigate("/player/profile");
           } else if (userRole === "expert") {
-            navigate("/expert/dashboard");
+            navigate("/expert/profile");
           } else {
-            navigate("/home");
+            navigate("/");
           }
         }, 1500);
       } else if (updateProfile.rejected.match(resultAction)) {

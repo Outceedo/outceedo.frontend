@@ -101,10 +101,11 @@ interface Booking {
   player: Player;
   service: Service;
   review?: string;
-  isPaid?: boolean;
   paymentIntentId?: string;
   paymentIntentClientSecret?: string;
   agora?: AgoraCredentials;
+  expertMarkedComplete?: boolean;
+  playerMarkedComplete?: boolean;
 }
 
 const BookingExpertside: React.FC = () => {
@@ -174,6 +175,8 @@ const BookingExpertside: React.FC = () => {
   };
 
   const canGoLive = (booking: Booking) => {
+    if (booking.service?.serviceId !== "2") return false;
+
     if (!isPaid(booking)) return false;
 
     const now = new Date();
@@ -764,7 +767,20 @@ const BookingExpertside: React.FC = () => {
       }
 
       closeBookingDetails();
+      await Swal.fire({
+        icon: "success",
+        title: "Session Marked Complete!",
+        text: "Thank you for confirming the session completion.",
+        confirmButtonColor: "#10B981",
+        timer: 2500,
+      });
     } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to mark session as complete. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
       setError("Failed to complete booking. Please try again.");
     } finally {
       setLoading(false);
@@ -858,6 +874,7 @@ const BookingExpertside: React.FC = () => {
     switch (status) {
       case "COMPLETED":
       case "SCHEDULED":
+      case "COMPLETED":
         return "bg-green-100 text-green-800 hover:bg-green-100";
       case "REJECTED":
       case "CANCELLED":
@@ -958,6 +975,22 @@ const BookingExpertside: React.FC = () => {
       matchesAction &&
       matchesDateFilter(booking) &&
       matchesServiceTypeFilter(booking)
+    );
+  });
+
+  const activeSessionsForCompletion = bookings.filter((booking) => {
+    const isScheduled = booking.status === "SCHEDULED";
+    const isOverAndPaid =
+      isPaid(booking) &&
+      isSessionOver(booking) &&
+      booking.status !== "COMPLETED";
+
+    return (
+      (isScheduled || isOverAndPaid) &&
+      booking.status !== "REJECTED" &&
+      booking.status !== "CANCELLED" &&
+      booking.status !== "COMPLETED" &&
+      !booking.expertMarkedComplete
     );
   });
 
@@ -1241,62 +1274,62 @@ const BookingExpertside: React.FC = () => {
       <div className="mt-4">
         <h3 className="font-medium mb-2">Active Sessions</h3>
         <div className="space-y-2">
-          {bookings
-            .filter((booking) => booking.status === "ACCEPTED")
-            .map((booking) => (
-              <div
-                key={`complete-${booking.id}`}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
-                onClick={() => openBookingDetails(booking)}
-              >
-                <div className="flex items-center gap-3 mb-2 sm:mb-0">
-                  <img
-                    src={
-                      booking.player?.photo ||
-                      `https://i.pravatar.cc/60?u=${booking.playerId}`
-                    }
-                    alt="Player"
-                    className="w-8 h-8 rounded-full object-cover"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = `https://i.pravatar.cc/60?u=${booking.playerId}`;
-                    }}
-                  />
-                  <div>
-                    <p
-                      className="font-medium cursor-pointer hover:text-blue-600"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const player = booking.player?.username;
-                        localStorage.setItem(
-                          "viewplayerusername",
-                          player || ""
-                        );
-                        navigate("/expert/playerinfo");
-                      }}
-                    >
-                      {booking.player?.username || "Unknown Player"}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {booking.service?.service?.name} -{" "}
-                      {formatDate(booking.date, booking.startTime)}
-                    </p>
-                  </div>
-                </div>
-                <Button
-                  variant="outline"
-                  className="bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleCompleteBooking(booking.id);
+          {activeSessionsForCompletion.map((booking) => (
+            <div
+              key={`complete-${booking.id}`}
+              className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
+              onClick={() => openBookingDetails(booking)}
+            >
+              <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                <img
+                  src={
+                    booking.player?.photo ||
+                    `https://i.pravatar.cc/60?u=${booking.playerId}`
+                  }
+                  alt="Player"
+                  className="w-8 h-8 rounded-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = `https://i.pravatar.cc/60?u=${booking.playerId}`;
                   }}
-                >
-                  <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
-                  Mark as Completed
-                </Button>
+                />
+                <div>
+                  <p
+                    className="font-medium cursor-pointer hover:text-blue-600"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const player = booking.player?.username;
+                      localStorage.setItem("viewplayerusername", player || "");
+                      navigate("/expert/playerinfo");
+                    }}
+                  >
+                    {booking.player?.username || "Unknown Player"}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {booking.service?.service?.name} -{" "}
+                    {formatDate(booking.date, booking.startTime)}
+                    {isSessionOver(booking) && (
+                      <span className="ml-2 text-red-600 font-medium">
+                        (Session Ended)
+                      </span>
+                    )}
+                  </p>
+                </div>
               </div>
-            ))}
-          {bookings.filter((b) => b.status === "ACCEPTED").length === 0 && (
+              <Button
+                variant="outline"
+                className="bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCompleteBooking(booking.id);
+                }}
+              >
+                <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                Mark as Completed
+              </Button>
+            </div>
+          ))}
+          {activeSessionsForCompletion.length === 0 && (
             <p className="text-gray-500 text-center py-2">
               No active sessions to complete
             </p>
@@ -1401,7 +1434,9 @@ const BookingExpertside: React.FC = () => {
                             ? "Session is Live Now!"
                             : isSessionToday(selectedBooking)
                             ? "Session Today"
-                            : "Upcoming Session"}
+                            : isSessionOver(selectedBooking)
+                            ? "Session Over"
+                            : null}
                         </p>
                         <p
                           className={`text-sm mt-1 ${
