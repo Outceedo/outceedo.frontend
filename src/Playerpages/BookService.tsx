@@ -44,6 +44,13 @@ interface TimeSlot {
   isAvailable: boolean;
 }
 
+interface DurationOption {
+  value: number;
+  label: string;
+  price: number;
+  numericPrice: number;
+}
+
 const BookingCalendar: React.FC = () => {
   const navigate = useNavigate();
   const today = new Date();
@@ -71,6 +78,8 @@ const BookingCalendar: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [selectedDuration, setSelectedDuration] = useState<number>(60);
+  const [finalPrice, setFinalPrice] = useState<number>(0);
   const [bookingDescription, setBookingDescription] = useState<string>("");
   const [bookingLocation, setBookingLocation] = useState<string>("");
   const [displayedMonth, setDisplayedMonth] = useState<CalendarMonth>({
@@ -97,11 +106,111 @@ const BookingCalendar: React.FC = () => {
 
   const isOnGroundAssessment = service?.name?.includes("ON GROUND ASSESSMENT");
 
+  // Enhanced price parsing with comprehensive test case handling
+  const parsePrice = (priceString: string | undefined | null): number => {
+    // Handle null, undefined, or empty string
+    if (!priceString || priceString.trim() === "") {
+      return 25.0; // Default fallback
+    }
+
+    // Convert to string and trim
+    const cleanInput = String(priceString).trim();
+
+    // Handle edge cases
+    if (cleanInput === "0" || cleanInput === "$0" || cleanInput === "0.00") {
+      return 25.0; // Don't allow zero pricing, use default
+    }
+
+    // Remove all non-numeric characters except decimal point
+    const numericString = cleanInput.replace(/[^0-9.]/g, "");
+
+    // Handle cases with multiple decimal points (keep only the first one)
+    const decimalParts = numericString.split(".");
+    const cleanedPrice =
+      decimalParts.length > 1
+        ? `${decimalParts[0]}.${decimalParts.slice(1).join("")}`
+        : numericString;
+
+    // Parse the cleaned price
+    const parsed = parseFloat(cleanedPrice);
+
+    // Validate the parsed result
+    if (isNaN(parsed) || parsed <= 0 || parsed > 9999.99) {
+      return 25.0; // Default fallback for invalid prices
+    }
+
+    // Round to 2 decimal places to handle floating point precision
+    return Math.round(parsed * 100) / 100;
+  };
+
+  // Enhanced price calculation with precise decimal handling
+  const calculatePriceForDuration = (
+    basePrice: number,
+    multiplier: number
+  ): number => {
+    // Use precise decimal arithmetic
+    const result = basePrice * multiplier;
+
+    // Round to 2 decimal places using precise method
+    return Math.round(result * 100) / 100;
+  };
+
+  // Enhanced price formatting
+  const formatPrice = (price: number): number => {
+    if (isNaN(price) || price < 0) {
+      return 0;
+    }
+    return price.toFixed(2);
+  };
+
+  const getDurationOptions = (): DurationOption[] => {
+    const basePrice = parsePrice(service?.price);
+
+    return [
+      {
+        value: 60,
+        label: "1 Hour",
+        price: formatPrice(basePrice),
+        numericPrice: basePrice,
+      },
+      {
+        value: 90,
+        label: "1.5 Hours",
+        price: formatPrice(calculatePriceForDuration(basePrice, 1.5)),
+        numericPrice: calculatePriceForDuration(basePrice, 1.5),
+      },
+      {
+        value: 120,
+        label: "2 Hours",
+        price: formatPrice(calculatePriceForDuration(basePrice, 2.0)),
+        numericPrice: calculatePriceForDuration(basePrice, 2.0),
+      },
+    ];
+  };
+
+  const durationOptions = getDurationOptions();
+
+  // Update price when duration changes
+  useEffect(() => {
+    if (service && selectedDuration) {
+      const option = durationOptions.find(
+        (opt) => opt.value === selectedDuration
+      );
+      if (option) {
+        setFinalPrice(option.numericPrice);
+      }
+    }
+  }, [selectedDuration, service]);
+
   // 1. Load service from localStorage on mount
   useEffect(() => {
     const storedService = localStorage.getItem("selectedService");
     if (storedService) {
-      setService(JSON.parse(storedService));
+      const parsedService = JSON.parse(storedService);
+      setService(parsedService);
+      // Initialize price when service is loaded
+      const basePrice = parsePrice(parsedService?.price);
+      setFinalPrice(basePrice);
     }
   }, []);
 
@@ -157,8 +266,7 @@ const BookingCalendar: React.FC = () => {
     };
 
     fetchExpertAvailability();
-    // eslint-disable-next-line
-  }, [service, selectedMonthIndex, selectedYear]); // Depend on full service
+  }, [service, selectedMonthIndex, selectedYear]);
 
   // 3. Fetch time slots after service loads and a date is selected
   useEffect(() => {
@@ -216,7 +324,6 @@ const BookingCalendar: React.FC = () => {
     };
 
     fetchTimeSlots();
-    // eslint-disable-next-line
   }, [service, selectedDate, selectedMonthIndex, selectedYear]);
 
   useEffect(() => {
@@ -226,7 +333,7 @@ const BookingCalendar: React.FC = () => {
       0
     ).getDate();
     let firstDay = new Date(selectedYear, selectedMonthIndex, 1).getDay() - 1;
-    if (firstDay === -1) firstDay = 6; // Convert Sunday from -1 to 6
+    if (firstDay === -1) firstDay = 6;
 
     setDisplayedMonth({
       name: monthNames[selectedMonthIndex],
@@ -295,11 +402,27 @@ const BookingCalendar: React.FC = () => {
     if (isDateAvailable(day) && !isDateInPast(day)) {
       setSelectedDate(day);
       setSelectedTime(null);
+      setSelectedDuration(60);
     }
   };
 
   const handleTimeSelect = (slot: TimeSlot) => {
     setSelectedTime(slot.startTime);
+    setSelectedDuration(60);
+  };
+
+  const handleDurationSelect = (duration: number) => {
+    if (duration < 60 || duration > 120) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Duration",
+        text: "Session duration must be between 1 and 2 hours.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+    setSelectedDuration(duration);
   };
 
   const handleBack = () => {
@@ -318,11 +441,14 @@ const BookingCalendar: React.FC = () => {
     setBookingLocation(e.target.value);
   };
 
-  const calculateEndTime = (startTime: string): string => {
+  const calculateEndTime = (
+    startTime: string,
+    durationMinutes: number = 60
+  ): string => {
     const [hour, minute] = startTime.split(":").map(Number);
 
     let endHour = hour;
-    let endMinute = minute + 60;
+    let endMinute = minute + durationMinutes;
 
     if (endMinute >= 60) {
       endHour += Math.floor(endMinute / 60);
@@ -334,6 +460,7 @@ const BookingCalendar: React.FC = () => {
       .toString()
       .padStart(2, "0")}`;
   };
+
   const formatDateForAPI = (): string => {
     if (!selectedDate) return "";
     const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
@@ -341,6 +468,26 @@ const BookingCalendar: React.FC = () => {
     const month = String(date.getMonth() + 1).padStart(2, "0");
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
+  };
+
+  const getDurationLabel = (minutes: number): string => {
+    if (minutes === 60) return "1 Hour";
+    if (minutes === 90) return "1.5 Hours";
+    if (minutes === 120) return "2 Hours";
+    return `${minutes} minutes`;
+  };
+
+  // Clean function to get current price without side effects
+  const getCurrentPrice = (): string => {
+    const option = durationOptions.find(
+      (opt) => opt.value === selectedDuration
+    );
+    return option?.price || formatPrice(finalPrice);
+  };
+
+  // Enhanced price validation
+  const validatePrice = (price: number): boolean => {
+    return !isNaN(price) && price > 0 && price <= 9999.99;
   };
 
   const handleConfirm = async () => {
@@ -364,11 +511,33 @@ const BookingCalendar: React.FC = () => {
       });
       return;
     }
+    if (selectedDuration < 60 || selectedDuration > 120) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid Duration",
+        text: "Session duration must be between 1 and 2 hours.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+      return;
+    }
     if (isOnGroundAssessment && !bookingLocation.trim()) {
       Swal.fire({
         icon: "error",
         title: "Please Enter Location",
         text: "Enter your location for On Ground Assessment.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    // Enhanced price validation
+    if (!validatePrice(finalPrice)) {
+      Swal.fire({
+        icon: "error",
+        title: "Price Error",
+        text: "Invalid booking price. Please refresh and try again.",
         timer: 3000,
         showConfirmButton: false,
       });
@@ -381,7 +550,7 @@ const BookingCalendar: React.FC = () => {
       const expertId = service?.expertId || localStorage.getItem("expertid");
       const serviceId = service?.serviceid;
       const startTime = selectedTime;
-      const endTime = calculateEndTime(selectedTime);
+      const endTime = calculateEndTime(selectedTime, selectedDuration);
       const formattedDate = formatDateForAPI();
 
       const bookingData = {
@@ -390,9 +559,20 @@ const BookingCalendar: React.FC = () => {
         date: formattedDate,
         startTime: startTime,
         endTime: endTime,
+        duration: selectedDuration,
         location: bookingLocation,
         description: bookingDescription,
+        price: formatPrice(finalPrice),
       };
+
+      console.log("Booking data being sent:", bookingData);
+      console.log("Final price validation:", {
+        originalPrice: service?.price,
+        parsedBasePrice: parsePrice(service?.price),
+        selectedDuration,
+        finalPrice,
+        isValid: validatePrice(finalPrice),
+      });
 
       const token = localStorage.getItem("token");
 
@@ -417,7 +597,6 @@ const BookingCalendar: React.FC = () => {
           showConfirmButton: false,
         });
       } else {
-        // Block the slot after successful booking
         try {
           await fetch(BLOCK_API_URL, {
             method: "PATCH",
@@ -549,7 +728,11 @@ const BookingCalendar: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-gray-500" />
-                  <span className="text-gray-600">60 mins per session</span>
+                  <span className="text-gray-600">
+                    {selectedTime && selectedDuration
+                      ? `${getDurationLabel(selectedDuration)} session`
+                      : "1-2 hours per session"}
+                  </span>
                 </div>
                 <div className="flex items-start gap-3">
                   <Video className="h-5 w-5 text-gray-500 mt-1" />
@@ -564,7 +747,16 @@ const BookingCalendar: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-5 w-5 text-gray-500" />
                   <span className="text-gray-600">
-                    Fees: {service?.price || "$25/h"}
+                    {selectedTime && selectedDuration ? (
+                      <>
+                        Fees: {getCurrentPrice()}
+                        <span className="text-xs text-gray-500 block">
+                          ({getDurationLabel(selectedDuration)} session)
+                        </span>
+                      </>
+                    ) : (
+                      `Fees: ${formatPrice(parsePrice(service?.price))}/h`
+                    )}
                   </span>
                 </div>
               </div>
@@ -645,15 +837,23 @@ const BookingCalendar: React.FC = () => {
                   </>
                 )}
               </div>
-              {/* Selected date */}
+              {/* Selected date and time */}
               <div className="mb-6">
                 <p className="text-gray-700 font-medium mb-3">
                   {getFormattedDate()}
                 </p>
                 {selectedTime ? (
-                  <span className="bg-red-500 p-2 rounded-lg text-white">
-                    {selectedTime}
-                  </span>
+                  <div className="space-y-2">
+                    <span className="bg-red-500 p-2 rounded-lg text-white inline-block">
+                      {formatTime(selectedTime)} -{" "}
+                      {formatTime(
+                        calculateEndTime(selectedTime, selectedDuration)
+                      )}
+                    </span>
+                    <p className="text-sm text-gray-600">
+                      Duration: {getDurationLabel(selectedDuration)}
+                    </p>
+                  </div>
                 ) : null}
               </div>
               {/* Time slots with loading state */}
@@ -698,6 +898,35 @@ const BookingCalendar: React.FC = () => {
                   </div>
                 )}
               </div>
+              {/* Duration Selector */}
+              {selectedTime && (
+                <div className="mb-6">
+                  <h3 className="text-sm font-medium text-gray-700 mb-3">
+                    Select Session Duration
+                  </h3>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    {durationOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => handleDurationSelect(option.value)}
+                        className={`
+                          p-3 border rounded-lg text-sm transition-all
+                          ${
+                            selectedDuration === option.value
+                              ? "border-red-500 bg-red-50 text-red-700"
+                              : "border-gray-200 hover:border-gray-300 text-gray-800"
+                          }
+                        `}
+                      >
+                        <div className="font-medium">{option.label}</div>
+                        <div className="text-xs text-gray-500 mt-1">
+                          {option.price}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {/* Simple Location field - Only for ON GROUND ASSESSMENT */}
               {isOnGroundAssessment && (
                 <div className="mt-6 mb-4">
@@ -722,7 +951,7 @@ const BookingCalendar: React.FC = () => {
                   </p>
                 </div>
               )}
-              {/* Description field - Added below the calendar and time slots */}
+              {/* Description field */}
               <div className="mt-6">
                 <Label
                   htmlFor="booking-description"
