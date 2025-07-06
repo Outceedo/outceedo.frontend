@@ -44,13 +44,6 @@ interface TimeSlot {
   isAvailable: boolean;
 }
 
-interface DurationOption {
-  value: number;
-  label: string;
-  price: number;
-  numericPrice: number;
-}
-
 const BookingCalendar: React.FC = () => {
   const navigate = useNavigate();
   const today = new Date();
@@ -77,8 +70,10 @@ const BookingCalendar: React.FC = () => {
     useState<number>(initialMonthIndex);
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
-  const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [selectedDuration, setSelectedDuration] = useState<number>(60);
+  const [selectedStartTime, setSelectedStartTime] = useState<string | null>(
+    null
+  );
+  const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null);
   const [finalPrice, setFinalPrice] = useState<number>(0);
   const [bookingDescription, setBookingDescription] = useState<string>("");
   const [bookingLocation, setBookingLocation] = useState<string>("");
@@ -108,99 +103,112 @@ const BookingCalendar: React.FC = () => {
 
   // Enhanced price parsing with comprehensive test case handling
   const parsePrice = (priceString: string | undefined | null): number => {
-    // Handle null, undefined, or empty string
     if (!priceString || priceString.trim() === "") {
-      return 25.0; // Default fallback
+      return 25.0;
     }
 
-    // Convert to string and trim
     const cleanInput = String(priceString).trim();
 
-    // Handle edge cases
     if (cleanInput === "0" || cleanInput === "$0" || cleanInput === "0.00") {
-      return 25.0; // Don't allow zero pricing, use default
+      return 25.0;
     }
 
-    // Remove all non-numeric characters except decimal point
     const numericString = cleanInput.replace(/[^0-9.]/g, "");
-
-    // Handle cases with multiple decimal points (keep only the first one)
     const decimalParts = numericString.split(".");
     const cleanedPrice =
       decimalParts.length > 1
         ? `${decimalParts[0]}.${decimalParts.slice(1).join("")}`
         : numericString;
 
-    // Parse the cleaned price
     const parsed = parseFloat(cleanedPrice);
 
-    // Validate the parsed result
     if (isNaN(parsed) || parsed <= 0 || parsed > 9999.99) {
-      return 25.0; // Default fallback for invalid prices
+      return 25.0;
     }
 
-    // Round to 2 decimal places to handle floating point precision
     return Math.round(parsed * 100) / 100;
   };
 
-  // Enhanced price calculation with precise decimal handling
-  const calculatePriceForDuration = (
-    basePrice: number,
-    multiplier: number
+  // Calculate price based on duration between start and end time
+  const calculatePriceForTimeRange = (
+    startTime: string,
+    endTime: string
   ): number => {
-    // Use precise decimal arithmetic
-    const result = basePrice * multiplier;
-
-    // Round to 2 decimal places using precise method
-    return Math.round(result * 100) / 100;
-  };
-
-  // Enhanced price formatting
-  const formatPrice = (price: number): number => {
-    if (isNaN(price) || price < 0) {
-      return 0;
-    }
-    return price.toFixed(2);
-  };
-
-  const getDurationOptions = (): DurationOption[] => {
+    const duration = calculateDurationInMinutes(startTime, endTime);
     const basePrice = parsePrice(service?.price);
-
-    return [
-      {
-        value: 60,
-        label: "1 Hour",
-        price: formatPrice(basePrice),
-        numericPrice: basePrice,
-      },
-      {
-        value: 90,
-        label: "1.5 Hours",
-        price: formatPrice(calculatePriceForDuration(basePrice, 1.5)),
-        numericPrice: calculatePriceForDuration(basePrice, 1.5),
-      },
-      {
-        value: 120,
-        label: "2 Hours",
-        price: formatPrice(calculatePriceForDuration(basePrice, 2.0)),
-        numericPrice: calculatePriceForDuration(basePrice, 2.0),
-      },
-    ];
+    const hours = duration / 60;
+    return Math.round(basePrice * hours * 100) / 100;
   };
 
-  const durationOptions = getDurationOptions();
+  // Calculate duration in minutes between two times
+  const calculateDurationInMinutes = (
+    startTime: string,
+    endTime: string
+  ): number => {
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
 
-  // Update price when duration changes
-  useEffect(() => {
-    if (service && selectedDuration) {
-      const option = durationOptions.find(
-        (opt) => opt.value === selectedDuration
-      );
-      if (option) {
-        setFinalPrice(option.numericPrice);
-      }
+    const startTotalMinutes = startHour * 60 + startMinute;
+    let endTotalMinutes = endHour * 60 + endMinute;
+
+    // Handle overnight sessions
+    if (endTotalMinutes <= startTotalMinutes) {
+      endTotalMinutes += 24 * 60;
     }
-  }, [selectedDuration, service]);
+
+    return endTotalMinutes - startTotalMinutes;
+  };
+
+  // Format price as string with dollar sign
+  const formatPrice = (price: number): string => {
+    if (isNaN(price) || price < 0) {
+      return "$25.00";
+    }
+    return `$${price.toFixed(2)}`;
+  };
+
+  // Get all unique time slots for selection
+  const getAllTimeSlots = (): string[] => {
+    const timeSlots: string[] = [];
+    availableTimeSlots.forEach((slot) => {
+      if (!timeSlots.includes(slot.startTime)) {
+        timeSlots.push(slot.startTime);
+      }
+      if (!timeSlots.includes(slot.endTime)) {
+        timeSlots.push(slot.endTime);
+      }
+    });
+    return timeSlots.sort();
+  };
+
+  // Check if a time slot is selectable for end time
+  const isValidEndTime = (time: string): boolean => {
+    if (!selectedStartTime) return false;
+
+    const duration = calculateDurationInMinutes(selectedStartTime, time);
+    return duration >= 60 && duration <= 120; // 1-2 hours
+  };
+
+  // Check if a time slot is available
+  const isTimeSlotAvailable = (time: string): boolean => {
+    return availableTimeSlots.some(
+      (slot) => slot.startTime === time || slot.endTime === time
+    );
+  };
+
+  // Update price when start or end time changes
+  useEffect(() => {
+    if (selectedStartTime && selectedEndTime) {
+      const price = calculatePriceForTimeRange(
+        selectedStartTime,
+        selectedEndTime
+      );
+      setFinalPrice(price);
+    } else if (service) {
+      const basePrice = parsePrice(service?.price);
+      setFinalPrice(basePrice);
+    }
+  }, [selectedStartTime, selectedEndTime, service]);
 
   // 1. Load service from localStorage on mount
   useEffect(() => {
@@ -208,7 +216,6 @@ const BookingCalendar: React.FC = () => {
     if (storedService) {
       const parsedService = JSON.parse(storedService);
       setService(parsedService);
-      // Initialize price when service is loaded
       const basePrice = parsePrice(parsedService?.price);
       setFinalPrice(basePrice);
     }
@@ -247,7 +254,8 @@ const BookingCalendar: React.FC = () => {
           );
           if (!data[formattedDate]) {
             setSelectedDate(null);
-            setSelectedTime(null);
+            setSelectedStartTime(null);
+            setSelectedEndTime(null);
             setAvailableTimeSlots([]);
           }
         }
@@ -301,13 +309,15 @@ const BookingCalendar: React.FC = () => {
         const availableSlots = data.filter((slot) => slot.isAvailable);
         setAvailableTimeSlots(availableSlots);
 
-        if (selectedTime) {
-          const [hour, minute] = selectedTime.split(":");
-          const selectedTimeFormatted = `${hour}:${minute}`;
-          const isTimeAvailable = availableSlots.some(
-            (slot) => slot.startTime === selectedTimeFormatted
+        // Reset selections if they're no longer valid
+        if (selectedStartTime) {
+          const isStartTimeAvailable = availableSlots.some(
+            (slot) => slot.startTime === selectedStartTime
           );
-          if (!isTimeAvailable) setSelectedTime(null);
+          if (!isStartTimeAvailable) {
+            setSelectedStartTime(null);
+            setSelectedEndTime(null);
+          }
         }
       } catch (error) {
         console.error("Error fetching time slots:", error);
@@ -367,16 +377,14 @@ const BookingCalendar: React.FC = () => {
     return availabilityData[dateString] === true;
   };
 
-  const organizeTimeSlotsIntoRows = () => {
+  const organizeTimeSlotsIntoRows = (timeSlots: string[]) => {
     const rows = [];
     const slotsPerRow = 4;
-    for (let i = 0; i < availableTimeSlots.length; i += slotsPerRow) {
-      rows.push(availableTimeSlots.slice(i, i + slotsPerRow));
+    for (let i = 0; i < timeSlots.length; i += slotsPerRow) {
+      rows.push(timeSlots.slice(i, i + slotsPerRow));
     }
     return rows;
   };
-
-  const timeSlotRows = organizeTimeSlotsIntoRows();
 
   const handlePrevMonth = () => {
     if (selectedYear === currentYear && selectedMonthIndex <= currentMonth)
@@ -401,28 +409,20 @@ const BookingCalendar: React.FC = () => {
   const handleDateSelect = (day: number) => {
     if (isDateAvailable(day) && !isDateInPast(day)) {
       setSelectedDate(day);
-      setSelectedTime(null);
-      setSelectedDuration(60);
+      setSelectedStartTime(null);
+      setSelectedEndTime(null);
     }
   };
 
-  const handleTimeSelect = (slot: TimeSlot) => {
-    setSelectedTime(slot.startTime);
-    setSelectedDuration(60);
+  const handleStartTimeSelect = (time: string) => {
+    setSelectedStartTime(time);
+    setSelectedEndTime(null); // Reset end time when start time changes
   };
 
-  const handleDurationSelect = (duration: number) => {
-    if (duration < 60 || duration > 120) {
-      Swal.fire({
-        icon: "error",
-        title: "Invalid Duration",
-        text: "Session duration must be between 1 and 2 hours.",
-        timer: 3000,
-        showConfirmButton: false,
-      });
-      return;
+  const handleEndTimeSelect = (time: string) => {
+    if (isValidEndTime(time)) {
+      setSelectedEndTime(time);
     }
-    setSelectedDuration(duration);
   };
 
   const handleBack = () => {
@@ -441,26 +441,6 @@ const BookingCalendar: React.FC = () => {
     setBookingLocation(e.target.value);
   };
 
-  const calculateEndTime = (
-    startTime: string,
-    durationMinutes: number = 60
-  ): string => {
-    const [hour, minute] = startTime.split(":").map(Number);
-
-    let endHour = hour;
-    let endMinute = minute + durationMinutes;
-
-    if (endMinute >= 60) {
-      endHour += Math.floor(endMinute / 60);
-      endMinute %= 60;
-    }
-    if (endHour >= 24) endHour %= 24;
-
-    return `${endHour.toString().padStart(2, "0")}:${endMinute
-      .toString()
-      .padStart(2, "0")}`;
-  };
-
   const formatDateForAPI = (): string => {
     if (!selectedDate) return "";
     const date = new Date(selectedYear, selectedMonthIndex, selectedDate);
@@ -470,22 +450,22 @@ const BookingCalendar: React.FC = () => {
     return `${year}-${month}-${day}`;
   };
 
-  const getDurationLabel = (minutes: number): string => {
-    if (minutes === 60) return "1 Hour";
-    if (minutes === 90) return "1.5 Hours";
-    if (minutes === 120) return "2 Hours";
-    return `${minutes} minutes`;
-  };
-
-  // Clean function to get current price without side effects
-  const getCurrentPrice = (): string => {
-    const option = durationOptions.find(
-      (opt) => opt.value === selectedDuration
+  const getDurationLabel = (): string => {
+    if (!selectedStartTime || !selectedEndTime) return "";
+    const duration = calculateDurationInMinutes(
+      selectedStartTime,
+      selectedEndTime
     );
-    return option?.price || formatPrice(finalPrice);
+    const hours = Math.floor(duration / 60);
+    const minutes = duration % 60;
+
+    if (minutes === 0) {
+      return `${hours} Hour${hours > 1 ? "s" : ""}`;
+    } else {
+      return `${hours}h ${minutes}m`;
+    }
   };
 
-  // Enhanced price validation
   const validatePrice = (price: number): boolean => {
     return !isNaN(price) && price > 0 && price <= 9999.99;
   };
@@ -501,17 +481,32 @@ const BookingCalendar: React.FC = () => {
       });
       return;
     }
-    if (!selectedTime) {
+    if (!selectedStartTime) {
       Swal.fire({
         icon: "error",
-        title: "Please Select a Time",
-        text: "You must select an available time slot to continue.",
+        title: "Please Select Start Time",
+        text: "You must select a start time to continue.",
         timer: 3000,
         showConfirmButton: false,
       });
       return;
     }
-    if (selectedDuration < 60 || selectedDuration > 120) {
+    if (!selectedEndTime) {
+      Swal.fire({
+        icon: "error",
+        title: "Please Select End Time",
+        text: "You must select an end time to continue.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    const duration = calculateDurationInMinutes(
+      selectedStartTime,
+      selectedEndTime
+    );
+    if (duration < 60 || duration > 120) {
       Swal.fire({
         icon: "error",
         title: "Invalid Duration",
@@ -521,6 +516,7 @@ const BookingCalendar: React.FC = () => {
       });
       return;
     }
+
     if (isOnGroundAssessment && !bookingLocation.trim()) {
       Swal.fire({
         icon: "error",
@@ -532,7 +528,6 @@ const BookingCalendar: React.FC = () => {
       return;
     }
 
-    // Enhanced price validation
     if (!validatePrice(finalPrice)) {
       Swal.fire({
         icon: "error",
@@ -549,30 +544,25 @@ const BookingCalendar: React.FC = () => {
     try {
       const expertId = service?.expertId || localStorage.getItem("expertid");
       const serviceId = service?.serviceid;
-      const startTime = selectedTime;
-      const endTime = calculateEndTime(selectedTime, selectedDuration);
       const formattedDate = formatDateForAPI();
+      const duration = calculateDurationInMinutes(
+        selectedStartTime,
+        selectedEndTime
+      );
 
       const bookingData = {
         expertId: expertId,
         serviceId: serviceId,
         date: formattedDate,
-        startTime: startTime,
-        endTime: endTime,
-        duration: selectedDuration,
+        startTime: selectedStartTime,
+        endTime: selectedEndTime,
+        duration: duration,
         location: bookingLocation,
         description: bookingDescription,
-        price: formatPrice(finalPrice),
+        price: Math.round(finalPrice * 100), // Send as integer (cents)
       };
 
       console.log("Booking data being sent:", bookingData);
-      console.log("Final price validation:", {
-        originalPrice: service?.price,
-        parsedBasePrice: parsePrice(service?.price),
-        selectedDuration,
-        finalPrice,
-        isValid: validatePrice(finalPrice),
-      });
 
       const token = localStorage.getItem("token");
 
@@ -606,8 +596,8 @@ const BookingCalendar: React.FC = () => {
             },
             body: JSON.stringify({
               date: formattedDate,
-              startTime: startTime,
-              endTime: endTime,
+              startTime: selectedStartTime,
+              endTime: selectedEndTime,
               reason: "Booked by player",
             }),
           });
@@ -686,6 +676,16 @@ const BookingCalendar: React.FC = () => {
     }
   };
 
+  // Get time slots for start time selection (original slots)
+  const startTimeSlots = availableTimeSlots.map((slot) => slot.startTime);
+  const startTimeSlotRows = organizeTimeSlotsIntoRows([
+    ...new Set(startTimeSlots),
+  ]);
+
+  // Get time slots for end time selection (all available times)
+  const allTimeSlots = getAllTimeSlots();
+  const endTimeSlotRows = organizeTimeSlotsIntoRows(allTimeSlots);
+
   return (
     <div className="flex flex-col justify-center items-center">
       <Card className="w-full max-w-4xl shadow-lg">
@@ -729,9 +729,9 @@ const BookingCalendar: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <Clock className="h-5 w-5 text-gray-500" />
                   <span className="text-gray-600">
-                    {selectedTime && selectedDuration
-                      ? `${getDurationLabel(selectedDuration)} session`
-                      : "1-2 hours per session"}
+                    {selectedStartTime && selectedEndTime
+                      ? `${getDurationLabel()} session`
+                      : "Select time range for your session"}
                   </span>
                 </div>
                 <div className="flex items-start gap-3">
@@ -747,11 +747,11 @@ const BookingCalendar: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-5 w-5 text-gray-500" />
                   <span className="text-gray-600">
-                    {selectedTime && selectedDuration ? (
+                    {selectedStartTime && selectedEndTime ? (
                       <>
-                        Fees: {getCurrentPrice()}
+                        Fees: {formatPrice(finalPrice)}
                         <span className="text-xs text-gray-500 block">
-                          ({getDurationLabel(selectedDuration)} session)
+                          ({getDurationLabel()} session)
                         </span>
                       </>
                     ) : (
@@ -842,24 +842,32 @@ const BookingCalendar: React.FC = () => {
                 <p className="text-gray-700 font-medium mb-3">
                   {getFormattedDate()}
                 </p>
-                {selectedTime ? (
+                {selectedStartTime && selectedEndTime ? (
                   <div className="space-y-2">
                     <span className="bg-red-500 p-2 rounded-lg text-white inline-block">
-                      {formatTime(selectedTime)} -{" "}
-                      {formatTime(
-                        calculateEndTime(selectedTime, selectedDuration)
-                      )}
+                      {formatTime(selectedStartTime)} -{" "}
+                      {formatTime(selectedEndTime)}
                     </span>
                     <p className="text-sm text-gray-600">
-                      Duration: {getDurationLabel(selectedDuration)}
+                      Duration: {getDurationLabel()}
+                    </p>
+                  </div>
+                ) : selectedStartTime ? (
+                  <div className="space-y-2">
+                    <span className="bg-blue-500 p-2 rounded-lg text-white inline-block">
+                      Start: {formatTime(selectedStartTime)}
+                    </span>
+                    <p className="text-sm text-gray-600">
+                      Please select an end time
                     </p>
                   </div>
                 ) : null}
               </div>
-              {/* Time slots with loading state */}
+
+              {/* Start Time Slots */}
               <div className="mb-6">
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
-                  Available Time Slots
+                  Available Start Times
                 </h3>
                 {!selectedDate ? (
                   <p className="text-gray-500 text-sm italic">
@@ -875,22 +883,22 @@ const BookingCalendar: React.FC = () => {
                   </p>
                 ) : (
                   <div className="space-y-3">
-                    {timeSlotRows.map((row, rowIndex) => (
+                    {startTimeSlotRows.map((row, rowIndex) => (
                       <div key={rowIndex} className="grid grid-cols-4 gap-2">
-                        {row.map((slot) => (
+                        {row.map((time) => (
                           <button
-                            key={slot.startTime}
-                            onClick={() => handleTimeSelect(slot)}
+                            key={time}
+                            onClick={() => handleStartTimeSelect(time)}
                             className={`
                               py-2 px-3 border rounded-md text-sm
                               ${
-                                selectedTime === slot.startTime
-                                  ? "border-red-500 bg-red-50 text-red-500"
+                                selectedStartTime === time
+                                  ? "border-blue-500 bg-blue-50 text-blue-500"
                                   : "border-gray-200 hover:border-gray-300 text-gray-800"
                               }
                             `}
                           >
-                            {formatTime(slot.startTime)}
+                            {formatTime(time)}
                           </button>
                         ))}
                       </div>
@@ -898,35 +906,48 @@ const BookingCalendar: React.FC = () => {
                   </div>
                 )}
               </div>
-              {/* Duration Selector */}
-              {selectedTime && (
+
+              {/* End Time Slots - Only show after start time is selected */}
+              {selectedStartTime && (
                 <div className="mb-6">
-                  <h3 className="text-sm font-medium text-gray-700 mb-3">
-                    Select Session Duration
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">
+                    Select End Time
                   </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    {durationOptions.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => handleDurationSelect(option.value)}
-                        className={`
-                          p-3 border rounded-lg text-sm transition-all
-                          ${
-                            selectedDuration === option.value
-                              ? "border-red-500 bg-red-50 text-red-700"
-                              : "border-gray-200 hover:border-gray-300 text-gray-800"
-                          }
-                        `}
-                      >
-                        <div className="font-medium">{option.label}</div>
-                        <div className="text-xs text-gray-500 mt-1">
-                          {option.price}
-                        </div>
-                      </button>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Choose an end time (1-2 hours from start time)
+                  </p>
+                  <div className="space-y-3">
+                    {endTimeSlotRows.map((row, rowIndex) => (
+                      <div key={rowIndex} className="grid grid-cols-4 gap-2">
+                        {row.map((time) => {
+                          const isValid = isValidEndTime(time);
+                          const isAvailable = isTimeSlotAvailable(time);
+                          return (
+                            <button
+                              key={time}
+                              onClick={() => handleEndTimeSelect(time)}
+                              disabled={!isValid || !isAvailable}
+                              className={`
+                                py-2 px-3 border rounded-md text-sm
+                                ${
+                                  selectedEndTime === time
+                                    ? "border-red-500 bg-red-50 text-red-500"
+                                    : isValid && isAvailable
+                                    ? "border-gray-200 hover:border-gray-300 text-gray-800"
+                                    : "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
+                                }
+                              `}
+                            >
+                              {formatTime(time)}
+                            </button>
+                          );
+                        })}
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
+
               {/* Simple Location field - Only for ON GROUND ASSESSMENT */}
               {isOnGroundAssessment && (
                 <div className="mt-6 mb-4">
@@ -976,7 +997,9 @@ const BookingCalendar: React.FC = () => {
         <Button
           className="bg-red-500 hover:bg-red-600 text-white px-8"
           onClick={handleConfirm}
-          disabled={loading || !selectedDate || !selectedTime}
+          disabled={
+            loading || !selectedDate || !selectedStartTime || !selectedEndTime
+          }
         >
           {loading ? "Processing..." : "Confirm Booking"}
         </Button>
