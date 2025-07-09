@@ -72,7 +72,7 @@ interface ProfileDetailsProps {
 
 const ProfileDetails: React.FC<ProfileDetailsProps> = ({
   playerData = {
-    aboutMe: "",
+    aboutMe: "I am a passionate player dedicated to improving my skills.",
     documents: [],
     socials: {},
   },
@@ -622,11 +622,10 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             <div className="relative">
               <p
                 ref={aboutTextRef}
-                className={`text-gray-700 dark:text-gray-300 ${
-                  showSeeMore && !isAboutExpanded
+                className={`text-gray-700 dark:text-gray-300 ${showSeeMore && !isAboutExpanded
                     ? "line-clamp-3 overflow-hidden"
                     : ""
-                }`}
+                  }`}
                 style={{ whiteSpace: "pre-line" }}
               >
                 {aboutMe}
@@ -1326,7 +1325,9 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
       )}
 
       {/* Social Links */}
-      <Card className="mt-4 relative border p-6 w-1/3 rounded-lg dark:bg-gray-700 dark:text-white">
+      <Card className="mt-4 relative border rounded-lg dark:bg-gray-700 dark:text-white
+  p-6 
+  w-full sm:w-full md:w-full lg:w-1/2"> {/* Adjusted width classes for responsive design */}
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
           Social Media
         </h3>
@@ -1334,7 +1335,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         {isEditingSocials ? (
           <div className="space-y-3">
             {/* LinkedIn */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
                 <FaLinkedinIn size={20} />
               </div>
@@ -1342,12 +1343,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 placeholder="LinkedIn URL (e.g. linkedin.com/in/username)"
                 value={socials.linkedin}
                 onChange={(e) => handleSocialChange("linkedin", e.target.value)}
-                className="flex-1 dark:bg-gray-800"
+                className="flex-1 dark:bg-gray-800 min-w-[200px]"
               />
             </div>
 
             {/* Instagram */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-pink-50 dark:bg-pink-900/20">
                 <FaInstagram size={20} />
               </div>
@@ -1357,12 +1358,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 onChange={(e) =>
                   handleSocialChange("instagram", e.target.value)
                 }
-                className="flex-1 dark:bg-gray-800"
+                className="flex-1 dark:bg-gray-800 min-w-[200px]"
               />
             </div>
 
             {/* Facebook */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
                 <FaFacebookF size={20} />
               </div>
@@ -1370,12 +1371,12 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 placeholder="Facebook URL (e.g. facebook.com/username)"
                 value={socials.facebook}
                 onChange={(e) => handleSocialChange("facebook", e.target.value)}
-                className="flex-1 dark:bg-gray-800"
+                className="flex-1 dark:bg-gray-800 min-w-[200px]"
               />
             </div>
 
             {/* Twitter */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap">
               <div className="w-10 h-10 flex items-center justify-center rounded-full bg-blue-50 dark:bg-blue-900/20">
                 <FontAwesomeIcon icon={faXTwitter} />
               </div>
@@ -1383,20 +1384,21 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 placeholder="Twitter URL (e.g. twitter.com/username)"
                 value={socials.twitter}
                 onChange={(e) => handleSocialChange("twitter", e.target.value)}
-                className="flex-1 dark:bg-gray-800"
+                className="flex-1 dark:bg-gray-800 min-w-[200px]"
               />
             </div>
 
-            <div className="flex justify-end space-x-2 mt-3">
+            <div className="flex justify-end space-x-2 mt-3 flex-wrap sm:flex-nowrap">
               <Button
                 variant="outline"
                 onClick={() => setIsEditingSocials(false)}
+                className="w-full sm:w-auto mb-2 sm:mb-0"
               >
                 <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
               </Button>
               <Button
                 variant="default"
-                className="bg-red-600 hover:bg-red-700"
+                className="bg-red-600 hover:bg-red-700 w-full sm:w-auto"
                 onClick={saveSocials}
               >
                 <FontAwesomeIcon icon={faSave} className="mr-1" /> Save
@@ -1406,7 +1408,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
         ) : (
           <>
             <div className="flex gap-5">
-              <div className="flex justify-center gap-6 mt-4">
+              <div className="flex justify-center gap-3 sm:gap-6 mt-4 flex-wrap">
                 {icons
                   .map((item, index) => {
                     const platform = item.link;

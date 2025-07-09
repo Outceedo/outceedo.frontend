@@ -246,12 +246,13 @@ const Playerview: React.FC = () => {
           >
             ←
           </div>
-          <div className="flex flex-col lg:flex-row gap-6 items-start mt-4">
-            <img
-              src={profileData.photo || profile}
-              alt={`${displayName}'s profile`}
-              className="rounded-lg w-60 h-60 object-cover shadow-md"
-            />
+          <div className="flex flex-col lg:flex-row gap-6 items-center
+           mt-4">
+             <img
+    src={profileData.photo || profile}
+    alt={`${displayName}'s profile`}
+    className="rounded-lg w-60 h-60 object-cover shadow-md sm:self-center"
+  />
 
             <div className="flex flex-col mt-5 w-full gap-4">
               <div>

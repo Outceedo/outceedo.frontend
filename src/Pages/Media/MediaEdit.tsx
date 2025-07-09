@@ -184,7 +184,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
   return (
     <div className="p-4 w-full -ml-4 -mt-4">
       {/* Top Tabs & Upload */}
-      <div className="flex space-x-4 p-4">
+      <div className="flex text-[15px] gap-1">
         {[
           { name: "All", icon: null },
           { name: "Photos", icon: faCamera },
@@ -192,7 +192,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
         ].map((tab) => (
           <button
             key={tab.name}
-            className={`px-4 py-2 rounded-md flex items-center gap-2 ${
+            className={`px-4  py-2 rounded-md flex items-center gap-2 ${
               activeTab === tab.name
                 ? "bg-yellow-200 dark:bg-yellow-400 font-semibold"
                 : "bg-transparent text-gray-600 hover:text-black dark:text-gray-300"
@@ -286,14 +286,14 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
 
       {/* Upload Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50">
-          <div className="relative">
-            <MediaUpload
-              onClose={() => setIsModalOpen(false)}
-              onMediaUpdate={handleMediaUpdate}
-            />
-          </div>
-        </div>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm z-50 p-4 sm:p-0">
+  <div className="relative w-full sm:w-auto">
+    <MediaUpload
+      onClose={() => setIsModalOpen(false)}
+      onMediaUpdate={handleMediaUpdate}
+    />
+  </div>
+</div>
       )}
 
       {/* Preview Modal */}
@@ -371,51 +371,51 @@ const MediaCard: React.FC<MediaCardProps> = ({ item, onDelete, onPreview }) => {
   }, []);
 
   return (
-    <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 lg:max-w-96 max-w-64 3xl:h-84">
-      {/* Three-dot delete menu */}
-      <div className="absolute top-1 right-1 z-10" ref={menuRef}>
+   <div className="relative bg-white p-4 shadow-md rounded-lg dark:bg-gray-700 w-full sm:w-auto sm:max-w-64 lg:max-w-96 3xl:h-84">
+  {/* Three-dot delete menu */}
+  <div className="absolute top-1 right-1 z-10" ref={menuRef}>
+    <Button
+      className="text-black bg-yellow-200 dark:text-black text-3xl hover:bg-yellow-200 w-4 h-8 flex items-center justify-center"
+      onClick={() => setMenuOpen((prev) => !prev)}
+    >
+      &times;
+    </Button>
+    {menuOpen && (
+      <div className="absolute right-0 mt-1 bg-white shadow-md rounded-md">
         <Button
-          className="text-black bg-yellow-200 dark:text-black text-3xl hover:bg-yellow-200 w-4 h-8"
-          onClick={() => setMenuOpen((prev) => !prev)}
+          onClick={() => {
+            onDelete(item.id);
+            setMenuOpen(false);
+          }}
+          className="block px-4 py-2 text-sm text-red-600 bg-white w-full text-left hover:bg-white hover:bg-opacity-90"
         >
-          &times;
+          <FontAwesomeIcon icon={faTrash} className="mr-2" />
+          Delete
         </Button>
-        {menuOpen && (
-          <div className="absolute right-0 mt-1 bg-white shadow-md rounded-md">
-            <Button
-              onClick={() => {
-                onDelete(item.id);
-                setMenuOpen(false);
-              }}
-              className="block px-4 py-2 text-sm text-red-600 bg-white w-full text-left hover:bg-white"
-            >
-              <FontAwesomeIcon icon={faTrash} className="mr-2" />
-              Delete
-            </Button>
-          </div>
-        )}
       </div>
+    )}
+  </div>
 
-      {/* Preview on Click */}
-      <div onClick={onPreview} className="cursor-pointer">
-        {item.type === "photo" ? (
-          <img
-            src={item.preview || item.url || ""}
-            alt={item.title}
-            className="w-full h-40 3xl:h-56 object-cover rounded-lg mt-2"
-          />
-        ) : (
-          <video
-            src={item.preview || item.url || ""}
-            className="w-full h-40 3xl:h-72 rounded-lg mt-2"
-          />
-        )}
-      </div>
+  {/* Preview on Click */}
+  <div onClick={onPreview} className="cursor-pointer w-full">
+    {item.type === "photo" ? (
+      <img
+        src={item.preview || item.url || ""}
+        alt={item.title}
+        className="w-full h-40 sm:h-40 3xl:h-56 object-cover rounded-lg mt-2"
+      />
+    ) : (
+      <video
+        src={item.preview || item.url || ""}
+        className="w-full h-40 sm:h-40 3xl:h-72 rounded-lg mt-2"
+      />
+    )}
+  </div>
 
-      {/* Title below */}
-      <p className="mt-2 text-center text-sm font-medium text-gray-700 dark:text-white">
-        {item.title}
-      </p>
-    </div>
+  {/* Title below */}
+  <p className="mt-2 text-center text-sm font-medium text-gray-700 dark:text-white truncate">
+    {item.title}
+  </p>
+</div>
   );
 };
