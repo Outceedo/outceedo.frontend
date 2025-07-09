@@ -847,6 +847,19 @@ const BookingExpertside: React.FC = () => {
       setSubmittingReview(false);
     }
   };
+  const handleEvaluation = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    booking: Booking
+  ) => {
+    e.stopPropagation();
+    if (booking.player?.username) {
+      localStorage.setItem("playerName", booking.player.username);
+    }
+    if (booking.player?.photo) {
+      localStorage.setItem("playerPhoto", booking.player.photo);
+    }
+    navigate("/expert/evaluate");
+  };
 
   const getActionBadgeStyle = (status: string) => {
     switch (status) {
@@ -1825,13 +1838,23 @@ const BookingExpertside: React.FC = () => {
 
               {selectedBooking.status === "COMPLETED" &&
                 !selectedBooking.review && (
-                  <Button
-                    className="bg-yellow-500 text-white hover:bg-yellow-600"
-                    onClick={() => openReviewModal(selectedBooking.id)}
-                  >
-                    <FontAwesomeIcon icon={faStar} className="mr-2" />
-                    Add Review
-                  </Button>
+                  <>
+                    <Button
+                      className="bg-yellow-500 text-white hover:bg-yellow-600"
+                      onClick={() => openReviewModal(selectedBooking.id)}
+                    >
+                      <FontAwesomeIcon icon={faStar} className="mr-2" />
+                      Add Review
+                    </Button>
+                    <Button
+                      className="bg-green-500 text-white hover:bg-green-600"
+                      onClick={(e) => {
+                        handleEvaluation(e, selectedBooking);
+                      }}
+                    >
+                      Evaluate
+                    </Button>
+                  </>
                 )}
 
               <Button
