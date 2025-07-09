@@ -22,6 +22,7 @@ import {
   faChalkboardTeacher,
   faInfoCircle,
 } from "@fortawesome/free-solid-svg-icons";
+import { useNavigate } from "react-router-dom";
 
 interface Expert {
   id: string;
@@ -211,6 +212,22 @@ const BookingTable: React.FC<BookingTableProps> = ({
     return <div className="text-center py-8">Loading bookings...</div>;
   }
 
+  const navigate = useNavigate(); // <-- Add this line
+
+  const handleEvaluation = (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    booking: Booking
+  ) => {
+    e.stopPropagation();
+    if (booking.player?.username) {
+      localStorage.setItem("playerName", booking.player.username);
+    }
+    if (booking.player?.photo) {
+      localStorage.setItem("playerPhoto", booking.player.photo);
+    }
+    navigate("/expert/evaluate");
+  };
+
   return (
     <div className="rounded-md border overflow-x-auto">
       <Table>
@@ -382,7 +399,9 @@ const BookingTable: React.FC<BookingTableProps> = ({
                     size="icon"
                     className="h-8 w-8"
                     title="Create/View Report"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                      handleEvaluation(e, booking);
+                    }}
                   >
                     <FontAwesomeIcon icon={faFileAlt} />
                   </Button>
