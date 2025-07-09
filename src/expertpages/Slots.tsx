@@ -286,7 +286,7 @@ const ExpertAvailabilityManager = () => {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        let top = rect.bottom + 12;
+        let top = rect.bottom-100;
         let left = rect.left + rect.width / 2 - popperWidth / 2;
 
         if (left < 10) {
@@ -319,8 +319,8 @@ const ExpertAvailabilityManager = () => {
           }
         }
         if (stepCard.focusRef === switchWrapperRef) {
-          left = rect.left;
-          top = rect.top - 90;
+          left = rect.left+50;
+          top = rect.top-100;
 
           if (left < 10) {
             left = rect.left + rect.width / 2 - popperWidth / 2;

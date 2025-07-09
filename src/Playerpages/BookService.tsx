@@ -854,7 +854,7 @@ const BookingCalendar: React.FC = () => {
                   </div>
                 ) : selectedStartTime ? (
                   <div className="space-y-2">
-                    <span className="bg-blue-500 p-2 rounded-lg text-white inline-block">
+                    <span className="bg-red-500 p-2 rounded-lg text-white inline-block">
                       Start: {formatTime(selectedStartTime)}
                     </span>
                     <p className="text-sm text-gray-600">
@@ -934,7 +934,7 @@ const BookingCalendar: React.FC = () => {
                                     ? "border-red-500 bg-red-50 text-red-500"
                                     : isValid && isAvailable
                                     ? "border-gray-200 hover:border-gray-300 text-gray-800"
-                                    : "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
+                                    : "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed hidden"
                                 }
                               `}
                             >

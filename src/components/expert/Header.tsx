@@ -18,6 +18,7 @@ const menuItems = [
   { path: "/expert/sponsorinfo", name: "Sponsor Profile" },
   { path: "/expert/details-form", name: "Edit Profile" },
   { path: "/expert/playerinfo", name: "Player Profile" },
+  { path: "/expert/evaluate", name: "Evaluation" },
 ];
 function ExpertHeader({ setOpen }: ExpertHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);

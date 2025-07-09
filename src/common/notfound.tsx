@@ -4,7 +4,8 @@ import { useNavigate } from "react-router-dom";
 const NotFound = () => {
   const navigate = useNavigate();
   const handlenav = () => {
-    navigate(-1);
+    const role = localStorage.getItem("role");
+    navigate(`/${role}/profile`);
   };
   return (
     <div className="flex flex-col justify-center items-center pt-24">

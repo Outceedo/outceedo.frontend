@@ -15,6 +15,7 @@ import ForgotPassword from "./Pages/Auth/ForgotPassword";
 import Detailsform from "./common/Detailsform";
 import SignUp from "./Pages/Auth/Signup";
 import ResetPassword from "./Pages/Auth/Resetpassword";
+import loader from "./assets/images/loader.gif";
 //playerpage
 import Profile from "./Playerpages/playerprofile";
 import Dashboard from "./Playerpages/dashboard";
@@ -93,6 +94,7 @@ import ExportReports from "./Adminpages/Expert/ExpertReports";
 import ExpertCetification from "./Adminpages/Expert/ExpertCetification";
 import ExpertServices from "./Adminpages/Expert/ExpertServices";
 import NotFound from "./common/notfound";
+import AssessmentEvaluationForm from "./expertpages/evaluation";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -125,9 +127,12 @@ const AppContent: React.FC = () => {
 
   if (isInitializing) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
-        <span className="ml-3 text-gray-700">Authenticating...</span>
+      <div className="flex items-center justify-center min-h-screen flex-col">
+        {/* <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-red-600"></div>
+         */}
+        <img src={loader} alt="" height={700} width={350} />
+
+        {/* <span className="text-gray-700">Authenticating...</span> */}
       </div>
     );
   }
@@ -256,11 +261,8 @@ const AppContent: React.FC = () => {
         <Route path="playerinfo" element={<Playerview />} />
         <Route path="details-form" element={<Detailsform />} />
         <Route path="sponsorinfo" element={<SponsorInfo />} />
-        <Route
-          path="applications"
-          element={<>expert submitted applications</>}
-        />
         <Route path="slots" element={<ExpertAvailabilityManager />} />
+        <Route path="evaluate" element={<AssessmentEvaluationForm />} />
       </Route>
 
       {/* Sponsor routes */}
