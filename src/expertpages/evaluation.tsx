@@ -107,48 +107,67 @@ export default function AssessmentEvaluationForm({
     verdict: "",
   });
 
-  // Player info
+  // Player info and service name
   const [playerName, setPlayerName] = useState<string>("");
   const [playerPhoto, setPlayerPhoto] = useState<string>("");
+  const [serviceName, setServiceName] = useState<string>("");
 
   useEffect(() => {
-    // Try to get from localStorage, else fallback to empty
     setPlayerName(localStorage.getItem("playerName") || "");
     setPlayerPhoto(localStorage.getItem("playerPhoto") || "");
+    setServiceName(localStorage.getItem("serviceName") || "");
   }, []);
 
   // Stepper: All attributes + 2 (rating, review)
   const totalSteps = attributes.length + 2;
 
-  // Handle main attribute value change
-  const handleAttributeChange = (attr: string, val: number) => {
-    setForm((prev) => ({
-      ...prev,
-      attributes: {
-        ...prev.attributes,
-        [attr]: {
-          ...prev.attributes[attr],
-          percentage: isNaN(val) ? 0 : val,
-        },
-      },
-    }));
+  // Calculate average for attribute based on subskills
+  const calculateAverage = (subskills: Record<string, number>) => {
+    const scores = Object.values(subskills).map((n) => (isNaN(n) ? 0 : n));
+    if (scores.length === 0) return 0;
+    const sum = scores.reduce((acc, curr) => acc + curr, 0);
+    return Math.round(sum / scores.length);
   };
 
-  // Handle subskill value change
-  const handleSubskillChange = (attr: string, sub: string, val: number) => {
-    setForm((prev) => ({
-      ...prev,
-      attributes: {
+  // When subskills change, update main attribute automatically
+  useEffect(() => {
+    // Only update on subskill change
+    setForm((prev) => {
+      const updatedAttributes: Record<string, AttributeScore> = {
         ...prev.attributes,
-        [attr]: {
-          ...prev.attributes[attr],
-          subskills: {
-            ...prev.attributes[attr].subskills,
-            [sub]: isNaN(val) ? 0 : val,
+      };
+      attributes.forEach((attr) => {
+        const avg = calculateAverage(prev.attributes[attr.label].subskills);
+        updatedAttributes[attr.label] = {
+          ...updatedAttributes[attr.label],
+          percentage: avg,
+        };
+      });
+      return { ...prev, attributes: updatedAttributes };
+    });
+    // eslint-disable-next-line
+  }, [step]); // recalc on step change (so when subskills are changed and you go to next/prev step, it updates)
+
+  // Also recalc main value when subskills are changed
+  const handleSubskillChange = (attr: string, sub: string, val: number) => {
+    setForm((prev) => {
+      const newSubskills = {
+        ...prev.attributes[attr].subskills,
+        [sub]: isNaN(val) ? 0 : val,
+      };
+      const avg = calculateAverage(newSubskills);
+      return {
+        ...prev,
+        attributes: {
+          ...prev.attributes,
+          [attr]: {
+            ...prev.attributes[attr],
+            subskills: newSubskills,
+            percentage: avg,
           },
         },
-      },
-    }));
+      };
+    });
   };
 
   // Handle textareas/inputs for review
@@ -166,8 +185,7 @@ export default function AssessmentEvaluationForm({
     // Steps 0..attributes.length-1: main attribute + subskills
     if (step < attributes.length) {
       const attr = attributes[step];
-      const mainScore = form.attributes[attr.label].percentage;
-      if (mainScore < 0 || mainScore > 100 || isNaN(mainScore)) return false;
+      // Only check subskills
       for (const sub of attr.subskills) {
         const subScore = form.attributes[attr.label].subskills[sub];
         if (subScore < 0 || subScore > 100 || isNaN(subScore)) return false;
@@ -203,7 +221,7 @@ export default function AssessmentEvaluationForm({
   return (
     <form
       onSubmit={handleSubmit}
-      className="w-5xl mx-auto p-6 bg-white rounded-xl shadow"
+      className="w-3xl mx-auto p-6 bg-white rounded-xl shadow"
     >
       {/* Player display */}
       <div className="flex items-center gap-4 mb-8">
@@ -219,8 +237,12 @@ export default function AssessmentEvaluationForm({
           </div>
         )}
         <div className="flex flex-col">
-          <span className="text-lg font-semibold">{playerName || "Player"}</span>
-          <span className="text-sm text-gray-500">Player Assessment Report</span>
+          <span className="text-lg font-semibold">
+            {playerName || "Player"}
+          </span>
+          <span className="text-sm text-gray-500">
+            {serviceName ? serviceName : "Player Assessment Report"}
+          </span>
         </div>
       </div>
       {/* Stepper */}
@@ -239,7 +261,6 @@ export default function AssessmentEvaluationForm({
               {idx + 1}
             </div>
             <span className="mt-2 text-xs">{attr.label}</span>
-            
           </div>
         ))}
         <div className="flex flex-col items-center flex-1">
@@ -255,7 +276,6 @@ export default function AssessmentEvaluationForm({
             {attributes.length + 1}
           </div>
           <span className="mt-2 text-xs">Rating</span>
-          
         </div>
         <div className="flex flex-col items-center flex-1">
           <div
@@ -266,8 +286,6 @@ export default function AssessmentEvaluationForm({
             {attributes.length + 2}
           </div>
           <span className="mt-2 text-xs">Review</span>
-          
-          {/* No trailing bar */}
         </div>
       </div>
 
@@ -282,13 +300,9 @@ export default function AssessmentEvaluationForm({
               min={0}
               max={100}
               value={form.attributes[attributes[step].label].percentage}
-              onChange={(e) =>
-                handleAttributeChange(
-                  attributes[step].label,
-                  parseInt(e.target.value)
-                )
-              }
-              className="flex-1"
+              readOnly
+              disabled
+              className="flex-1 opacity-70"
             />
             <span
               className="w-12 text-center font-bold"
@@ -354,9 +368,9 @@ export default function AssessmentEvaluationForm({
 
       {/* Review */}
       {step === attributes.length + 1 && (
-        <Card className="p-6">
-          <h2 className="text-lg font-bold mb-6">Assessment Review</h2>
-          <div className="mb-4">
+        <Card className="px-6">
+          <h2 className="text-lg font-bold">Assessment Review</h2>
+          <div className="">
             <Label>Strengths</Label>
             <Textarea
               name="strengths"
@@ -367,7 +381,7 @@ export default function AssessmentEvaluationForm({
               placeholder="Describe player's strengths"
             />
           </div>
-          <div className="mb-4">
+          <div className="">
             <Label>Areas for Improvement</Label>
             <Textarea
               name="improvement"
@@ -378,7 +392,7 @@ export default function AssessmentEvaluationForm({
               placeholder="Describe areas for improvement"
             />
           </div>
-          <div className="mb-4">
+          <div className="">
             <Label>Verdict</Label>
             <Textarea
               name="verdict"

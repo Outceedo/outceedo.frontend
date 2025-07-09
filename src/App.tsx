@@ -95,6 +95,7 @@ import ExpertCetification from "./Adminpages/Expert/ExpertCetification";
 import ExpertServices from "./Adminpages/Expert/ExpertServices";
 import NotFound from "./common/notfound";
 import AssessmentEvaluationForm from "./expertpages/evaluation";
+import Success from "./common/Success";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -262,7 +263,6 @@ const AppContent: React.FC = () => {
         <Route path="details-form" element={<Detailsform />} />
         <Route path="sponsorinfo" element={<SponsorInfo />} />
         <Route path="slots" element={<ExpertAvailabilityManager />} />
-        <Route path="evaluate" element={<AssessmentEvaluationForm />} />
       </Route>
 
       {/* Sponsor routes */}
@@ -376,6 +376,7 @@ const AppContent: React.FC = () => {
         }
       />
       <Route path="*" element={<NotFound />} />
+      <Route path="/subscription/success" element={<Success />} />
     </Routes>
   );
 };

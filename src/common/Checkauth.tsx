@@ -56,7 +56,11 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
 
   // Handle authenticated users
   else {
-    if (location.pathname === "/login" || location.pathname === "/signup") {
+    if (
+      location.pathname === "/login" ||
+      location.pathname === "/signup" ||
+      location.pathname === "/"
+    ) {
       switch (effectiveRole) {
         case "expert":
           return <Navigate to="/expert/profile" replace />;
