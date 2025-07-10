@@ -281,7 +281,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
               <TableHead className="text-center w-[120px]">Actions</TableHead>
               <TableHead className="text-center w-[70px]">Session</TableHead>
               <TableHead className="text-center w-[70px]">Report</TableHead>
-              <TableHead className="text-center w-[70px]">Review</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -440,22 +439,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
                       onClick={(e) => handleOpenEvaluation(e, booking)}
                     >
                       <FontAwesomeIcon icon={faFileAlt} />
-                    </Button>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={`h-8 w-8 ${
-                        booking.review ? "text-yellow-500" : ""
-                      }`}
-                      title={booking.review ? "Edit Review" : "Add Review"}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onReviewClick(booking.id);
-                      }}
-                    >
-                      <FontAwesomeIcon icon={faStar} />
                     </Button>
                   </TableCell>
                 </TableRow>

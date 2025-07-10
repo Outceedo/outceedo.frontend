@@ -57,6 +57,8 @@ import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import StripePaymentModal from "../StripePaymentModal";
 import AgoraVideoModal from "./AgoraVideoModal";
+import { DialogDescription } from "@radix-ui/react-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Expert {
   id: string;
@@ -132,6 +134,8 @@ const MyBooking: React.FC = () => {
 
   const [isVideoOpen, setIsVideoOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
@@ -149,6 +153,8 @@ const MyBooking: React.FC = () => {
   const [isAgoraModalOpen, setIsAgoraModalOpen] = useState(false);
   const [booking, setBooking] = useState<Booking | null>(null);
   const [agora, setAgora] = useState<Agora>();
+
+  const [submittingReview, setSubmittingReview] = useState(false);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
@@ -247,6 +253,7 @@ const MyBooking: React.FC = () => {
 
     return canGoLiveNow;
   };
+
   const isUpcomingSession = (booking: Booking) => {
     if (!isPaid(booking)) return false;
 
@@ -621,6 +628,60 @@ const MyBooking: React.FC = () => {
     }));
   };
 
+  const openReviewModal = (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
+    setSelectedBookingId(bookingId);
+    setReviewText(booking?.review || "");
+    setIsReviewModalOpen(true);
+    setIsBookingDetailsOpen(false);
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
+    setSelectedBookingId(null);
+    setReviewText("");
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedBookingId || !reviewText.trim()) return;
+    setSubmittingReview(true);
+    try {
+      const token = localStorage.getItem("token");
+      await axios.post(
+        `${API_BASE_URL}/${selectedBookingId}/review`,
+        { review: reviewText.trim() },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === selectedBookingId ? { ...b, review: reviewText.trim() } : b
+        )
+      );
+      closeReviewModal();
+      Swal.fire({
+        icon: "success",
+        title: "Review Submitted",
+        text: "Your review has been saved.",
+        confirmButtonColor: "#10B981",
+        timer: 2000,
+      });
+    } catch (err) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to submit review. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
   const getActionBadgeStyle = (status: string) => {
     switch (status) {
       case "ACCEPTED":
@@ -815,6 +876,10 @@ const MyBooking: React.FC = () => {
       return dateA.getTime() - dateB.getTime();
     });
 
+  const handleReviewClick = (bookingId: string) => {
+    openReviewModal(bookingId);
+  };
+
   const navigate = useNavigate();
 
   return (
@@ -920,6 +985,7 @@ const MyBooking: React.FC = () => {
           onOpenVideoModal={openVideoModal}
           onOpenReportModal={openReportModal}
           onToggleVisibility={toggleVisibility}
+          onReviewClick={handleReviewClick}
         />
       )}
 
@@ -1823,6 +1889,65 @@ const MyBooking: React.FC = () => {
           agora={agora}
         />
       )}
+
+      <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {bookings.find((b) => b.id === selectedBookingId)?.review
+                ? "Edit Player Review"
+                : "Add Player Review"}
+            </DialogTitle>
+            <DialogDescription>
+              Add your feedback about the player's performance during this
+              session. This review will be visible to the player.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="py-4">
+            <div className="mb-4">
+              <p className="text-sm font-medium mb-1">Session Details:</p>
+              {selectedBookingId && (
+                <p className="text-sm text-gray-500">
+                  {bookings.find((b) => b.id === selectedBookingId)?.service
+                    ?.service?.name || "Service"}{" "}
+                  with{" "}
+                  {bookings.find((b) => b.id === selectedBookingId)?.player
+                    ?.username || "Player"}{" "}
+                  on{" "}
+                  {bookings.find((b) => b.id === selectedBookingId)
+                    ? formatDate(
+                        bookings.find((b) => b.id === selectedBookingId)
+                          ?.date || "",
+                        bookings.find((b) => b.id === selectedBookingId)
+                          ?.startTime || ""
+                      )
+                    : ""}
+                </p>
+              )}
+            </div>
+
+            <Textarea
+              placeholder="Enter your review here..."
+              className="min-h-[150px]"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={closeReviewModal}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submittingReview || !reviewText.trim()}
+            >
+              {submittingReview ? "Submitting..." : "Submit Review"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
