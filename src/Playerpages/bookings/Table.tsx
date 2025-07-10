@@ -9,6 +9,7 @@ import {
   faLaptop,
   faChalkboardTeacher,
   faInfoCircle,
+  faStar,
 } from "@fortawesome/free-solid-svg-icons";
 import { useNavigate } from "react-router-dom";
 import {
@@ -82,6 +83,7 @@ interface BookingsTableProps {
   onOpenVideoModal: (id: string, e?: React.MouseEvent) => void;
   onOpenReportModal: (id: string, e?: React.MouseEvent) => void;
   onToggleVisibility: (id: string, e?: React.MouseEvent) => void;
+  onReviewClick: (bookingId: string) => void;
 }
 
 const BookingsTable: React.FC<BookingsTableProps> = ({
@@ -91,6 +93,7 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
   onOpenVideoModal,
   onOpenReportModal,
   onToggleVisibility,
+  onReviewClick,
 }) => {
   const navigate = useNavigate();
 
@@ -243,6 +246,7 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
             <TableHead className="w-[100px]">Payment</TableHead>
             <TableHead className="text-center w-[70px]">Video</TableHead>
             <TableHead className="text-center w-[70px]">Report</TableHead>
+            <TableHead className="text-center w-[70px]">Review</TableHead>
             <TableHead className="text-center w-[70px]">View</TableHead>
           </TableRow>
         </TableHeader>
@@ -347,6 +351,22 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
                     onClick={(e) => onOpenReportModal(booking.id, e)}
                   >
                     <FontAwesomeIcon icon={faFileAlt} />
+                  </Button>
+                </TableCell>
+                <TableCell className="text-center">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className={`h-8 w-8 ${
+                      booking.review ? "text-yellow-500" : ""
+                    }`}
+                    title={booking.review ? "Edit Review" : "Add Review"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onReviewClick(booking.id);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faStar} />
                   </Button>
                 </TableCell>
                 <TableCell className="text-center">

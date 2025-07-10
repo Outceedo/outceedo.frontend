@@ -587,17 +587,7 @@ const Profile: React.FC = () => {
                 {/* Basic Info Section with Edit Button */}
                 <div className="mt-5">
                   <div className="flex justify-between items-start flex-wrap gap-2">
-                    {!isEditingBasicInfo ? (
-                      <Button
-                        onClick={enterEditMode}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center gap-1 text-blue-600"
-                      >
-                        <FontAwesomeIcon icon={faPen} className="text-xs" />
-                        <span>Edit</span>
-                      </Button>
-                    ) : (
+                    {!isEditingBasicInfo ? null : (
                       <div className="flex gap-2">
                         <Button
                           onClick={handleCancelEdit}

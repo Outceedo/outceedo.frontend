@@ -120,12 +120,9 @@ const BookingExpertside: React.FC = () => {
   const [videoError, setVideoError] = useState<string | null>(null);
   const [filtersApplied, setFiltersApplied] = useState(false);
 
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
     null
   );
-  const [reviewText, setReviewText] = useState("");
-  const [submittingReview, setSubmittingReview] = useState(false);
 
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
@@ -787,66 +784,6 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  const openReviewModal = (bookingId: string) => {
-    const booking = bookings.find((b) => b.id === bookingId);
-    setSelectedBookingId(bookingId);
-    setReviewText(booking?.review || "");
-    setIsReviewModalOpen(true);
-    setIsBookingDetailsOpen(false);
-  };
-
-  const closeReviewModal = () => {
-    setIsReviewModalOpen(false);
-    setSelectedBookingId(null);
-    setReviewText("");
-  };
-
-  const handleSubmitReview = async () => {
-    if (!selectedBookingId) return;
-
-    setSubmittingReview(true);
-
-    try {
-      const token = localStorage.getItem("token");
-
-      await axios.post(
-        `${API_BASE_URL}/booking/${selectedBookingId}/review`,
-        { review: reviewText },
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      setBookings((prevBookings) =>
-        prevBookings.map((booking) =>
-          booking.id === selectedBookingId
-            ? { ...booking, review: reviewText }
-            : booking
-        )
-      );
-
-      if (selectedBooking && selectedBooking.id === selectedBookingId) {
-        setSelectedBooking({ ...selectedBooking, review: reviewText });
-      }
-
-      closeReviewModal();
-    } catch (error) {
-      setError("Failed to submit review. Please try again.");
-      setBookings((prevBookings) =>
-        prevBookings.map((booking) =>
-          booking.id === selectedBookingId
-            ? { ...booking, review: reviewText }
-            : booking
-        )
-      );
-      closeReviewModal();
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
   const handleEvaluation = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     booking: Booking
@@ -1729,27 +1666,6 @@ const BookingExpertside: React.FC = () => {
                 </div>
               )}
 
-              {selectedBooking.review && (
-                <div className="mb-5 bg-gray-50 p-4 rounded-lg">
-                  <h3 className="text-lg font-semibold mb-2 flex items-center">
-                    <FontAwesomeIcon
-                      icon={faStar}
-                      className="mr-2 text-yellow-500"
-                    />
-                    Your Review
-                  </h3>
-                  <p className="text-gray-700 italic">
-                    "{selectedBooking.review}"
-                  </p>
-                  <button
-                    className="mt-2 text-blue-600 hover:text-blue-800 text-sm font-medium"
-                    onClick={() => openReviewModal(selectedBooking.id)}
-                  >
-                    Edit Review
-                  </button>{" "}
-                </div>
-              )}
-
               <div className="mt-4 text-xs text-gray-500">
                 <p>Booking ID: {selectedBooking.id}</p>
                 <p>
@@ -1840,13 +1756,6 @@ const BookingExpertside: React.FC = () => {
                 !selectedBooking.review && (
                   <>
                     <Button
-                      className="bg-yellow-500 text-white hover:bg-yellow-600"
-                      onClick={() => openReviewModal(selectedBooking.id)}
-                    >
-                      <FontAwesomeIcon icon={faStar} className="mr-2" />
-                      Add Review
-                    </Button>
-                    <Button
                       className="bg-green-500 text-white hover:bg-green-600"
                       onClick={(e) => {
                         handleEvaluation(e, selectedBooking);
@@ -1868,65 +1777,6 @@ const BookingExpertside: React.FC = () => {
           </DialogContent>
         </Dialog>
       )}
-
-      <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>
-              {bookings.find((b) => b.id === selectedBookingId)?.review
-                ? "Edit Player Review"
-                : "Add Player Review"}
-            </DialogTitle>
-            <DialogDescription>
-              Add your feedback about the player's performance during this
-              session. This review will be visible to the player.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="py-4">
-            <div className="mb-4">
-              <p className="text-sm font-medium mb-1">Session Details:</p>
-              {selectedBookingId && (
-                <p className="text-sm text-gray-500">
-                  {bookings.find((b) => b.id === selectedBookingId)?.service
-                    ?.service?.name || "Service"}{" "}
-                  with{" "}
-                  {bookings.find((b) => b.id === selectedBookingId)?.player
-                    ?.username || "Player"}{" "}
-                  on{" "}
-                  {bookings.find((b) => b.id === selectedBookingId)
-                    ? formatDate(
-                        bookings.find((b) => b.id === selectedBookingId)
-                          ?.date || "",
-                        bookings.find((b) => b.id === selectedBookingId)
-                          ?.startTime || ""
-                      )
-                    : ""}
-                </p>
-              )}
-            </div>
-
-            <Textarea
-              placeholder="Enter your review here..."
-              className="min-h-[150px]"
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value)}
-            />
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={closeReviewModal}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmitReview}
-              disabled={submittingReview || !reviewText.trim()}
-            >
-              {submittingReview ? "Submitting..." : "Submit Review"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isRejectConfirmOpen} onOpenChange={setIsRejectConfirmOpen}>
         <DialogContent className="sm:max-w-[400px]">
