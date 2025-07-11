@@ -27,6 +27,8 @@ import { MoveLeft } from "lucide-react";
 import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
 import ExpertProfiledetails from "./ExpertProfiledetails";
+import Swal from "sweetalert2";
+import { title } from "process";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
@@ -156,8 +158,8 @@ const Expertview = () => {
         responseTime: viewedProfile.responseTime || "40 mins",
         travelLimit: viewedProfile.travelLimit || "30 kms",
         certificationLevel: viewedProfile.certificationLevel || "3rd highest",
-        followers: Math.floor(Math.random() * 200) + 50, // Demo
-        assessments: Math.floor(Math.random() * 150) + 50, // Demo
+        followers: 0, // Demo
+        assessments: 0, // Demo
         profileImage: viewedProfile.photo || null,
         socialLinks: viewedProfile.socialLinks || {},
         about:
@@ -341,7 +343,13 @@ const Expertview = () => {
 
   const handleVideoUploadSubmit = async () => {
     if (!selectedVideo) {
-      alert("Please select a video to upload");
+      Swal.fire({
+        icon: "error",
+        title: "Please select a video to upload",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+
       return;
     }
     try {
@@ -349,14 +357,24 @@ const Expertview = () => {
       setUploadProgress(20);
       const token = localStorage.getItem("token");
       if (!token) {
-        alert("Authentication token not found. Please log in again.");
+        Swal.fire({
+          icon: "error",
+          title: "Authentication Failed",
+          timer: 3000,
+          showConfirmButton: false,
+        });
         setIsUploading(false);
         return;
       }
       const expertId = localStorage.getItem("expertid");
       const userId = localStorage.getItem("userId");
       if (!expertId) {
-        alert("Expert information missing. Please try again.");
+        Swal.fire({
+          icon: "error",
+          title: "Expert Information Missing. Please try again",
+          timer: 3000,
+          showConfirmButton: false,
+        });
         setIsUploading(false);
         return;
       }
@@ -392,9 +410,13 @@ const Expertview = () => {
       });
       setUploadProgress(100);
       setIsVideoUploadModalOpen(false);
-      alert(
-        "Video assessment request submitted successfully! You'll be notified when the expert reviews your recording."
-      );
+      Swal.fire({
+        icon: "success",
+        title: "Video assessment request submitted successfully!",
+        text: "You'll be notified when the expert reviews your recording.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
       navigate("/player/mybooking");
     } catch (error: any) {
       const errorMessage =
@@ -466,13 +488,17 @@ const Expertview = () => {
               </p>
             </div>
             <div>
-              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Club</p>
+              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                Club
+              </p>
               <p className="font-semibold dark:text-white text-sm sm:text-base">
                 {expertData.club || "Not specified"}
               </p>
             </div>
             <div>
-              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Languages</p>
+              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                Languages
+              </p>
               <p className="font-semibold dark:text-white text-sm sm:text-base">
                 {expertData.language?.length > 0
                   ? expertData.language.slice(0, 3).join(", ")
@@ -480,7 +506,9 @@ const Expertview = () => {
               </p>
             </div>
             <div>
-              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Location</p>
+              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                Location
+              </p>
               <p className="font-semibold dark:text-white text-sm sm:text-base">
                 {expertData.location || "Not specified"}
               </p>
