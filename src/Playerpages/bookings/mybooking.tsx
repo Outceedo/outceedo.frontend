@@ -1895,8 +1895,8 @@ const MyBooking: React.FC = () => {
           <DialogHeader>
             <DialogTitle>
               {bookings.find((b) => b.id === selectedBookingId)?.review
-                ? "Edit Player Review"
-                : "Add Player Review"}
+                ? "Edit Review"
+                : "Add Review for the Expert"}
             </DialogTitle>
             <DialogDescription>
               Add your feedback about the player's performance during this

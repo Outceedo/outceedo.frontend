@@ -475,8 +475,7 @@ const ExpertProfiles: React.FC = () => {
                   expert.username ||
                   "Expert User";
 
-                const rating =
-                  expert.rating || Math.floor(Math.random() * 2) + 3.5;
+                const rating = expert.rating || 0;
                 const reviews = expert.reviews || 0;
 
                 const expertImage = expert.photo || avatar;

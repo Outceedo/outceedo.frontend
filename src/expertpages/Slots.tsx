@@ -286,7 +286,7 @@ const ExpertAvailabilityManager = () => {
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
 
-        let top = rect.bottom-100;
+        let top = rect.bottom - 100;
         let left = rect.left + rect.width / 2 - popperWidth / 2;
 
         if (left < 10) {
@@ -319,8 +319,8 @@ const ExpertAvailabilityManager = () => {
           }
         }
         if (stepCard.focusRef === switchWrapperRef) {
-          left = rect.left+50;
-          top = rect.top-100;
+          left = rect.left + 50;
+          top = rect.top - 100;
 
           if (left < 10) {
             left = rect.left + rect.width / 2 - popperWidth / 2;
@@ -850,11 +850,10 @@ const ExpertAvailabilityManager = () => {
   };
 
   const formatDateForDisplay = (date: Date): string => {
-    return date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0"); // getMonth is zero-based
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   const formatTimeForDisplay = (time: string): string => {
