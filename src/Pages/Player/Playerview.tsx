@@ -20,7 +20,7 @@ import {
   faStar as faStarSolid,
   faStarHalfAlt,
 } from "@fortawesome/free-solid-svg-icons";
-
+import { Button } from "@/components/ui/button";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 
 interface Stat {
@@ -91,6 +91,12 @@ const Playerview: React.FC = () => {
 
   // Get profile data from Redux store
   const { viewedProfile, status } = useAppSelector((state) => state.profile);
+   const [isFollowing, setIsFollowing] = useState(false);
+
+   const handleFollowToggle = () => {
+    setIsFollowing((prev) => !prev);
+    // Add API call here
+   };
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -246,14 +252,20 @@ const Playerview: React.FC = () => {
           >
             ←
           </div>
-          <div className="flex flex-col lg:flex-row gap-6 items-center
-           mt-4">
-             <img
-    src={profileData.photo || profile}
-    alt={`${displayName}'s profile`}
-    className="rounded-lg w-60 h-60 object-cover shadow-md sm:self-center"
-  />
-
+          <div className="flex flex-col lg:flex-row gap-6 items-start mt-4">
+            <img
+              src={profileData.photo || profile}
+              alt={`${displayName}'s profile`}
+              className="rounded-lg w-60 h-60 object-cover shadow-md"
+            />
+               {profileData.role === "fan" && (
+                      <Button
+                        className="bg-red-600 hover:bg-red-700 text-white cursor-pointer"
+                        onClick={handleFollowToggle}
+                      >
+                        {isFollowing ? "Unfollow" : "Follow"}
+                      </Button>
+                    )} 
             <div className="flex flex-col mt-5 w-full gap-4">
               <div>
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">

@@ -9,18 +9,20 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import profile from "../../assets/images/avatar.png";
-
+import { Input } from "@/components/ui/input";
+import {Search} from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 const applications = [
-  { invoice: "#923", date: "Sun Nov 26 2023 11:46", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 719.0, showDate: "12-06-2025" },
-  { invoice: "#043", date: "Wed Aug 09 2023 15:14", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 198.0, showDate: "12-06-2025" },
-  { invoice: "#042", date: "Thu Nov 23 2023 10:30", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 674.0, showDate: "12-06-2025" },
-  { invoice: "#023", date: "Tue Sep 12 2023 02:17", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 393.0, showDate: "12-06-2025" },
-  { invoice: "#098", date: "Sun Nov 26 2023 07:00", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 731.0, showDate: "12-06-2025" },
-  { invoice: "#064", date: "Sun Apr 21 2024 21:29", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 197.0, showDate: "12-06-2025" },
-  { invoice: "#334", date: "Thu Feb 15 2024 01:55", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 970.0, showDate: "12-06-2025" },
-  { invoice: "#754", date: "Wed Nov 22 2023 06:48", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 448.0, showDate: "12-06-2025" },
-  { invoice: "#23", date: "Sun Feb 04 2024 10:56", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 764.0, showDate: "12-06-2025" },
-  { invoice: "#221", date: "Fri Jul 21 2023 19:47:52", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 385.0, showDate: "12-06-2025" },
+  { Application: "#923", date: "Sun Nov 26 2023 11:46", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 719.0, showDate: "12-06-2025",status:"accepted" },
+  { Application: "#043", date: "Wed Aug 09 2023 15:14", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 198.0, showDate: "12-06-2025",status:"accepted"  },
+  { Application: "#042", date: "Thu Nov 23 2023 10:30", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 674.0, showDate: "12-06-2025",status:"rejected"  },
+  { Application: "#023", date: "Tue Sep 12 2023 02:17", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 393.0, showDate: "12-06-2025",status:"rejected"  },
+  { Application: "#098", date: "Sun Nov 26 2023 07:00", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 731.0, showDate: "12-06-2025",status:"accepted"  },
+  { Application: "#064", date: "Sun Apr 21 2024 21:29", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 197.0, showDate: "12-06-2025",status:"rejected"  },
+  { Application: "#334", date: "Thu Feb 15 2024 01:55", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 970.0, showDate: "12-06-2025",status:"rejected"  },
+  { Application: "#754", date: "Wed Nov 22 2023 06:48", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 448.0, showDate: "12-06-2025",status:"accepted"  },
+  { Application: "#23", date: "Sun Feb 04 2024 10:56", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 764.0, showDate: "12-06-2025",status:"rejected"  },
+  { Application: "#221", date: "Fri Jul 21 2023 19:47:52", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 385.0, showDate: "12-06-2025",status:"accepted"  },
 ];
 
 const SponsorShipApplication: React.FC = () => {
@@ -44,25 +46,39 @@ const SponsorShipApplication: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Sponsor Applications</h2>
-        <select className="border px-3 py-2 rounded-md dark:bg-gray-800">
-          {months.map((month, index) => (
-            <option key={index} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
-      </div>
+         <div className="flex items-center gap-2">
+    {/* Search input with icon */}
+    <div className="relative w-full dark:bg-slate-600 dark:text-white rounded-lg">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search by name"
+                className="pl-9 w-full dark:bg-slate-700 text-sm sm:text-base"
+               />
+            </div>
+
+    {/* Month dropdown */}
+    <select className="border px-3 py-2 rounded-md dark:bg-gray-900">
+      {months.map((month, index) => (
+        <option key={index} value={month}>
+          {month}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
 
       <div className="rounded-lg border overflow-x-auto">
         <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-700">
+          <TableHeader className="bg-red-50 dark:bg-gray-800 text-xl ">
             <TableRow>
               <TableHead></TableHead>
-              <TableHead>Invoice</TableHead>
+              <TableHead>Applications</TableHead>
               <TableHead>Sponsor</TableHead>
               <TableHead>Player</TableHead>
-              <TableHead>Amount</TableHead>
+              <TableHead>Sponsor Type</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -76,7 +92,7 @@ const SponsorShipApplication: React.FC = () => {
                 <TableCell>
                   <div className="flex items-center gap-2 font-medium">
                     <i className="far fa-file-lines text-gray-500 text-sm dark:text-gray-400"></i>
-                    <span>Application {app.invoice}</span>
+                    <span>Application {app.Application}</span>
                   </div>
                   <div className="text-sm text-gray-500">{app.date}</div>
                 </TableCell>
@@ -111,6 +127,17 @@ const SponsorShipApplication: React.FC = () => {
 
                 <TableCell>{app.amount.toFixed(2)}</TableCell>
                 <TableCell>{app.showDate}</TableCell>
+                                <TableCell>
+                  <Badge
+                    className={
+                      app.status === "accepted"
+                        ? "bg-green-200 text-green-800 w-20 p-1"
+                        : "bg-yellow-200 text-yellow-800 w-20 p-1"
+                    }
+                  >
+                    {app.status}
+                  </Badge>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>

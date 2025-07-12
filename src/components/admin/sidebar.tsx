@@ -57,25 +57,25 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
       id: 2,
       name: "Bookings",
       icon: "fas fa-calendar-check",
-      path: "/admin/booking",
+      path: "/admin/player/booking",
     },
     {
       id: 3,
       name: "SponsorShip Application ",
       icon: " fas fa-file-signature",
-      path: "/admin/sponsorshipapplication",
+      path: "/admin/player/sponsorshipapplication",
     },
-    {
-      id: 4,
-      name: "Certifications&Award",
-      icon: "fas fa-award ",
-      path: "/admin/certifications&awards",
-    },
+    // {
+    //   id: 4,
+    //   name: "Certifications&Award",
+    //   icon: "fas fa-award ",
+    //   path: "/admin/certifications&awards",
+    // },
     {
       id: 5,
       name: "Reports",
       icon: "fas fa-file-alt",
-      path: "/admin/reports",
+      path: "/admin/player/reports",
     },
 
     {
@@ -96,26 +96,26 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
       id: 2,
       name: "Bookings",
       icon: "fas fa-calendar-check",
-      path: "/admin/expertbooking",
+      path: "/admin/expert/booking",
     },
 
     {
       id: 3,
       name: "Services",
       icon: "fas fa-hands-helping",
-      path: "/admin/expertservices",
+      path: "/admin/expert/services",
     },
-    {
-      id: 4,
-      name: "Certifications&Awards",
-      icon: "fas fa-award ",
-      path: "/admin/expertcetification",
-    },
+    // {
+    //   id: 4,
+    //   name: "Certifications&Awards",
+    //   icon: "fas fa-award ",
+    //   path: "/admin/expertcetification",
+    // },
     {
       id: 5,
       name: "Reports",
       icon: "fas fa-file-alt",
-      path: "/admin/expertreports",
+      path: "/admin/expert/reports",
     },
 
     {

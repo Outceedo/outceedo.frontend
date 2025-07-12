@@ -10,109 +10,124 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import profile from "../../assets/images/avatar.png";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 
 const bookings = [
   {
-    invoice: "#923",
+    Bookings: "#923",
     date: "Sun Nov 26 2023 11:46",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Aarav Sharma",
+    expert: "Dr. Mehta",
     assessment: "Online Video Assessment",
     amount: 719.0,
     status: "Pending",
+    report: true,
   },
   {
-    invoice: "#043",
+    Bookings: "#043",
     date: "Wed Aug 09 2023 15:14",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Ananya Verma",
+    expert: "Coach Ahuja",
     assessment: "1-on-1 Online Training or advice",
     amount: 198.0,
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#042",
+    Bookings: "#042",
     date: "Thu Nov 23 2023 10:30",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Karan Singh",
+    expert: "Expert Sinha",
     assessment: "Online Video Assessment",
     amount: 674.0,
     status: "Completed",
+    report: false,
   },
   {
-    invoice: "#023",
+    Bookings: "#023",
     date: "Tue Sept 12 2023 02:17",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Priya Iyer",
+    expert: "Coach Das",
     assessment: "On-Field Live Assessment",
     amount: 393.0,
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#098",
+    Bookings: "#098",
     date: "Sun Nov 26 2023 07:00",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Rohit Reddy",
+    expert: "Trainer Joshi",
     assessment: "1-on-1 Online Training or advice",
     amount: 731.0,
     status: "Pending",
+    report: false,
   },
   {
-    invoice: "#064",
+    Bookings: "#064",
     date: "Mon Jul 24 2023 21:29",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Sneha Nair",
+    expert: "Mentor Kapoor",
     assessment: "Online Video Assessment",
     amount: 197.0,
     status: "Pending",
+    report: true,
   },
   {
-    invoice: "#334",
+    Bookings: "#334",
     date: "Sat Apr 22 2024 01:55",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Yash Jadhav",
+    expert: "Dr. Menon",
     assessment: "1-on-1 Online Training or advice",
     amount: 970.0,
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#754",
+    Bookings: "#754",
     date: "Wed Nov 22 2023 06:48",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Divya Patil",
+    expert: "Coach Ramesh",
     assessment: "On-Field Live Assessment",
     amount: 448.0,
     status: "Pending",
+    report: false,
   },
   {
-    invoice: "#23",
+    Bookings: "#023",
     date: "Sun Feb 04 2024 10:56",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Neha Kulkarni",
+    expert: "Trainer Raju",
     assessment: "Online Video Assessment",
     amount: 764.0,
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#221",
+    Bookings: "#221",
     date: "Fri Jul 21 2023 19:47:55",
     image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
+    player: "Ajay Mishra",
+    expert: "Coach Iqbal",
     assessment: "On-Field Live Assessment",
     amount: 385.0,
     status: "Pending",
+    report: false,
   },
+  
+ 
 ];
+
 
 const ExpertBooking: React.FC = () => {
   const [months, setMonths] = useState<string[]>([]);
@@ -120,24 +135,13 @@ const ExpertBooking: React.FC = () => {
   useEffect(() => {
     const fetchMonths = () => {
       const monthList = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
+        "January", "February", "March", "April", "May", "June",
+        "July", "August", "September", "October", "November", "December",
       ];
       setTimeout(() => {
         setMonths(monthList);
       }, 500);
     };
-
     fetchMonths();
   }, []);
 
@@ -145,26 +149,38 @@ const ExpertBooking: React.FC = () => {
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Expert Booking</h2>
-        <select className="border px-3 py-2 rounded-md dark:bg-gray-900">
-          {months.map((month, index) => (
-            <option key={index} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <div className="relative w-full dark:bg-slate-600 dark:text-white rounded-lg">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search by name"
+              className="pl-9 w-full dark:bg-slate-700 text-sm sm:text-base"
+            />
+          </div>
+
+          <select className="border px-3 py-2 rounded-md dark:bg-gray-900">
+            {months.map((month, index) => (
+              <option key={index} value={month}>
+                {month}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
         <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-800">
+          <TableHeader className="bg-red-50 dark:bg-gray-800 text-xl">
             <TableRow>
               <TableHead></TableHead>
-              <TableHead>Invoice</TableHead>
+              <TableHead>Bookings</TableHead>
               <TableHead>Expert</TableHead>
-               <TableHead>Player</TableHead>
-              <TableHead>Assessment</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Player</TableHead>
+              <TableHead>Assessment Type</TableHead>
+              <TableHead>Reports</TableHead>
+              <TableHead>Fee</TableHead>
+              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -177,13 +193,12 @@ const ExpertBooking: React.FC = () => {
 
                 <TableCell>
                   <div className="flex items-center gap-2 font-medium">
-                    <i className="far fa-file-lines text-gray-500 text-sm dark:text-gray-400"></i>
-                    <span>Invoice {booking.invoice}</span>
+                    <span>Bookings {booking.Bookings}</span>
                   </div>
                   <div className="text-sm text-gray-500">{booking.date}</div>
                 </TableCell>
 
-               <TableCell>
+                <TableCell>
                   <div className="flex items-center gap-3">
                     <img
                       src={booking.image}
@@ -192,14 +207,10 @@ const ExpertBooking: React.FC = () => {
                     />
                     <div className="flex flex-col">
                       <span className="font-medium">{booking.expert}</span>
-                      <div className="text-sm text-gray-500">
-                        Secondary info
-                      </div>
+                      <div className="text-sm text-gray-500">Secondary info</div>
                     </div>
                   </div>
                 </TableCell>
-
-
 
                 <TableCell>
                   <div className="flex items-center gap-3">
@@ -210,17 +221,37 @@ const ExpertBooking: React.FC = () => {
                     />
                     <div className="flex flex-col">
                       <span className="font-medium">{booking.player}</span>
-                      <div className="text-sm text-gray-500">
-                        Secondary info
-                      </div>
+                      <div className="text-sm text-gray-500">Secondary info</div>
                     </div>
                   </div>
                 </TableCell>
 
-               
-
                 <TableCell>{booking.assessment}</TableCell>
-                <TableCell>{booking.amount.toFixed(2)}</TableCell>
+
+                <TableCell>
+                  {booking.report ? (
+                    <span className="text-green-600 font-medium">Attached</span>
+                  ) : (
+                    <span className="text-gray-400">Not Submitted</span>
+                  )}
+                </TableCell>
+
+                <TableCell>
+                  <div className="flex flex-col">
+                    <span className="text-base font-semibold">
+                      £{booking.amount.toFixed(2)}
+                    </span>
+                    <span
+                      className={`text-sm ${
+                        booking.status === "Completed"
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                      }`}
+                    >
+                      {booking.status === "Completed" ? "Paid" : "Pending"}
+                    </span>
+                  </div>
+                </TableCell>
 
                 <TableCell>
                   <Badge

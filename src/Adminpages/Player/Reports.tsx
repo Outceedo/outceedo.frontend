@@ -9,18 +9,18 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import profile from "../../assets/images/avatar.png";
-
+import { Badge } from "@/components/ui/badge";
 const reports = [
-  { invoice: "#923", date: "Sun Nov 26 2023 11:46", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025" },
-  { invoice: "#043", date: "Wed Aug 09 2023 15:14", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "1-on-1 Online Training or advice", showDate: "12-06-2025" },
-  { invoice: "#042", date: "Thu Nov 23 2023 18:00", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025" },
-  { invoice: "#023", date: "Tue Sep 12 2023 02:17", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "On-Field Live Assessment", showDate: "12-06-2025" },
-  { invoice: "#098", date: "Sun Nov 26 2023 07:03", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "1-on-1 Online Training or advice", showDate: "12-06-2025" },
-  { invoice: "#064", date: "Sun Apr 21 2024 21:29", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025" },
-  { invoice: "#334", date: "Thu Feb 15 2024 01:55", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "1-on-1 Online Training or advice", showDate: "12-06-2025" },
-  { invoice: "#754", date: "Wed Nov 22 2023 06:48", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "On-Field Live Assessment", showDate: "12-06-2025" },
-  { invoice: "#23", date: "Sun Feb 04 2024 10:55:56", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025" },
-  { invoice: "#221", date: "Fri Jul 21 2023 19:47:52", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "On-Field Live Assessment", showDate: "12-06-2025" },
+  { Report: "#923", date: "Sun Nov 26 2023 11:46", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025",status: "pending" },
+  { Report: "#043", date: "Wed Aug 09 2023 15:14", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "1-on-1 Online Training or advice", showDate: "12-06-2025",status: "completed" },
+  { Report: "#042", date: "Thu Nov 23 2023 18:00", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025",status: "pending" },
+  { Report: "#023", date: "Tue Sep 12 2023 02:17", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "On-Field Live Assessment", showDate: "12-06-2025",status: "completed" },
+  { Report: "#098", date: "Sun Nov 26 2023 07:03", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "1-on-1 Online Training or advice", showDate: "12-06-2025",status: "pending"},
+  { Report: "#064", date: "Sun Apr 21 2024 21:29", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025",status: "completed" },
+  { Report: "#334", date: "Thu Feb 15 2024 01:55", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "1-on-1 Online Training or advice", showDate: "12-06-2025",status: "completed" },
+  { Report: "#754", date: "Wed Nov 22 2023 06:48", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "On-Field Live Assessment", showDate: "12-06-2025",status:"pending" },
+  { Report: "#23", date: "Sun Feb 04 2024 10:55:56", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "Online Video Assessment", showDate: "12-06-2025",status: "completed" },
+  { Report: "#221", date: "Fri Jul 21 2023 19:47:52", expert: "Text cell lg", image: profile, player: "Text cell lg", assessment: "On-Field Live Assessment", showDate: "12-06-2025",status: "completed" },
 ];
 
 const Reports: React.FC = () => {
@@ -32,14 +32,15 @@ const Reports: React.FC = () => {
 
       <div className="rounded-lg border overflow-x-auto">
         <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-800">
+          <TableHeader className="bg-red-50 dark:bg-gray-800 text-xl">
             <TableRow>
               <TableHead></TableHead>
-              <TableHead>Invoice</TableHead>
+              <TableHead>Reports</TableHead>
               <TableHead>Expert</TableHead>
               <TableHead>Player</TableHead>
-              <TableHead>Assessment</TableHead>
+              <TableHead>Assessment Type</TableHead>
               <TableHead>Date</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -53,7 +54,7 @@ const Reports: React.FC = () => {
                 <TableCell>
                   <div className="flex items-center gap-2 font-medium">
                     <i className="far fa-file-lines text-gray-500 text-sm dark:text-gray-400"></i>
-                    <span>Report {report.invoice}</span>
+                    <span>Report {report.Report}</span>
                   </div>
                   <div className="text-sm text-gray-500">{report.date}</div>
                 </TableCell>
@@ -88,6 +89,17 @@ const Reports: React.FC = () => {
 
                 <TableCell>{report.assessment}</TableCell>
                 <TableCell>{report.showDate}</TableCell>
+               <TableCell>
+                  <Badge
+                    className={
+                      report.status === "completed"
+                        ? "bg-green-200 text-green-800 w-20 p-1"
+                        : "bg-yellow-200 text-yellow-800 w-20 p-1"
+                    }
+                  >
+                    {report.status}
+                  </Badge>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
