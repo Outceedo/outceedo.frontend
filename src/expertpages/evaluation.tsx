@@ -5,12 +5,32 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
+import axios from "axios";
+import Swal from "sweetalert2";
 
-// Attributes and subskills config
 interface Attribute {
   label: string;
   color: string;
   subskills: string[];
+}
+
+interface CategoryData {
+  id: string;
+  name: string;
+  description: string;
+}
+
+type AttributeScore = {
+  percentage: number;
+  subskills: Record<string, number>;
+};
+
+interface FormState {
+  attributes: Record<string, AttributeScore>;
+  rating: number;
+  strengths: string;
+  improvement: string;
+  verdict: string;
 }
 
 const attributes: Attribute[] = [
@@ -66,19 +86,6 @@ const attributes: Attribute[] = [
   },
 ];
 
-type AttributeScore = {
-  percentage: number;
-  subskills: Record<string, number>;
-};
-
-interface FormState {
-  attributes: Record<string, AttributeScore>;
-  rating: number;
-  strengths: string;
-  improvement: string;
-  verdict: string;
-}
-
 const initialAttributeState = () =>
   Object.fromEntries(
     attributes.map((attr) => [
@@ -97,7 +104,6 @@ export default function AssessmentEvaluationForm({
   onSubmit?: (data: FormState) => void;
   onBack?: () => void;
 }) {
-  // Step: 0 = first attribute, ... last attribute, then rating/review
   const [step, setStep] = useState(0);
   const [form, setForm] = useState<FormState>({
     attributes: initialAttributeState(),
@@ -107,21 +113,64 @@ export default function AssessmentEvaluationForm({
     verdict: "",
   });
 
-  // Player info and service name
   const [playerName, setPlayerName] = useState<string>("");
   const [playerPhoto, setPlayerPhoto] = useState<string>("");
   const [serviceName, setServiceName] = useState<string>("");
+
+  const [categories, setCategories] = useState<CategoryData[]>([]);
+  const [categoryIdMap, setCategoryIdMap] = useState<Record<string, string>>(
+    {}
+  );
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [pendingStep, setPendingStep] = useState<number | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [submitLoading, setSubmitLoading] = useState(false);
+  const [categoriesLoaded, setCategoriesLoaded] = useState(false);
+
+  const totalSteps = attributes.length + 2;
 
   useEffect(() => {
     setPlayerName(localStorage.getItem("playerName") || "");
     setPlayerPhoto(localStorage.getItem("playerPhoto") || "");
     setServiceName(localStorage.getItem("serviceName") || "");
+    fetchCategories();
   }, []);
 
-  // Stepper: All attributes + 2 (rating, review)
-  const totalSteps = attributes.length + 2;
+  const fetchCategories = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_PORT}/api/v1/user/reports/categories/list`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-  // Calculate average for attribute based on subskills
+      if (response.status === 200 && response.data) {
+        const result = response.data;
+
+        if (result.data && Array.isArray(result.data)) {
+          setCategories(result.data);
+
+          const mapping: Record<string, string> = {};
+
+          result.data.forEach((cat: CategoryData) => {
+            mapping[cat.name] = cat.id;
+          });
+
+          setCategoryIdMap(mapping);
+          setCategoriesLoaded(true);
+        }
+      }
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error("Axios error details:", error.response?.data);
+      }
+    }
+  };
+
   const calculateAverage = (subskills: Record<string, number>) => {
     const scores = Object.values(subskills).map((n) => (isNaN(n) ? 0 : n));
     if (scores.length === 0) return 0;
@@ -129,9 +178,7 @@ export default function AssessmentEvaluationForm({
     return Math.round(sum / scores.length);
   };
 
-  // When subskills change, update main attribute automatically
   useEffect(() => {
-    // Only update on subskill change
     setForm((prev) => {
       const updatedAttributes: Record<string, AttributeScore> = {
         ...prev.attributes,
@@ -145,10 +192,8 @@ export default function AssessmentEvaluationForm({
       });
       return { ...prev, attributes: updatedAttributes };
     });
-    // eslint-disable-next-line
-  }, [step]); // recalc on step change (so when subskills are changed and you go to next/prev step, it updates)
+  }, [step]);
 
-  // Also recalc main value when subskills are changed
   const handleSubskillChange = (attr: string, sub: string, val: number) => {
     setForm((prev) => {
       const newSubskills = {
@@ -170,7 +215,6 @@ export default function AssessmentEvaluationForm({
     });
   };
 
-  // Handle textareas/inputs for review
   const handleText = (
     e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
   ) => {
@@ -180,23 +224,18 @@ export default function AssessmentEvaluationForm({
     }));
   };
 
-  // Step validation
   const validateStep = () => {
-    // Steps 0..attributes.length-1: main attribute + subskills
     if (step < attributes.length) {
       const attr = attributes[step];
-      // Only check subskills
       for (const sub of attr.subskills) {
         const subScore = form.attributes[attr.label].subskills[sub];
         if (subScore < 0 || subScore > 100 || isNaN(subScore)) return false;
       }
       return true;
     }
-    // Step for rating (0-5 stars, can be 0)
     if (step === attributes.length) {
       return form.rating >= 0 && form.rating <= 5;
     }
-    // Step for review
     if (step === attributes.length + 1) {
       return (
         form.strengths.trim().length > 0 &&
@@ -207,232 +246,500 @@ export default function AssessmentEvaluationForm({
     return true;
   };
 
+  const getCategoryId = (attrLabel: string): string | null => {
+    const categoryId = categoryIdMap[attrLabel];
+
+    if (categoryId) {
+      return categoryId;
+    }
+
+    const matchingCategory = categories.find((cat) => cat.name === attrLabel);
+    if (matchingCategory) {
+      return matchingCategory.id;
+    }
+
+    return null;
+  };
+
+  const postAttributeStep = async (attrLabel: string) => {
+    const playerId = localStorage.getItem("playerId");
+    const bookingId = localStorage.getItem("bookingId");
+    const token = localStorage.getItem("token");
+
+    if (!categoriesLoaded || categories.length === 0) {
+      alert(
+        "Categories are still loading. Please wait a moment and try again."
+      );
+      return false;
+    }
+
+    const categoryId = getCategoryId(attrLabel);
+
+    if (!playerId || !bookingId || !categoryId || !token) {
+      alert(`Missing required data. Please check:
+        - Player ID: ${playerId ? "✓ Found" : "✗ Missing"}
+        - Booking ID: ${bookingId ? "✓ Found" : "✗ Missing"}
+        - Category ID for ${attrLabel}: ${categoryId ? "✓ Found" : "✗ Missing"}
+        - Auth Token: ${token ? "✓ Found" : "✗ Missing"}
+        
+        ${
+          !categoryId
+            ? `Available categories: ${categories
+                .map((c) => c.name)
+                .join(", ")}`
+            : ""
+        }`);
+      return false;
+    }
+
+    const formattedAttributes = form.attributes[attrLabel].subskills;
+    const overallScore = form.attributes[attrLabel].percentage;
+
+    const payload = {
+      playerId,
+      bookingId,
+      categoryId,
+      attributes: formattedAttributes,
+      overallScore: overallScore,
+    };
+
+    try {
+      setLoading(true);
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_PORT}/api/v1/user/reports`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setLoading(false);
+      return true;
+    } catch (error) {
+      setLoading(false);
+
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        alert(`API Error: ${errorMessage}`);
+      } else {
+        alert(
+          `Network error: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
+      }
+      return false;
+    }
+  };
+
   const nextStep = () => {
-    if (validateStep()) setStep((s) => Math.min(s + 1, totalSteps - 1));
+    if (!validateStep()) {
+      alert("Please fill in all required fields with valid values (0-100).");
+      return;
+    }
+
+    if (!categoriesLoaded && step < attributes.length) {
+      alert("Categories are still loading. Please wait a moment.");
+      return;
+    }
+
+    if (step < attributes.length) {
+      setPendingStep(step + 1);
+      setShowConfirm(true);
+    } else {
+      setStep((s) => Math.min(s + 1, totalSteps - 1));
+    }
   };
 
   const prevStep = () => setStep((s) => Math.max(s - 1, 0));
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleConfirm = async () => {
+    if (pendingStep !== null && step < attributes.length) {
+      const attrLabel = attributes[step].label;
+      const success = await postAttributeStep(attrLabel);
+
+      if (success) {
+        setStep(pendingStep);
+        setShowConfirm(false);
+        setPendingStep(null);
+      } else {
+        setShowConfirm(false);
+        setPendingStep(null);
+      }
+    }
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setPendingStep(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (validateStep()) onSubmit?.(form);
+
+    if (!validateStep()) {
+      alert("Please fill in all required fields.");
+      return;
+    }
+
+    setSubmitLoading(true);
+
+    try {
+      const playerId = localStorage.getItem("playerId");
+      const bookingId = localStorage.getItem("bookingId");
+      const token = localStorage.getItem("token");
+
+      if (!playerId || !bookingId || !token) {
+        alert("Missing required data for final submission.");
+        setSubmitLoading(false);
+        return;
+      }
+
+      const payload = {
+        playerId,
+        bookingId,
+        strengths: form.strengths,
+        improvements: form.improvement,
+        verdict: form.verdict,
+        rating: form.rating,
+      };
+
+      const response = await axios.post(
+        `${import.meta.env.VITE_PORT}/api/v1/user/reports/review`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      onSubmit?.(form);
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        const errorMessage = error.response?.data?.message || error.message;
+        alert(`Failed to submit evaluation: ${errorMessage}`);
+      } else {
+        alert("Failed to submit evaluation. Please try again.");
+      }
+    } finally {
+      setSubmitLoading(false);
+      Swal.fire({
+        icon: "success",
+        title: "Assessment Report submitter successfully",
+        timer: 2000,
+      });
+      window.location.reload();
+    }
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="w-3xl mx-auto p-6 bg-white rounded-xl shadow"
-    >
-      {/* Player display */}
-      <div className="flex items-center gap-4 mb-8">
-        {playerPhoto ? (
-          <img
-            src={playerPhoto}
-            alt={playerName}
-            className="w-14 h-14 object-cover rounded-full border"
-          />
-        ) : (
-          <div className="w-14 h-14 bg-gray-200 rounded-full flex items-center justify-center text-2xl text-gray-500">
-            <span>👤</span>
+    <>
+      {showConfirm && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/40 bg-opacity-50 z-50">
+          <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full mx-4">
+            <div className="text-xl font-bold mb-4 text-gray-900">
+              Confirm Step Submission
+            </div>
+            <p className="mb-6 text-gray-600">
+              Once submitted, this attribute step cannot be edited. Are you sure
+              you want to continue?
+            </p>
+            <div className="flex justify-end gap-3">
+              <Button
+                onClick={handleCancel}
+                variant="outline"
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleConfirm}
+                disabled={loading}
+                className="bg-red-500 text-white hover:bg-red-600"
+              >
+                {loading ? "Submitting..." : "Submit Step"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <form
+        onSubmit={handleSubmit}
+        className="w-4xl mx-auto px-10 py-5 bg-white rounded-xl shadow-lg max-h-screen overflow-y-auto"
+      >
+        <div className="flex items-center gap-4 mb-2">
+          {playerPhoto ? (
+            <img
+              src={playerPhoto}
+              alt={playerName}
+              className="w-16 h-16 object-cover rounded-full border-2 border-gray-200"
+            />
+          ) : (
+            <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center text-2xl text-gray-500">
+              <span>👤</span>
+            </div>
+          )}
+          <div className="flex flex-col">
+            <span className="text-xl font-semibold text-gray-900">
+              {playerName || "Player"}
+            </span>
+            <span className="text-sm text-gray-500">
+              {serviceName ? serviceName : "Player Assessment Report"}
+            </span>
+          </div>
+        </div>
+
+        {!categoriesLoaded && (
+          <div className="mb-4 p-3 bg-yellow-100 border border-yellow-400 rounded text-yellow-800">
+            Loading categories... Please wait before proceeding.
           </div>
         )}
-        <div className="flex flex-col">
-          <span className="text-lg font-semibold">
-            {playerName || "Player"}
-          </span>
-          <span className="text-sm text-gray-500">
-            {serviceName ? serviceName : "Player Assessment Report"}
-          </span>
+
+        <div className="mb-4">
+          <div className="flex justify-between text-sm text-gray-500 mb-2">
+            <span>
+              Step {step + 1} of {totalSteps}
+            </span>
+            <span>{Math.round(((step + 1) / totalSteps) * 100)}% Complete</span>
+          </div>
+          <Progress value={((step + 1) / totalSteps) * 100} className="h-2" />
         </div>
-      </div>
-      {/* Stepper */}
-      <div className="flex justify-between items-center mb-8">
-        {attributes.map((attr, idx) => (
-          <div key={attr.label} className="flex flex-col items-center flex-1">
+
+        <div className="flex justify-between items-center mb-3 overflow-x-auto">
+          {attributes.map((attr, idx) => (
             <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                step === idx
+              key={attr.label}
+              className="flex flex-col items-center flex-1 min-w-0"
+            >
+              <div
+                className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm transition-colors ${
+                  step === idx
+                    ? "bg-red-500"
+                    : step > idx
+                    ? "bg-green-500"
+                    : "bg-gray-300"
+                }`}
+              >
+                {idx + 1}
+              </div>
+              <span className="mt-2 text-xs text-center truncate w-full">
+                {attr.label}
+              </span>
+            </div>
+          ))}
+          <div className="flex flex-col items-center flex-1">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm transition-colors ${
+                step === attributes.length
                   ? "bg-red-500"
-                  : step > idx
+                  : step > attributes.length
                   ? "bg-green-500"
                   : "bg-gray-300"
               }`}
             >
-              {idx + 1}
+              {attributes.length + 1}
             </div>
-            <span className="mt-2 text-xs">{attr.label}</span>
+            <span className="mt-2 text-xs">Rating</span>
           </div>
-        ))}
-        <div className="flex flex-col items-center flex-1">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-              step === attributes.length
-                ? "bg-red-500"
-                : step > attributes.length
-                ? "bg-green-500"
-                : "bg-gray-300"
-            }`}
-          >
-            {attributes.length + 1}
-          </div>
-          <span className="mt-2 text-xs">Rating</span>
-        </div>
-        <div className="flex flex-col items-center flex-1">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-              step === attributes.length + 1 ? "bg-red-500" : "bg-gray-300"
-            }`}
-          >
-            {attributes.length + 2}
-          </div>
-          <span className="mt-2 text-xs">Review</span>
-        </div>
-      </div>
-
-      {/* Attribute + Subskills (steps 0 ... attributes.length-1) */}
-      {step < attributes.length && (
-        <Card className="p-6">
-          <h2 className="text-lg font-bold mb-6">{attributes[step].label}</h2>
-          <Label className="font-semibold">{attributes[step].label} %</Label>
-          <div className="flex items-center gap-4 mt-2 mb-6">
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={form.attributes[attributes[step].label].percentage}
-              readOnly
-              disabled
-              className="flex-1 opacity-70"
-            />
-            <span
-              className="w-12 text-center font-bold"
-              style={{ color: attributes[step].color }}
+          <div className="flex flex-col items-center flex-1">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm transition-colors ${
+                step === attributes.length + 1 ? "bg-red-500" : "bg-gray-300"
+              }`}
             >
-              {form.attributes[attributes[step].label].percentage}%
-            </span>
+              {attributes.length + 2}
+            </div>
+            <span className="mt-2 text-xs">Review</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {attributes[step].subskills.map((sub) => (
-              <div key={sub}>
-                <label className="text-sm">{sub}</label>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={form.attributes[attributes[step].label].subskills[sub]}
-                  onChange={(e) =>
-                    handleSubskillChange(
-                      attributes[step].label,
-                      sub,
-                      parseInt(e.target.value)
-                    )
-                  }
-                  className="w-full border rounded p-2 mt-1"
-                  placeholder="Score (%)"
+        </div>
+
+        {step < attributes.length && (
+          <Card className="px-6 -mb-6">
+            <h2 className="text-xl font-bold text-gray-900">
+              {attributes[step].label}
+            </h2>
+
+            <div className="">
+              <Label className="text-md font-semibold mb-2 block">
+                Overall {attributes[step].label} Score
+              </Label>
+              <div className="flex items-center gap-4">
+                <div className="flex-1">
+                  <Progress
+                    value={form.attributes[attributes[step].label].percentage}
+                    className="h-3"
+                  />
+                </div>
+                <span
+                  className="text-md font-bold min-w-[60px] text-center"
+                  style={{ color: attributes[step].color }}
+                >
+                  {form.attributes[attributes[step].label].percentage}%
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {attributes[step].subskills.map((sub) => (
+                <div key={sub} className="space-y-2">
+                  <Label className="text-sm font-medium">{sub}</Label>
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={
+                      form.attributes[attributes[step].label].subskills[sub] ||
+                      ""
+                    }
+                    onChange={(e) =>
+                      handleSubskillChange(
+                        attributes[step].label,
+                        sub,
+                        parseInt(e.target.value) || 0
+                      )
+                    }
+                    className="w-full border border-gray-300 rounded-md px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    placeholder="0-100"
+                    required
+                  />
+                  <Progress
+                    value={
+                      form.attributes[attributes[step].label].subskills[sub] ||
+                      0
+                    }
+                    className="h-2"
+                  />
+                </div>
+              ))}
+            </div>
+          </Card>
+        )}
+
+        {step === attributes.length && (
+          <Card className="p-6">
+            <h2 className="text-2xl font-bold mb-6 text-gray-900">
+              Overall Rating
+            </h2>
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+              <Label className="text-lg font-medium">Rate the Player:</Label>
+              <div className="flex items-center gap-2">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <button
+                    type="button"
+                    key={i}
+                    onClick={() => setForm((prev) => ({ ...prev, rating: i }))}
+                    className="focus:outline-none hover:scale-110 transition-transform"
+                  >
+                    <Star
+                      fill={i <= form.rating ? "#FACC15" : "none"}
+                      stroke="#FACC15"
+                      className="w-10 h-10"
+                    />
+                  </button>
+                ))}
+                <span className="ml-4 text-2xl font-bold text-gray-900">
+                  {form.rating} / 5
+                </span>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {step === attributes.length + 1 && (
+          <Card className="px-6 py-2">
+            <h2 className="text-lg font-bold text-gray-900">
+              Assessment Review
+            </h2>
+            <div className="space-y-2">
+              <div>
+                <Label className="text-md font-medium mb-2 block">
+                  Strengths
+                </Label>
+                <Textarea
+                  name="strengths"
+                  value={form.strengths}
+                  onChange={handleText}
                   required
-                />
-                <Progress
-                  value={form.attributes[attributes[step].label].subskills[sub]}
-                  className="h-1 bg-gray-200 [&>div]:bg-green-500"
+                  className="w-full min-h-[50px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Describe the player's key strengths and standout qualities..."
                 />
               </div>
-            ))}
-          </div>
-        </Card>
-      )}
-
-      {/* Overall Rating */}
-      {step === attributes.length && (
-        <Card className="p-6">
-          <h2 className="text-lg font-bold mb-6">Overall Rating</h2>
-          <div className="flex items-center gap-4">
-            <Label className="text-lg">Rate the Player (0-5):</Label>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <button
-                type="button"
-                key={i}
-                onClick={() => setForm((prev) => ({ ...prev, rating: i }))}
-                className="focus:outline-none"
-              >
-                <Star
-                  fill={i <= form.rating ? "#FACC15" : "none"}
-                  stroke="#FACC15"
-                  className="w-8 h-8"
+              <div>
+                <Label className="text-md font-medium mb-2 block">
+                  Areas for Improvement
+                </Label>
+                <Textarea
+                  name="improvement"
+                  value={form.improvement}
+                  onChange={handleText}
+                  required
+                  className="w-full min-h-[50px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Identify specific areas where the player can improve..."
                 />
-              </button>
-            ))}
-            <span className="ml-3 text-xl font-bold">{form.rating} / 5</span>
-          </div>
-        </Card>
-      )}
+              </div>
+              <div>
+                <Label className="text-md font-medium mb-2 block">
+                  Final Verdict
+                </Label>
+                <Textarea
+                  name="verdict"
+                  value={form.verdict}
+                  onChange={handleText}
+                  required
+                  className="w-full min-h-[90px] p-4 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                  placeholder="Provide your overall assessment and recommendations..."
+                />
+              </div>
+            </div>
+          </Card>
+        )}
 
-      {/* Review */}
-      {step === attributes.length + 1 && (
-        <Card className="px-6">
-          <h2 className="text-lg font-bold">Assessment Review</h2>
-          <div className="">
-            <Label>Strengths</Label>
-            <Textarea
-              name="strengths"
-              value={form.strengths}
-              onChange={handleText}
-              required
-              className="w-full mt-1"
-              placeholder="Describe player's strengths"
-            />
-          </div>
-          <div className="">
-            <Label>Areas for Improvement</Label>
-            <Textarea
-              name="improvement"
-              value={form.improvement}
-              onChange={handleText}
-              required
-              className="w-full mt-1"
-              placeholder="Describe areas for improvement"
-            />
-          </div>
-          <div className="">
-            <Label>Verdict</Label>
-            <Textarea
-              name="verdict"
-              value={form.verdict}
-              onChange={handleText}
-              required
-              className="w-full mt-1"
-              placeholder="Final verdict"
-            />
-          </div>
-        </Card>
-      )}
-
-      {/* Stepper Controls */}
-      <div className="flex justify-between mt-8">
-        <Button
-          type="button"
-          onClick={prevStep}
-          disabled={step === 0}
-          className="flex items-center gap-2"
-          variant="outline"
-        >
-          <ChevronLeft /> Back
-        </Button>
-        {step < totalSteps - 1 && (
+        <div className="flex justify-between items-center mt-8 mb-6">
           <Button
             type="button"
-            onClick={nextStep}
-            disabled={!validateStep()}
-            className="flex items-center gap-2"
+            onClick={onBack || prevStep}
+            disabled={step === 0}
+            className="flex items-center gap-2 px-6 py-3"
+            variant="outline"
           >
-            Next <ChevronRight />
+            <ChevronLeft className="w-4 h-4" />
+            {step === 0 ? "Exit" : "Back"}
           </Button>
-        )}
-        {step === totalSteps - 1 && (
-          <Button type="submit" className="bg-red-500 text-white">
-            Submit Evaluation
-          </Button>
-        )}
-      </div>
-    </form>
+
+          {step < totalSteps - 1 && (
+            <Button
+              type="button"
+              onClick={nextStep}
+              disabled={
+                !validateStep() ||
+                loading ||
+                (!categoriesLoaded && step < attributes.length)
+              }
+              className="flex items-center gap-2 px-6 py-3 bg-red-500 text-white hover:bg-red-600"
+            >
+              {loading ? "Saving..." : "Next"}
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          )}
+
+          {step === totalSteps - 1 && (
+            <Button
+              type="submit"
+              disabled={!validateStep() || submitLoading}
+              className="px-6 py-3 bg-green-600 text-white hover:bg-green-700"
+            >
+              {submitLoading ? "Submitting..." : "Submit Evaluation"}
+            </Button>
+          )}
+        </div>
+      </form>
+    </>
   );
 }

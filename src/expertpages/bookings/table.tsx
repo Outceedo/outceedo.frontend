@@ -24,6 +24,9 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import AssessmentEvaluationForm from "../evaluation";
 import { FaCross, FaWindowClose } from "react-icons/fa";
+import { X } from "lucide-react";
+import axios from "axios";
+import AssessmentReport from "./AssessmentReport";
 
 interface Expert {
   id: string;
@@ -86,6 +89,33 @@ interface BookingTableProps {
   onReviewClick: (bookingId: string) => void;
 }
 
+interface ReportData {
+  category: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  id: string;
+  bookingId: string;
+  attributes: Record<string, any>;
+  overallScore: number;
+  assessedAt: string;
+  player: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    photo: string;
+  };
+  expert: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    photo: string;
+  };
+}
+
 const BookingTable: React.FC<BookingTableProps> = ({
   bookings,
   loading,
@@ -95,10 +125,13 @@ const BookingTable: React.FC<BookingTableProps> = ({
   onRescheduleBooking,
   onPlayerClick,
   onVideoClick,
-  onReviewClick,
 }) => {
   const [showEvalModal, setShowEvalModal] = useState(false);
   const [evalBooking, setEvalBooking] = useState<Booking | null>(null);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string>("");
+  const [reportData, setReportData] = useState<ReportData[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const getServiceType = (booking: Booking): string => {
     if (booking.service?.serviceId === "1") {
@@ -212,11 +245,62 @@ const BookingTable: React.FC<BookingTableProps> = ({
     return booking.service?.service?.id === "1" && booking.recordedVideo;
   };
 
+  const fetchReportData = async (bookingId: string) => {
+    setReportLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_PORT}/api/v1/user/reports/booking/${bookingId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200 && response.data) {
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          setReportData(response.data);
+          return true;
+        } else {
+          setReportData([]);
+          return false;
+        }
+      }
+      return false;
+    } catch (error) {
+      setReportData([]);
+      return false;
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const handleReportClick = async (
+    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
+    booking: Booking
+  ) => {
+    e.stopPropagation();
+    setSelectedBookingId(booking.id);
+
+    const success = await fetchReportData(booking.id);
+    if (success) {
+      setIsReportOpen(true);
+    } else {
+      handleOpenEvaluation(e, booking);
+    }
+  };
+
+  const closeReportModal = () => {
+    setIsReportOpen(false);
+    setSelectedBookingId("");
+    setReportData([]);
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading bookings...</div>;
   }
 
-  // Modal for Evaluation Form
   const handleOpenEvaluation = (
     e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
     booking: Booking
@@ -231,6 +315,12 @@ const BookingTable: React.FC<BookingTableProps> = ({
     if (booking.service?.service?.name) {
       localStorage.setItem("serviceName", booking.service.service.name);
     }
+    if (booking.player?.id) {
+      localStorage.setItem("playerId", booking.player.id);
+    }
+    if (booking.id) {
+      localStorage.setItem("bookingId", booking.id);
+    }
     setEvalBooking(booking);
     setShowEvalModal(true);
   };
@@ -242,7 +332,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
 
   return (
     <>
-      {/* Modal for Assessment Evaluation Form */}
       {showEvalModal && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center"
@@ -252,8 +341,8 @@ const BookingTable: React.FC<BookingTableProps> = ({
           }}
         >
           <div className="absolute inset-0" onClick={handleCloseEvalModal} />
-          <div className="relative z-10 bg-white rounded-xl max-w-3xl w-full mx-4 shadow-xl p-0 flex flex-col">
-            <div className="flex justify-end p-2">
+          <div className="relative z-10 bg-white rounded-xl max-w-4xl w-full mx-4 shadow-xl p-0 flex flex-col">
+            <div className="flex justify-end px-2">
               <Button
                 variant="ghost"
                 size="icon"
@@ -267,6 +356,28 @@ const BookingTable: React.FC<BookingTableProps> = ({
           </div>
         </div>
       )}
+
+      {isReportOpen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex justify-between items-center p-4 border-b">
+            <h2 className="text-lg font-semibold">Assessment Report</h2>
+            <button onClick={closeReportModal}>
+              <X className="w-6 h-6 cursor-pointer text-gray-800 hover:text-black" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-4">
+            {reportLoading ? (
+              <div className="text-center py-8">Loading report...</div>
+            ) : (
+              <AssessmentReport
+                bookingId={selectedBookingId}
+                reportData={reportData}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
@@ -436,7 +547,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                       size="icon"
                       className="h-8 w-8"
                       title="Create/View Report"
-                      onClick={(e) => handleOpenEvaluation(e, booking)}
+                      onClick={(e) => handleReportClick(e, booking)}
                     >
                       <FontAwesomeIcon icon={faFileAlt} />
                     </Button>
