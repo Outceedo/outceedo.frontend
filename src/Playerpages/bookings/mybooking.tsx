@@ -29,7 +29,7 @@ import {
   faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
-import AssessmentReport from "../../Playerpages/AssessmentReport";
+import AssessmentReport from "./AssessmentReport";
 import { ArrowLeft, X } from "lucide-react";
 import profile from "../../assets/images/avatar.png";
 import axios from "axios";

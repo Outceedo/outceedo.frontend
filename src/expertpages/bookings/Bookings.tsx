@@ -795,7 +795,12 @@ const BookingExpertside: React.FC = () => {
     if (booking.player?.photo) {
       localStorage.setItem("playerPhoto", booking.player.photo);
     }
-    navigate("/expert/evaluate");
+    if (booking.player?.id) {
+      localStorage.setItem("playerId", booking.player.id);
+    }
+    if (booking.id) {
+      localStorage.setItem("bookingId", booking.id);
+    }
   };
 
   const getActionBadgeStyle = (status: string) => {
@@ -1292,13 +1297,9 @@ const BookingExpertside: React.FC = () => {
           <p className="text-2xl font-bold">{bookings.length}</p>
         </div>
         <div className="bg-green-50 p-4 rounded-lg border border-green-100">
-          <h3 className="font-medium text-green-800">Accepted</h3>
+          <h3 className="font-medium text-green-800">Scheduled</h3>
           <p className="text-2xl font-bold">
-            {
-              bookings.filter((b) =>
-                ["CONFIRMED", "ACCEPTED"].includes(b.status)
-              ).length
-            }
+            {bookings.filter((b) => ["SCHEDULED"].includes(b.status)).length}
           </p>
         </div>
         <div className="bg-red-50 p-4 rounded-lg border border-red-100">

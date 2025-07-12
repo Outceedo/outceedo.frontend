@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faVideo,
@@ -22,7 +22,11 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
+import axios from "axios";
 import profile from "../../assets/images/avatar.png";
+import AssessmentReport from "./AssessmentReport";
+import Swal from "sweetalert2";
 
 interface Expert {
   id: string;
@@ -76,6 +80,33 @@ interface Booking {
   paymentIntentClientSecret?: string;
 }
 
+interface ReportData {
+  category: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  id: string;
+  bookingId: string;
+  attributes: Record<string, any>;
+  overallScore: number;
+  assessedAt: string;
+  player: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    photo: string;
+  };
+  expert: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    username: string;
+    photo: string;
+  };
+}
+
 interface BookingsTableProps {
   bookings: Booking[];
   visibilityMap: { [id: string]: boolean };
@@ -91,13 +122,15 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
   visibilityMap,
   onOpenBookingDetails,
   onOpenVideoModal,
-  onOpenReportModal,
   onToggleVisibility,
   onReviewClick,
 }) => {
   const navigate = useNavigate();
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string>("");
+  const [reportData, setReportData] = useState<ReportData[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
 
-  // Utility functions moved from parent component
   const truncateText = (text: string, maxLength: number = 15) => {
     if (!text) return "";
     if (text.length <= maxLength) return text;
@@ -232,161 +265,237 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
     navigate("/player/exdetails");
   };
 
+  const fetchReportData = async (bookingId: string) => {
+    setReportLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_PORT}/api/v1/user/reports/booking/${bookingId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200 && response.data) {
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          setReportData(response.data);
+          return true;
+        } else {
+          setReportData([]);
+          return false;
+        }
+      }
+      return false;
+    } catch (error) {
+      setReportData([]);
+      return false;
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const handleReportClick = async (bookingId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedBookingId(bookingId);
+
+    const success = await fetchReportData(bookingId);
+    if (success) {
+      setIsReportOpen(true);
+    } else {
+      Swal.fire({
+        icon: "info",
+        title: "No Report Available",
+        text: "There is no assessment report available for this booking yet.",
+      });
+    }
+  };
+
+  const closeReportModal = () => {
+    setIsReportOpen(false);
+    setSelectedBookingId("");
+    setReportData([]);
+  };
+
   return (
-    <div className="rounded-md border overflow-x-auto">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[80px]">ID</TableHead>
-            <TableHead className="w-[140px]">Expert</TableHead>
-            <TableHead className="w-[120px]">Date</TableHead>
-            <TableHead className="w-[140px]">Service</TableHead>
-            <TableHead className="w-[80px]">Price</TableHead>
-            <TableHead className="w-[120px]">Status</TableHead>
-            <TableHead className="w-[100px]">Payment</TableHead>
-            <TableHead className="text-center w-[70px]">Video</TableHead>
-            <TableHead className="text-center w-[70px]">Report</TableHead>
-            <TableHead className="text-center w-[70px]">Review</TableHead>
-            <TableHead className="text-center w-[70px]">View</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {bookings.length === 0 ? (
+    <>
+      {isReportOpen && (
+        <div className="fixed inset-0 z-50 bg-white flex flex-col">
+          <div className="flex justify-between items-center p-4 border-b">
+            <h2 className="text-lg font-semibold">Assessment Report</h2>
+            <button onClick={closeReportModal}>
+              <X className="w-6 h-6 cursor-pointer text-gray-800 hover:text-black" />
+            </button>
+          </div>
+          <div className="flex-1 overflow-auto p-4">
+            {reportLoading ? (
+              <div className="text-center py-8">Loading report...</div>
+            ) : (
+              <AssessmentReport
+                bookingId={selectedBookingId}
+                reportData={reportData}
+              />
+            )}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-md border overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell colSpan={10} className="text-center py-4">
-                No bookings found
-              </TableCell>
+              <TableHead className="w-[80px]">ID</TableHead>
+              <TableHead className="w-[140px]">Expert</TableHead>
+              <TableHead className="w-[120px]">Date</TableHead>
+              <TableHead className="w-[140px]">Service</TableHead>
+              <TableHead className="w-[80px]">Price</TableHead>
+              <TableHead className="w-[120px]">Status</TableHead>
+              <TableHead className="w-[100px]">Payment</TableHead>
+              <TableHead className="text-center w-[70px]">Video</TableHead>
+              <TableHead className="text-center w-[70px]">Report</TableHead>
+              <TableHead className="text-center w-[70px]">Review</TableHead>
+              <TableHead className="text-center w-[70px]">View</TableHead>
             </TableRow>
-          ) : (
-            bookings.map((booking) => (
-              <TableRow
-                key={booking.id}
-                className="cursor-pointer hover:bg-gray-50"
-                onClick={() => onOpenBookingDetails(booking)}
-              >
-                <TableCell className="font-medium">
-                  {booking.id.substring(0, 6)}...
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={booking.expert?.photo || profile}
-                      alt={booking.expert?.username}
-                      className="w-8 h-8 rounded-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = profile;
-                      }}
-                    />
-                    <span
-                      className="truncate max-w-[80px] hover:text-blue-600 cursor-pointer"
-                      title={booking.expert?.username || "Unknown Expert"}
-                      onClick={(e) =>
-                        handleExpertClick(booking.expert?.username || "", e)
-                      }
-                    >
-                      {truncateText(
-                        booking.expert?.username || "Unknown Expert",
-                        12
-                      )}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell className="whitespace-nowrap">
-                  {formatShortDate(booking.date)}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <FontAwesomeIcon
-                      icon={getServiceTypeIcon(getServiceType(booking))}
-                      className="text-gray-500"
-                    />
-                    <span
-                      className="truncate block max-w-[100px]"
-                      title={
-                        booking.service?.service?.name || "Unknown Service"
-                      }
-                    >
-                      {booking.service?.service?.name || "Unknown Service"}
-                    </span>
-                  </div>
-                </TableCell>
-                <TableCell>${booking.service?.price || "N/A"}</TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={getActionBadgeStyle(booking.status)}
-                  >
-                    {formatStatus(booking.status)}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Badge
-                    variant="outline"
-                    className={getPaymentBadgeStyle(booking)}
-                  >
-                    {getPaymentStatusText(booking)}
-                  </Badge>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 cursor-pointer"
-                    onClick={(e) => onOpenVideoModal(booking.id, e)}
-                    disabled={
-                      booking.service
-                        ? booking.service.service.id !== "1"
-                        : true
-                    }
-                  >
-                    <FontAwesomeIcon icon={faVideo} />
-                  </Button>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 cursor-pointer"
-                    onClick={(e) => onOpenReportModal(booking.id, e)}
-                  >
-                    <FontAwesomeIcon icon={faFileAlt} />
-                  </Button>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className={`h-8 w-8 ${
-                      booking.review ? "text-yellow-500" : ""
-                    }`}
-                    title={booking.review ? "Edit Review" : "Add Review"}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onReviewClick(booking.id);
-                    }}
-                  >
-                    <FontAwesomeIcon icon={faStar} />
-                  </Button>
-                </TableCell>
-                <TableCell className="text-center">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={(e) => onToggleVisibility(booking.id, e)}
-                  >
-                    <FontAwesomeIcon
-                      icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
-                    />
-                  </Button>
+          </TableHeader>
+          <TableBody>
+            {bookings.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={10} className="text-center py-4">
+                  No bookings found
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ) : (
+              bookings.map((booking) => (
+                <TableRow
+                  key={booking.id}
+                  className="cursor-pointer hover:bg-gray-50"
+                  onClick={() => onOpenBookingDetails(booking)}
+                >
+                  <TableCell className="font-medium">
+                    {booking.id.substring(0, 6)}...
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <img
+                        src={booking.expert?.photo || profile}
+                        alt={booking.expert?.username}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = profile;
+                        }}
+                      />
+                      <span
+                        className="truncate max-w-[80px] hover:text-blue-600 cursor-pointer"
+                        title={booking.expert?.username || "Unknown Expert"}
+                        onClick={(e) =>
+                          handleExpertClick(booking.expert?.username || "", e)
+                        }
+                      >
+                        {truncateText(
+                          booking.expert?.username || "Unknown Expert",
+                          12
+                        )}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="whitespace-nowrap">
+                    {formatShortDate(booking.date)}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <FontAwesomeIcon
+                        icon={getServiceTypeIcon(getServiceType(booking))}
+                        className="text-gray-500"
+                      />
+                      <span
+                        className="truncate block max-w-[100px]"
+                        title={
+                          booking.service?.service?.name || "Unknown Service"
+                        }
+                      >
+                        {booking.service?.service?.name || "Unknown Service"}
+                      </span>
+                    </div>
+                  </TableCell>
+                  <TableCell>${booking.service?.price || "N/A"}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={getActionBadgeStyle(booking.status)}
+                    >
+                      {formatStatus(booking.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={getPaymentBadgeStyle(booking)}
+                    >
+                      {getPaymentStatusText(booking)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 cursor-pointer"
+                      onClick={(e) => onOpenVideoModal(booking.id, e)}
+                      disabled={
+                        booking.service
+                          ? booking.service.service.id !== "1"
+                          : true
+                      }
+                    >
+                      <FontAwesomeIcon icon={faVideo} />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 cursor-pointer"
+                      onClick={(e) => handleReportClick(booking.id, e)}
+                    >
+                      <FontAwesomeIcon icon={faFileAlt} />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className={`h-8 w-8 ${
+                        booking.review ? "text-yellow-500" : ""
+                      }`}
+                      title={booking.review ? "Edit Review" : "Add Review"}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onReviewClick(booking.id);
+                      }}
+                    >
+                      <FontAwesomeIcon icon={faStar} />
+                    </Button>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={(e) => onToggleVisibility(booking.id, e)}
+                    >
+                      <FontAwesomeIcon
+                        icon={visibilityMap[booking.id] ? faEye : faEyeSlash}
+                      />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </>
   );
 };
 
