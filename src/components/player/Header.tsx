@@ -58,22 +58,22 @@ const menuItems = [
 
 const freeFeatures = [
   { name: "Subscription Fee", value: "Free", desc: "No monthly charges" },
-  {
-    name: "Features",
-    value: "Limited",
-    desc: "Limited use of platform features",
-  },
+  // {
+  //   name: "Features",
+  //   value: "Limited",
+  //   desc: "Limited use of platform features",
+  // },
   {
     name: "Cloud Storage",
     value: "2 photos & 2 videos",
     desc: "Limited storage capacity",
   },
   { name: "Reports", value: "Limited Access", desc: "7 days access only" },
-  {
-    name: "Video Conference Recordings",
-    value: "Limited Access",
-    desc: "7 days access only",
-  },
+  // {
+  //   name: "Video Conference Recordings",
+  //   value: "Limited Access",
+  //   desc: "7 days access only",
+  // },
   { name: "Experts Search", value: "Limited", desc: "Local experts only" },
   { name: "Reports Download & Share", value: "NO", desc: "Not available" },
   {
@@ -81,14 +81,14 @@ const freeFeatures = [
     value: "Limited",
     desc: "Recorded Video Assessment only",
   },
-  { name: "Building Fans/Followers", value: "NO", desc: "Not available" },
-  {
-    name: "Promotions",
-    value: "NO",
-    desc: "Social Media, Newsletters, Front Page not available",
-  },
-  { name: "Sponsorship Applications", value: "NO", desc: "Not available" },
-  { name: "AI Features", value: "NO", desc: "Coming soon - Premium only" },
+  // { name: "Building Fans/Followers", value: "NO", desc: "Not available" },
+  // {
+  //   name: "Promotions",
+  //   value: "NO",
+  //   desc: "Social Media, Newsletters, Front Page not available",
+  // },
+  // { name: "Sponsorship Applications", value: "NO", desc: "Not available" },
+  // { name: "AI Features", value: "NO", desc: "Coming soon - Premium only" },
 ];
 
 const proFeatures = [
