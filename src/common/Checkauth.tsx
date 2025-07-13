@@ -56,11 +56,8 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
 
   // Handle authenticated users
   else {
-    if (
-      location.pathname === "/login" ||
-      location.pathname === "/signup" ||
-      location.pathname === "/"
-    ) {
+    // If authenticated user is on root path, redirect to their profile
+    if (location.pathname === "/") {
       switch (effectiveRole) {
         case "expert":
           return <Navigate to="/expert/profile" replace />;
@@ -71,9 +68,31 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
         case "team":
           return <Navigate to="/team/profile" replace />;
         case "user":
+        case "fan":
           return <Navigate to="/fan/profile" replace />;
         case "admin":
-          return <Navigate to="/admin/profile" replace />;
+          return <Navigate to="/admin/dashboard" replace />; // Changed to dashboard since that's what you have for admin
+        default:
+          return <Navigate to="/" replace />;
+      }
+    }
+
+    // If authenticated user is on login or signup, redirect to their profile
+    if (location.pathname === "/login" || location.pathname === "/signup") {
+      switch (effectiveRole) {
+        case "expert":
+          return <Navigate to="/expert/profile" replace />;
+        case "player":
+          return <Navigate to="/player/profile" replace />;
+        case "sponsor":
+          return <Navigate to="/sponsor/profile" replace />;
+        case "team":
+          return <Navigate to="/team/profile" replace />;
+        case "user":
+        case "fan":
+          return <Navigate to="/fan/profile" replace />;
+        case "admin":
+          return <Navigate to="/admin/dashboard" replace />;
         default:
           return <Navigate to="/" replace />;
       }
@@ -89,6 +108,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       sponsor: ["/sponsor", "/", "/public"],
       team: ["/team", "/", "/public"],
       user: ["/fan", "/", "/public"],
+      fan: ["/fan", "/", "/public"],
       admin: ["/admin", "/", "/public"],
     };
 

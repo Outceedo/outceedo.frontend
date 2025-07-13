@@ -17,18 +17,19 @@ import {
   faStarHalfAlt,
   faUpload,
   faFileUpload,
+  faLock,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
+// import { fetchSubscriptionStatus } from "../../store/subscriptionSlice";
 import { MoveLeft } from "lucide-react";
 import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
 import ExpertProfiledetails from "./ExpertProfiledetails";
 import Swal from "sweetalert2";
-import { title } from "process";
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
@@ -98,11 +99,33 @@ const Expertview = () => {
   const { viewedProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
+  const {
+    isActive,
+    planName,
+    loading: subscriptionLoading,
+  } = useAppSelector((state) => state.subscription);
   const navigate = useNavigate();
 
   const API_BOOKING_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
+  // Determine if user is on a premium plan
+  const isUserOnPremiumPlan =
+    isActive && planName && planName.toLowerCase() !== "free";
+
+  // Check if service is allowed for current plan
+  const isServiceAllowed = (serviceId: string) => {
+    // For free plan, only allow "Recorded Video Assessment" (serviceId "1")
+    if (!isUserOnPremiumPlan) {
+      return serviceId === "1";
+    }
+    // For premium plans, allow all services
+    return true;
+  };
+
   useEffect(() => {
+    // // Fetch subscription status on component mount
+    // dispatch(fetchSubscriptionStatus());
+
     const expertUsername = localStorage.getItem("viewexpertusername");
     if (expertUsername) {
       dispatch(getProfile(expertUsername));
@@ -307,6 +330,51 @@ const Expertview = () => {
   }
 
   const handlebook = (service: Service) => {
+    const serviceId = String(service.serviceId);
+
+    // Check if service is allowed for current plan
+    if (!isServiceAllowed(serviceId)) {
+      const currentPlanName = planName || "Free";
+
+      Swal.fire({
+        icon: "info",
+        title: "Upgrade to Premium",
+        html: `
+          <div class="text-left">
+            <p class="mb-3">This service is only available for Premium members.</p>
+            <div class="bg-blue-50 p-3 rounded-lg mb-3">
+              <h4 class="font-semibold text-blue-800 mb-2">Premium Benefits:</h4>
+              <ul class="text-sm text-blue-700 space-y-1">
+                <li>• Access to all expert services</li>
+                <li>• Unlimited bookings</li>
+                <li>• Priority support</li>
+                <li>• Enhanced storage capacity</li>
+                <li>• Worldwide expert search</li>
+                <li>• Reports download & share</li>
+              </ul>
+            </div>
+            <p class="text-sm text-gray-600">Your current plan: <strong>${currentPlanName}</strong></p>
+            <p class="text-xs text-gray-500 mt-2">Free plan only includes: Recorded Video Assessment</p>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Upgrade Now",
+        cancelButtonText: "Maybe Later",
+        confirmButtonColor: "#3B82F6",
+        cancelButtonColor: "#6B7280",
+        customClass: {
+          popup: "swal-wide",
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Navigate to dashboard where upgrade functionality exists
+          navigate("/player/dashboard");
+        }
+      });
+      return;
+    }
+
+    // If service is allowed, proceed with booking
     setCurrentService(service);
     const serviceData = {
       expertId: expertData.id,
@@ -317,6 +385,7 @@ const Expertview = () => {
       description: service.description,
       price: service.price,
     };
+
     switch (service.serviceId) {
       case "1":
         setIsVideoUploadModalOpen(true);
@@ -577,31 +646,116 @@ const Expertview = () => {
         <>
           <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-bold">Services Offered</h2>
+
+            {/* Plan Info Banner */}
+            {!subscriptionLoading && (
+              <div
+                className={`rounded-lg p-3 mb-4 mt-2 ${
+                  isUserOnPremiumPlan
+                    ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                    : "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                }`}
+              >
+                <p
+                  className={`text-sm ${
+                    isUserOnPremiumPlan
+                      ? "text-green-700 dark:text-green-300"
+                      : "text-blue-700 dark:text-blue-300"
+                  }`}
+                >
+                  {isUserOnPremiumPlan ? (
+                    <>
+                      ✨ You're on the <strong>{planName}</strong> plan! Access
+                      to all services is available.
+                    </>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon icon={faLock} className="mr-2" />
+                      You're on the <strong>{planName || "Free"}</strong> plan.
+                      Only <strong>Recorded Video Assessment</strong> is
+                      available.
+                      <button
+                        onClick={() => navigate("/player/dashboard")}
+                        className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                      >
+                        Upgrade to Premium
+                      </button>{" "}
+                      for access to all services.
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4 mb-6 sm:mb-8">
               {services.length > 0 ? (
-                services.map((service) => (
-                  <Card key={service.id} className="overflow-hidden">
-                    <div className="p-4 sm:p-5">
-                      <div className="flex flex-col sm:flex-row justify-between items-start mb-3 sm:mb-4">
-                        <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-                          {service.name}
-                        </h3>
-                        <span className="text-red-600 font-bold mt-2 sm:mt-0">
-                          {service.price}
-                        </span>
+                services.map((service) => {
+                  const serviceAllowed = isServiceAllowed(
+                    String(service.serviceId)
+                  );
+
+                  return (
+                    <Card
+                      key={service.id}
+                      className={`overflow-hidden ${
+                        !serviceAllowed ? "opacity-75 border-gray-300" : ""
+                      }`}
+                    >
+                      <div className="p-4 sm:p-5 relative">
+                        {!serviceAllowed && (
+                          <div className="absolute top-2 right-2">
+                            <FontAwesomeIcon
+                              icon={faLock}
+                              className="text-gray-400 text-lg"
+                            />
+                          </div>
+                        )}
+                        <div className="flex flex-col sm:flex-row justify-between items-start mb-3 sm:mb-4">
+                          <h3
+                            className={`text-base sm:text-lg font-semibold ${
+                              !serviceAllowed
+                                ? "text-gray-500 dark:text-gray-400"
+                                : "text-gray-900 dark:text-white"
+                            }`}
+                          >
+                            {service.name}
+                            {!serviceAllowed && (
+                              <span className="ml-2 text-xs bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded-full">
+                                Premium Only
+                              </span>
+                            )}
+                          </h3>
+                          <span
+                            className={`font-bold mt-2 sm:mt-0 ${
+                              !serviceAllowed ? "text-gray-500" : "text-red-600"
+                            }`}
+                          >
+                            {service.price}
+                          </span>
+                        </div>
+                        <p
+                          className={`mb-3 sm:mb-4 text-sm sm:text-base ${
+                            !serviceAllowed
+                              ? "text-gray-500 dark:text-gray-400"
+                              : "text-gray-700 dark:text-gray-300"
+                          }`}
+                        >
+                          {service.description}
+                        </p>
+                        <Button
+                          onClick={() => handlebook(service)}
+                          className={`w-full sm:w-auto ${
+                            serviceAllowed
+                              ? "bg-red-600 hover:bg-red-700 text-white"
+                              : "bg-gray-400 hover:bg-gray-500 text-white cursor-pointer"
+                          }`}
+                        >
+                          {serviceAllowed ? "Book Now" : "Upgrade to Book"}
+                        </Button>
                       </div>
-                      <p className="text-gray-700 dark:text-gray-300 mb-3 sm:mb-4 text-sm sm:text-base">
-                        {service.description}
-                      </p>
-                      <Button
-                        onClick={() => handlebook(service)}
-                        className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
-                      >
-                        Book Now
-                      </Button>
-                    </div>
-                  </Card>
-                ))
+                    </Card>
+                  );
+                })
               ) : (
                 <p className="col-span-2 text-center text-gray-500 text-base sm:text-xl">
                   No services available.
@@ -757,6 +911,13 @@ const Expertview = () => {
           </div>
         </div>
       )}
+
+      {/* Add CSS for wider SweetAlert modals */}
+      <style jsx global>{`
+        .swal-wide {
+          width: 600px !important;
+        }
+      `}</style>
     </div>
   );
 };
