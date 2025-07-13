@@ -1,12 +1,13 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "./auth-slice";
 import profileReducer from "../store/profile-slice";
+import subscriptionReducer from "./plans-slice/index";
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
     profile: profileReducer,
-    // Add other reducers here
+    subscription: subscriptionReducer,
   },
 });
 

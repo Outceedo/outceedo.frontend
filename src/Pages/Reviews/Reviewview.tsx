@@ -335,9 +335,29 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
           {reviews.map((review: ReviewItem) => (
             <div
               key={review.id}
-              className="border dark:bg-gray-800 dark:border-gray-600 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition"
+              className="border dark:bg-gray-800 dark:border-gray-600 rounded-lg p-4 shadow-sm cursor-pointer hover:shadow-md transition relative"
               onClick={() => handleCardClick(review)}
             >
+              {/* Verified Badge - Show only if bookingId exists */}
+              {review.bookingId && (
+                <div className="absolute top-2 right-2">
+                  <span className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded-full shadow-sm flex items-center gap-1">
+                    <svg
+                      className="w-3 h-3"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                    Verified
+                  </span>
+                </div>
+              )}
+
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 bg-gray-300 dark:bg-gray-700 rounded-full overflow-hidden">
                   <img
@@ -384,7 +404,32 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
             >
               &times;
             </button>
-            <div className="flex flex-col items-center">
+
+            {/* Verified Badge in Modal */}
+            {selectedReview.bookingId && (
+              <div className="absolute top-2 left-3">
+                <span className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded-full shadow-sm flex items-center gap-1">
+                  <svg
+                    className="w-3 h-3"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                  Verified
+                </span>
+              </div>
+            )}
+
+            <div
+              className={`flex flex-col items-center ${
+                selectedReview.bookingId ? "mt-6" : ""
+              }`}
+            >
               <img
                 src={selectedReview.reviewer.photo}
                 alt={selectedReview.reviewer.username}

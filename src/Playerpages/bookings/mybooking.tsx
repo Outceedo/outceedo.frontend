@@ -30,7 +30,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import AssessmentReport from "./AssessmentReport";
-import { ArrowLeft, X } from "lucide-react";
+import { ArrowLeft, Star, X } from "lucide-react";
 import profile from "../../assets/images/avatar.png";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -155,8 +155,13 @@ const MyBooking: React.FC = () => {
   const [agora, setAgora] = useState<Agora>();
 
   const [submittingReview, setSubmittingReview] = useState(false);
+  const [newRating, setNewRating] = useState<number>(0);
+
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+  const API_BASE_URL2 = `${import.meta.env.VITE_PORT}/api/v1`;
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
 
   useEffect(() => {
@@ -609,6 +614,52 @@ const MyBooking: React.FC = () => {
     setSelectedBookingId(null);
   };
 
+  const fetchReportData = async (bookingId: string) => {
+    setReportLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_PORT}/api/v1/user/reports/booking/${bookingId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.status === 200 && response.data) {
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          setReportData(response.data);
+          return true;
+        } else {
+          setReportData([]);
+          return false;
+        }
+      }
+      return false;
+    } catch (error) {
+      setReportData([]);
+      return false;
+    } finally {
+      setReportLoading(false);
+    }
+  };
+  const handleReportClick = async (bookingId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedBookingId(bookingId);
+    setIsBookingDetailsOpen(false);
+
+    const success = await fetchReportData(bookingId);
+    if (success) {
+      setIsReportOpen(true);
+    } else {
+      Swal.fire({
+        icon: "info",
+        title: "No Report Available",
+        text: "There is no assessment report available for this booking yet.",
+      });
+    }
+  };
   const openReportModal = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setSelectedBookingId(id);
@@ -647,35 +698,61 @@ const MyBooking: React.FC = () => {
     setSubmittingReview(true);
     try {
       const token = localStorage.getItem("token");
-      await axios.post(
-        `${API_BASE_URL}/${selectedBookingId}/review`,
-        { review: reviewText.trim() },
+      const selectedBooking = bookings.find((b) => b.id === selectedBookingId);
+
+      if (!selectedBooking) {
+        throw new Error("Selected booking not found");
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL2}/user/profile/review/${selectedBooking.expertId}`,
+        {
+          rating: newRating || 5,
+          comment: reviewText.trim(),
+          bookingId: selectedBookingId,
+        },
         {
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
         }
       );
+
+      // Update the bookings state with the new review
       setBookings((prev) =>
         prev.map((b) =>
-          b.id === selectedBookingId ? { ...b, review: reviewText.trim() } : b
+          b.id === selectedBookingId
+            ? {
+                ...b,
+                review: {
+                  rating: newRating || 5,
+                  comment: reviewText.trim(),
+                  createdAt: new Date().toISOString(),
+                  id: response.data?.reviewId || `review_${Date.now()}`,
+                },
+              }
+            : b
         )
       );
+
       closeReviewModal();
+
       Swal.fire({
         icon: "success",
         title: "Review Submitted",
-        text: "Your review has been saved.",
+        text: "Your review has been saved successfully.",
         confirmButtonColor: "#10B981",
         timer: 2000,
+        showConfirmButton: false,
       });
     } catch (err) {
+      console.error("Error submitting review:", err);
       Swal.fire({
         icon: "error",
         title: "Error",
         text: "Failed to submit review. Please try again.",
         confirmButtonColor: "#EF4444",
+        timer: 3000,
       });
     } finally {
       setSubmittingReview(false);
@@ -1767,7 +1844,7 @@ const MyBooking: React.FC = () => {
 
               <Button
                 variant="outline"
-                onClick={() => openReportModal(selectedBooking.id)}
+                onClick={(e) => handleReportClick(selectedBooking.id, e)}
               >
                 <FontAwesomeIcon icon={faFileAlt} className="mr-2" />
                 View Report
@@ -1862,7 +1939,14 @@ const MyBooking: React.FC = () => {
             </button>
           </div>
           <div className="flex-1 overflow-auto p-4">
-            <AssessmentReport bookingId={selectedBookingId} />
+            {reportLoading ? (
+              <div className="text-center py-8">Loading report...</div>
+            ) : (
+              <AssessmentReport
+                bookingId={selectedBookingId}
+                reportData={reportData}
+              />
+            )}
           </div>
         </div>
       )}
@@ -1899,21 +1983,27 @@ const MyBooking: React.FC = () => {
                 : "Add Review for the Expert"}
             </DialogTitle>
             <DialogDescription>
-              Add your feedback about the player's performance during this
-              session. This review will be visible to the player.
+              Add your feedback about the Expert's performance during this
+              session. This review will be visible to the Expert.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="py-4">
-            <div className="mb-4">
+          <div className="py-4 space-y-4">
+            <div>
               <p className="text-sm font-medium mb-1">Session Details:</p>
               {selectedBookingId && (
                 <p className="text-sm text-gray-500">
                   {bookings.find((b) => b.id === selectedBookingId)?.service
                     ?.service?.name || "Service"}{" "}
                   with{" "}
-                  {bookings.find((b) => b.id === selectedBookingId)?.player
-                    ?.username || "Player"}{" "}
+                  {bookings.find((b) => b.id === selectedBookingId)?.expert
+                    ?.username ||
+                    bookings.find((b) => b.id === selectedBookingId)?.expert
+                      ?.firstName +
+                      " " +
+                      bookings.find((b) => b.id === selectedBookingId)?.expert
+                        ?.lastName ||
+                    "Expert"}{" "}
                   on{" "}
                   {bookings.find((b) => b.id === selectedBookingId)
                     ? formatDate(
@@ -1927,12 +2017,40 @@ const MyBooking: React.FC = () => {
               )}
             </div>
 
-            <Textarea
-              placeholder="Enter your review here..."
-              className="min-h-[150px]"
-              value={reviewText}
-              onChange={(e) => setReviewText(e.target.value)}
-            />
+            {/* Rating Component */}
+            <div>
+              <p className="text-sm font-medium mb-2">Rating:</p>
+              <div className="flex items-center gap-1">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setNewRating(star)}
+                    className="p-1 hover:scale-110 transition-transform"
+                  >
+                    <Star
+                      className={`w-6 h-6 ${
+                        star <= (newRating || 0)
+                          ? "fill-yellow-400 text-yellow-400"
+                          : "text-gray-300"
+                      }`}
+                    />
+                  </button>
+                ))}
+                <span className="ml-2 text-sm text-gray-600">
+                  {newRating ? `${newRating}/5` : "Select rating"}
+                </span>
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium mb-2">Your Review:</p>
+              <Textarea
+                placeholder="Enter your review here..."
+                className="min-h-[150px]"
+                value={reviewText}
+                onChange={(e) => setReviewText(e.target.value)}
+              />
+            </div>
           </div>
 
           <DialogFooter>
