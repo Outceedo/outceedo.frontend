@@ -579,13 +579,35 @@ const BookingCalendar: React.FC = () => {
 
       if (!response.ok) {
         console.error("Booking failed:", data);
-        Swal.fire({
-          icon: "error",
-          title: "Booking Failed",
-          text: data.message || "Unknown error occurred",
-          timer: 3000,
-          showConfirmButton: false,
-        });
+
+        // Check if the error is about expert being already booked
+        if (data.error && data.error.includes("already booked")) {
+          Swal.fire({
+            icon: "info",
+            title: "Time Slot Not Available",
+            html: `
+              <div class="text-center">
+                <p class="mb-3">${data.error}</p>
+                <p class="text-gray-600">Please select another time slot as the expert is already booked during this time.</p>
+              </div>
+            `,
+            confirmButtonText: "Choose Another Slot",
+            confirmButtonColor: "#3085d6",
+            allowOutsideClick: false,
+          }).then(() => {
+            // Reset time selections to allow user to pick different times
+            setSelectedStartTime(null);
+            setSelectedEndTime(null);
+          });
+        } else {
+          Swal.fire({
+            icon: "error",
+            title: "Booking Failed",
+            text: data.message || "Unknown error occurred",
+            timer: 3000,
+            showConfirmButton: false,
+          });
+        }
       } else {
         try {
           await fetch(BLOCK_API_URL, {
