@@ -67,6 +67,16 @@ interface DailyAvailability {
   [date: string]: boolean;
 }
 
+interface BlockedSlot {
+  id: string;
+  expertId: string;
+  date: string;
+  startTime: string | null;
+  endTime: string | null;
+  reason: string | null;
+  createdAt: string;
+}
+
 const GUIDE_CARDS_KEY = "expert_availability_guide_dismissed";
 
 const ExpertAvailabilityManager = () => {
@@ -99,6 +109,11 @@ const ExpertAvailabilityManager = () => {
   } | null>(null);
   const [calendarTimeSlots, setCalendarTimeSlots] = useState<
     Record<string, TimeSlot[]>
+  >({});
+
+  // New state to store blocked dates with their IDs
+  const [blockedDatesMap, setBlockedDatesMap] = useState<
+    Record<string, string>
   >({});
 
   // Popper guide state and refs
@@ -183,8 +198,34 @@ const ExpertAvailabilityManager = () => {
     "00:00",
   ];
 
+  // New function to fetch blocked slots
+  const fetchBlockedSlots = async () => {
+    try {
+      const response = await axiosInstance.get(`${API_BASE_URL}/slots/blocked`);
+      const blockedSlots: BlockedSlot[] = response.data;
+
+      // Create a map of date -> id for blocked dates (only those with reason and null startTime/endTime)
+      const blockedDatesMapping: Record<string, string> = {};
+
+      blockedSlots.forEach((slot) => {
+        if (slot.reason && slot.startTime === null && slot.endTime === null) {
+          // This is a blocked day (not a specific time slot)
+          const date = new Date(slot.date);
+          const formattedDate = formatDateString(date);
+          blockedDatesMapping[formattedDate] = slot.id;
+        }
+      });
+
+      setBlockedDatesMap(blockedDatesMapping);
+      console.log("Blocked dates map:", blockedDatesMapping);
+    } catch (error) {
+      console.error("Failed to fetch blocked slots:", error);
+    }
+  };
+
   useEffect(() => {
     fetchAvailabilityPatterns();
+    fetchBlockedSlots(); // Fetch blocked slots on component mount
     if (!localStorage.getItem(GUIDE_CARDS_KEY)) {
       setShowGuide(true);
       setGuideStep(0);
@@ -194,6 +235,7 @@ const ExpertAvailabilityManager = () => {
   useEffect(() => {
     fetchMonthlyAvailability();
     fetchCalendarSlotsForMonth();
+    fetchBlockedSlots(); // Refresh blocked slots when month/year changes
   }, [currentMonth, currentYear]);
 
   useEffect(() => {
@@ -491,6 +533,15 @@ const ExpertAvailabilityManager = () => {
           setSelectedDayAvailability(false);
           setTimeSlots([]);
         }
+
+        // Update blocked dates map
+        if (response.data?.id) {
+          setBlockedDatesMap((prev) => ({
+            ...prev,
+            [formattedDate]: response.data.id,
+          }));
+        }
+
         Swal.fire(
           "Success",
           `${formatDateForDisplay(date)} has been marked as unavailable.`,
@@ -549,6 +600,65 @@ const ExpertAvailabilityManager = () => {
       }
     } catch (error) {
       Swal.fire("Error", "Failed to block date or time slot", "error");
+    }
+  };
+
+  // Updated function to unblock an entire day using the correct ID
+  const unblockDay = async (date: Date) => {
+    const formattedDate = formatDateString(date);
+    const blockId = blockedDatesMap[formattedDate];
+
+    if (!blockId) {
+      Swal.fire("Error", "No block ID found for this date.", "error");
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.delete(
+        `${API_BASE_URL}/${blockId}/unblock`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Update state immediately
+      setMonthlyAvailability((prev) => ({
+        ...prev,
+        [formattedDate]: true,
+      }));
+
+      if (isSameDay(date, selectedDate)) {
+        setSelectedDayAvailability(true);
+      }
+
+      // Remove from blocked dates map
+      setBlockedDatesMap((prev) => {
+        const newMap = { ...prev };
+        delete newMap[formattedDate];
+        return newMap;
+      });
+
+      // Refresh data to reflect changes
+      fetchTimeSlotsForSelectedDate();
+      fetchCalendarSlotsForMonth();
+      fetchBlockedSlots(); // Refresh blocked slots
+
+      Swal.fire(
+        "Success",
+        `${formatDateForDisplay(
+          date
+        )} has been unblocked and is now available.`,
+        "success"
+      );
+    } catch (error: any) {
+      Swal.fire(
+        "Error",
+        error?.response?.data?.message || "Failed to unblock day.",
+        "error"
+      );
     }
   };
 
@@ -910,23 +1020,14 @@ const ExpertAvailabilityManager = () => {
     setSelectedDate(date);
   };
 
-  const handleDayAvailabilityToggle = (available: boolean) => {
+  const handleDayAvailabilityToggle = async (available: boolean) => {
     if (!available) {
       setBlockingDate(new Date(selectedDate));
       setBlockingTimeSlot(null);
       setBlockReasonDialogOpen(true);
     } else {
-      setSelectedDayAvailability(true);
-      setMonthlyAvailability((prev) => ({
-        ...prev,
-        [formatDateString(selectedDate)]: true,
-      }));
-      fetchTimeSlotsForSelectedDate();
-      Swal.fire(
-        "Success",
-        `${formatDateString(selectedDate)} is now marked as available.`,
-        "success"
-      );
+      // Call the new unblock day API
+      await unblockDay(selectedDate);
     }
   };
 
