@@ -1808,8 +1808,7 @@ const MyBooking: React.FC = () => {
                   </Button>
                 )}
 
-              {(selectedBooking.status === "ACCEPTED" ||
-                selectedBooking.status === "SCHEDULED" ||
+              {(selectedBooking.status === "SCHEDULED" ||
                 isSessionOver(selectedBooking)) &&
                 selectedBooking.status !== "COMPLETED" && (
                   <Button
