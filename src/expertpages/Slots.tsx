@@ -603,26 +603,73 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  // Updated function to unblock an entire day using the correct ID
+  // Updated function to unblock an entire day with fallback API
   const unblockDay = async (date: Date) => {
     const formattedDate = formatDateString(date);
     const blockId = blockedDatesMap[formattedDate];
 
-    if (!blockId) {
-      Swal.fire("Error", "No block ID found for this date.", "error");
-      return;
+    if (blockId) {
+      // Primary method: Use the block ID to unblock
+      try {
+        const response = await axiosInstance.delete(
+          `${API_BASE_URL}/${blockId}/unblock`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        // Update state immediately
+        setMonthlyAvailability((prev) => ({
+          ...prev,
+          [formattedDate]: true,
+        }));
+
+        if (isSameDay(date, selectedDate)) {
+          setSelectedDayAvailability(true);
+        }
+
+        // Remove from blocked dates map
+        setBlockedDatesMap((prev) => {
+          const newMap = { ...prev };
+          delete newMap[formattedDate];
+          return newMap;
+        });
+
+        // Refresh data to reflect changes
+        fetchTimeSlotsForSelectedDate();
+        fetchCalendarSlotsForMonth();
+        fetchBlockedSlots(); // Refresh blocked slots
+
+        Swal.fire(
+          "Success",
+          `${formatDateForDisplay(
+            date
+          )} has been unblocked and is now available.`,
+          "success"
+        );
+        return;
+      } catch (error: any) {
+        console.error("Primary unblock failed, trying fallback:", error);
+      }
     }
 
+    // Fallback method: Use availability API to create availability for the day
     try {
-      const response = await axiosInstance.delete(
-        `${API_BASE_URL}/${blockId}/unblock`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
+      const dayOfWeek = date.getDay();
+      const payload = {
+        availabilities: [
+          {
+            dayOfWeek: dayOfWeek,
+            startTime: "09:00",
+            endTime: "17:00",
           },
-        }
-      );
+        ],
+      };
+
+      await axiosInstance.post(`${API_BASE_URL}`, payload);
 
       // Update state immediately
       setMonthlyAvailability((prev) => ({
@@ -634,7 +681,7 @@ const ExpertAvailabilityManager = () => {
         setSelectedDayAvailability(true);
       }
 
-      // Remove from blocked dates map
+      // Remove from blocked dates map if it was there
       setBlockedDatesMap((prev) => {
         const newMap = { ...prev };
         delete newMap[formattedDate];
@@ -643,6 +690,7 @@ const ExpertAvailabilityManager = () => {
 
       // Refresh data to reflect changes
       fetchTimeSlotsForSelectedDate();
+      fetchAvailabilityPatterns();
       fetchCalendarSlotsForMonth();
       fetchBlockedSlots(); // Refresh blocked slots
 
@@ -650,13 +698,13 @@ const ExpertAvailabilityManager = () => {
         "Success",
         `${formatDateForDisplay(
           date
-        )} has been unblocked and is now available.`,
+        )} has been made available with default time slots (9:00 AM - 5:00 PM).`,
         "success"
       );
     } catch (error: any) {
       Swal.fire(
         "Error",
-        error?.response?.data?.message || "Failed to unblock day.",
+        error?.response?.data?.message || "Failed to make day available.",
         "error"
       );
     }
