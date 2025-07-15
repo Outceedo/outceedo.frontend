@@ -8,6 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import axios from "axios";
 import Swal from "sweetalert2";
+import { useNavigate } from "react-router-dom";
 
 interface UploadItem {
   id: number;
@@ -47,6 +48,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     },
   ]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const nav = useNavigate();
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
@@ -368,25 +370,33 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
           tab.charAt(0).toUpperCase() + tab.slice(1)
         } Upload Limit Reached`,
         html: `
-          <div class="text-left">
-            <p class="mb-2">You've reached your ${tab} upload limit.</p>
-            <p class="text-sm text-gray-600">Current: ${current}/${limit}</p>
-            ${
-              planLimits.planName === "Free"
-                ? `
-              <div class="mt-3 p-2 bg-blue-50 rounded">
-                <p class="text-sm text-blue-700">Upgrade to Premium for more storage!</p>
-                <button onclick="window.location.href='/player/dashboard'" class="mt-2 bg-blue-600 text-white px-3 py-1 rounded text-sm">
-                  Upgrade Now
-                </button>
-              </div>
-            `
-                : ""
-            }
-          </div>
-        `,
+    <div class="text-left">
+      <p class="mb-2">You've reached your ${tab} upload limit.</p>
+      <p class="text-sm text-gray-600">Current: ${current}/${limit}</p>
+      ${
+        planLimits.planName === "Free"
+          ? `
+        <div class="mt-3 p-2 bg-blue-50 rounded">
+          <p class="text-sm text-blue-700">Upgrade to Premium for more storage!</p>
+        </div>
+      `
+          : ""
+      }
+    </div>
+  `,
+        showCancelButton: planLimits.planName === "Free",
         confirmButtonText: "Got it",
+        cancelButtonText:
+          planLimits.planName === "Free" ? "Upgrade Now" : undefined,
         confirmButtonColor: "#3B82F6",
+        cancelButtonColor: "#10B981",
+      }).then((result) => {
+        if (
+          result.dismiss === Swal.DismissReason.cancel &&
+          planLimits.planName === "Free"
+        ) {
+          nav("/plans");
+        }
       });
       return;
     }

@@ -14,6 +14,7 @@ import axios from "axios";
 import Swal from "sweetalert2";
 import MediaUpload from "./Mediaupload";
 import { useAppSelector, useAppDispatch } from "../../store/hooks";
+import { useNavigate } from "react-router-dom";
 
 interface UploadItem {
   id: string | number;
@@ -37,6 +38,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedMedia, setSelectedMedia] = useState<(string | number)[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const nav = useNavigate();
 
   const dispatch = useAppDispatch();
   const {
@@ -202,8 +204,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
         cancelButtonColor: "#6B7280",
       }).then((result) => {
         if (result.isConfirmed && !isUserOnPremiumPlan) {
-          // Navigate to upgrade page (you can adjust this route)
-          window.location.href = "/player/dashboard";
+          nav("/plans");
         }
       });
       return;
@@ -322,7 +323,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
             </div>
             {!isUserOnPremiumPlan && (
               <button
-                onClick={() => (window.location.href = "/")}
+                onClick={() => nav("/plans")}
                 className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md font-medium whitespace-nowrap"
               >
                 Upgrade to Premium

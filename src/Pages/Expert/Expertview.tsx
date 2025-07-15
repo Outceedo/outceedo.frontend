@@ -18,6 +18,10 @@ import {
   faUpload,
   faFileUpload,
   faLock,
+  faUserPlus,
+  faUserCheck,
+  faHeart,
+  faUserMinus,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 
@@ -29,6 +33,7 @@ import { MoveLeft } from "lucide-react";
 import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
 import ExpertProfiledetails from "./ExpertProfiledetails";
+import FollowersList from "../../components/follower/followerlist"; // Import the FollowersList component
 import Swal from "sweetalert2";
 
 const icons = [
@@ -46,6 +51,16 @@ interface Service {
   additionalDetails?: string;
   price: string | number;
   isActive?: boolean;
+}
+
+interface Follower {
+  id: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  photo?: string;
+  role?: string;
+  [key: string]: any;
 }
 
 type TabType = "details" | "media" | "reviews" | "services";
@@ -95,6 +110,16 @@ const Expertview = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
+  // Follow functionality state
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [isFollowLoading, setIsFollowLoading] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+
+  // Followers modal state
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [followers, setFollowers] = useState<Follower[]>([]);
+  const [loadingFollowers, setLoadingFollowers] = useState(false);
+
   const dispatch = useAppDispatch();
   const { viewedProfile, status, error } = useAppSelector(
     (state) => state.profile
@@ -107,12 +132,13 @@ const Expertview = () => {
   const navigate = useNavigate();
 
   const API_BOOKING_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+  const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
 
   // Determine if user is on a premium plan
   const isUserOnPremiumPlan =
     isActive && planName && planName.toLowerCase() !== "free";
 
-  // Check if service is allowed for current plan
+  // Check if service/follow is allowed for current plan
   const isServiceAllowed = (serviceId: string) => {
     // For free plan, only allow "Recorded Video Assessment" (serviceId "1")
     if (!isUserOnPremiumPlan) {
@@ -120,6 +146,11 @@ const Expertview = () => {
     }
     // For premium plans, allow all services
     return true;
+  };
+
+  // Check if follow is allowed for current plan
+  const isFollowAllowed = () => {
+    return isUserOnPremiumPlan;
   };
 
   useEffect(() => {
@@ -133,6 +164,220 @@ const Expertview = () => {
       console.error("No expert username found in localStorage");
     }
   }, [dispatch]);
+
+  // Check if current user is following this expert and get followers count
+  useEffect(() => {
+    if (viewedProfile?.id) {
+      checkFollowStatus();
+      // Set initial followers count (you might want to get this from the API)
+      setFollowersCount(viewedProfile.followersCount || 0); // Using your demo value as fallback
+    }
+  }, [viewedProfile]);
+
+  const checkFollowStatus = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token || !viewedProfile?.id) return;
+
+      const response = await axios.get(
+        `${API_FOLLOW_URL}/${viewedProfile.id}/follow-status`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setIsFollowing(response.data?.isFollowing || false);
+    } catch (error) {
+      console.error("Error checking follow status:", error);
+      // If endpoint doesn't exist, default to false
+      setIsFollowing(false);
+    }
+  };
+
+  // Fetch followers list
+  const fetchFollowers = async () => {
+    if (!viewedProfile?.id) return;
+
+    setLoadingFollowers(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_FOLLOW_URL}/${viewedProfile.id}/followers`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setFollowers(response.data?.users || []);
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      setFollowers([]);
+    } finally {
+      setLoadingFollowers(false);
+    }
+  };
+
+  // Handle followers count click
+  const handleFollowersClick = () => {
+    setIsFollowersModalOpen(true);
+    fetchFollowers();
+  };
+
+  const handleFollow = async () => {
+    if (!isFollowAllowed()) {
+      const currentPlanName = planName || "Free";
+
+      Swal.fire({
+        icon: "info",
+        title: "Upgrade to Premium",
+        html: `
+          <div class="text-left">
+            <p class="mb-3">Following experts is only available for Premium members.</p>
+            <div class="bg-blue-50 p-3 rounded-lg mb-3">
+              <h4 class="font-semibold text-blue-800 mb-2">Premium Benefits:</h4>
+              <ul class="text-sm text-blue-700 space-y-1">
+                <li>• Follow your favorite experts</li>
+                <li>• Access to all expert services</li>
+                <li>• Unlimited bookings</li>
+                <li>• Priority support</li>
+                <li>• Enhanced storage capacity</li>
+                <li>• Worldwide expert search</li>
+                <li>• Reports download & share</li>
+              </ul>
+            </div>
+            <p class="text-sm text-gray-600">Your current plan: <strong>${currentPlanName}</strong></p>
+            <p class="text-xs text-gray-500 mt-2">Free plan has limited features</p>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Upgrade Now",
+        cancelButtonText: "Maybe Later",
+        confirmButtonColor: "#3B82F6",
+        cancelButtonColor: "#6B7280",
+        customClass: {
+          popup: "swal-wide",
+        },
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/plans");
+        }
+      });
+      return;
+    }
+
+    if (!viewedProfile?.id) {
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Expert information not available. Please try again.",
+        timer: 3000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    setIsFollowLoading(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        Swal.fire({
+          icon: "error",
+          title: "Authentication Failed",
+          text: "Please login to follow experts.",
+          timer: 3000,
+          showConfirmButton: false,
+        });
+        return;
+      }
+
+      let response;
+      let newFollowStatus;
+
+      if (isFollowing) {
+        // Unfollow the expert
+        response = await axios.patch(
+          `${API_FOLLOW_URL}/${viewedProfile.id}/unfollow`,
+          {},
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        newFollowStatus = false;
+      } else {
+        // Follow the expert
+        response = await axios.patch(
+          `${API_FOLLOW_URL}/${viewedProfile.id}/follow`,
+          {},
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        newFollowStatus = true;
+      }
+
+      setIsFollowing(newFollowStatus);
+
+      // Update followers count
+      setFollowersCount((prev) => (newFollowStatus ? prev + 1 : prev - 1));
+
+      Swal.fire({
+        icon: "success",
+        title: newFollowStatus ? "Following!" : "Unfollowed",
+        text: newFollowStatus
+          ? `You are now following ${expertData.name}`
+          : `You unfollowed ${expertData.name}`,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (error: any) {
+      console.error("Follow/Unfollow error:", error);
+      const errorMessage =
+        error.response?.data?.message ||
+        error.response?.data?.error ||
+        "Failed to update follow status. Please try again.";
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: errorMessage,
+        timer: 3000,
+        showConfirmButton: false,
+      });
+    } finally {
+      setIsFollowLoading(false);
+    }
+  };
+
+  // Handle unfollow with confirmation
+  const handleUnfollowWithConfirmation = async () => {
+    if (!isFollowing) return;
+
+    Swal.fire({
+      title: "Unfollow Expert?",
+      text: `Are you sure you want to unfollow ${expertData.name}?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      cancelButtonColor: "#3085d6",
+      confirmButtonText: "Yes, unfollow",
+      cancelButtonText: "Cancel",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        handleFollow(); // This will trigger unfollow since isFollowing is true
+      }
+    });
+  };
 
   const certificates = viewedProfile?.documents
     ? viewedProfile.documents
@@ -181,7 +426,7 @@ const Expertview = () => {
         responseTime: viewedProfile.responseTime || "40 mins",
         travelLimit: viewedProfile.travelLimit || "30 kms",
         certificationLevel: viewedProfile.certificationLevel || "3rd highest",
-        followers: 0, // Demo
+        followers: followersCount, // Use dynamic followers count
         assessments: 0, // Demo
         profileImage: viewedProfile.photo || null,
         socialLinks: viewedProfile.socialLinks || {},
@@ -208,7 +453,7 @@ const Expertview = () => {
         responseTime: "N/A",
         travelLimit: "N/A",
         certificationLevel: "3rd highest",
-        followers: 110,
+        followers: followersCount,
         assessments: 100,
         profileImage: "N/A",
         about: "N/A",
@@ -219,6 +464,8 @@ const Expertview = () => {
       };
 
   localStorage.setItem("expertid", expertData?.id);
+
+  // ... (keep all the existing SERVICE_NAME_MAP, getServiceNameById, formatServiceDescription, services logic)
 
   const SERVICE_NAME_MAP: Record<string, string> = {
     "1": "RECORDED VIDEO ASSESSMENT",
@@ -329,6 +576,8 @@ const Expertview = () => {
     return `${year}-${month}-${day}`;
   }
 
+  // ... (keep all the existing handlebook, handleVideoChange, handleVideoUploadSubmit logic)
+
   const handlebook = (service: Service) => {
     const serviceId = String(service.serviceId);
 
@@ -367,8 +616,7 @@ const Expertview = () => {
         },
       }).then((result) => {
         if (result.isConfirmed) {
-          // Navigate to dashboard where upgrade functionality exists
-          navigate("/player/dashboard");
+          navigate("/plans");
         }
       });
       return;
@@ -447,12 +695,28 @@ const Expertview = () => {
         setIsUploading(false);
         return;
       }
+      const extractPrice = (priceString: string | number): number => {
+        if (typeof priceString === "number") {
+          return priceString;
+        }
+
+        if (typeof priceString === "string") {
+          // Remove all non-numeric characters except decimal point
+          const numericString = priceString.replace(/[^\d.]/g, "");
+          const parsedPrice = parseFloat(numericString);
+          return isNaN(parsedPrice) ? 0 : parsedPrice;
+        }
+
+        return 0;
+      };
+      const servicePrice = extractPrice(currentService?.price || 0);
       const formData = new FormData();
       formData.append("video", selectedVideo);
       const bookingData = {
         expertId: expertId,
         playerId: userId,
         serviceId: currentService?.id,
+        price: servicePrice,
         date: getTodaysDate(),
         startTime: "00:00",
         endTime: "00:00",
@@ -626,7 +890,10 @@ const Expertview = () => {
               {totalReviews} review{totalReviews !== 1 ? "s" : ""}
             </span>
           </div>
-          <div className="text-center">
+          <div
+            className="text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
+            onClick={handleFollowersClick}
+          >
             <p className="text-red-500 text-2xl sm:text-3xl font-bold">
               {expertData.followers}
             </p>
@@ -642,6 +909,99 @@ const Expertview = () => {
           </div>
         </div>
       </div>
+
+      {/* Follow Button Section - For all roles except current expert */}
+      {localStorage.getItem("role") && (
+        <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
+          <div className="flex flex-col items-center justify-center">
+            {/* Follow Plan Info Banner */}
+            {!subscriptionLoading && !isFollowAllowed() && (
+              <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
+                  <FontAwesomeIcon icon={faLock} className="mr-2" />
+                  Following experts is a <strong>Premium feature</strong>.
+                  <button
+                    onClick={() => navigate("/plans")}
+                    className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    Upgrade to Premium
+                  </button>{" "}
+                  to follow your favorite experts.
+                </p>
+              </div>
+            )}
+
+            {/* Follow/Unfollow Buttons */}
+            {isFollowAllowed() && isFollowing ? (
+              // Show both Following button and Unfollow button when following
+              <div className="flex items-center gap-2">
+                <Button
+                  disabled
+                  className="px-6 py-3 rounded-lg font-semibold bg-green-600 text-white cursor-default"
+                >
+                  <FontAwesomeIcon
+                    icon={faUserCheck}
+                    className="text-lg mr-2"
+                  />
+                  Following
+                </Button>
+                <Button
+                  onClick={handleUnfollowWithConfirmation}
+                  disabled={isFollowLoading}
+                  className="px-4 py-3 rounded-lg font-semibold bg-gray-500 hover:bg-red-600 text-white transition-colors"
+                >
+                  {isFollowLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                  ) : (
+                    <>
+                      <FontAwesomeIcon
+                        icon={faUserMinus}
+                        className="text-lg mr-2"
+                      />
+                      Unfollow
+                    </>
+                  )}
+                </Button>
+              </div>
+            ) : (
+              // Show single Follow or Upgrade button when not following
+              <Button
+                onClick={handleFollow}
+                disabled={isFollowLoading}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
+                  isFollowAllowed()
+                    ? "bg-red-600 hover:bg-red-700 text-white"
+                    : "bg-gray-400 hover:bg-gray-500 text-white cursor-pointer"
+                }`}
+              >
+                {isFollowLoading ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                ) : isFollowAllowed() ? (
+                  <>
+                    <FontAwesomeIcon icon={faUserPlus} className="text-lg" />
+                    Follow
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faLock} className="text-lg" />
+                    Upgrade to Follow
+                  </>
+                )}
+              </Button>
+            )}
+
+            {isFollowing && isFollowAllowed() && (
+              <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
+                <FontAwesomeIcon icon={faHeart} className="mr-1" />
+                You're following {expertData.name}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ... (keep all existing services, tabs, and other content) */}
+
       {localStorage.getItem("role") === "player" ? (
         <>
           <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
@@ -675,7 +1035,7 @@ const Expertview = () => {
                       Only <strong>Recorded Video Assessment</strong> is
                       available.
                       <button
-                        onClick={() => navigate("/player/dashboard")}
+                        onClick={() => navigate("/plans")}
                         className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
                       >
                         Upgrade to Premium
@@ -798,6 +1158,27 @@ const Expertview = () => {
           </div>
         )}
       </div>
+
+      {/* Followers Modal */}
+      {isFollowersModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-[95vw] max-w-md p-6 relative max-h-[80vh] overflow-hidden">
+            <button
+              onClick={() => setIsFollowersModalOpen(false)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl z-10"
+            >
+              ✕
+            </button>
+            <h3 className="text-lg font-semibold mb-4 text-center dark:text-white">
+              Followers ({followersCount})
+            </h3>
+            <div className="overflow-y-auto max-h-96">
+              <FollowersList followers={followers} loading={loadingFollowers} />
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Video Upload Modal (for RECORDED VIDEO ASSESSMENT) */}
       {isVideoUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">

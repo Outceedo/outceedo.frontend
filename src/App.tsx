@@ -97,6 +97,7 @@ import ExpertServices from "./Adminpages/Expert/ExpertServices";
 import NotFound from "./common/notfound";
 import AssessmentEvaluationForm from "./expertpages/evaluation";
 import Success from "./common/Success";
+import PricingPlans from "./Pages/Home/Pricing";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -402,6 +403,8 @@ const AppContent: React.FC = () => {
             </div>
           }
         />
+
+        <Route path="/plans" element={<PricingPlans />} />
 
         <Route path="/subscription/success" element={<Success />} />
         <Route path="*" element={<NotFound />} />

@@ -106,6 +106,33 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
     }
   }, [bookingId]);
 
+  // Calculate overall score from all categories
+  const calculateOverallScore = (): number => {
+    if (!reportData || reportData.length === 0) return 0;
+
+    const totalScore = reportData.reduce(
+      (sum, item) => sum + item.overallScore,
+      0
+    );
+    const averageScore = totalScore / reportData.length;
+    return Math.round(averageScore);
+  };
+
+  const overallScore = calculateOverallScore();
+
+  // Function to get performance level based on score
+  const getPerformanceLevel = (
+    score: number
+  ): { level: string; color: string } => {
+    if (score >= 90) return { level: "Excellent", color: "#16a34a" };
+    if (score >= 80) return { level: "Very Good", color: "#65a30d" };
+    if (score >= 70) return { level: "Good", color: "#ca8a04" };
+    if (score >= 60) return { level: "Average", color: "#ea580c" };
+    return { level: "Needs Improvement", color: "#dc2626" };
+  };
+
+  const performanceLevel = getPerformanceLevel(overallScore);
+
   // Function to inject CSS overrides that force safe colors
   const injectSafeCSS = () => {
     const styleId = "pdf-safe-styles";
@@ -127,6 +154,9 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
       }
       .pdf-safe .bg-amber-100 {
         background-color: #fef3c7 !important;
+      }
+      .pdf-safe .bg-gray-50 {
+        background-color: #f9fafb !important;
       }
       .pdf-safe .bg-gray-200 {
         background-color: #e5e7eb !important;
@@ -154,7 +184,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
         fill: currentColor !important;
         color: inherit !important;
       }
-      .pdf-safe [class*="bg-"]:not(.bg-white):not(.bg-amber-100):not(.bg-gray-200):not(.bg-green-100) {
+      .pdf-safe [class*="bg-"]:not(.bg-white):not(.bg-amber-100):not(.bg-gray-50):not(.bg-gray-200):not(.bg-green-100) {
         background-color: transparent !important;
       }
       .pdf-safe [class*="text-"]:not(.text-gray-500):not(.text-gray-700):not(.text-green-600):not(.text-stone-800) {
@@ -218,6 +248,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
             }
             .bg-white { background-color: #ffffff !important; }
             .bg-amber-100 { background-color: #fef3c7 !important; }
+            .bg-gray-50 { background-color: #f9fafb !important; }
             .bg-gray-200 { background-color: #e5e7eb !important; }
             .bg-green-100 { background-color: #dcfce7 !important; }
             .text-gray-500 { color: #6b7280 !important; }
@@ -538,6 +569,89 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
           </div>
         </div>
       </CardContent>
+
+      {/* Overall Score Section */}
+      <div className="bg-gray-50 rounded-xl shadow-md p-8 mx-auto">
+        <h3 className="text-xl font-semibold text-center mb-16">
+          Overall Performance Score
+        </h3>
+
+        <div className="flex flex-col items-center">
+          {/* Semicircle Progress Bar */}
+          <div className="relative w-48 h-24 mb-6 mr-24">
+            <div
+              className="w-48 h-24 relative"
+              style={{ transform: "rotate(-90deg)" }}
+            >
+              <CircularProgressbar
+                value={overallScore}
+                styles={buildStyles({
+                  textSize: "0px", // Hide default text as we'll add custom
+                  pathColor: performanceLevel.color,
+                  trailColor: "#e5e7eb",
+                  strokeLinecap: "round",
+                  pathTransition: "stroke-dasharray 0.5s ease 0s",
+                })}
+                circleRatio={0.5} // Creates semicircle
+              />
+            </div>
+
+            {/* Custom text overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-lg font-semibold text-stone-800 ml-22">
+              <div
+                className="text-4xl font-bold"
+                style={{ color: performanceLevel.color }}
+              >
+                {overallScore}%
+              </div>
+              <div className="text-sm font-medium text-gray-600 mt-1">
+                Overall Score
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Level */}
+          <div className="text-center">
+            <div
+              className="text-lg font-semibold mb-2"
+              style={{ color: performanceLevel.color }}
+            >
+              {performanceLevel.level}
+            </div>
+            <div className="text-sm text-gray-600 max-w-md">
+              Based on the average of all category assessments, this player
+              demonstrates{" "}
+              <span
+                className="font-medium"
+                style={{ color: performanceLevel.color }}
+              >
+                {performanceLevel.level.toLowerCase()}
+              </span>{" "}
+              performance across all evaluated attributes.
+            </div>
+          </div>
+
+          {/* Score Breakdown */}
+          <div className="mt-6 w-full max-w-md">
+            <div className="text-sm font-medium text-gray-700 mb-3 text-center">
+              Category Breakdown
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {transformedAttributes.map((attr, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center py-1"
+                >
+                  <span className="text-gray-600">{attr.label}:</span>
+                  <span className="font-medium" style={{ color: attr.color }}>
+                    {attr.percentage}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {reviewData && (
         <div className="justify-start">
