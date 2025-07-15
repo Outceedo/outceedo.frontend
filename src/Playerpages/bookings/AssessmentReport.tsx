@@ -106,16 +106,43 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
     }
   }, [bookingId]);
 
+  // Calculate overall score from all categories
+  const calculateOverallScore = (): number => {
+    if (!reportData || reportData.length === 0) return 0;
+
+    const totalScore = reportData.reduce(
+      (sum, item) => sum + item.overallScore,
+      0
+    );
+    const averageScore = totalScore / reportData.length;
+    return Math.round(averageScore);
+  };
+
+  const overallScore = calculateOverallScore();
+
+  // Function to get performance level based on score
+  const getPerformanceLevel = (
+    score: number
+  ): { level: string; color: string } => {
+    if (score >= 90) return { level: "Excellent", color: "#16a34a" };
+    if (score >= 80) return { level: "Very Good", color: "#65a30d" };
+    if (score >= 70) return { level: "Good", color: "#ca8a04" };
+    if (score >= 60) return { level: "Average", color: "#ea580c" };
+    return { level: "Needs Improvement", color: "#dc2626" };
+  };
+
+  const performanceLevel = getPerformanceLevel(overallScore);
+
   // Function to inject CSS overrides that force safe colors
   const injectSafeCSS = () => {
-    const styleId = 'pdf-safe-styles';
+    const styleId = "pdf-safe-styles";
     let existingStyle = document.getElementById(styleId);
-    
+
     if (existingStyle) {
       existingStyle.remove();
     }
 
-    const style = document.createElement('style');
+    const style = document.createElement("style");
     style.id = styleId;
     style.textContent = `
       .pdf-safe * {
@@ -127,6 +154,9 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
       }
       .pdf-safe .bg-amber-100 {
         background-color: #fef3c7 !important;
+      }
+      .pdf-safe .bg-gray-50 {
+        background-color: #f9fafb !important;
       }
       .pdf-safe .bg-gray-200 {
         background-color: #e5e7eb !important;
@@ -154,7 +184,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
         fill: currentColor !important;
         color: inherit !important;
       }
-      .pdf-safe [class*="bg-"]:not(.bg-white):not(.bg-amber-100):not(.bg-gray-200):not(.bg-green-100) {
+      .pdf-safe [class*="bg-"]:not(.bg-white):not(.bg-amber-100):not(.bg-gray-50):not(.bg-gray-200):not(.bg-green-100) {
         background-color: transparent !important;
       }
       .pdf-safe [class*="text-"]:not(.text-gray-500):not(.text-gray-700):not(.text-green-600):not(.text-stone-800) {
@@ -179,21 +209,21 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
 
     try {
       const element = reportRef.current;
-      
+
       // Inject safe CSS
       injectedStyle = injectSafeCSS();
-      
+
       // Add safe class to element
-      element.classList.add('pdf-safe');
-      
+      element.classList.add("pdf-safe");
+
       // Wait a bit for styles to apply
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
 
       const canvas = await html2canvas(element, {
         scale: 1,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#ffffff',
+        backgroundColor: "#ffffff",
         logging: false,
         width: element.scrollWidth,
         height: element.scrollHeight,
@@ -202,13 +232,15 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
         scrollX: 0,
         scrollY: 0,
         ignoreElements: (element) => {
-          return element.tagName === 'BUTTON' || 
-                 element.classList.contains('pdf-exclude') ||
-                 element.getAttribute('data-exclude-pdf') === 'true';
+          return (
+            element.tagName === "BUTTON" ||
+            element.classList.contains("pdf-exclude") ||
+            element.getAttribute("data-exclude-pdf") === "true"
+          );
         },
         onclone: (clonedDoc, clonedElement) => {
           // Apply safe styles to cloned document
-          const clonedStyle = clonedDoc.createElement('style');
+          const clonedStyle = clonedDoc.createElement("style");
           clonedStyle.textContent = `
             * {
               color: black !important;
@@ -216,6 +248,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
             }
             .bg-white { background-color: #ffffff !important; }
             .bg-amber-100 { background-color: #fef3c7 !important; }
+            .bg-gray-50 { background-color: #f9fafb !important; }
             .bg-gray-200 { background-color: #e5e7eb !important; }
             .bg-green-100 { background-color: #dcfce7 !important; }
             .text-gray-500 { color: #6b7280 !important; }
@@ -226,88 +259,105 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
             svg { fill: currentColor !important; }
           `;
           clonedDoc.head.appendChild(clonedStyle);
-          
+
           // Remove buttons and problem elements
-          const buttonsToHide = clonedElement.querySelectorAll('button, .pdf-exclude');
-          buttonsToHide.forEach(btn => {
-            (btn as HTMLElement).style.display = 'none';
+          const buttonsToHide = clonedElement.querySelectorAll(
+            "button, .pdf-exclude"
+          );
+          buttonsToHide.forEach((btn) => {
+            (btn as HTMLElement).style.display = "none";
           });
-        }
+        },
       });
 
       // Remove safe class and styles
-      element.classList.remove('pdf-safe');
+      element.classList.remove("pdf-safe");
       if (injectedStyle) {
         removeSafeCSS(injectedStyle);
       }
 
-      const imgData = canvas.toDataURL('image/png', 1.0);
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      
+      const imgData = canvas.toDataURL("image/png", 1.0);
+      const pdf = new jsPDF("p", "mm", "a4");
+
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
       const margin = 10;
-      const availableWidth = pdfWidth - (margin * 2);
-      const availableHeight = pdfHeight - (margin * 2);
-      
+      const availableWidth = pdfWidth - margin * 2;
+      const availableHeight = pdfHeight - margin * 2;
+
       const imgWidth = availableWidth;
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
+
       if (imgHeight <= availableHeight) {
-        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", margin, margin, imgWidth, imgHeight);
       } else {
         // Multi-page handling
         let yPosition = 0;
         let pageNumber = 1;
-        
+
         while (yPosition < canvas.height) {
           if (pageNumber > 1) {
             pdf.addPage();
           }
-          
+
           const sourceY = yPosition;
           const sourceHeight = Math.min(
             (availableHeight * canvas.width) / imgWidth,
             canvas.height - yPosition
           );
-          
-          const pageCanvas = document.createElement('canvas');
-          const pageCtx = pageCanvas.getContext('2d')!;
+
+          const pageCanvas = document.createElement("canvas");
+          const pageCtx = pageCanvas.getContext("2d")!;
           pageCanvas.width = canvas.width;
           pageCanvas.height = sourceHeight;
-          
+
           pageCtx.drawImage(
             canvas,
-            0, sourceY, canvas.width, sourceHeight,
-            0, 0, canvas.width, sourceHeight
+            0,
+            sourceY,
+            canvas.width,
+            sourceHeight,
+            0,
+            0,
+            canvas.width,
+            sourceHeight
           );
-          
-          const pageImgData = pageCanvas.toDataURL('image/png', 1.0);
+
+          const pageImgData = pageCanvas.toDataURL("image/png", 1.0);
           const pageImgHeight = (sourceHeight * imgWidth) / canvas.width;
-          
-          pdf.addImage(pageImgData, 'PNG', margin, margin, imgWidth, pageImgHeight);
-          
+
+          pdf.addImage(
+            pageImgData,
+            "PNG",
+            margin,
+            margin,
+            imgWidth,
+            pageImgHeight
+          );
+
           yPosition += sourceHeight;
           pageNumber++;
         }
       }
-      
+
       const playerName = formatFullName(
         reportData[0]?.player?.firstName,
         reportData[0]?.player?.lastName
       );
-      const date = new Date().toISOString().split('T')[0];
-      const filename = `Assessment_Report_${playerName.replace(/\s+/g, '_')}_${date}.pdf`;
-      
+      const date = new Date().toISOString().split("T")[0];
+      const filename = `Assessment_Report_${playerName.replace(
+        /\s+/g,
+        "_"
+      )}_${date}.pdf`;
+
       pdf.save(filename);
-      
     } catch (error) {
-      console.error('Error generating PDF:', error);
-      alert('Failed to generate PDF. Please try again.');
+      console.error("Error generating PDF:", error);
+      alert("Failed to generate PDF. Please try again.");
     } finally {
       // Cleanup
       if (reportRef.current) {
-        reportRef.current.classList.remove('pdf-safe');
+        reportRef.current.classList.remove("pdf-safe");
       }
       if (injectedStyle) {
         removeSafeCSS(injectedStyle);
@@ -325,24 +375,24 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
         reportData[0]?.player?.firstName,
         reportData[0]?.player?.lastName
       )} - Generated on ${new Date().toLocaleDateString()}`;
-      
+
       if (navigator.share) {
         await navigator.share({
-          title: 'Assessment Report',
+          title: "Assessment Report",
           text: shareText,
-          url: window.location.href
+          url: window.location.href,
         });
       } else {
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(shareText);
-          alert('Report details copied to clipboard!');
+          alert("Report details copied to clipboard!");
         } else {
-          alert('Sharing not supported on this device.');
+          alert("Sharing not supported on this device.");
         }
       }
     } catch (error) {
-      console.error('Error sharing:', error);
-      alert('Unable to share the report.');
+      console.error("Error sharing:", error);
+      alert("Unable to share the report.");
     } finally {
       setShareLoading(false);
     }
@@ -382,10 +432,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
   }
 
   return (
-    <div 
-      ref={reportRef} 
-      className="p-6 bg-white space-y-6"
-    >
+    <div ref={reportRef} className="p-6 bg-white space-y-6">
       <div className="flex justify-center items-center mb-14">
         <h2 className="text-2xl font-semibold">Assessment Report</h2>
       </div>
@@ -449,7 +496,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
             title="Download as PDF"
           >
             <Download className="w-4 h-4" />
-            {downloadLoading ? 'Generating...' : 'PDF'}
+            {downloadLoading ? "Generating..." : "PDF"}
           </button>
           <button
             onClick={handleShare}
@@ -458,7 +505,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
             title="Share Report"
           >
             <Share2 className="w-4 h-4" />
-            {shareLoading ? 'Sharing...' : 'Share'}
+            {shareLoading ? "Sharing..." : "Share"}
           </button>
         </div>
       </div>
@@ -522,6 +569,89 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
           </div>
         </div>
       </CardContent>
+
+      {/* Overall Score Section */}
+      <div className="bg-gray-50 rounded-xl shadow-md p-8 mx-auto">
+        <h3 className="text-xl font-semibold text-center mb-16">
+          Overall Performance Score
+        </h3>
+
+        <div className="flex flex-col items-center">
+          {/* Semicircle Progress Bar */}
+          <div className="relative w-48 h-24 mb-6 mr-24">
+            <div
+              className="w-48 h-24 relative"
+              style={{ transform: "rotate(-90deg)" }}
+            >
+              <CircularProgressbar
+                value={overallScore}
+                styles={buildStyles({
+                  textSize: "0px", // Hide default text as we'll add custom
+                  pathColor: performanceLevel.color,
+                  trailColor: "#e5e7eb",
+                  strokeLinecap: "round",
+                  pathTransition: "stroke-dasharray 0.5s ease 0s" ,
+                })}
+                circleRatio={0.5} // Creates semicircle
+              />
+            </div>
+
+            {/* Custom text overlay */}
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-lg font-semibold text-stone-800 ml-22">
+              <div
+                className="text-4xl font-bold"
+                style={{ color: performanceLevel.color }}
+              >
+                {overallScore}%
+              </div>
+              <div className="text-sm font-medium text-gray-600 mt-1">
+                Overall Score
+              </div>
+            </div>
+          </div>
+
+          {/* Performance Level */}
+          <div className="text-center">
+            <div
+              className="text-lg font-semibold mb-2"
+              style={{ color: performanceLevel.color }}
+            >
+              {performanceLevel.level}
+            </div>
+            <div className="text-sm text-gray-600 max-w-md">
+              Based on the average of all category assessments, this player
+              demonstrates{" "}
+              <span
+                className="font-medium"
+                style={{ color: performanceLevel.color }}
+              >
+                {performanceLevel.level.toLowerCase()}
+              </span>{" "}
+              performance across all evaluated attributes.
+            </div>
+          </div>
+
+          {/* Score Breakdown */}
+          <div className="mt-6 w-full max-w-md">
+            <div className="text-sm font-medium text-gray-700 mb-3 text-center">
+              Category Breakdown
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-xs">
+              {transformedAttributes.map((attr, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center py-1"
+                >
+                  <span className="text-gray-600">{attr.label}:</span>
+                  <span className="font-medium" style={{ color: attr.color }}>
+                    {attr.percentage}%
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
 
       {reviewData && (
         <div className="justify-start">
