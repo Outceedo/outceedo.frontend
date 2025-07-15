@@ -393,6 +393,8 @@ const PlayerProfiles: React.FC = () => {
       navigate(`/team/playerinfo`);
     } else if (localStorage.getItem("role") === "sponsor") {
       navigate(`/sponsor/playerinfo`);
+    } else {
+      navigate("/fan/playerinfo");
     }
   };
 

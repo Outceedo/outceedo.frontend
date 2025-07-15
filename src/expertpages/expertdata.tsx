@@ -131,7 +131,7 @@ const ExpertProfile = () => {
           navigate("/expert/details-form");
         }
       }
-    }, 2000);
+    }, 5000);
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
 

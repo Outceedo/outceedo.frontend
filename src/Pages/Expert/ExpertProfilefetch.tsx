@@ -347,6 +347,8 @@ const ExpertProfiles: React.FC = () => {
       navigate("/sponsor/exdetails");
     } else if (role === "team") {
       navigate("/team/exdetails");
+    } else {
+      navigate("/fan/exdetails");
     }
   };
 

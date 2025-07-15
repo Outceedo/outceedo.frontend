@@ -98,6 +98,8 @@ import NotFound from "./common/notfound";
 import AssessmentEvaluationForm from "./expertpages/evaluation";
 import Success from "./common/Success";
 import PricingPlans from "./Pages/Home/Pricing";
+import Expertinfo from "./fanpages/Expertinfo";
+import Playerinfo from "./fanpages/Playerinfo";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -342,6 +344,8 @@ const AppContent: React.FC = () => {
           <Route path="experts" element={<FanExperts />} />
           <Route path="profile" element={<Fanprofile />} />
           <Route path="details-form" element={<Fandetailsform />} />
+          <Route path="exdetails" element={<Expertinfo />} />
+          <Route path="playerinfo" element={<Playerinfo />} />
         </Route>
 
         {/* Admin routes */}

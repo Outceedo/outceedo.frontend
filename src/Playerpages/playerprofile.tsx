@@ -319,7 +319,7 @@ const Profile: React.FC = () => {
           navigate("/player/details-form");
         }
       }
-    }, 2000);
+    }, 5000);
 
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
