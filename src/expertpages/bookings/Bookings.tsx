@@ -1157,7 +1157,7 @@ const BookingExpertside: React.FC = () => {
 
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">
-                  ${booking.service?.price || "N/A"}
+                  ${booking.price || "N/A"}
                 </span>
 
                 {canGoLive(booking) ? (
@@ -1490,7 +1490,7 @@ const BookingExpertside: React.FC = () => {
                   </h3>
                   <div className="text-lg font-bold text-green-700">
                     <FontAwesomeIcon icon={faMoneyBill} className="mr-1" />$
-                    {selectedBooking.service?.price || "N/A"}
+                    {selectedBooking.price || "N/A"}
                   </div>
                 </div>
                 <p className="font-medium break-words">
@@ -1876,8 +1876,8 @@ const BookingExpertside: React.FC = () => {
                 </p>
                 <p className="text-sm">
                   <span className="font-semibold">Price:</span> $
-                  {bookings.find((b) => b.id === bookingToAccept)?.service
-                    ?.price || "N/A"}
+                  {bookings.find((b) => b.id === bookingToAccept)?.price ||
+                    "N/A"}
                 </p>
               </div>
             )}
