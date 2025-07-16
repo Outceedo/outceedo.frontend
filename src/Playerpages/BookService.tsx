@@ -559,7 +559,7 @@ const BookingCalendar: React.FC = () => {
         duration: duration,
         location: bookingLocation,
         description: bookingDescription,
-        price: Math.round(finalPrice * 100), // Send as integer (cents)
+        price: finalPrice,
       };
 
       console.log("Booking data being sent:", bookingData);

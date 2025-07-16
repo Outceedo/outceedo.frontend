@@ -1150,7 +1150,7 @@ const MyBooking: React.FC = () => {
 
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">
-                  ${booking.service?.price || "N/A"}
+                  ${booking.price || "N/A"}
                 </span>
 
                 {isSessionOver(booking) ? (
@@ -1507,7 +1507,7 @@ const MyBooking: React.FC = () => {
                   </h3>
                   <div className="text-lg font-bold text-green-700">
                     <FontAwesomeIcon icon={faMoneyBill} className="mr-1" />$
-                    {selectedBooking.service?.price || "N/A"}
+                    {selectedBooking.price || "N/A"}
                   </div>
                 </div>
                 <h4 className="font-medium mb-2 break-words">
@@ -1827,7 +1827,7 @@ const MyBooking: React.FC = () => {
                   onClick={() => handlePayment(selectedBooking.id)}
                 >
                   <FontAwesomeIcon icon={faCreditCard} className="mr-2" />
-                  Pay Now (${selectedBooking.service?.price})
+                  Pay Now (${selectedBooking.price})
                 </Button>
               )}
 
