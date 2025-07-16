@@ -131,6 +131,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
   const myUIDRef = useRef<number | null>(null);
   const localVideoRef = useRef<HTMLDivElement>(null);
+  const waitingLocalVideoRef = useRef<HTMLDivElement>(null); // New ref for waiting screen video
   const remoteVideoRefs = useRef<{ [uid: string]: HTMLDivElement | null }>({});
   const chatEndRef = useRef<HTMLDivElement>(null);
   const callStartTime = useRef<number>(0);
@@ -165,6 +166,18 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       }
     };
   }, [isJoined]);
+
+  // Effect to play local video in waiting screen when available
+  useEffect(() => {
+    if (
+      localVideoTrack &&
+      !isVideoMuted &&
+      waitingLocalVideoRef.current &&
+      remoteUsers.length === 0
+    ) {
+      localVideoTrack.play(waitingLocalVideoRef.current);
+    }
+  }, [localVideoTrack, isVideoMuted, remoteUsers.length]);
 
   useEffect(() => {
     if (chatEndRef.current) {
@@ -745,6 +758,13 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         await client.publish([localVideoTrack]);
         setIsVideoMuted(false);
         addChatMessage("System", "Expert turned on camera", false);
+
+        // Re-play video in waiting screen if no remote users
+        if (remoteUsers.length === 0 && waitingLocalVideoRef.current) {
+          setTimeout(() => {
+            localVideoTrack.play(waitingLocalVideoRef.current!);
+          }, 100);
+        }
       }
     } catch (error) {
       // Fallback to setEnabled method
@@ -756,6 +776,17 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           `Expert ${isVideoMuted ? "turned on" : "turned off"} camera`,
           false
         );
+
+        // Re-play video in waiting screen if no remote users and video is being turned on
+        if (
+          isVideoMuted &&
+          remoteUsers.length === 0 &&
+          waitingLocalVideoRef.current
+        ) {
+          setTimeout(() => {
+            localVideoTrack.play(waitingLocalVideoRef.current!);
+          }, 100);
+        }
       } catch (fallbackError) {
         addChatMessage("System", "Failed to toggle camera", false);
       }
@@ -1057,8 +1088,51 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             } flex flex-col relative`}
           >
             <div className="flex-1 relative bg-gradient-to-br from-green-100 to-emerald-100 p-4">
-              {allParticipants.length === 1 ? (
-                <div className="w-full h-full flex items-center justify-center">
+              {remoteUsers.length === 0 ? (
+                /* Waiting screen with local video */
+                <div className="w-full h-full flex flex-col items-center justify-center">
+                  {/* Show local video if available and not muted */}
+                  {localVideoTrack && !isVideoMuted ? (
+                    <div className="w-80 h-60 bg-black rounded-xl overflow-hidden shadow-lg mb-6 relative">
+                      <div
+                        ref={waitingLocalVideoRef}
+                        className="w-full h-full"
+                      />
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs flex items-center space-x-1">
+                        <FontAwesomeIcon
+                          icon={faChalkboardTeacher}
+                          className="text-green-400"
+                        />
+                        <span className="font-medium">You (Expert)</span>
+                        {(!localAudioTrack || isAudioMuted) && (
+                          <FontAwesomeIcon
+                            icon={faMicrophoneSlash}
+                            className="text-red-400"
+                          />
+                        )}
+                      </div>
+                      <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
+                        Preview
+                      </div>
+                    </div>
+                  ) : (
+                    /* Fallback when no video or camera is off */
+                    <div className="w-80 h-60 bg-gradient-to-br from-green-200 to-emerald-200 rounded-xl flex items-center justify-center mb-6 shadow-lg">
+                      <div className="text-center">
+                        <img
+                          src={booking.expert.photo}
+                          alt={booking.expert.username}
+                          className="w-16 h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
+                        />
+                        <p className="text-sm text-gray-700 font-medium">
+                          {!localVideoTrack
+                            ? "Camera Access Denied"
+                            : "Camera Off"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="text-center">
                     <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-4">
                       <FontAwesomeIcon
@@ -1069,34 +1143,58 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     <h3 className="text-lg font-semibold text-gray-700 mb-2">
                       Waiting for {booking.player.username}
                     </h3>
-                    <p className="text-gray-500 text-sm mb-2">
+                    <p className="text-gray-500 text-sm mb-4">
                       Your student will join the expert session shortly...
                     </p>
-                    <div className="mt-3 text-xs text-gray-400">
-                      <p className="flex items-center justify-center mb-1">
-                        <FontAwesomeIcon
-                          icon={faChalkboardTeacher}
-                          className="mr-2"
-                        />
-                        Expert Session: {booking.service.service.name}
-                      </p>
-                      <p className="flex items-center justify-center mb-1">
-                        <FontAwesomeIcon icon={faClock} className="mr-2" />
-                        Time: {booking.startTime} - {booking.endTime}
-                      </p>
-                      {isJoined && (
-                        <p className="text-green-600 mt-2 flex items-center justify-center">
+
+                    {/* Session details */}
+                    <div className="bg-white bg-opacity-90 backdrop-blur rounded-lg p-4 max-w-md mx-auto shadow-lg">
+                      <div className="text-xs text-gray-600 space-y-2">
+                        <p className="flex items-center justify-center">
                           <FontAwesomeIcon
-                            icon={faCheckCircle}
-                            className="mr-1"
+                            icon={faChalkboardTeacher}
+                            className="mr-2 text-green-500"
                           />
-                          Expert connected and ready to teach
+                          <span className="font-medium">Session:</span>
+                          <span className="ml-1">
+                            {booking.service.service.name}
+                          </span>
                         </p>
-                      )}
+                        <p className="flex items-center justify-center">
+                          <FontAwesomeIcon
+                            icon={faClock}
+                            className="mr-2 text-blue-500"
+                          />
+                          <span className="font-medium">Time:</span>
+                          <span className="ml-1">
+                            {booking.startTime} - {booking.endTime}
+                          </span>
+                        </p>
+                        <p className="flex items-center justify-center">
+                          <FontAwesomeIcon
+                            icon={faGraduationCap}
+                            className="mr-2 text-purple-500"
+                          />
+                          <span className="font-medium">Student:</span>
+                          <span className="ml-1">
+                            {booking.player.username}
+                          </span>
+                        </p>
+                        {isJoined && (
+                          <p className="text-green-600 mt-3 flex items-center justify-center font-medium">
+                            <FontAwesomeIcon
+                              icon={faCheckCircle}
+                              className="mr-1"
+                            />
+                            Expert connected and ready to teach
+                          </p>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
               ) : (
+                /* Grid view when student has joined */
                 <div
                   className={`w-full h-full grid ${getGridCols(
                     allParticipants.length
@@ -1203,7 +1301,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     className="mr-2 text-green-500"
                   />
                   <span className="font-medium">
-                    {allParticipants.length} participants
+                    {allParticipants.length} participant
+                    {allParticipants.length !== 1 ? "s" : ""}
                   </span>
                 </div>
               </div>
