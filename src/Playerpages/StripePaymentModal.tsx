@@ -190,7 +190,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
               Booking Summary
             </h3>
             <div className="text-2xl font-bold text-blue-600">
-              ${booking.service.price}
+              ${booking.price}
             </div>
           </div>
 
@@ -396,7 +396,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
             ) : (
               <div className="flex items-center space-x-2">
                 <FontAwesomeIcon icon={faLock} />
-                <span>Pay ${booking.service.price}</span>
+                <span>Pay ${booking.price}</span>
               </div>
             )}
           </Button>
