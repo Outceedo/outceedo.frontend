@@ -204,7 +204,14 @@ const PDFDocument: React.FC<{
     header: {
       fontSize: 24,
       textAlign: "center",
-      marginBottom: 40,
+      marginBottom: 20,
+      fontWeight: "bold",
+      color: "red-500",
+    },
+    header2: {
+      fontSize: 20,
+      textAlign: "center",
+      marginBottom: 20,
       fontWeight: "bold",
       color: "#000000",
     },
@@ -420,7 +427,8 @@ const PDFDocument: React.FC<{
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
-        <Text style={styles.header}>Assessment Report</Text>
+        <Text style={styles.header}>Outceedo</Text>
+        {/* <Text style={styles.header2}>Assessment Report</Text> */}
 
         {/* Info Section */}
         <View style={styles.infoSection}>
@@ -800,7 +808,8 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
   return (
     <div ref={reportRef} className="p-6 bg-white space-y-6">
       <div className="flex justify-center items-center mb-14">
-        <h2 className="text-2xl font-semibold">Assessment Report</h2>
+        <h2 className="text-2xl font-semibold">Outceedo</h2>
+        {/* <h2 className="text-2xl font-semibold">Assessment Report</h2> */}
       </div>
 
       <div className="flex justify-between text-sm mb-6">

@@ -9,6 +9,7 @@ import {
   faTimes,
   faStar as faStarSolid,
   faStarHalfAlt,
+  faLock,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import ProfileDetails from "./profiledetails";
@@ -52,12 +53,12 @@ interface EditableProfileData {
 }
 
 const initialStats: Stat[] = [
-  { label: "Pace", percentage: 60, color: "#E63946" },
-  { label: "Shooting", percentage: 55, color: "#D62828" },
-  { label: "Passing", percentage: 80, color: "#4CAF50" },
-  { label: "Dribbling", percentage: 65, color: "#68A357" },
-  { label: "Defending", percentage: 90, color: "#2D6A4F" },
-  { label: "Physical", percentage: 60, color: "#F4A261" },
+  { label: "Pace", percentage: 0, color: "#E63946" },
+  { label: "Shooting", percentage: 0, color: "#D62828" },
+  { label: "Passing", percentage: 0, color: "#4CAF50" },
+  { label: "Dribbling", percentage: 0, color: "#68A357" },
+  { label: "Defending", percentage: 0, color: "#2D6A4F" },
+  { label: "Physical", percentage: 0, color: "#F4A261" },
 ];
 
 const calculateOVR = (stats: Stat[]) => {
@@ -124,8 +125,14 @@ const Profile: React.FC = () => {
   const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
+  const {
+    isActive,
+    planName,
+    loading: subscriptionLoading,
+  } = useAppSelector((state) => state.subscription);
   const navigate = useNavigate();
-
+  const isUserOnPremiumPlan =
+    isActive && planName && planName.toLowerCase() !== "free";
   const [playerStats, setPlayerStats] = useState(initialStats);
 
   useEffect(() => {
@@ -869,7 +876,7 @@ const Profile: React.FC = () => {
                 <Dialog>
                   <DialogTrigger asChild>
                     <div className="flex items-center gap-2 cursor-pointer">
-                      <p className="text-red-500  font-bold">7</p>
+                      <p className="text-red-500  font-bold">0</p>
                       <p className="text-gray-500 dark:text-white">Followers</p>
                     </div>
                   </DialogTrigger>
@@ -885,6 +892,45 @@ const Profile: React.FC = () => {
               </div>
             </div>
           </div>
+          {!subscriptionLoading && (
+            <div
+              className={`rounded-lg p-3 mb-4 mt-2 ${
+                isUserOnPremiumPlan
+                  ? "bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                  : "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+              }`}
+            >
+              <p
+                className={`text-sm ${
+                  isUserOnPremiumPlan
+                    ? "text-green-700 dark:text-green-300"
+                    : "text-blue-700 dark:text-blue-300"
+                }`}
+              >
+                {isUserOnPremiumPlan ? (
+                  <>
+                    ✨ You're on the <strong>{planName}</strong> plan! Access to
+                    all services is available.
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faLock} className="mr-2" />
+                    You're on the <strong>{planName || "Free"}</strong> plan.
+                    Only <strong>Recorded Video Assessment</strong> is
+                    available.
+                    <button
+                      onClick={() => navigate("/plans")}
+                      className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                    >
+                      Upgrade to Premium
+                    </button>{" "}
+                    for access to all services.
+                  </>
+                )}
+              </p>
+            </div>
+          )}
+
           {/* Tabs Section */}
           <div className="mt-8">
             <div className="flex gap-5 sm:gap-4 border-b overflow-x-auto">

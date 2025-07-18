@@ -1520,25 +1520,6 @@ const MyBooking: React.FC = () => {
                   {selectedBooking.service?.service?.description ||
                     "No description available"}
                 </p>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span>One-on-one personalized instruction</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span>Video recording for later review</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span>Detailed performance assessment</span>
-                  </div>
-                  <div className="flex items-start">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span>Follow-up recommendations</span>
-                  </div>
-                </div>
               </div>
 
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">

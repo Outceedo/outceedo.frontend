@@ -78,6 +78,7 @@ interface Booking {
   isPaid?: boolean;
   paymentIntentId?: string;
   paymentIntentClientSecret?: string;
+  price?: number;
 }
 
 interface ReportData {
@@ -256,6 +257,7 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
+      year: "numeric",
     });
   };
 

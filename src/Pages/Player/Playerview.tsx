@@ -425,46 +425,37 @@ const Playerview: React.FC = () => {
   const generatePlayerStats = (profile: Profile) => {
     const height = profile.height || 0;
     const weight = profile.weight || 0;
-    const age = profile.age || 20;
+    const age = profile.age || "N/A";
 
     const stats: Stat[] = [
       {
         label: "Pace",
-        percentage: Math.min(
-          95,
-          Math.max(50, height && weight ? 100 - (weight / height) * 100 : 60)
-        ),
+        percentage: 0,
         color: "#E63946",
       },
       {
         label: "Shooting",
-        percentage: Math.min(95, Math.max(50, 65 + (age / 35) * 20)),
+        percentage: 0,
         color: "#D62828",
       },
       {
         label: "Passing",
-        percentage: Math.min(95, Math.max(50, 70 + (age / 35) * 15)),
+        percentage: 0,
         color: "#4CAF50",
       },
       {
         label: "Dribbling",
-        percentage: Math.min(95, Math.max(50, 85 - (age / 35) * 10)),
+        percentage: 0,
         color: "#68A357",
       },
       {
         label: "Defending",
-        percentage: Math.min(
-          95,
-          Math.max(50, weight ? 60 + (weight / 100) * 30 : 60)
-        ),
+        percentage: 0,
         color: "#2D6A4F",
       },
       {
         label: "Physical",
-        percentage: Math.min(
-          95,
-          Math.max(50, height && weight ? (weight / height) * 200 : 60)
-        ),
+        percentage: 0,
         color: "#F4A261",
       },
     ];
