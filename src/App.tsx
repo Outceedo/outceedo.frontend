@@ -84,7 +84,7 @@ import AdminLayoutdefault from "./components/admin/defaultlayout";
 import Player from "./Adminpages/Player/Player";
 import Booking from "./Adminpages/Player/Booking";
 import SponsorShipApplication from "./Adminpages/Player/SponsorShipApplication";
-import Certificates from "./Adminpages/Player/Certifications";
+import ServiceTransaction from "./Adminpages/Player/ServiceTransaction";
 import Media from "./Adminpages/Player/Media";
 
 import Expert from "./Adminpages/Expert/Expert";
@@ -353,7 +353,7 @@ const AppContent: React.FC = () => {
   <Route path="player/booking" element={<Booking />} />
   <Route path="player/sponsorshipapplication" element={<SponsorShipApplication />} />
   <Route path="player/media" element={<Media />} />
-  <Route path="player/certifications&awards" element={<Certificates />} />
+  <Route path="player/ServiceTransaction" element={<ServiceTransaction />} />
 
   {/* Expert */}
   <Route path="expert" element={<Expert />} />

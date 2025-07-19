@@ -11,182 +11,183 @@ import { Checkbox } from "@/components/ui/checkbox";
 import profile from "../../assets/images/avatar.png";
 import {
   Trash2,
-  Image as ImageIcon,
-  Video as VideoIcon,
-  Pencil,
   Eye,
-  MoreVertical,
-  X,
+  Edit2,
+  MoreHorizontal,
+  Pencil,
 } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
+// Sample data adapted to the image
 const mediaData = [
   {
-    expert: "Aarav Kumar",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/mov_bbb.mp4",
+    status: "Pending",
   },
   {
-    expert: "Meera Sharma",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/movie.mp4",
+    status: "Completed",
   },
   {
-    expert: "Aarav Kumar",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/mov_bbb.mp4",
+    status: "Pending",
   },
   {
-    expert: "Meera Sharma",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/movie.mp4",
+    status: "Completed",
   },
   {
-    expert: "Aarav Kumar",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/mov_bbb.mp4",
+    status: "Pending",
   },
   {
-    expert: "Meera Sharma",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/movie.mp4",
+    status: "Completed",
   },
   {
-    expert: "Aarav Kumar",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/mov_bbb.mp4",
+    status: "Pending",
   },
   {
-    expert: "Meera Sharma",
+    name: "User name",
     image: profile,
-    video: "https://www.w3schools.com/html/movie.mp4",
+    status: "Completed",
+  },
+  {
+    name: "User name",
+    image: profile,
+    status: "Pending",
+  },
+  {
+    name: "User name",
+    image: profile,
+    status: "Completed",
   },
 ];
 
-const Media: React.FC = () => {
-  const [selectedMedia, setSelectedMedia] = useState<{
-    type: "image" | "video";
-    src: string;
-  } | null>(null);
+const statusClass = status =>
+  status === "Completed"
+    ? "bg-green-100 text-green-700"
+    : "bg-yellow-100 text-yellow-700";
+
+const Media = () => {
+  const [selectedMonth, setSelectedMonth] = useState("October");
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
 
   return (
-    <div className="p-6 relative">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Player Media </h2>
+    <div className="p-6">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-6">
+        <h2 className="text-2xl font-semibold">Player's Media</h2>
+        <div>
+          <select
+            className="border px-3 py-2 rounded-md bg-white w-36 font-medium text-gray-700"
+            value={selectedMonth}
+            onChange={e => setSelectedMonth(e.target.value)}
+          >
+            {months.map((month, idx) => (
+              <option key={idx} value={month}>
+                {month}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
 
-      <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-800 text-xl">
+      <div className="rounded-xl border bg-white overflow-x-auto shadow-sm">
+        <Table className="min-w-[950px]">
+          <TableHeader className="bg-red-50 text-xs sm:text-base">
             <TableRow>
-              <TableHead></TableHead>
-              <TableHead>Players</TableHead>
-              <TableHead>Pictures</TableHead>
-              <TableHead>Videos</TableHead>
-              <TableHead className="text-center">Actions</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50"></TableHead>
+              <TableHead className="px-3 py-3 bg-red-50">Players Name</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50">Audio</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50">Videos</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50">Certificates</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50">Awards</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50">Status</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {mediaData.map((item, index) => (
-              <TableRow key={index}>
-                <TableCell>
+            {mediaData.map((item, idx) => (
+              <TableRow key={idx} className="border-b last:border-b-0 hover:bg-gray-50">
+                <TableCell className="px-3 py-2 align-middle">
                   <Checkbox />
                 </TableCell>
-
-                <TableCell>
-                  <div className="flex items-center gap-2">
+                {/* Player Name with image */}
+                <TableCell className="px-3 py-2 align-middle">
+                  <div className="flex items-center gap-3">
                     <img
                       src={item.image}
-                      alt={item.expert}
+                      alt={item.name}
                       className="w-8 h-8 rounded-full object-cover"
                     />
-                    <Link
-                      to={`/expert-profile/${index + 1}`}
-                      className="text-blue-600 underline hover:text-blue-800"
-                    >
-                      {item.expert}
-                    </Link>
+                    <span className="font-medium text-xs sm:text-sm">{item.name}</span>
                   </div>
                 </TableCell>
-
-                <TableCell>
-                  <button
-                    onClick={() =>
-                      setSelectedMedia({ type: "image", src: item.image })
-                    }
-                    className="flex items-center gap-1 text-sm text-purple-800 hover:text-purple-900 bg-purple-100 rounded-xl p-1.5 cursor-pointer"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    Picture
-                  </button>
+                {/* Audio */}
+                <TableCell className="px-3 py-2 align-middle">
+                  <a href="#" className="text-blue-600 underline hover:text-blue-800 text-xs sm:text-sm">View</a>
                 </TableCell>
-
-                <TableCell>
-                  <button
-                    onClick={() =>
-                      setSelectedMedia({ type: "video", src: item.video })
-                    }
-                    className="flex items-center gap-1 text-sm text-purple-800 hover:text-purple-900 bg-purple-100 rounded-xl p-1.5 cursor-pointer"
-                  >
-                    <VideoIcon className="w-4 h-4" />
-                    Video
-                  </button>
+                {/* Videos */}
+                <TableCell className="px-3 py-2 align-middle">
+                  <a href="#" className="text-blue-600 underline hover:text-blue-800 text-xs sm:text-sm">View</a>
                 </TableCell>
-
-                <TableCell className="flex gap-2 justify-center">
-                  <Button size="icon" variant="ghost">
-                    <Trash2 className="w-4 h-4 text-red-500" />
-                  </Button>
-                  <Button size="icon" variant="ghost">
-                    <Pencil className="w-4 h-4 text-gray-600 dark:text-white" />
-                  </Button>
-                  <Button size="icon" variant="ghost">
-                    <Eye className="w-4 h-4 text-gray-600 dark:text-white" />
-                  </Button>
-                  <Button size="icon" variant="ghost">
-                    <MoreVertical className="w-4 h-4 text-gray-600 dark:text-white" />
-                  </Button>
+                {/* Certificates */}
+                <TableCell className="px-3 py-2 align-middle">
+                  <a href="#" className="text-blue-600 underline hover:text-blue-800 text-xs sm:text-sm">View</a>
+                </TableCell>
+                {/* Awards */}
+                <TableCell className="px-3 py-2 align-middle">
+                  <a href="#" className="text-blue-600 underline hover:text-blue-800 text-xs sm:text-sm">View</a>
+                </TableCell>
+                {/* Status */}
+                <TableCell className="px-3 py-2 align-middle">
+                  <span className={`rounded-lg px-3 py-1 text-xs font-semibold ${statusClass(item.status)}`}>
+                    {item.status}
+                  </span>
+                </TableCell>
+                {/* Actions */}
+                <TableCell className="px-3 py-2 align-middle">
+                  <div className="flex gap-2">
+                    <Button size="icon" variant="ghost">
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                    <Button size="icon" variant="ghost">
+                      <Pencil className="w-4 h-4 text-gray-600 dark:text-white" />
+                    </Button>
+                    <Button size="icon" variant="ghost">
+                      <Eye className="w-4 h-4 text-gray-600 dark:text-white" />
+                    </Button>
+                    <Button size="icon" variant="ghost">
+                     <MoreHorizontal className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
-
-      {/* Modal Preview for Image or Video */}
-      {selectedMedia && (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="relative bg-white dark:bg-gray-900 p-4 rounded-md shadow-lg w-full max-w-md">
-            <button
-              onClick={() => setSelectedMedia(null)}
-              className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <h3 className="text-lg font-semibold mb-3 text-center">
-              {selectedMedia.type === "image"
-                ? "Image Preview"
-                : "Video Preview"}
-            </h3>
-
-            {selectedMedia.type === "image" ? (
-              <img
-                src={selectedMedia.src}
-                alt="Media"
-                className="w-full rounded border shadow-sm"
-              />
-            ) : (
-              <video
-                src={selectedMedia.src}
-                controls
-                className="w-full rounded border shadow-sm"
-              />
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Pagination */}
       <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-white">
         <div>Showing 1 out of {mediaData.length}</div>

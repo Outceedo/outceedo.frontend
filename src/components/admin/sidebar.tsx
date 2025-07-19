@@ -5,6 +5,8 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faAddressBook } from '@fortawesome/free-solid-svg-icons';
 
 // --- Role-based Menu Definitions ---
 interface MenuItem {
@@ -49,43 +51,39 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
   player: [
     {
       id: 1,
-      name: "Players",
+      name: "Registered Players",
       icon: "fas fa-user-tie",
       path: "/admin/player",
     },
     {
       id: 2,
-      name: "Bookings",
+      name: "Booking Experts",
       icon: "fas fa-calendar-check",
       path: "/admin/player/booking",
     },
     {
       id: 3,
-      name: "SponsorShip Application ",
+      name: "SponsorShip Request",
       icon: " fas fa-file-signature",
       path: "/admin/player/sponsorshipapplication",
     },
-   
-     {
-     id: 4,
-       name: "Media",
+    {
+      id: 4,
+      name: "Service Transactions",
+      icon: "fas fa-address-card",
+      path: "/admin/player/ServiceTransaction",
+    },
+    
+    {
+     id: 5,
+       name: "Player's Media",
       icon: "fas fa-photo-video",
 
       path: "/admin/player/media",
     },
-     {
-      id: 5,
-       name: "Certifications&Award",
-      icon: "fas fa-award ",
-       path: "/admin/player/certifications&awards",
-     },
+   
      
-      {
-      id: 6,
-      name: "Dashboard",
-      icon: "fas fa-table-columns",
-      path: "/admin/dashboard",
-    },
+     
     
   ],
   expert: [
@@ -330,53 +328,20 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
       )}
 
       {/* Logo */}
-      <h1 className="font-bold text-center text-gray-800 dark:text-white">
-        LOGO
-      </h1>
+      <div className="flex mt-1 ml-5 lg:ml-6">
+      <div className="flex items-center mb-8 gap-2">
+       <FontAwesomeIcon icon={faAddressBook} className="text-[25px] text-gray-700" />
+      <span className="font-bold text-[25px] text-gray-800">Outceedo</span>
+      </div>
+      </div>
+      
 
       {/* Profile Section */}
-      <div className="flex flex-col items-center gap-2 mb-2">
-        <img
-          src={currentProfile?.photo || profile}
-          alt="Profile"
-          className="rounded-full w-20 h-20 cursor-pointer object-cover"
-          onClick={() =>
-            navigate(`/${getRoleFromPath(location.pathname)}/details-form`)
-          }
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = profile;
-          }}
-        />
-        <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
-          {adminName}
-        </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400 font-sans">
-          {currentProfile?.age
-            ? `Age ${currentProfile.age} yrs (${
-                new Date().getFullYear() - currentProfile.age
-              })`
-            : ""}
-        </p>
-        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {adminProfession.toUpperCase()}
-          {adminSubProfession
-            ? ` - ${
-                adminSubProfession.charAt(0).toUpperCase() +
-                adminSubProfession.slice(1)
-              }`
-            : ""}
-        </p>
-        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {currentProfile?.gender
-            ? currentProfile.gender.charAt(0).toUpperCase() +
-              currentProfile.gender.slice(1)
-            : ""}
-        </p>
-        {status === "loading" && (
-          <div className="text-sm text-gray-500">Loading profile...</div>
-        )}
-      </div>
+      
+      {/* Sidebar Title */}
+      
+      
+      
 
       {/* Navigation Items */}
       <div className="flex flex-col gap-3 w-full px-4">
