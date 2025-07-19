@@ -171,7 +171,7 @@ const SponsorApplicationpage = () => {
           <TableHeader>
             <TableRow>
               <TableHead>Application ID</TableHead>
-              <TableHead>Applicant Name and Sponsor Type</TableHead>
+              <TableHead> Sponsor Name </TableHead>
               <TableHead>Application Date</TableHead>
               <TableHead>Sponsorship Type</TableHead>
               <TableHead>Budget</TableHead>
@@ -198,17 +198,23 @@ const SponsorApplicationpage = () => {
                 </TableCell>
                 <TableCell className="flex items-center gap-3">
                   <Avatar>
-                    <AvatarImage src={app.user?.photo} />
+                    <AvatarImage src={app.sponsor?.photo} />
                     <AvatarFallback>
                       {app.user?.firstName?.charAt(0)}
                     </AvatarFallback>
                   </Avatar>
                   <span
                     className="cursor-pointer text-blue-600 hover:underline"
-                    onClick={() => navigate(`/player/Sponsorinfo`)}
+                    onClick={() => {
+                      localStorage.setItem(
+                        "viewsponsorusername",
+                        app.sponsor.username
+                      );
+                      navigate(`/player/Sponsorinfo`);
+                    }}
                   >
                     {app.user
-                      ? app.user.firstName + " " + app.user.lastName
+                      ? app.sponsor.firstName + " " + app.sponsor.lastName
                       : "-"}
                   </span>
                 </TableCell>
