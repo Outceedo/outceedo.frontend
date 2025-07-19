@@ -252,7 +252,13 @@ const SponsorApplication = () => {
                   </Avatar>
                   <span
                     className="cursor-pointer text-blue-600 hover:underline"
-                    onClick={() => navigate(`/sponsor/Sponsorinfo`)}
+                    onClick={() => {
+                      localStorage.setItem(
+                        "viewplayerusername",
+                        app.user.username
+                      );
+                      navigate(`/sponsor/playerinfo`);
+                    }}
                   >
                     {app.user
                       ? app.user.firstName + " " + app.user.lastName
