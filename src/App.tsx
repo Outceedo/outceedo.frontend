@@ -17,7 +17,7 @@ import SignUp from "./Pages/Auth/Signup";
 import ResetPassword from "./Pages/Auth/Resetpassword";
 //playerpage
 import Profile from "./Playerpages/playerprofile";
-import Dashboard from "./Playerpages/dashboard";
+
 import Matches from "./Playerpages/matches";
 import MyBooking from "./Playerpages/bookings/mybooking";
 import Experts from "./Playerpages/experts";
@@ -40,7 +40,7 @@ import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
 import PlayersProfile from "./expertpages/playerProfiles";
-import ExpertDashboard from "./expertpages/Dashboard";
+
 import ExpertMatches from "./expertpages/ExpertMatches";
 import BookingExpertside from "./expertpages/bookings/Bookings";
 import ExpertProfile from "./expertpages/expertdata";
@@ -85,13 +85,26 @@ import Player from "./Adminpages/Player/Player";
 import Booking from "./Adminpages/Player/Booking";
 import SponsorShipApplication from "./Adminpages/Player/SponsorShipApplication";
 import Certificates from "./Adminpages/Player/Certifications";
-import Reports from "./Adminpages/Player/Reports";
+import Media from "./Adminpages/Player/Media";
 
 import Expert from "./Adminpages/Expert/Expert";
 import ExpertBooking from "./Adminpages/Expert/ExpertBooking";
-import ExportReports from "./Adminpages/Expert/ExpertReports";
+import ExpertMedia from "./Adminpages/Expert/ExpertMedia"
 import ExpertCetification from "./Adminpages/Expert/ExpertCetification";
 import ExpertServices from "./Adminpages/Expert/ExpertServices";
+import PaymentClaims from "./Adminpages/Expert/PaymentClaims";
+
+import Sponsor from "./Adminpages/Sponsor/Sponsor";
+import SponsorApplications from "./Adminpages/Sponsor/SponsorApplications"
+import SponsorMedia from "./Adminpages/Sponsor/SponsorMedia"
+
+import  Team from "./Adminpages/Teams/Team"
+import TeamSponsorApplications from "./Adminpages/Teams/TeamSponsorApplications"
+import TeamMedia from "./Adminpages/Teams/TeamMedia"
+
+import Fans from "./Adminpages/Fans/Fans"
+import FansReviews from "./Adminpages/Fans/FansReviews"
+
 import NotFound from "./common/notfound";
 
 const token = localStorage.getItem("token");
@@ -219,7 +232,7 @@ const AppContent: React.FC = () => {
       <Route
         path="/player"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <PlayerLayout />
           </CheckAuth>
         }
@@ -242,7 +255,7 @@ const AppContent: React.FC = () => {
       <Route
         path="/expert"
         element={
-          <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+         <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
             <ExpertLayout />
           </CheckAuth>
         }
@@ -333,21 +346,41 @@ const AppContent: React.FC = () => {
       >
         <Route path="dashboard" element={<Dashboardadmin />} />
       </Route>
+             
+             <Route path="/admin" element={<AdminLayout />}>
+  {/* Player */}
+  <Route path="player" element={<Player />} />
+  <Route path="player/booking" element={<Booking />} />
+  <Route path="player/sponsorshipapplication" element={<SponsorShipApplication />} />
+  <Route path="player/media" element={<Media />} />
+  <Route path="player/certifications&awards" element={<Certificates />} />
 
-      <Route path="/admin" element={<AdminLayout />}>
-        {/* Player */}
-        <Route path="player" element={<Player />} />
-        <Route path="player/booking" element={<Booking />} />
-        <Route path="player/sponsorshipapplication" element={<SponsorShipApplication />}/>
-       {/* <Route path="certifications&awards" element={<Certificates />} />*/}
-        <Route path="player/reports" element={<Reports />} />
-        {/* Expert */}
-        <Route path="expert" element={<Expert />} />
-        <Route path="expert/booking" element={<ExpertBooking />} />
-        <Route path="expert/reports" element={<ExportReports />} />
-        {/* <Route path="expertcetification" element={<ExpertCetification />} /> */}
-        <Route path="expert/services" element={<ExpertServices />} />
-      </Route>
+  {/* Expert */}
+  <Route path="expert" element={<Expert />} />
+  <Route path="expert/booking" element={<ExpertBooking />} />
+  <Route path="expert/paymentclaims" element={<PaymentClaims />} />
+  <Route path="expert/media" element={<ExpertMedia />} />
+  <Route path="expert/expertcetification" element={<ExpertCetification />} />
+  <Route path="expert/services" element={<ExpertServices />} />
+
+  {/* Sponsor */}
+  <Route path="sponsor" element={<Sponsor />} />
+  <Route path="sponsor/sponsormedia" element={<SponsorMedia />} />
+  <Route path="sponsor/sponsorapplications" element={<SponsorApplications />} />
+
+  {/* Team */}
+  <Route path="team" element={<Team />} />
+  <Route path="team/teamsapplications" element={<TeamSponsorApplications />} />
+  <Route path="team/teamsmedia" element={<TeamMedia />} />
+
+   {/* Fans */}
+   <Route path="fan" element={<Fans />} />
+  <Route path="fan/reviews" element={<FansReviews />} />
+
+</Route>
+
+
+
 
       <Route
         path="/unauthorized"

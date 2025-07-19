@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Table,
@@ -14,21 +13,20 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import profile from "../../assets/images/avatar.png";
 import { Input } from "@/components/ui/input";
-import {Search} from "lucide-react";
-const expert = [
-  { image: profile, name: "User name", joined: "18th June 2025", header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025", header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025", header: "Inactive" },
+import { Search } from "lucide-react";
+
+const sponsors = [
+  { image: profile, name: "Sponsor A", joined: "15th May 2024", email: "sponsorA@example.com", status: "Active" },
+  { image: profile, name: "Sponsor B", joined: "22nd June 2024", email: "sponsorB@example.com", status: "Inactive" },
+  { image: profile, name: "Sponsor C", joined: "03rd July 2024", email: "sponsorC@example.com", status: "Active" },
+  { image: profile, name: "Sponsor D", joined: "12th August 2024", email: "sponsorD@example.com", status: "Inactive" },
+   { image: profile, name: "Sponsor A", joined: "15th May 2024", email: "sponsorA@example.com", status: "Active" },
+  { image: profile, name: "Sponsor B", joined: "22nd June 2024", email: "sponsorB@example.com", status: "Inactive" },
+  { image: profile, name: "Sponsor C", joined: "03rd July 2024", email: "sponsorC@example.com", status: "Active" },
+  { image: profile, name: "Sponsor D", joined: "12th August 2024", email: "sponsorD@example.com", status: "Inactive" },
 ];
 
-const Expert: React.FC = () => {
+const Sponsor: React.FC = () => {
   const [months, setMonths] = useState<string[]>([]);
 
   useEffect(() => {
@@ -48,72 +46,70 @@ const Expert: React.FC = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Expert Details</h2>
-<div className="flex items-center gap-2">
-    {/* Search input with icon */}
-    <div className="relative w-full dark:bg-slate-600 dark:text-white rounded-lg">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
-              <Input
-                type="text"
-                placeholder="Search by name"
-                className="pl-9 w-full dark:bg-slate-700 text-sm sm:text-base"
-               />
-            </div>
+        <h2 className="text-2xl font-semibold">Sponsor Details</h2>
 
-    {/* Month dropdown */}
-    <select className="border px-3 py-2 rounded-md dark:bg-gray-900">
-      {months.map((month, index) => (
-        <option key={index} value={month}>
-          {month}
-        </option>
-      ))}
-    </select>
-  </div>
-</div>
+        <div className="flex items-center gap-2">
+          <div className="relative w-full dark:bg-slate-600 dark:text-white rounded-lg">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+            <Input
+              type="text"
+              placeholder="Search by name"
+              className="pl-9 w-full dark:bg-slate-700 text-sm sm:text-base"
+            />
+          </div>
+
+          <select className="border px-3 py-2 rounded-md dark:bg-gray-900">
+            {months.map((month, index) => (
+              <option key={index} value={month}>
+                {month}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <div className="rounded-lg border">
         <Table>
           <TableHeader className="bg-red-50 dark:bg-gray-800 text-xl">
             <TableRow>
               <TableHead></TableHead>
-              <TableHead>Experts</TableHead>
+              <TableHead>Sponsors</TableHead>
               <TableHead>Joining Date</TableHead>
+              <TableHead>Email ID</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
 
           <TableBody>
-            {expert.map((expert, index) => (
+            {sponsors.map((sponsor, index) => (
               <TableRow key={index}>
                 <TableCell>
                   <Checkbox />
                 </TableCell>
- <TableCell>
+                <TableCell>
                   <div className="flex items-center gap-3">
                     <img
-                      src={expert.image}
-                      alt={expert.name}
+                      src={sponsor.image}
+                      alt={sponsor.name}
                       className="w-8 h-8 rounded-full object-cover"
                     />
-                    <a
-                      href="#"
-                      className="text-blue-600 hover:underline"
-                    >
-                      {expert.name}
+                    <a href="#" className="text-blue-600 hover:underline">
+                      {sponsor.name}
                     </a>
                   </div>
                 </TableCell>
-                <TableCell>{expert.joined}</TableCell>        
+                <TableCell>{sponsor.joined}</TableCell>
+                <TableCell>{sponsor.email}</TableCell>
                 <TableCell>
                   <Badge
                     className={
-                      expert.header === "Active"
-                        ? "bg-green-200 text-green-800 p-2 w-20"
-                        : "bg-yellow-200 text-yellow-800 p-2 w-20"
+                      sponsor.status === "Active"
+                        ? "bg-green-200 text-green-800 p-1 w-16"
+                        : "bg-yellow-200 text-yellow-800 p-1 w-16"
                     }
                   >
-                    {expert.header}
+                    {sponsor.status}
                   </Badge>
                 </TableCell>
 
@@ -150,4 +146,4 @@ const Expert: React.FC = () => {
   );
 };
 
-export default Expert;
+export default Sponsor;

@@ -104,7 +104,7 @@ const applications = [
   },
 ];
 
-const SponsorShipApplication: React.FC = () => {
+const SponsorApplications: React.FC = () => {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">Sponsor Applications</h2>
@@ -190,4 +190,4 @@ const SponsorShipApplication: React.FC = () => {
   );
 };
 
-export default SponsorShipApplication;
+export default SponsorApplications;

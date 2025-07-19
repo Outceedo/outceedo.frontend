@@ -33,6 +33,17 @@ const menuItems = [
   { path: "/expert/expertservices", name: "Services" },
   { path: "/expert/expertcetification", name: "Certifications&Awards" },
   { path: "/expert/expertreports", name: "Reports" },
+
+  //sponsors
+   { path: "/sponsor/sponsor", name: "Sponsor" },
+
+      
+
+   //Teams
+    { path: "/team/team", name: "Teams" },
+
+    // Fans
+      { path: "/fans/fans", name: "Fans&Follwers" },
 ];
 
 function Header({ setOpen }: AdminHeaderProps) {

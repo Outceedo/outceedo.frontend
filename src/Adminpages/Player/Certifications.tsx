@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -9,36 +9,48 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import profile from "../../assets/images/avatar.png";
+import {
+  Trash2,
+  FileText,
+  Pencil,
+  Eye,
+  MoreVertical,
+  X,
+} from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const awards = [
-  { invoice: "#923", date: "Sun Nov 26 2023 11:46", image: profile, player: "Text cell lg", amount: 719.0, showDate: "12-06-2025" },
-  { invoice: "#043", date: "Wed Aug 09 2023 15:14", image: profile, player: "Text cell lg", amount: 198.0, showDate: "12-06-2025" },
-  { invoice: "#042", date: "Thu Nov 23 2023 10:30", image: profile, player: "Text cell lg", amount: 674.0, showDate: "12-06-2025" },
-  { invoice: "#023", date: "Tue Sep 12 2023 02:17", image: profile, player: "Text cell lg", amount: 393.0, showDate: "12-06-2025" },
-  { invoice: "#098", date: "Sun Nov 26 2023 07:00", image: profile, player: "Text cell lg", amount: 731.0, showDate: "12-06-2025" },
-  { invoice: "#064", date: "Sun Apr 21 2024 21:29", image: profile, player: "Text cell lg", amount: 197.0, showDate: "12-06-2025" },
-  { invoice: "#334", date: "Thu Feb 15 2024 01:55", image: profile, player: "Text cell lg", amount: 970.0, showDate: "12-06-2025" },
-  { invoice: "#754", date: "Wed Nov 22 2023 06:48", image: profile, player: "Text cell lg", amount: 448.0, showDate: "12-06-2025" },
-  { invoice: "#23", date: "Sun Feb 04 2024 10:56", image: profile, player: "Text cell lg", amount: 764.0, showDate: "12-06-2025" },
-  { invoice: "#221", date: "Fri Jul 21 2023 19:47:52", image: profile, player: "Text cell lg", amount: 385.0, showDate: "12-06-2025" },
+  { expert: "Aarav Kumar", image: profile },
+  { expert: "Meera Sharma", image: profile },
+  { expert: "Ravi Desai", image: profile },
+  { expert: "Sneha Verma", image: profile },
+  { expert: "Karan Patel", image: profile },
+  { expert: "Isha Nair", image: profile },
+  { expert: "Rahul Mehta", image: profile },
+  { expert: "Anjali Reddy", image: profile },
+  { expert: "Devansh Rao", image: profile },
+  { expert: "Pooja Iyer", image: profile },
 ];
 
-const Certificates: React.FC = () => {
+const Cetification: React.FC = () => {
+  const [selectedCertificate, setSelectedCertificate] = useState<string | null>(null);
+
   return (
-    <div className="p-6">
+    <div className="p-6 relative">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-2xl font-semibold">Certificates & Awards</h2>
       </div>
 
+      {/* Table */}
       <div className="rounded-lg border overflow-x-auto">
         <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-800">
+          <TableHeader className="bg-red-50 dark:bg-gray-800 text-xl">
             <TableRow>
               <TableHead></TableHead>
-              <TableHead>Invoice</TableHead>
-              <TableHead>Player</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead>Players</TableHead>
+              <TableHead>Certificate</TableHead>
+              <TableHead className="text-center">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -49,37 +61,76 @@ const Certificates: React.FC = () => {
                 </TableCell>
 
                 <TableCell>
-                  <div className="flex items-center gap-2 font-medium">
-                    <i className="far fa-file-lines text-gray-500 text-sm dark:text-gray-400"></i>
-                    <span>Application {award.invoice}</span>
+                  <div className="flex items-center gap-2">
+                    <img
+                      src={award.image}
+                      alt={award.expert}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                    <Link
+                      to={`/expert-profile/${index + 1}`}
+                      className="text-blue-600 underline hover:text-blue-800"
+                    >
+                      {award.expert}
+                    </Link>
                   </div>
-                  <div className="text-sm text-gray-500">{award.date}</div>
                 </TableCell>
 
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={award.image}
-                      alt={award.player}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{award.player}</span>
-                      <div className="text-sm text-gray-500">Secondary info</div>
-                    </div>
-                  </div>
+                  <button
+                    onClick={() => setSelectedCertificate(award.image)}
+                    className="flex items-center gap-1 text-sm text-fuchsia-800 hover:text-fuchsia-900 bg-fuchsia-100 p-1.5 rounded-xl cursor-pointer"
+                  >
+                    <FileText className="w-4 h-4" />
+                    Certificate
+                  </button>
                 </TableCell>
 
-                <TableCell>{award.amount.toFixed(2)}</TableCell>
-                <TableCell>{award.showDate}</TableCell>
+                <TableCell className="flex gap-2 justify-center">
+                  <Button size="icon" variant="ghost" title="View">
+                    <Eye className="w-4 h-4 text-gray-600" />
+                  </Button>
+                  <Button size="icon" variant="ghost" title="Edit">
+                    <Pencil className="w-4 h-4 text-blue-500" />
+                  </Button>
+                  <Button size="icon" variant="ghost" title="Delete">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                  <Button size="icon" variant="ghost" title="More">
+                    <MoreVertical className="w-4 h-4 text-gray-600" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
+      {/* Modal popup for certificate */}
+      {selectedCertificate && (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex justify-center items-center z-50">
+          <div className="relative bg-white p-4 rounded-lg shadow-lg max-w-lg w-full dark:bg-gray-900">
+            <button
+              onClick={() => setSelectedCertificate(null)}
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-semibold mb-3 text-center">
+              Certificate Preview
+            </h3>
+            <img
+              src={selectedCertificate}
+              alt="Certificate"
+              className="rounded border w-full object-contain"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Pagination */}
       <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-white">
-        <div>Showing 1 out 100</div>
+        <div>Showing 1 out of 10</div>
         <div className="flex gap-1">
           <button className="border px-2 rounded">⟨</button>
           <button className="border px-2 rounded bg-gray-200">1</button>
@@ -91,4 +142,4 @@ const Certificates: React.FC = () => {
   );
 };
 
-export default Certificates;
+export default Cetification;

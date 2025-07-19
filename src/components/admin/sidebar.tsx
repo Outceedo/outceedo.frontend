@@ -65,25 +65,28 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
       icon: " fas fa-file-signature",
       path: "/admin/player/sponsorshipapplication",
     },
-    // {
-    //   id: 4,
-    //   name: "Certifications&Award",
-    //   icon: "fas fa-award ",
-    //   path: "/admin/certifications&awards",
-    // },
-    {
-      id: 5,
-      name: "Reports",
-      icon: "fas fa-file-alt",
-      path: "/admin/player/reports",
-    },
+   
+     {
+     id: 4,
+       name: "Media",
+      icon: "fas fa-photo-video",
 
-    {
+      path: "/admin/player/media",
+    },
+     {
+      id: 5,
+       name: "Certifications&Award",
+      icon: "fas fa-award ",
+       path: "/admin/player/certifications&awards",
+     },
+     
+      {
       id: 6,
       name: "Dashboard",
       icon: "fas fa-table-columns",
       path: "/admin/dashboard",
     },
+    
   ],
   expert: [
     {
@@ -105,83 +108,119 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
       icon: "fas fa-hands-helping",
       path: "/admin/expert/services",
     },
-    // {
-    //   id: 4,
-    //   name: "Certifications&Awards",
-    //   icon: "fas fa-award ",
-    //   path: "/admin/expertcetification",
-    // },
-    {
-      id: 5,
-      name: "Reports",
-      icon: "fas fa-file-alt",
-      path: "/admin/expert/reports",
+
+     {
+      id: 3,
+      name: "PaymentClaims",
+      icon: "fas fa-money-check-alt",
+      path: "/admin/expert/paymentclaims",
     },
 
+     {
+     id: 4,
+       name: "Media",
+      icon: "fas fa-photo-video",
+
+      path: "/admin/expert/media",
+    },
     {
+      id: 5,
+       name: "Certifications&Award",
+      icon: "fas fa-award ",
+       path: "/admin/expert/expertcetification",
+     },
+
+     {
       id: 6,
       name: "Dashboard",
       icon: "fas fa-table-columns",
       path: "/admin/dashboard",
     },
+   
   ],
   sponsor: [
-    {
-      id: 1,
+   {
+  id: 1,
+  name: "Sponsor",
+  icon: "fas fa-user-tie", 
+  path: "/admin/sponsor",
+},
+{
+  id: 2,
+  name: "SponsorApplications",
+  icon: "fas fa-file-signature", 
+  path: "/admin/sponsor/sponsorapplications",
+},
+{
+  id: 3,
+  name: "Media",
+  icon: "fas fa-photo-video", 
+  path: "/admin/sponsor/sponsormedia",
+},
+
+ {
+      id: 4,
       name: "Dashboard",
       icon: "fas fa-table-columns",
-      path: "/sponsor/dashboard",
+      path: "/admin/dashboard",
     },
-    {
-      id: 2,
-      name: "Sponsorships",
-      icon: "fas fa-hand-holding-usd",
-      path: "/sponsor/sponsorships",
-    },
-    { id: 3, name: "Profile", icon: "fas fa-user", path: "/sponsor/profile" },
-    {
-      id: 4,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
-    },
+
+
+
+
   ],
   team: [
-    {
-      id: 1,
-      name: "Dashboard",
-      icon: "fas fa-table-columns",
-      path: "/team/dashboard",
-    },
-    { id: 2, name: "Matches", icon: "fas fa-futbol", path: "/team/matches" },
-    { id: 3, name: "Members", icon: "fas fa-users", path: "/team/members" },
-    { id: 4, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
-    {
-      id: 5,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
-    },
-  ],
-  fan: [
-    {
-      id: 1,
-      name: "Dashboard",
-      icon: "fas fa-table-columns",
-      path: "/fan/dashboard",
-    },
-    { id: 2, name: "Favourites", icon: "fas fa-star", path: "/fan/favourites" },
-    { id: 3, name: "Profile", icon: "fas fa-user", path: "/fan/profile" },
-    {
+     {
+  id: 1,
+  name: "Teams",
+  icon: "fas fa-user-tie", 
+  path: "/admin/team",
+},
+{
+  id: 2,
+  name: "SponsorApplications",
+  icon: "fas fa-file-signature", 
+  path: "/admin/team/teamsapplications",
+},
+{
+  id: 3,
+  name: "Media",
+  icon: "fas fa-photo-video", 
+  path: "/admin/team/teamsmedia",
+},
+
+ {
       id: 4,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
+      name: "Dashboard",
+      icon: "fas fa-table-columns",
+      path: "/admin/dashboard",
     },
   ],
+
+
+ fan: [
+     {
+  id: 1,
+  name: "Fans&Follwers",
+  icon: "fas fa-user-tie", 
+  path: "/admin/fan",
+},
+{
+  id: 2,
+  name: "Reviews",
+  icon: "fas fa-file-signature", 
+  path: "/admin/fan/reviews",
+},
+ {
+      id: 3,
+      name: "Dashboard",
+      icon: "fas fa-table-columns",
+      path: "/admin/dashboard",
+    },
+
+  ],
+
+
 };
 
 // --- Utility to get role from path ---

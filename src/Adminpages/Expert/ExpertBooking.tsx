@@ -11,144 +11,129 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import profile from "../../assets/images/avatar.png";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, FileText, FileX2 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const bookings = [
   {
-    Bookings: "#923",
-    date: "Sun Nov 26 2023 11:46",
-    image: profile,
-    player: "Aarav Sharma",
-    expert: "Dr. Mehta",
-    assessment: "Online Video Assessment",
-    amount: 719.0,
-    status: "Pending",
-    report: true,
-  },
-  {
-    Bookings: "#043",
+    Booking: "#043",
     date: "Wed Aug 09 2023 15:14",
     image: profile,
-    player: "Ananya Verma",
-    expert: "Coach Ahuja",
-    assessment: "1-on-1 Online Training or advice",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "1-on-1 Online Training or advice",
     amount: 198.0,
     status: "Completed",
     report: true,
   },
   {
-    Bookings: "#042",
+    Booking: "#042",
     date: "Thu Nov 23 2023 10:30",
     image: profile,
-    player: "Karan Singh",
-    expert: "Expert Sinha",
-    assessment: "Online Video Assessment",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "Online Video Assessment",
     amount: 674.0,
     status: "Completed",
     report: false,
   },
   {
-    Bookings: "#023",
+    Booking: "#023",
     date: "Tue Sept 12 2023 02:17",
     image: profile,
-    player: "Priya Iyer",
-    expert: "Coach Das",
-    assessment: "On-Field Live Assessment",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "On-Field Live Assessment",
     amount: 393.0,
     status: "Completed",
     report: true,
   },
   {
-    Bookings: "#098",
+    Booking: "#098",
     date: "Sun Nov 26 2023 07:00",
     image: profile,
-    player: "Rohit Reddy",
-    expert: "Trainer Joshi",
-    assessment: "1-on-1 Online Training or advice",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "1-on-1 Online Training or advice",
     amount: 731.0,
     status: "Pending",
     report: false,
   },
   {
-    Bookings: "#064",
+    Booking: "#064",
     date: "Mon Jul 24 2023 21:29",
     image: profile,
-    player: "Sneha Nair",
-    expert: "Mentor Kapoor",
-    assessment: "Online Video Assessment",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "Online Video Assessment",
     amount: 197.0,
     status: "Pending",
     report: true,
   },
   {
-    Bookings: "#334",
+    Booking: "#334",
     date: "Sat Apr 22 2024 01:55",
     image: profile,
-    player: "Yash Jadhav",
-    expert: "Dr. Menon",
-    assessment: "1-on-1 Online Training or advice",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "1-on-1 Online Training or advice",
     amount: 970.0,
     status: "Completed",
     report: true,
   },
   {
-    Bookings: "#754",
+    Booking: "#754",
     date: "Wed Nov 22 2023 06:48",
     image: profile,
-    player: "Divya Patil",
-    expert: "Coach Ramesh",
-    assessment: "On-Field Live Assessment",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "On-Field Live Assessment",
     amount: 448.0,
     status: "Pending",
     report: false,
   },
   {
-    Bookings: "#023",
+    Booking: "#23",
     date: "Sun Feb 04 2024 10:56",
     image: profile,
-    player: "Neha Kulkarni",
-    expert: "Trainer Raju",
-    assessment: "Online Video Assessment",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "Online Video Assessment",
     amount: 764.0,
     status: "Completed",
     report: true,
   },
   {
-    Bookings: "#221",
+    Booking: "#221",
     date: "Fri Jul 21 2023 19:47:55",
     image: profile,
-    player: "Ajay Mishra",
-    expert: "Coach Iqbal",
-    assessment: "On-Field Live Assessment",
+    player: "Player Name",
+    expert: "Expert Name",
+    service: "On-Field Live Assessment",
     amount: 385.0,
     status: "Pending",
-    report: false,
+    report: true,
   },
-  
- 
 ];
 
-
-const ExpertBooking: React.FC = () => {
+const Booking: React.FC = () => {
   const [months, setMonths] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchMonths = () => {
-      const monthList = [
-        "January", "February", "March", "April", "May", "June",
-        "July", "August", "September", "October", "November", "December",
-      ];
-      setTimeout(() => {
-        setMonths(monthList);
-      }, 500);
-    };
-    fetchMonths();
+    const monthList = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    setTimeout(() => {
+      setMonths(monthList);
+    }, 500);
   }, []);
 
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Expert Booking</h2>
+        <h2 className="text-2xl font-semibold">Experts Booking</h2>
+
         <div className="flex items-center gap-2">
           <div className="relative w-full dark:bg-slate-600 dark:text-white rounded-lg">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
@@ -174,13 +159,13 @@ const ExpertBooking: React.FC = () => {
           <TableHeader className="bg-red-50 dark:bg-gray-800 text-xl">
             <TableRow>
               <TableHead></TableHead>
-              <TableHead>Bookings</TableHead>
-              <TableHead>Expert</TableHead>
-              <TableHead>Player</TableHead>
-              <TableHead>Assessment Type</TableHead>
+              <TableHead>Booking ID</TableHead>
+              <TableHead>Experts</TableHead>
+              <TableHead>Players</TableHead>
+              <TableHead>Service Type</TableHead>
+              <TableHead>Amount</TableHead>
+              <TableHead>Actions</TableHead>
               <TableHead>Reports</TableHead>
-              <TableHead>Fee</TableHead>
-              <TableHead>Action</TableHead>
             </TableRow>
           </TableHeader>
 
@@ -192,10 +177,10 @@ const ExpertBooking: React.FC = () => {
                 </TableCell>
 
                 <TableCell>
-                  <div className="flex items-center gap-2 font-medium">
-                    <span>Bookings {booking.Bookings}</span>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{booking.Booking}</span>
+                    <span className="text-sm text-gray-500">{booking.date}</span>
                   </div>
-                  <div className="text-sm text-gray-500">{booking.date}</div>
                 </TableCell>
 
                 <TableCell>
@@ -205,10 +190,12 @@ const ExpertBooking: React.FC = () => {
                       alt={booking.expert}
                       className="w-8 h-8 rounded-full object-cover"
                     />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{booking.expert}</span>
-                      <div className="text-sm text-gray-500">Secondary info</div>
-                    </div>
+                    <Link
+                      to={`/expert-profile/${booking.expert}`}
+                      className="text-blue-600 underline font-medium"
+                    >
+                      {booking.expert}
+                    </Link>
                   </div>
                 </TableCell>
 
@@ -219,22 +206,16 @@ const ExpertBooking: React.FC = () => {
                       alt={booking.player}
                       className="w-8 h-8 rounded-full object-cover"
                     />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{booking.player}</span>
-                      <div className="text-sm text-gray-500">Secondary info</div>
-                    </div>
+                    <Link
+                      to={`/player-profile/${booking.player}`}
+                      className="text-blue-600 underline font-medium"
+                    >
+                      {booking.player}
+                    </Link>
                   </div>
                 </TableCell>
 
-                <TableCell>{booking.assessment}</TableCell>
-
-                <TableCell>
-                  {booking.report ? (
-                    <span className="text-green-600 font-medium">Attached</span>
-                  ) : (
-                    <span className="text-gray-400">Not Submitted</span>
-                  )}
-                </TableCell>
+                <TableCell>{booking.service}</TableCell>
 
                 <TableCell>
                   <div className="flex flex-col">
@@ -257,12 +238,20 @@ const ExpertBooking: React.FC = () => {
                   <Badge
                     className={
                       booking.status === "Completed"
-                        ? "bg-green-200 text-green-800 w-20 p-1"
-                        : "bg-yellow-200 text-yellow-800 w-20 p-1"
+                        ? "bg-green-200 text-green-800 w-20 p-2"
+                        : "bg-yellow-200 text-yellow-800 w-20 p-2"
                     }
                   >
                     {booking.status}
                   </Badge>
+                </TableCell>
+
+                <TableCell>
+                  {booking.report ? (
+                    <FileText className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <FileX2 className="w-5 h-5 text-gray-400" />
+                  )}
                 </TableCell>
               </TableRow>
             ))}
@@ -271,7 +260,7 @@ const ExpertBooking: React.FC = () => {
       </div>
 
       <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-white">
-        <div>Showing 1 out 100</div>
+        <div>Showing 1 out of 100</div>
         <div className="flex gap-1">
           <button className="border px-2 rounded">⟨</button>
           <button className="border px-2 rounded bg-gray-200">1</button>
@@ -283,4 +272,4 @@ const ExpertBooking: React.FC = () => {
   );
 };
 
-export default ExpertBooking;
+export default Booking;

@@ -104,7 +104,7 @@ const applications = [
   },
 ];
 
-const SponsorShipApplication: React.FC = () => {
+const TeamSponsorApplications: React.FC = () => {
   return (
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">Sponsor Applications</h2>
@@ -117,7 +117,7 @@ const SponsorShipApplication: React.FC = () => {
               <TableHead>Application ID</TableHead>
               <TableHead>Sponsors</TableHead>
               <TableHead>Players</TableHead>
-              <TableHead>Sponsors Type</TableHead>
+              <TableHead>Sponsor Type</TableHead>
               <TableHead>Amount</TableHead>
               <TableHead>Request Date</TableHead>
               <TableHead>Status</TableHead>
@@ -186,8 +186,20 @@ const SponsorShipApplication: React.FC = () => {
           </TableBody>
         </Table>
       </div>
+        <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-white">
+        <div>Showing 1 out 100</div>
+        <div className="flex gap-1">
+          <button className="border px-2 rounded">⟨</button>
+          <button className="border px-2 rounded bg-gray-200">1</button>
+          <button className="border px-2 rounded">2</button>
+          <button className="border px-2 rounded">⟩</button>
+        </div>
+      </div>
     </div>
+    
+
+    
   );
 };
 
-export default SponsorShipApplication;
+export default TeamSponsorApplications;
