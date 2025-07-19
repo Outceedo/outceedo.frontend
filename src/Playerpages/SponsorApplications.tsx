@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Circle, X,ArrowLeft } from "lucide-react";
+import { Circle, X, ArrowLeft } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 import { useState, useEffect } from "react";
@@ -135,11 +135,11 @@ const SponsorApplicationpage = () => {
   return (
     <div className="p-3">
       <button
-              onClick={() => navigate(-1)}
-              className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
-            >
-              <ArrowLeft className="w-5 h-5 mr-1" />
-            </button>
+        onClick={() => navigate(-1)}
+        className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
+      >
+        <ArrowLeft className="w-5 h-5 mr-1" />
+      </button>
       <div className="flex gap-4 mb-4">
         <div className="relative w-1/3">
           <FontAwesomeIcon
@@ -205,7 +205,7 @@ const SponsorApplicationpage = () => {
                   </Avatar>
                   <span
                     className="cursor-pointer text-blue-600 hover:underline"
-                    onClick={() => navigate(`/team/Sponsorinfo`)}
+                    onClick={() => navigate(`/player/Sponsorinfo`)}
                   >
                     {app.user
                       ? app.user.firstName + " " + app.user.lastName
@@ -222,7 +222,7 @@ const SponsorApplicationpage = () => {
                     : "-"}
                 </TableCell>
                 <TableCell>{app.sponsorshipType || "-"}</TableCell>
-                <TableCell>-</TableCell>
+                <TableCell>{app.budget}</TableCell>
 
                 <TableCell>
                   <span

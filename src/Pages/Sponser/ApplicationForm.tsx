@@ -20,6 +20,7 @@ const ApplicationForm = () => {
     uniqueFactor: "",
     sponsorshipProduct: false,
     sponsorshipMoney: false,
+    budget: "",
     website: "",
     additionalInfo: "",
   });
@@ -49,6 +50,9 @@ const ApplicationForm = () => {
     if (!formData.sponsorshipProduct && !formData.sponsorshipMoney) {
       newErrors.sponsorship = "At least one sponsorship type must be selected.";
     }
+    if (formData.sponsorshipMoney && !formData.budget.trim()) {
+      newErrors.budget = "Budget is required for money sponsorship.";
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -68,13 +72,19 @@ const ApplicationForm = () => {
       sponsorshipType = "money";
     }
 
-    const payload = {
+    const payload: any = {
       reason: formData.reason,
       uniqueFactor: formData.uniqueFactor,
       website: formData.website,
       sponsorshipType: sponsorshipType,
       additionalInfo: formData.additionalInfo,
     };
+
+    // Include budget if money sponsorship is selected
+    if (formData.sponsorshipMoney) {
+      payload.budget = formData.budget;
+    }
+
     const token = localStorage.getItem("token");
 
     try {
@@ -187,6 +197,24 @@ const ApplicationForm = () => {
             <p className="text-red-500 text-sm mt-1">{errors.sponsorship}</p>
           )}
         </div>
+
+        {/* Budget (only if money sponsorship is selected) */}
+        {formData.sponsorshipMoney && (
+          <div>
+            <Label>What is your expected sponsorship budget?</Label>
+            <Input
+              type="number"
+              placeholder="Enter budget amount"
+              className={inputClass("budget")}
+              value={formData.budget}
+              onChange={(e) => handleChange("budget", e.target.value)}
+              min={0}
+            />
+            {errors.budget && (
+              <p className="text-red-500 text-sm mt-1">{errors.budget}</p>
+            )}
+          </div>
+        )}
 
         {/* Website */}
         <div>

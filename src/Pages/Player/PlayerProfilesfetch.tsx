@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfiles } from "../../store/profile-slice";
@@ -196,6 +196,7 @@ const PlayerProfiles: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]); // Store all profiles for client-side filtering
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -205,10 +206,13 @@ const PlayerProfiles: React.FC = () => {
 
   // Extract users array and pagination info from the profiles response
   const usersArray = profiles?.users || [];
-  const totalPages = profiles?.totalPages || 1;
-  const totalProfiles = profiles?.total || 0;
 
-  console.log(usersArray);
+  // Store all profiles when data is fetched
+  useEffect(() => {
+    if (usersArray.length > 0) {
+      setAllProfiles(usersArray);
+    }
+  }, [usersArray]);
 
   // Determine user type to fetch opposite profiles
   const userRole = localStorage.getItem("role") as Role;
@@ -219,44 +223,128 @@ const PlayerProfiles: React.FC = () => {
       ? "player"
       : "player";
 
-  // Fetch profiles when page, limit changes
-  useEffect(() => {
-    fetchProfiles();
-  }, [currentPage, limit, dispatch, profileType]);
+  const extractFilterOptions = useCallback(
+    (key: keyof Profile, dataArray: Profile[]): string[] => {
+      const options = new Set<string>();
 
-  // Separate effect for filter and search changes to reset pagination
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    } else {
-      fetchProfiles();
-    }
-  }, [searchQuery, filters]);
+      dataArray.forEach((profile: Profile) => {
+        if (key === "language" && profile.language) {
+          const langs = Array.isArray(profile.language)
+            ? profile.language
+            : [profile.language];
+          langs.forEach((lang) => {
+            if (lang) options.add(lang);
+          });
+        } else if (key === "sports" || key === "sport") {
+          // Handle sports (both array and single string formats)
+          if (profile.sports && Array.isArray(profile.sports)) {
+            profile.sports.forEach((sport) => {
+              if (sport) options.add(sport);
+            });
+          } else if (profile.sport && typeof profile.sport === "string") {
+            options.add(profile.sport);
+          }
+        } else {
+          const value = profile[key];
+          if (value && typeof value === "string") options.add(value);
+        }
+      });
 
-  // Function to fetch profiles
-  const fetchProfiles = () => {
+      return Array.from(options);
+    },
+    []
+  );
+
+  // Fetch profiles only on initial load, page change, or limit change
+  const fetchProfiles = useCallback(() => {
     const params: any = {
       page: currentPage,
       limit,
       userType: profileType,
     };
 
-    // Add search term if provided
+    console.log("Fetching profiles with params:", params); // Debug log
+    dispatch(getProfiles(params));
+  }, [currentPage, limit, profileType, dispatch]);
+
+  // Initial load and pagination/limit changes only
+  useEffect(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
+
+  // Client-side filtering and searching
+  const filteredAndSearchedProfiles = useMemo(() => {
+    let filtered = [...allProfiles];
+
+    // Apply search filter
     if (searchQuery.trim()) {
-      params.search = searchQuery.trim();
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((profile) => {
+        const fullName = `${profile.firstName || ""} ${
+          profile.lastName || ""
+        }`.toLowerCase();
+        const username = profile.username?.toLowerCase() || "";
+        const bio = profile.bio?.toLowerCase() || "";
+        const profession = profile.profession?.toLowerCase() || "";
+        const subProfession = profile.subProfession?.toLowerCase() || "";
+
+        return (
+          fullName.includes(query) ||
+          username.includes(query) ||
+          bio.includes(query) ||
+          profession.includes(query) ||
+          subProfession.includes(query)
+        );
+      });
     }
 
-    // Add filters if they have values
+    // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
-        params[key] = value;
+        filtered = filtered.filter((profile) => {
+          if (key === "sport") {
+            // Handle both sports array and sport string
+            if (profile.sports && Array.isArray(profile.sports)) {
+              return profile.sports.some((sport) => sport === value);
+            } else if (profile.sport) {
+              return profile.sport === value;
+            }
+            return false;
+          } else if (key === "language") {
+            if (profile.language) {
+              const langs = Array.isArray(profile.language)
+                ? profile.language
+                : [profile.language];
+              return langs.includes(value);
+            }
+            return false;
+          } else {
+            return profile[key] === value;
+          }
+        });
       }
     });
 
-    dispatch(getProfiles(params));
-  };
+    return filtered;
+  }, [allProfiles, searchQuery, filters]);
+
+  // Calculate pagination for filtered results
+  const totalFilteredProfiles = filteredAndSearchedProfiles.length;
+  const totalPages = Math.ceil(totalFilteredProfiles / limit);
+  const startIndex = (currentPage - 1) * limit;
+  const endIndex = startIndex + limit;
+  const displayedProfiles = filteredAndSearchedProfiles.slice(
+    startIndex,
+    endIndex
+  );
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filters]);
 
   const handleFilterChange = (value: string, filterType: string) => {
+    console.log("Filter changed:", filterType, value); // Debug log
     setFilters({
       ...filters,
       [filterType.toLowerCase()]: value,
@@ -265,6 +353,7 @@ const PlayerProfiles: React.FC = () => {
 
   // Clear all filters
   const clearAllFilters = () => {
+    console.log("Clearing all filters"); // Debug log
     setFilters({
       sport: "",
       profession: "",
@@ -284,49 +373,16 @@ const PlayerProfiles: React.FC = () => {
     );
   };
 
-  // Since we're doing server-side pagination, we use the current page data
-  const displayedProfiles = usersArray;
-
-  // Extract unique filter values from current page profiles
-  const extractFilterOptions = (key: keyof Profile): string[] => {
-    const options = new Set<string>();
-
-    usersArray.forEach((profile: Profile) => {
-      if (key === "language" && profile.language) {
-        const langs = Array.isArray(profile.language)
-          ? profile.language
-          : [profile.language];
-        langs.forEach((lang) => {
-          if (lang) options.add(lang);
-        });
-      } else if (key === "sports" || key === "sport") {
-        // Handle sports (both array and single string formats)
-        if (profile.sports && Array.isArray(profile.sports)) {
-          profile.sports.forEach((sport) => {
-            if (sport) options.add(sport);
-          });
-        } else if (profile.sport && typeof profile.sport === "string") {
-          options.add(profile.sport);
-        }
-      } else {
-        const value = profile[key];
-        if (value && typeof value === "string") options.add(value);
-      }
-    });
-
-    return Array.from(options);
-  };
-
-  // Get profile filter options
+  // Get filter options from all profiles (not just current page)
   const sportOptions = [
-    ...extractFilterOptions("sports"),
-    ...extractFilterOptions("sport"),
+    ...extractFilterOptions("sports", allProfiles),
+    ...extractFilterOptions("sport", allProfiles),
   ];
-  const professionOptions = extractFilterOptions("profession");
-  const cityOptions = extractFilterOptions("city");
-  const countryOptions = extractFilterOptions("country");
-  const genderOptions = extractFilterOptions("gender");
-  const languageOptions = extractFilterOptions("language");
+  const professionOptions = extractFilterOptions("profession", allProfiles);
+  const cityOptions = extractFilterOptions("city", allProfiles);
+  const countryOptions = extractFilterOptions("country", allProfiles);
+  const genderOptions = extractFilterOptions("gender", allProfiles);
+  const languageOptions = extractFilterOptions("language", allProfiles);
 
   // Default sports if none found in data
   const defaultSports = [
@@ -340,7 +396,7 @@ const PlayerProfiles: React.FC = () => {
     "Volleyball",
   ];
   const finalSportOptions =
-    sportOptions.length > 0 ? sportOptions : defaultSports;
+    sportOptions.length > 0 ? [...new Set(sportOptions)] : defaultSports;
 
   // Generate filter configuration
   const filterConfig = [
@@ -410,6 +466,15 @@ const PlayerProfiles: React.FC = () => {
     setLimit(newLimit);
     setCurrentPage(1);
   };
+
+  console.log("Current state:", {
+    searchQuery,
+    filters,
+    currentPage,
+    status,
+    totalFilteredProfiles,
+    displayedCount: displayedProfiles.length,
+  }); // Debug log
 
   return (
     <div className="flex bg">
@@ -512,10 +577,21 @@ const PlayerProfiles: React.FC = () => {
           )}
 
           {/* No Profiles State */}
-          {status === "succeeded" && displayedProfiles.length === 0 && (
+          {status === "succeeded" &&
+            displayedProfiles.length === 0 &&
+            allProfiles.length > 0 && (
+              <div className="text-center p-6 sm:p-10">
+                <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
+                  No {profileType}s found matching your criteria.
+                </p>
+              </div>
+            )}
+
+          {/* No Profiles Loaded */}
+          {status === "succeeded" && allProfiles.length === 0 && (
             <div className="text-center p-6 sm:p-10">
               <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-                No {profileType}s found matching your criteria.
+                No {profileType}s available.
               </p>
             </div>
           )}
@@ -655,6 +731,12 @@ const PlayerProfiles: React.FC = () => {
               {/* Results Info */}
               <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
                 <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+                  <span>
+                    Showing {Math.min(startIndex + 1, totalFilteredProfiles)} to{" "}
+                    {Math.min(endIndex, totalFilteredProfiles)} of{" "}
+                    {totalFilteredProfiles} {profileType}s
+                  </span>
+                  <span className="hidden sm:inline">•</span>
                   <span>
                     Page {currentPage} of {totalPages}
                   </span>

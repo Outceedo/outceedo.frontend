@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import sponsor2 from "../../assets/images/avatar.png";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, Star, Search, ChevronRight, ChevronLeft } from "lucide-react";
@@ -148,8 +148,6 @@ export default function SponsorProfiles() {
 
   // Extract sponsors and pagination info from profiles response
   const sponsorsArray = profiles?.users || [];
-  const totalPages = profiles?.totalPages || 1;
-  const totalSponsors = profiles?.total || 0;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [countries, setCountries] = useState<Country[]>([]);
@@ -159,6 +157,7 @@ export default function SponsorProfiles() {
   const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(
     null
   );
+  const [allSponsors, setAllSponsors] = useState<SponsorProfile[]>([]); // Store all sponsors for client-side filtering
 
   const [filters, setFilters] = useState({
     country: "",
@@ -168,6 +167,93 @@ export default function SponsorProfiles() {
   });
 
   const navigate = useNavigate();
+
+  // Store all sponsors when data is fetched
+  useEffect(() => {
+    if (sponsorsArray.length > 0) {
+      setAllSponsors(sponsorsArray);
+    }
+  }, [sponsorsArray]);
+
+  const extractFilterOptions = useCallback(
+    (key: keyof SponsorProfile, dataArray: SponsorProfile[]): string[] => {
+      const options = new Set<string>();
+      dataArray.forEach((sponsor: SponsorProfile) => {
+        const value = sponsor[key];
+        if (value && typeof value === "string") options.add(value);
+      });
+      return Array.from(options);
+    },
+    []
+  );
+
+  // Fetch sponsors only on initial load, page change, or limit change
+  const fetchSponsors = useCallback(() => {
+    const params: any = {
+      page: currentPage,
+      limit,
+      userType: "sponsor",
+    };
+
+    console.log("Fetching sponsors with params:", params); // Debug log
+    dispatch(getProfiles(params));
+  }, [currentPage, limit, dispatch]);
+
+  // Initial load and pagination/limit changes only
+  useEffect(() => {
+    fetchSponsors();
+  }, [fetchSponsors]);
+
+  // Client-side filtering and searching
+  const filteredAndSearchedSponsors = useMemo(() => {
+    let filtered = [...allSponsors];
+
+    // Apply search filter
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase().trim();
+      filtered = filtered.filter((sponsor) => {
+        const fullName = `${sponsor.firstName || ""} ${
+          sponsor.lastName || ""
+        }`.toLowerCase();
+        const username = sponsor.username?.toLowerCase() || "";
+        const company = sponsor.company?.toLowerCase() || "";
+        const bio = sponsor.bio?.toLowerCase() || "";
+
+        return (
+          fullName.includes(query) ||
+          username.includes(query) ||
+          company.includes(query) ||
+          bio.includes(query)
+        );
+      });
+    }
+
+    // Apply filters
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        filtered = filtered.filter((sponsor) => {
+          return sponsor[key] === value;
+        });
+      }
+    });
+
+    return filtered;
+  }, [allSponsors, searchTerm, filters]);
+
+  // Calculate pagination for filtered results
+  const totalFilteredSponsors = filteredAndSearchedSponsors.length;
+  const totalPages = Math.ceil(totalFilteredSponsors / limit);
+  const startIndex = (currentPage - 1) * limit;
+  const endIndex = startIndex + limit;
+  const displayedSponsors = filteredAndSearchedSponsors.slice(
+    startIndex,
+    endIndex
+  );
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, filters]);
 
   const openReportModal = (sponsor: SponsorProfile) => {
     setActiveSponsor(sponsor);
@@ -195,42 +281,6 @@ export default function SponsorProfiles() {
     }
   };
 
-  // Fetch sponsors when page, limit, or filters change
-  useEffect(() => {
-    fetchSponsors();
-  }, [currentPage, limit, dispatch]);
-
-  // Separate effect for filter changes to reset pagination
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    } else {
-      fetchSponsors();
-    }
-  }, [searchTerm, filters]);
-
-  const fetchSponsors = () => {
-    const params: any = {
-      page: currentPage,
-      limit,
-      userType: "sponsor",
-    };
-
-    // Add search term if provided
-    if (searchTerm.trim()) {
-      params.search = searchTerm.trim();
-    }
-
-    // Add filters if they have values
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        params[key] = value;
-      }
-    });
-
-    dispatch(getProfiles(params));
-  };
-
   useEffect(() => {
     fetch("https://restcountries.com/v3.1/all")
       .then((res) => res.json())
@@ -246,6 +296,7 @@ export default function SponsorProfiles() {
   }, []);
 
   const handleFilterChange = (value: string, filterType: string) => {
+    console.log("Filter changed:", filterType, value); // Debug log
     const normalizedKey = filterType.toLowerCase();
     let stateKey = "";
     switch (normalizedKey) {
@@ -273,6 +324,7 @@ export default function SponsorProfiles() {
   };
 
   const clearAllFilters = () => {
+    console.log("Clearing all filters"); // Debug log
     setSearchTerm("");
     setFilters({
       country: "",
@@ -289,27 +341,18 @@ export default function SponsorProfiles() {
     );
   };
 
-  // Extract filter options from current page data
-  const extractFilterOptions = (key: keyof SponsorProfile): string[] => {
-    const options = new Set<string>();
-    sponsorsArray.forEach((sponsor: SponsorProfile) => {
-      const value = sponsor[key];
-      if (value && typeof value === "string") options.add(value);
-    });
-    return Array.from(options);
-  };
-
-  const countryOptions = extractFilterOptions("country");
-  const sponsorTypeOptions = extractFilterOptions("sponsorType");
-  const sponsorshipTypeOptions = extractFilterOptions("sponsorshipType");
-  const budgetRangeOptions = extractFilterOptions("budgetRange");
+  // Get filter options from all sponsors (not just current page)
+  const countryOptions = extractFilterOptions("country", allSponsors);
+  const sponsorTypeOptions = extractFilterOptions("sponsorType", allSponsors);
+  const sponsorshipTypeOptions = extractFilterOptions(
+    "sponsorshipType",
+    allSponsors
+  );
+  const budgetRangeOptions = extractFilterOptions("budgetRange", allSponsors);
 
   const defaultSponsorTypes = ["Individual", "Corporate", "Institution"];
   const defaultSponsorshipTypes = ["Cash", "Card", "Gift", "Professional Fee"];
   const defaultBudgetRanges = ["10K-50K", "50K-100K", "100K-500K", "500K+"];
-
-  // Since we're doing server-side pagination, we don't need client-side filtering
-  const displayedSponsors = sponsorsArray;
 
   const calculateRating = (reviews: any[] = []) => {
     if (!reviews || reviews.length === 0) return 0;
@@ -329,6 +372,15 @@ export default function SponsorProfiles() {
     setLimit(newLimit);
     setCurrentPage(1);
   };
+
+  console.log("Current state:", {
+    searchTerm,
+    filters,
+    currentPage,
+    status,
+    totalFilteredSponsors,
+    displayedCount: displayedSponsors.length,
+  }); // Debug log
 
   return (
     <div className="px-3 sm:px-6 py-2 w-full mx-auto dark:bg-gray-900">
@@ -505,10 +557,21 @@ export default function SponsorProfiles() {
       )}
 
       {/* No Sponsors State */}
-      {status === "succeeded" && displayedSponsors.length === 0 && (
+      {status === "succeeded" &&
+        displayedSponsors.length === 0 &&
+        allSponsors.length > 0 && (
+          <div className="text-center p-6 sm:p-10">
+            <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
+              No sponsors found matching your criteria.
+            </p>
+          </div>
+        )}
+
+      {/* No Sponsors Loaded */}
+      {status === "succeeded" && allSponsors.length === 0 && (
         <div className="text-center p-6 sm:p-10">
           <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-            No sponsors found matching your criteria.
+            No sponsors available.
           </p>
         </div>
       )}
@@ -680,6 +743,12 @@ export default function SponsorProfiles() {
           {/* Results Info */}
           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
             <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+              <span>
+                Showing {Math.min(startIndex + 1, totalFilteredSponsors)} to{" "}
+                {Math.min(endIndex, totalFilteredSponsors)} of{" "}
+                {totalFilteredSponsors} sponsors
+              </span>
+              <span className="hidden sm:inline">•</span>
               <span>
                 Page {currentPage} of {totalPages}
               </span>

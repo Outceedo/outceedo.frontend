@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { faStar } from "@fortawesome/free-solid-svg-icons";
@@ -150,6 +150,7 @@ const ExpertProfiles: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
+  const [allExperts, setAllExperts] = useState<Expert[]>([]); // Store all experts for client-side filtering
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -157,44 +158,133 @@ const ExpertProfiles: React.FC = () => {
   const { profiles, status, error } = useAppSelector((state) => state.profile);
 
   const expertsArray = profiles?.users || [];
-  const totalPages = profiles?.totalPages || 1;
-  const totalExperts = profiles?.total || 0;
 
-  console.log(expertsArray);
-
+  // Store all experts when data is fetched
   useEffect(() => {
-    fetchProfiles();
-  }, [currentPage, limit, dispatch]);
-
-  useEffect(() => {
-    if (currentPage !== 1) {
-      setCurrentPage(1);
-    } else {
-      fetchProfiles();
+    if (expertsArray.length > 0) {
+      setAllExperts(expertsArray);
     }
-  }, [searchQuery, filters]);
+  }, [expertsArray]);
 
-  const fetchProfiles = () => {
+  const extractFilterOptions = useCallback(
+    (key: keyof Expert, dataArray: Expert[]): string[] => {
+      const options = new Set<string>();
+
+      dataArray.forEach((expert: Expert) => {
+        if (key === "language" && expert.language) {
+          const langs = Array.isArray(expert.language)
+            ? expert.language
+            : [expert.language];
+          langs.forEach((lang) => {
+            if (lang) options.add(lang);
+          });
+        } else if (key === "sports" || key === "sport") {
+          if (expert.sports && Array.isArray(expert.sports)) {
+            expert.sports.forEach((sport) => {
+              if (sport) options.add(sport);
+            });
+          } else if (expert.sport && typeof expert.sport === "string") {
+            options.add(expert.sport);
+          }
+        } else {
+          const value = expert[key];
+          if (value && typeof value === "string") options.add(value);
+        }
+      });
+
+      return Array.from(options);
+    },
+    []
+  );
+
+  // Fetch profiles only on initial load, page change, or limit change
+  const fetchProfiles = useCallback(() => {
     const params: any = {
       page: currentPage,
       limit,
       userType: "expert",
     };
 
+    console.log("Fetching profiles with params:", params); // Debug log
+    dispatch(getProfiles(params));
+  }, [currentPage, limit, dispatch]);
+
+  // Initial load and pagination/limit changes only
+  useEffect(() => {
+    fetchProfiles();
+  }, [fetchProfiles]);
+
+  // Client-side filtering and searching
+  const filteredAndSearchedExperts = useMemo(() => {
+    let filtered = [...allExperts];
+
+    // Apply search filter
     if (searchQuery.trim()) {
-      params.search = searchQuery.trim();
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((expert) => {
+        const fullName = `${expert.firstName || ""} ${
+          expert.lastName || ""
+        }`.toLowerCase();
+        const username = expert.username?.toLowerCase() || "";
+        const bio = expert.bio?.toLowerCase() || "";
+        const profession = expert.profession?.toLowerCase() || "";
+
+        return (
+          fullName.includes(query) ||
+          username.includes(query) ||
+          bio.includes(query) ||
+          profession.includes(query)
+        );
+      });
     }
 
+    // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
-        params[key] = value;
+        filtered = filtered.filter((expert) => {
+          if (key === "sport") {
+            // Handle both sports array and sport string
+            if (expert.sports && Array.isArray(expert.sports)) {
+              return expert.sports.some((sport) => sport === value);
+            } else if (expert.sport) {
+              return expert.sport === value;
+            }
+            return false;
+          } else if (key === "language") {
+            if (expert.language) {
+              const langs = Array.isArray(expert.language)
+                ? expert.language
+                : [expert.language];
+              return langs.includes(value);
+            }
+            return false;
+          } else {
+            return expert[key] === value;
+          }
+        });
       }
     });
 
-    dispatch(getProfiles(params));
-  };
+    return filtered;
+  }, [allExperts, searchQuery, filters]);
+
+  // Calculate pagination for filtered results
+  const totalFilteredExperts = filteredAndSearchedExperts.length;
+  const totalPages = Math.ceil(totalFilteredExperts / limit);
+  const startIndex = (currentPage - 1) * limit;
+  const endIndex = startIndex + limit;
+  const displayedExperts = filteredAndSearchedExperts.slice(
+    startIndex,
+    endIndex
+  );
+
+  // Reset to page 1 when filters or search change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filters]);
 
   const handleFilterChange = (value: string, filterType: string) => {
+    console.log("Filter changed:", filterType, value); // Debug log
     const normalizedKey = filterType.toLowerCase();
     let stateKey = "";
 
@@ -228,6 +318,7 @@ const ExpertProfiles: React.FC = () => {
   };
 
   const clearAllFilters = () => {
+    console.log("Clearing all filters"); // Debug log
     setSearchQuery("");
     setFilters({
       profession: "",
@@ -246,45 +337,15 @@ const ExpertProfiles: React.FC = () => {
     );
   };
 
-  const displayedExperts = expertsArray;
-
-  const extractFilterOptions = (key: keyof Expert): string[] => {
-    const options = new Set<string>();
-
-    expertsArray.forEach((expert: Expert) => {
-      if (key === "language" && expert.language) {
-        const langs = Array.isArray(expert.language)
-          ? expert.language
-          : [expert.language];
-        langs.forEach((lang) => {
-          if (lang) options.add(lang);
-        });
-      } else if (key === "sports" || key === "sport") {
-        if (expert.sports && Array.isArray(expert.sports)) {
-          expert.sports.forEach((sport) => {
-            if (sport) options.add(sport);
-          });
-        } else if (expert.sport && typeof expert.sport === "string") {
-          options.add(expert.sport);
-        }
-      } else {
-        const value = expert[key];
-        if (value && typeof value === "string") options.add(value);
-      }
-    });
-
-    return Array.from(options);
-  };
-
-  const professionOptions = extractFilterOptions("profession");
-  const cityOptions = extractFilterOptions("city");
-  const countryOptions = extractFilterOptions("country");
-  const genderOptions = extractFilterOptions("gender");
-  const languageOptions = extractFilterOptions("language");
-
+  // Get filter options from all experts (not just current page)
+  const professionOptions = extractFilterOptions("profession", allExperts);
+  const cityOptions = extractFilterOptions("city", allExperts);
+  const countryOptions = extractFilterOptions("country", allExperts);
+  const genderOptions = extractFilterOptions("gender", allExperts);
+  const languageOptions = extractFilterOptions("language", allExperts);
   const sportOptions = [
-    ...extractFilterOptions("sports"),
-    ...extractFilterOptions("sport"),
+    ...extractFilterOptions("sports", allExperts),
+    ...extractFilterOptions("sport", allExperts),
   ];
 
   const defaultSports = [
@@ -297,8 +358,9 @@ const ExpertProfiles: React.FC = () => {
     "Hockey",
     "Swimming",
   ];
+
   const finalSportOptions =
-    sportOptions.length > 0 ? sportOptions : defaultSports;
+    sportOptions.length > 0 ? [...new Set(sportOptions)] : defaultSports;
 
   const filterConfig = [
     {
@@ -354,7 +416,6 @@ const ExpertProfiles: React.FC = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -362,6 +423,15 @@ const ExpertProfiles: React.FC = () => {
     setLimit(newLimit);
     setCurrentPage(1);
   };
+
+  console.log("Current state:", {
+    searchQuery,
+    filters,
+    currentPage,
+    status,
+    totalFilteredExperts,
+    displayedCount: displayedExperts.length,
+  }); // Debug log
 
   return (
     <div className="flex">
@@ -460,10 +530,21 @@ const ExpertProfiles: React.FC = () => {
           )}
 
           {/* No Experts State */}
-          {status === "succeeded" && displayedExperts.length === 0 && (
+          {status === "succeeded" &&
+            displayedExperts.length === 0 &&
+            allExperts.length > 0 && (
+              <div className="text-center p-6 sm:p-10">
+                <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
+                  No experts found matching your criteria.
+                </p>
+              </div>
+            )}
+
+          {/* No Experts Loaded */}
+          {status === "succeeded" && allExperts.length === 0 && (
             <div className="text-center p-6 sm:p-10">
               <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-                No experts found matching your criteria.
+                No experts available.
               </p>
             </div>
           )}
@@ -606,6 +687,12 @@ const ExpertProfiles: React.FC = () => {
               {/* Results Info */}
               <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
                 <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
+                  <span>
+                    Showing {Math.min(startIndex + 1, totalFilteredExperts)} to{" "}
+                    {Math.min(endIndex, totalFilteredExperts)} of{" "}
+                    {totalFilteredExperts} experts
+                  </span>
+                  <span className="hidden sm:inline">•</span>
                   <span>
                     Page {currentPage} of {totalPages}
                   </span>
