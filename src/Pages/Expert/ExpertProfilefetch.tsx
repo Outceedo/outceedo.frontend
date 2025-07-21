@@ -638,7 +638,7 @@ const ExpertProfiles: React.FC = () => {
                             {reviews}+
                           </p>
                           <p className="text-gray-700 text-xs dark:text-gray-300">
-                            Assessments
+                            Services Completed
                           </p>
                         </div>
                       </div>

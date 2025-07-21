@@ -1963,8 +1963,8 @@ const MyBooking: React.FC = () => {
                 : "Add Review for the Expert"}
             </DialogTitle>
             <DialogDescription>
-              Add your feedback about the Expert's performance during this
-              session. This review will be visible to the Expert.
+              Add your feedback about the Expert during this session. This
+              review will be visible to the Expert.
             </DialogDescription>
           </DialogHeader>
 

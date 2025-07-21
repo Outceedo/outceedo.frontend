@@ -904,7 +904,7 @@ const Expertview = () => {
               {expertData.assessments}+
             </p>
             <p className="text-gray-500 text-xs sm:text-base">
-              Assessments Evaluated
+              Services Completed
             </p>
           </div>
         </div>
