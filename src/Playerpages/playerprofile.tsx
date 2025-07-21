@@ -326,7 +326,7 @@ const Profile: React.FC = () => {
           navigate("/player/details-form");
         }
       }
-    }, 5000);
+    }, 9000);
 
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
