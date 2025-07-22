@@ -889,6 +889,7 @@ const Expertview = () => {
             <span className="text-gray-500 text-sm">
               {totalReviews} review{totalReviews !== 1 ? "s" : ""}
             </span>
+            <span className="text-gray-500"> {avgRating}/5</span>
           </div>
           <div
             className="text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"

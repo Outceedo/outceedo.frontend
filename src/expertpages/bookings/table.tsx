@@ -21,6 +21,7 @@ import {
   faLaptop,
   faChalkboardTeacher,
   faInfoCircle,
+  faDollar,
 } from "@fortawesome/free-solid-svg-icons";
 import AssessmentEvaluationForm from "../evaluation";
 import { FaCross, FaWindowClose } from "react-icons/fa";
@@ -392,6 +393,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
               <TableHead className="text-center w-[120px]">Actions</TableHead>
               <TableHead className="text-center w-[70px]">Session</TableHead>
               <TableHead className="text-center w-[70px]">Report</TableHead>
+              <TableHead className="text-center w-[70px]">Claim</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -550,6 +552,17 @@ const BookingTable: React.FC<BookingTableProps> = ({
                       onClick={(e) => handleReportClick(e, booking)}
                     >
                       <FontAwesomeIcon icon={faFileAlt} />
+                    </Button>
+                  </TableCell>
+
+                  <TableCell className="text-center">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      title="Claim Payment"
+                    >
+                      <FontAwesomeIcon icon={faDollar} />
                     </Button>
                   </TableCell>
                 </TableRow>
