@@ -114,6 +114,8 @@ const Expertview = () => {
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
+  const [followersLimit, setFollowersLimit] = useState(10); // default limit
+  const [followersPage, setFollowersPage] = useState(1);
 
   // Followers modal state
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
@@ -150,7 +152,11 @@ const Expertview = () => {
 
   // Check if follow is allowed for current plan
   const isFollowAllowed = () => {
-    return isUserOnPremiumPlan;
+    if (localStorage.getItem("role") === "player") {
+      return isUserOnPremiumPlan;
+    } else {
+      return true;
+    }
   };
 
   useEffect(() => {
@@ -173,6 +179,11 @@ const Expertview = () => {
       setFollowersCount(viewedProfile.followersCount || 0); // Using your demo value as fallback
     }
   }, [viewedProfile]);
+  useEffect(() => {
+    if (isFollowersModalOpen) {
+      fetchFollowers(followersLimit, followersPage);
+    }
+  }, [followersLimit, followersPage, isFollowersModalOpen]);
 
   const checkFollowStatus = async () => {
     try {
@@ -197,21 +208,23 @@ const Expertview = () => {
   };
 
   // Fetch followers list
-  const fetchFollowers = async () => {
+  const fetchFollowers = async (
+    limit = followersLimit,
+    page = followersPage
+  ) => {
     if (!viewedProfile?.id) return;
 
     setLoadingFollowers(true);
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `${API_FOLLOW_URL}/${viewedProfile.id}/followers`,
+        `${API_FOLLOW_URL}/${viewedProfile.id}/followers?limit=${limit}&page=${page}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         }
       );
-
       setFollowers(response.data?.users || []);
     } catch (error) {
       console.error("Error fetching followers:", error);
@@ -889,7 +902,7 @@ const Expertview = () => {
             <span className="text-gray-500 text-sm">
               {totalReviews} review{totalReviews !== 1 ? "s" : ""}
             </span>
-            <span className="text-gray-500"> {avgRating}/5</span>
+            <span className="text-gray-500"> ({avgRating}/5)</span>
           </div>
           <div
             className="text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
@@ -912,26 +925,10 @@ const Expertview = () => {
       </div>
 
       {/* Follow Button Section - For all roles except current expert */}
-      {localStorage.getItem("role") && (
+      {(localStorage.getItem("role") !== "player" ||
+        (localStorage.getItem("role") === "player" && isUserOnPremiumPlan)) && (
         <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
           <div className="flex flex-col items-center justify-center">
-            {/* Follow Plan Info Banner */}
-            {!subscriptionLoading && !isFollowAllowed() && (
-              <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
-                  <FontAwesomeIcon icon={faLock} className="mr-2" />
-                  Following experts is a <strong>Premium feature</strong>.
-                  <button
-                    onClick={() => navigate("/plans")}
-                    className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                  >
-                    Upgrade to Premium
-                  </button>{" "}
-                  to follow your favorite experts.
-                </p>
-              </div>
-            )}
-
             {/* Follow/Unfollow Buttons */}
             {isFollowAllowed() && isFollowing ? (
               // Show both Following button and Unfollow button when following
@@ -965,27 +962,18 @@ const Expertview = () => {
                 </Button>
               </div>
             ) : (
-              // Show single Follow or Upgrade button when not following
+              // Show single Follow button when not following
               <Button
                 onClick={handleFollow}
                 disabled={isFollowLoading}
-                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-                  isFollowAllowed()
-                    ? "bg-red-600 hover:bg-red-700 text-white"
-                    : "bg-gray-400 hover:bg-gray-500 text-white cursor-pointer"
-                }`}
+                className={`px-6 py-3 rounded-lg font-semibold transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white`}
               >
                 {isFollowLoading ? (
                   <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                ) : isFollowAllowed() ? (
+                ) : (
                   <>
                     <FontAwesomeIcon icon={faUserPlus} className="text-lg" />
                     Follow
-                  </>
-                ) : (
-                  <>
-                    <FontAwesomeIcon icon={faLock} className="text-lg" />
-                    Upgrade to Follow
                   </>
                 )}
               </Button>
@@ -997,6 +985,24 @@ const Expertview = () => {
                 You're following {expertData.name}
               </p>
             )}
+          </div>
+        </div>
+      )}
+      {/* Player on free plan sees upgrade banner */}
+      {localStorage.getItem("role") === "player" && !isUserOnPremiumPlan && (
+        <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
+          <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
+              <FontAwesomeIcon icon={faLock} className="mr-2" />
+              Following experts is a <strong>Premium feature</strong>.
+              <button
+                onClick={() => navigate("/plans")}
+                className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+              >
+                Upgrade to Premium
+              </button>{" "}
+              to follow your favorite experts.
+            </p>
           </div>
         </div>
       )}
@@ -1173,6 +1179,52 @@ const Expertview = () => {
             <h3 className="text-lg font-semibold mb-4 text-center dark:text-white">
               Followers ({followersCount})
             </h3>
+            {/* Pagination and limit controls */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <label className="mr-2 font-medium">Followers per page:</label>
+                <select
+                  value={followersLimit}
+                  onChange={(e) => {
+                    setFollowersLimit(Number(e.target.value));
+                    setFollowersPage(1);
+                    fetchFollowers(Number(e.target.value), 1);
+                  }}
+                  className="border rounded px-2 py-1"
+                >
+                  {[1, 5, 10, 20, 50].map((val) => (
+                    <option key={val} value={val}>
+                      {val}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <button
+                  disabled={followersPage === 1 || loadingFollowers}
+                  onClick={() => {
+                    setFollowersPage(followersPage - 1);
+                    fetchFollowers(followersLimit, followersPage - 1);
+                  }}
+                  className="px-2 py-1 border rounded mr-2"
+                >
+                  Prev
+                </button>
+                <span>Page {followersPage}</span>
+                <button
+                  disabled={
+                    followers.length < followersLimit || loadingFollowers
+                  }
+                  onClick={() => {
+                    setFollowersPage(followersPage + 1);
+                    fetchFollowers(followersLimit, followersPage + 1);
+                  }}
+                  className="px-2 py-1 border rounded ml-2"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
             <div className="overflow-y-auto max-h-96">
               <FollowersList followers={followers} loading={loadingFollowers} />
             </div>

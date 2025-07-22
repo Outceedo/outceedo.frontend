@@ -135,6 +135,10 @@ const Playerview: React.FC = () => {
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
 
+  // Followers pagination and limit state
+  const [followersLimit, setFollowersLimit] = useState(10);
+  const [followersPage, setFollowersPage] = useState(1);
+
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
@@ -154,7 +158,10 @@ const Playerview: React.FC = () => {
 
   // Check if follow is allowed for current plan
   const isFollowAllowed = () => {
-    return isUserOnPremiumPlan;
+    if (localStorage.getItem("role") === "player") {
+      return isUserOnPremiumPlan;
+    }
+    return true; // For other roles, allow following regardless of plan
   };
 
   useEffect(() => {
@@ -228,15 +235,18 @@ const Playerview: React.FC = () => {
     }
   };
 
-  // Fetch followers list
-  const fetchFollowers = async () => {
+  // Fetch followers list with limit and page
+  const fetchFollowers = async (
+    limit = followersLimit,
+    page = followersPage
+  ) => {
     if (!profileData?.id) return;
 
     setLoadingFollowers(true);
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
-        `${API_FOLLOW_URL}/${profileData.id}/followers`,
+        `${API_FOLLOW_URL}/${profileData.id}/followers?limit=${limit}&page=${page}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -245,6 +255,10 @@ const Playerview: React.FC = () => {
       );
 
       setFollowers(response.data?.users || []);
+      // Optionally update followersCount if API returns total
+      if (typeof response.data?.totalCount === "number") {
+        setFollowersCount(response.data.totalCount);
+      }
     } catch (error) {
       console.error("Error fetching followers:", error);
       setFollowers([]);
@@ -256,7 +270,19 @@ const Playerview: React.FC = () => {
   // Handle followers count click
   const handleFollowersClick = () => {
     setIsFollowersModalOpen(true);
-    fetchFollowers();
+    fetchFollowers(followersLimit, followersPage);
+  };
+
+  // Pagination and limit controls for followers modal
+  const handleFollowersLimitChange = (newLimit: number) => {
+    setFollowersLimit(newLimit);
+    setFollowersPage(1); // Reset to page 1 on limit change
+    fetchFollowers(newLimit, 1);
+  };
+
+  const handleFollowersPageChange = (newPage: number) => {
+    setFollowersPage(newPage);
+    fetchFollowers(followersLimit, newPage);
   };
 
   const handleFollow = async () => {
@@ -337,7 +363,7 @@ const Playerview: React.FC = () => {
 
       if (isFollowing) {
         // Unfollow the player
-        response = await axios.post(
+        response = await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/unfollow`,
           {},
           {
@@ -350,7 +376,7 @@ const Playerview: React.FC = () => {
         newFollowStatus = false;
       } else {
         // Follow the player
-        response = await axios.post(
+        response = await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/follow`,
           {},
           {
@@ -565,109 +591,108 @@ const Playerview: React.FC = () => {
               </div>
 
               {/* Follow Button Section - For all roles except current player */}
-              {localStorage.getItem("role") && (
-                <div className="mt-4">
-                  {/* Follow Plan Info Banner */}
-                  {!subscriptionLoading && !isFollowAllowed() && (
-                    <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        <FontAwesomeIcon icon={faLock} className="mr-2" />
-                        Following players is a <strong>Premium feature</strong>.
-                        <button
-                          onClick={() => navigate("/plans")}
-                          className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
-                        >
-                          Upgrade to Premium
-                        </button>{" "}
-                        to follow your favorite players.
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Follow/Unfollow Buttons */}
-                  <div className="flex items-center gap-4">
-                    {isFollowAllowed() && isFollowing ? (
-                      // Show both Following button and Unfollow button when following
-                      <div className="flex items-center gap-2">
+              {
+                // Only allow follow for premium players, or allow for other roles regardless of plan
+                ((localStorage.getItem("role") === "player" &&
+                  isUserOnPremiumPlan) ||
+                  localStorage.getItem("role") !== "player") && (
+                  <div className="mt-4">
+                    {/* Follow/Unfollow Buttons */}
+                    <div className="flex items-center gap-4">
+                      {isFollowAllowed() && isFollowing ? (
+                        // Show both Following button and Unfollow button when following
+                        <div className="flex items-center gap-2">
+                          <Button
+                            disabled
+                            className="px-6 py-2 rounded-lg font-semibold bg-green-600 text-white cursor-default"
+                          >
+                            <FontAwesomeIcon
+                              icon={faUserCheck}
+                              className="text-sm mr-2"
+                            />
+                            Following
+                          </Button>
+                          <Button
+                            onClick={handleUnfollowWithConfirmation}
+                            disabled={isFollowLoading}
+                            className="px-4 py-2 rounded-lg font-semibold bg-gray-500 hover:bg-red-600 text-white transition-colors"
+                          >
+                            {isFollowLoading ? (
+                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                            ) : (
+                              <>
+                                <FontAwesomeIcon
+                                  icon={faUserMinus}
+                                  className="text-sm mr-2"
+                                />
+                                Unfollow
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      ) : (
+                        // Show single Follow button when not following
                         <Button
-                          disabled
-                          className="px-6 py-2 rounded-lg font-semibold bg-green-600 text-white cursor-default"
-                        >
-                          <FontAwesomeIcon
-                            icon={faUserCheck}
-                            className="text-sm mr-2"
-                          />
-                          Following
-                        </Button>
-                        <Button
-                          onClick={handleUnfollowWithConfirmation}
+                          onClick={handleFollow}
                           disabled={isFollowLoading}
-                          className="px-4 py-2 rounded-lg font-semibold bg-gray-500 hover:bg-red-600 text-white transition-colors"
+                          className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white`}
                         >
                           {isFollowLoading ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
                           ) : (
                             <>
                               <FontAwesomeIcon
-                                icon={faUserMinus}
-                                className="text-sm mr-2"
+                                icon={faUserPlus}
+                                className="text-sm"
                               />
-                              Unfollow
+                              Follow
                             </>
                           )}
                         </Button>
-                      </div>
-                    ) : (
-                      // Show single Follow or Upgrade button when not following
-                      <Button
-                        onClick={handleFollow}
-                        disabled={isFollowLoading}
-                        className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 ${
-                          isFollowAllowed()
-                            ? "bg-red-600 hover:bg-red-700 text-white"
-                            : "bg-gray-400 hover:bg-gray-500 text-white cursor-pointer"
-                        }`}
+                      )}
+
+                      {/* Followers count display - Make it clickable */}
+                      <div
+                        className="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                        onClick={handleFollowersClick}
                       >
-                        {isFollowLoading ? (
-                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                        ) : isFollowAllowed() ? (
-                          <>
-                            <FontAwesomeIcon
-                              icon={faUserPlus}
-                              className="text-sm"
-                            />
-                            Follow
-                          </>
-                        ) : (
-                          <>
-                            <FontAwesomeIcon
-                              icon={faLock}
-                              className="text-sm"
-                            />
-                            Upgrade to Follow
-                          </>
-                        )}
-                      </Button>
-                    )}
-
-                    {/* Followers count display - Make it clickable */}
-                    <div
-                      className="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                      onClick={handleFollowersClick}
-                    >
-                      <span className="font-semibold">{followersCount}</span>{" "}
-                      followers
+                        <span className="font-semibold">{followersCount}</span>{" "}
+                        followers
+                      </div>
                     </div>
-                  </div>
 
-                  {isFollowing && isFollowAllowed() && (
-                    <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                      <FontAwesomeIcon icon={faHeart} className="mr-1" />
-                      You're following {displayName}
-                    </p>
-                  )}
-                </div>
-              )}
+                    {isFollowing && isFollowAllowed() && (
+                      <p className="text-sm text-green-600 dark:text-green-400 mt-2">
+                        <FontAwesomeIcon icon={faHeart} className="mr-1" />
+                        You're following {displayName}
+                      </p>
+                    )}
+                  </div>
+                )
+              }
+              {/* For player on free plan, show only upgrade banner */}
+              {localStorage.getItem("role") === "player" &&
+                !isUserOnPremiumPlan && (
+                  <div className="mt-4">
+                    {/* Follow Plan Info Banner */}
+                    {!subscriptionLoading && (
+                      <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          <FontAwesomeIcon icon={faLock} className="mr-2" />
+                          Following players is a{" "}
+                          <strong>Premium feature</strong>.
+                          <button
+                            onClick={() => navigate("/plans")}
+                            className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                          >
+                            Upgrade to Premium
+                          </button>{" "}
+                          to follow your favorite players.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
 
               {/* OVR Section - Only show for players */}
               {profileData.role === "player" && (
@@ -720,6 +745,7 @@ const Playerview: React.FC = () => {
                 <span className="text-gray-500">
                   {totalReviews} review{totalReviews !== 1 ? "s" : ""}
                 </span>
+                <span>({avgRating}/5)</span>
               </div>
             </div>
           </div>
@@ -752,7 +778,7 @@ const Playerview: React.FC = () => {
         </div>
       </div>
 
-      {/* Followers Modal */}
+      {/* Followers Modal with pagination and limit controls */}
       {isFollowersModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-lg w-[95vw] max-w-md p-6 relative max-h-[80vh] overflow-hidden">
@@ -765,6 +791,44 @@ const Playerview: React.FC = () => {
             <h3 className="text-lg font-semibold mb-4 text-center dark:text-white">
               Followers ({followersCount})
             </h3>
+            {/* Pagination and limit controls */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <label className="mr-2 font-medium">Followers per page:</label>
+                <select
+                  value={followersLimit}
+                  onChange={(e) =>
+                    handleFollowersLimitChange(Number(e.target.value))
+                  }
+                  className="border rounded px-2 py-1"
+                >
+                  {[1, 5, 10, 20, 50].map((val) => (
+                    <option key={val} value={val}>
+                      {val}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <button
+                  disabled={followersPage === 1 || loadingFollowers}
+                  onClick={() => handleFollowersPageChange(followersPage - 1)}
+                  className="px-2 py-1 border rounded mr-2"
+                >
+                  Prev
+                </button>
+                <span>Page {followersPage}</span>
+                <button
+                  disabled={
+                    followers.length < followersLimit || loadingFollowers
+                  }
+                  onClick={() => handleFollowersPageChange(followersPage + 1)}
+                  className="px-2 py-1 border rounded ml-2"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
             <div className="overflow-y-auto max-h-96">
               <FollowersList followers={followers} loading={loadingFollowers} />
             </div>

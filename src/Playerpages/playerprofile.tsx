@@ -122,6 +122,13 @@ const Profile: React.FC = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [followers, setFollowers] = useState<any[]>([]);
+  const [followersLimit, setFollowersLimit] = useState(10);
+  const [followersPage, setFollowersPage] = useState(1);
+  const [followersLoading, setFollowersLoading] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
+
   const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
@@ -134,6 +141,7 @@ const Profile: React.FC = () => {
   const isUserOnPremiumPlan =
     isActive && planName && planName.toLowerCase() !== "free";
   const [playerStats, setPlayerStats] = useState(initialStats);
+  const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
 
   useEffect(() => {
     const username = localStorage.getItem("username");
@@ -493,6 +501,48 @@ const Profile: React.FC = () => {
           : [],
       });
     }
+  };
+  const fetchFollowers = async (
+    limit = followersLimit,
+    page = followersPage
+  ) => {
+    if (!currentProfile?.id) return;
+    setFollowersLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${API_FOLLOW_URL}/${currentProfile.id}/followers?limit=${limit}&page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      const data = await response.json();
+      setFollowers(data?.users || []);
+      setFollowersCount(data?.totalCount || 0); // If API provides total count
+    } catch (error) {
+      setFollowers([]);
+      setFollowersCount(0);
+    } finally {
+      setFollowersLoading(false);
+    }
+  };
+  const handleFollowersOpen = () => {
+    setIsFollowersDialogOpen(true);
+    fetchFollowers(followersLimit, followersPage);
+  };
+
+  // Pagination controls for followers modal
+  const handleFollowersLimitChange = (newLimit: number) => {
+    setFollowersLimit(newLimit);
+    setFollowersPage(1);
+    fetchFollowers(newLimit, 1);
+  };
+
+  const handleFollowersPageChange = (newPage: number) => {
+    setFollowersPage(newPage);
+    fetchFollowers(followersLimit, newPage);
   };
 
   const ovrScore = calculateOVR(playerData.stats);
@@ -873,22 +923,13 @@ const Profile: React.FC = () => {
                   )}
                 </div>
                 {/* Followers dialog */}
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <div className="flex items-center gap-2 cursor-pointer">
-                      <p className="text-red-500  font-bold">0</p>
-                      <p className="text-gray-500 dark:text-white">Followers</p>
-                    </div>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-xs sm:max-w-md max-h-[80vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-lg font-semibold text-center">
-                        People who Follow
-                      </DialogTitle>
-                    </DialogHeader>
-                    <FollowList />
-                  </DialogContent>
-                </Dialog>
+                <div
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={handleFollowersOpen}
+                >
+                  <p className="text-red-500 font-bold">{followersCount}</p>
+                  <p className="text-gray-500 dark:text-white">Followers</p>
+                </div>
               </div>
             </div>
           </div>
@@ -982,6 +1023,64 @@ const Profile: React.FC = () => {
             </div>
           </div>
         </div>
+        {isFollowersDialogOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+            <div className="bg-white dark:bg-gray-800 rounded-lg w-[95vw] max-w-md p-6 relative max-h-[80vh] overflow-hidden">
+              <button
+                onClick={() => setIsFollowersDialogOpen(false)}
+                className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl z-10"
+              >
+                ✕
+              </button>
+              <h3 className="text-lg font-semibold mb-4 text-center dark:text-white">
+                Followers ({followersCount})
+              </h3>
+              {/* Pagination and limit controls */}
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <label className="mr-2 font-medium">
+                    Followers per page:
+                  </label>
+                  <select
+                    value={followersLimit}
+                    onChange={(e) =>
+                      handleFollowersLimitChange(Number(e.target.value))
+                    }
+                    className="border rounded px-2 py-1"
+                  >
+                    {[1, 5, 10, 20, 50].map((val) => (
+                      <option key={val} value={val}>
+                        {val}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <button
+                    disabled={followersPage === 1 || followersLoading}
+                    onClick={() => handleFollowersPageChange(followersPage - 1)}
+                    className="px-2 py-1 border rounded mr-2"
+                  >
+                    Prev
+                  </button>
+                  <span>Page {followersPage}</span>
+                  <button
+                    disabled={
+                      followers.length < followersLimit || followersLoading
+                    }
+                    onClick={() => handleFollowersPageChange(followersPage + 1)}
+                    className="px-2 py-1 border rounded ml-2"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+              <div className="overflow-y-auto max-h-96">
+                <FollowList followers={followers} loading={followersLoading} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
