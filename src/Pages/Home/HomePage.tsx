@@ -16,6 +16,7 @@ import Pricing from "./Pricing";
 import Contact from "./Contact";
 import User from "./user";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import OutceedoFooter from "./Footer";
 
 const HomePage: React.FC = () => {
   const navigate = useNavigate();
@@ -89,86 +90,7 @@ const HomePage: React.FC = () => {
       <Pricing />
       <Contact />
 
-      <div className="bg-[#011936] text-white py-12">
-        <div className="max-w-6xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center md:items-start">
-            <div className="text-center md:text-left mb-6 md:mb-0">
-              <h2 className="text-3xl font-bold">Logo</h2>
-              <p className="text-sm mt-2 text-gray-400">
-                Lorem ipsum dolor sit amet pretium consectetur adipiscing elit.
-              </p>
-            </div>
-            <div className="text-center md:text-left">
-              <h2 className="text-lg font-semibold mb-2">Company</h2>
-              <ul className="text-sm space-y-2 text-gray-400">
-                <li
-                  onClick={() => navigate("/")}
-                  className="cursor-pointer hover:text-white"
-                >
-                  About
-                </li>
-                <li
-                  onClick={() => navigate("/features")}
-                  className="cursor-pointer hover:text-white"
-                >
-                  Features
-                </li>
-                <li
-                  onClick={() => navigate("/pricing")}
-                  className="cursor-pointer hover:text-white"
-                >
-                  Pricing
-                </li>
-                <li
-                  onClick={() => navigate("/contact")}
-                  className="cursor-pointer hover:text-white"
-                >
-                  Contact & Support
-                </li>
-              </ul>
-            </div>
-            <div className="flex justify-center space-x-6 mt-6 md:mt-0">
-              <a
-                href="https://www.linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-600 text-2xl"
-              >
-                <FontAwesomeIcon icon={faLinkedin} />
-              </a>
-              <a
-                href="https://www.facebook.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-600 text-2xl"
-              >
-                <FontAwesomeIcon icon={faFacebook} />
-              </a>
-              <a
-                href="https://www.twitter.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-600 text-2xl"
-              >
-                <FontAwesomeIcon icon={faTwitter} />
-              </a>
-              <a
-                href="https://www.instagram.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-pink-600 text-2xl"
-              >
-                <FontAwesomeIcon icon={faInstagram} />
-              </a>
-            </div>
-          </div>
-        </div>
-        <div className="border-t border-gray-700 text-center py-6 text-gray-400">
-          <p className="text-sm">
-            © {new Date().getFullYear()} All rights are reserved.
-          </p>
-        </div>
-      </div>
+      <OutceedoFooter />
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">

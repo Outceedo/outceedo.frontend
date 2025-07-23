@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { CheckCircle, Crown, Gem } from "lucide-react";
+import { CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
@@ -29,25 +29,83 @@ interface Plan {
   features: PlanFeature[];
 }
 
-// Default features for free plan (if not provided by API)
-const defaultFreeFeatures = [
-  { name: "Cloud Storage", description: "2 photos & 2 videos" },
-  { name: "Reports", description: "Limited Access - 7 days only" },
-  { name: "Experts Search", description: "Local experts only" },
-  { name: "Bookings", description: "Recorded Video Assessment only" },
-];
-
-// Default features for pro plan (if not provided by API)
-const defaultProFeatures = [
-  { name: "Cloud Storage", description: "10 photos & 5 videos" },
-  { name: "Reports", description: "Unlimited Access" },
-  { name: "Experts Search", description: "Worldwide expert access" },
-  { name: "Bookings", description: "Access to all expert services" },
-  { name: "AI Features", description: "Access to AI features (coming soon)" },
+// Table configuration: Rows, keys, and how each plan answers
+const planComparisonData = [
+  {
+    label: "Subscription Fee",
+    key: "price",
+    free: "Free",
+    pro: "£10/month or £100/year",
+  },
+  {
+    label: "Features",
+    key: "features",
+    free: "Limited Use",
+    pro: "Unlimited Use",
+  },
+  {
+    label: "Cloud Storage",
+    key: "cloudStorage",
+    free: "2 Photos & 2 Videos",
+    pro: "10 Photos & 5 Videos",
+  },
+  {
+    label: "Reports",
+    key: "reports",
+    free: "Limited Access (7 days)",
+    pro: "Unlimited Access",
+  },
+  {
+    label: "Video Conference Recordings",
+    key: "videoConference",
+    free: "Limited Access (7 days)",
+    pro: "Unlimited Access",
+  },
+  {
+    label: "Experts Search",
+    key: "expertsSearch",
+    free: "Limited (Local)",
+    pro: "Unlimited (Worldwide)",
+  },
+  {
+    label: "Reports Download & Share",
+    key: "reportsDownload",
+    free: false,
+    pro: true,
+  },
+  {
+    label: "Bookings (Expert Services)",
+    key: "bookings",
+    free: "Recorded Video Assessment Only",
+    pro: "All Available Services",
+  },
+  {
+    label: "Building Fans/Followers",
+    key: "fansFollowers",
+    free: false,
+    pro: true,
+  },
+  {
+    label: "Promotions (Social Media, Newsletters, Front Page)",
+    key: "promotions",
+    free: false,
+    pro: true,
+  },
+  {
+    label: "Sponsorship Applications",
+    key: "sponsorship",
+    free: false,
+    pro: true,
+  },
+  {
+    label: "AI Features (coming soon)",
+    key: "aiFeatures",
+    free: false,
+    pro: true,
+  },
 ];
 
 export default function PricingPlans() {
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
 
@@ -62,10 +120,10 @@ export default function PricingPlans() {
 
   const API = `${import.meta.env.VITE_PORT}/api/v1/subscription/plans`;
 
-  // Fetch subscription status and plans on component mount
   useEffect(() => {
     dispatch(fetchSubscriptionStatus());
     fetchPlans();
+    // eslint-disable-next-line
   }, [dispatch]);
 
   const fetchPlans = async () => {
@@ -80,20 +138,19 @@ export default function PricingPlans() {
       });
       setPlans(response.data?.plans || []);
     } catch (error) {
-      console.error("Error fetching plans:", error);
       setPlans([]);
     } finally {
       setLoadingPlans(false);
     }
   };
 
-  // Create free plan object
-  const freePlan: Plan = {
+  // Plans info, fallback if API fails
+  const freePlan = {
     id: "free-plan",
-    name: "Free",
+    name: "Basic",
     price: 0,
     interval: "month",
-    description: "The essential features to get started.",
+    description: "",
     stripePriceId: "",
     stripeProductId: "",
     createdAt: "",
@@ -101,28 +158,43 @@ export default function PricingPlans() {
     features: [],
   };
 
-  // Get pro plan (first plan from API)
-  const proPlan = plans[0];
+  const proPlan = plans[0]
+    ? {
+        ...plans[0],
+        name: "Premium",
+        description: "",
+      }
+    : {
+        id: "pro-plan",
+        name: "Premium",
+        price: 10,
+        interval: "month",
+        description:
+          "Lorem ipsum dolor sit amet pretium consectetur adipiscing elit.",
+        stripePriceId: "",
+        stripeProductId: "",
+        createdAt: "",
+        updatedAt: "",
+        features: [],
+      };
 
-  // Check if user is on pro plan
+  // Subscription state
   const isUserOnProPlan =
     isActive && planName && planName.toLowerCase() !== "free";
-  const currentPlanName = isUserOnProPlan ? planName : "Free";
+  const currentPlanName = isUserOnProPlan ? proPlan.name : freePlan.name;
 
-  // Handle subscription to pro plan
+  // Handle subscribe
   const handleSubscribePro = async () => {
     if (!proPlan) {
-      alert("Pro plan not available yet. Please contact support.");
+      alert("Premium plan not available yet. Please contact support.");
       return;
     }
-
     try {
       const id = currentProfile?.id;
       if (!id) {
         alert("Please login to subscribe to a plan.");
         return;
       }
-
       localStorage.setItem("planId", proPlan.id);
       const api = `${import.meta.env.VITE_PORT}/api/v1/subscription/subscribe/${
         proPlan.id
@@ -139,193 +211,147 @@ export default function PricingPlans() {
           },
         }
       );
-
       if (response.data?.url) {
         window.open(response.data.url, "_blank");
       } else {
         alert("No payment URL returned.");
       }
     } catch (error) {
-      console.error("Subscription error:", error);
       alert("Something went wrong during upgrade.");
     }
   };
 
-  // Format expiry date
-  const formatExpiryDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
-  };
-
-  // Create array of all plans to display
-  const allPlans = [freePlan, ...(proPlan ? [proPlan] : [])];
-
-  if (loadingPlans) {
-    return (
-      <div
-        className="flex flex-col items-center py-10 px-4 md:px-10 mt-10"
-        id="pricing"
-      >
-        <div className="text-center">
-          <p className="text-lg">Loading pricing plans...</p>
-        </div>
-      </div>
-    );
-  }
+  // Table values for free & pro
+  const tableData = planComparisonData.map((row) => ({
+    label: row.label,
+    free: row.free,
+    pro: row.pro,
+  }));
 
   return (
-    <div
-      className="flex flex-col items-center px-4 md:px-10 mt-12"
-      id="pricing"
-    >
-      {/* Current subscription info */}
-      {isUserOnProPlan && (
-        <div className="w-full max-w-4xl mb-8 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <Crown className="text-yellow-300 h-6 w-6" />
-            <span className="font-bold text-lg">Current Plan: {planName}</span>
-          </div>
-          <p className="text-blue-100">
-            {expiryDate && `Expires on ${formatExpiryDate(expiryDate)}`}
-          </p>
+    <div className="w-full flex flex-col items-center py-14 px-2 md:px-0 bg-[#f7fafb] min-h-screen">
+      <div className="flex flex-col md:flex-row md:items-start w-full max-w-6xl gap-12">
+        {/* Left: Title */}
+        <div className="flex-1 md:max-w-xs flex flex-col items-start justify-start mt-2 mb-8 md:mb-0">
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-left leading-tight">
+            Choose a plan
+            <br />
+            that's right for you
+          </h2>
         </div>
-      )}
-
-      <div className="flex flex-col md:flex-row items-center space-y-8 md:space-y-0 md:space-x-8 justify-start mb-12 w-full max-w-6xl">
-        {allPlans.map((plan, index) => {
-          const isCurrentPlan =
-            plan.name.toLowerCase() === currentPlanName?.toLowerCase();
-          const isFree = plan.name.toLowerCase() === "free";
-          const isPro = !isFree;
-          const features =
-            plan.features && plan.features.length > 0
-              ? plan.features
-              : isFree
-              ? defaultFreeFeatures.map((f) => ({
-                  feature: {
-                    id: f.name,
-                    name: f.name,
-                    key: f.name,
-                    description: f.description,
-                  },
-                  id: f.name,
-                  value: "",
-                }))
-              : defaultProFeatures.map((f) => ({
-                  feature: {
-                    id: f.name,
-                    name: f.name,
-                    key: f.name,
-                    description: f.description,
-                  },
-                  id: f.name,
-                  value: "",
-                }));
-
-          return (
-            <div
-              key={plan.id || index}
-              className={`relative border-2 p-6 rounded-lg transition-all w-full text-left ${
-                isPro ? "border-blue-500" : "border-gray-300"
-              } ${isCurrentPlan ? "ring-2 ring-green-400" : ""}`}
-              onClick={() => setSelectedPlan(plan.name)}
-            >
-              {/* Popular badge for pro plan */}
-              {isPro && (
-                <div className="absolute top-0 left-0 right-0 bg-blue-500 text-white py-2 text-center rounded-t-lg mb-8">
-                  Recommended
-                </div>
-              )}
-
-              {/* Current plan badge */}
-              {isCurrentPlan && (
-                <div className="absolute top-2 right-2">
-                  <span className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded-full shadow">
-                    Current
-                  </span>
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 mb-2 mt-6">
-                {isFree ? (
-                  <Gem className="text-gray-400 h-6 w-6" />
-                ) : (
-                  <Crown className="text-blue-500 h-6 w-6" />
-                )}
-                <h3 className="text-2xl font-bold">{plan.name}</h3>
+        {/* Right: Plan Cards */}
+        <div className="flex-1 flex flex-col md:flex-row gap-6 w-full md:w-auto justify-end">
+          {/* Basic Plan Card */}
+          <div
+            className={`relative border border-gray-300 bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center ${
+              currentPlanName === freePlan.name ? "ring-2 ring-green-300" : ""
+            }`}
+          >
+            <div className="w-full flex flex-col items-center">
+              <div className="font-bold text-2xl mb-2">{freePlan.name}</div>
+              <div className="text-gray-500 mb-4 text-center">
+                {freePlan.description}
               </div>
-
-              {/* Price */}
-              <div className="mb-4">
-                <span className="text-3xl font-extrabold">${plan.price}</span>
-                <span className="text-gray-500 ml-1">/{plan.interval}</span>
-              </div>
-
-              <p className="text-gray-600 mb-6">{plan.description}</p>
-
-              {/* Action Button */}
-              {isFree ? (
-                <Button
-                  className="bg-gray-200 text-gray-500 w-full cursor-not-allowed mb-6"
-                  disabled
-                >
-                  {isCurrentPlan ? "Current Plan" : "Free Plan"}
-                </Button>
-              ) : isCurrentPlan ? (
-                <Button
-                  className="bg-green-600 hover:bg-green-700 text-white w-full cursor-not-allowed mb-6"
-                  disabled
-                >
-                  Current Plan
-                </Button>
-              ) : (
-                <Button
-                  className="bg-blue-600 hover:bg-blue-700 text-white w-full mb-6"
-                  onClick={handleSubscribePro}
-                  disabled={subscriptionLoading}
-                >
-                  {subscriptionLoading ? "Processing..." : "Upgrade to Pro"}
-                </Button>
-              )}
-
-              <div className="bg-gray-300 h-0.5 mb-4" />
-
-              {/* Features List */}
-              <ul className="text-gray-600 space-y-4">
-                {features.map((feature, featureIndex) => (
-                  <div key={feature.feature.id || featureIndex}>
-                    <li className="flex gap-4 items-start">
-                      <CheckCircle className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
-                      <div>
-                        <span className="font-semibold">
-                          {feature.feature.name}
-                        </span>
-                        {feature.value && (
-                          <span className="text-sm"> ({feature.value})</span>
-                        )}
-                        <p className="text-sm text-gray-500">
-                          {feature.feature.description}
-                        </p>
-                      </div>
-                    </li>
-                    {featureIndex < features.length - 1 && (
-                      <div className="bg-gray-300 h-0.5 my-4" />
-                    )}
-                  </div>
-                ))}
-              </ul>
+              <Button
+                className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
+                disabled={currentPlanName === freePlan.name}
+              >
+                {currentPlanName === freePlan.name
+                  ? "Current Plan"
+                  : "Get Started"}
+              </Button>
             </div>
-          );
-        })}
+          </div>
+          {/* Premium Plan Card */}
+          <div
+            className={`relative border-[4px] ${
+              currentPlanName === proPlan.name
+                ? "border-red-500"
+                : "border-gray-300"
+            } bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center`}
+          >
+            {/* Popular badge */}
+            <div className="absolute -top-5 left-0 right-0 flex justify-center">
+              <span className="bg-red-500 text-white text-xs font-bold py-1 px-5 rounded-full shadow">
+                Popular
+              </span>
+            </div>
+            <div className="w-full flex flex-col items-center">
+              <div className="font-bold text-2xl mb-2">{proPlan.name}</div>
+              <div className="text-gray-500 mb-4 text-center">
+                {proPlan.description}
+              </div>
+              <Button
+                className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
+                onClick={handleSubscribePro}
+                disabled={
+                  currentPlanName === proPlan.name || subscriptionLoading
+                }
+              >
+                {currentPlanName === proPlan.name
+                  ? "Current Plan"
+                  : subscriptionLoading
+                  ? "Processing..."
+                  : "Get Started"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Plan Comparison Table */}
+      <div className="overflow-x-auto w-full mt-12 max-w-4xl rounded-xl shadow border border-gray-200">
+        <table className="w-full text-left bg-[#fcfbf6]">
+          <thead>
+            <tr>
+              <th className="w-1/2 md:w-1/3 p-4 bg-[#f7fafb] text-base font-semibold text-gray-800">
+                &nbsp;
+              </th>
+              <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
+                Basic
+              </th>
+              <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
+                Premium
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {tableData.map((row, idx) => (
+              <tr
+                key={row.label}
+                className={idx % 2 === 0 ? "bg-[#f8f5e8]" : "bg-white"}
+              >
+                {/* Row label */}
+                <td className="p-4 text-gray-700 font-medium border-t border-gray-200">
+                  {row.label}
+                </td>
+                {/* Free value */}
+                <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
+                  {typeof row.free === "boolean" ? (
+                    row.free ? (
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    ) : (
+                      <XCircle className="h-6 w-6 text-red-400" />
+                    )
+                  ) : (
+                    row.free
+                  )}
+                </td>
+                {/* Pro value */}
+                <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
+                  {typeof row.pro === "boolean" ? (
+                    row.pro ? (
+                      <CheckCircle className="h-6 w-6 text-green-500" />
+                    ) : (
+                      <XCircle className="h-6 w-6 text-red-400" />
+                    )
+                  ) : (
+                    row.pro
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

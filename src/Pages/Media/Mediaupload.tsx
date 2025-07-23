@@ -429,19 +429,21 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         <h2 className="text-xl font-Raleway font-semibold">Upload Media</h2>
 
         {/* Plan Info */}
-        <div
-          className={`text-xs p-2 rounded mb-2 ${
-            planLimits.planName === "Free"
-              ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
-              : "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
-          }`}
-        >
-          <p className="font-medium">
-            {planLimits.planName} Plan - Photos: {currentCounts.photos}/
-            {planLimits.photos}, Videos: {currentCounts.videos}/
-            {planLimits.videos}
-          </p>
-        </div>
+        {localStorage.getItem("role") === "player" && (
+          <div
+            className={`text-xs p-2 rounded mb-2 ${
+              planLimits.planName === "Free"
+                ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                : "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300"
+            }`}
+          >
+            <p className="font-medium">
+              {planLimits.planName} Plan - Photos: {currentCounts.photos}/
+              {planLimits.photos}, Videos: {currentCounts.videos}/
+              {planLimits.videos}
+            </p>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex justify-between items-center border-b pb-2 mt-2">

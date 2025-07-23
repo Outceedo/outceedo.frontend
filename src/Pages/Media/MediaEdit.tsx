@@ -279,7 +279,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
   return (
     <div className="p-4 w-full -ml-4 mt-3">
       {/* Plan Info Banner */}
-      {!subscriptionLoading && (
+      {!subscriptionLoading && role === "player" && (
         <div
           className={`rounded-lg p-3 mb-4 ${
             isUserOnPremiumPlan

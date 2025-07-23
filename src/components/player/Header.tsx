@@ -6,7 +6,6 @@ import {
   faGem,
   faMoon,
   faSun,
-  faCheckCircle,
   faCrown,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
@@ -56,100 +55,6 @@ const menuItems = [
   { path: "/player/applications", name: "Sponsor Applications" },
 ];
 
-const freeFeatures = [
-  { name: "Subscription Fee", value: "Free", desc: "No monthly charges" },
-  // {
-  //   name: "Features",
-  //   value: "Limited",
-  //   desc: "Limited use of platform features",
-  // },
-  {
-    name: "Cloud Storage",
-    value: "2 photos & 2 videos",
-    desc: "Limited storage capacity",
-  },
-  { name: "Reports", value: "Limited Access", desc: "7 days access only" },
-  // {
-  //   name: "Video Conference Recordings",
-  //   value: "Limited Access",
-  //   desc: "7 days access only",
-  // },
-  { name: "Experts Search", value: "Limited", desc: "Local experts only" },
-  { name: "Reports Download & Share", value: "NO", desc: "Not available" },
-  {
-    name: "Bookings",
-    value: "Limited",
-    desc: "Recorded Video Assessment only",
-  },
-  // { name: "Building Fans/Followers", value: "NO", desc: "Not available" },
-  // {
-  //   name: "Promotions",
-  //   value: "NO",
-  //   desc: "Social Media, Newsletters, Front Page not available",
-  // },
-  // { name: "Sponsorship Applications", value: "NO", desc: "Not available" },
-  // { name: "AI Features", value: "NO", desc: "Coming soon - Premium only" },
-];
-
-const proFeatures = [
-  {
-    name: "Subscription Fee",
-    value: "£10/month or £100/year",
-    desc: "Flexible payment options",
-  },
-  {
-    name: "Features",
-    value: "Unlimited",
-    desc: "Unlimited use of all platform features",
-  },
-  {
-    name: "Cloud Storage",
-    value: "10 photos & 5 videos",
-    desc: "Enhanced storage capacity",
-  },
-  {
-    name: "Reports",
-    value: "Unlimited Access",
-    desc: "Access all reports anytime",
-  },
-  {
-    name: "Video Conference Recordings",
-    value: "Unlimited Access",
-    desc: "Access all recordings anytime",
-  },
-  {
-    name: "Experts Search",
-    value: "Unlimited",
-    desc: "Worldwide expert access",
-  },
-  {
-    name: "Reports Download & Share",
-    value: "YES",
-    desc: "Download and share reports",
-  },
-  {
-    name: "Bookings",
-    value: "All Services",
-    desc: "Access to all expert services",
-  },
-  { name: "Building Fans/Followers", value: "YES", desc: "Build your fanbase" },
-  {
-    name: "Promotions",
-    value: "YES",
-    desc: "Social Media, Newsletters, Front Page promotions",
-  },
-  {
-    name: "Sponsorship Applications",
-    value: "YES",
-    desc: "Apply for sponsorship opportunities",
-  },
-  {
-    name: "AI Features",
-    value: "YES",
-    desc: "Access to AI features (coming soon)",
-  },
-];
-
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const { currentProfile } = useAppSelector((state) => state.profile);
@@ -169,7 +74,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const {
     isActive,
     planName,
-    expiryDate,
     loading: subscriptionLoading,
   } = useAppSelector((state) => state.subscription);
 
@@ -220,54 +124,41 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
     }
   }, [showModal]);
 
-  // Free plan is always a local one (not subscribable, no price)
-  const freePlan = {
-    id: "free-plan",
-    name: "Free",
-    price: 0,
-    interval: "month",
-    description: "The essential features to get started.",
-    stripePriceId: "",
-    stripeProductId: "",
-    createdAt: "",
-    updatedAt: "",
-    features: [],
+  // Free/Basic plan local config
+  const basicPlan = {
+    name: "Basic",
+    description: "",
+    price: "Free",
+    isCurrent: !(isActive && planName && planName.toLowerCase() !== "free"),
+    button: "Get Started",
   };
 
-  // The first (and only) plan from API is the pro plan
-  const proPlan = plans[0];
-
-  // Check if user's current plan is pro (active subscription)
-  const isUserOnProPlan =
-    isActive && planName && planName.toLowerCase() !== "free";
-
-  // Format expiry date for display
-  const formatExpiryDate = (dateStr: string) => {
-    if (!dateStr) return "";
-    try {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      });
-    } catch {
-      return dateStr;
-    }
+  // Premium plan config (from API if available)
+  const proPlanObj = plans[0];
+  const premiumPlan = {
+    name: "Premium",
+    description: "",
+    price: "£10/month or £100/year",
+    isCurrent: isActive && planName && planName.toLowerCase() !== "free",
+    button:
+      isActive && planName && planName.toLowerCase() !== "free"
+        ? "Current Plan"
+        : "Get Started",
+    popular: true,
   };
 
   // Subscribe to pro plan (always use the only plan's id)
   const handleSubscribePro = async () => {
-    if (!proPlan) {
+    if (!proPlanObj) {
       alert("Pro plan not available yet. Please contact support.");
       return;
     }
     try {
       const id = currentProfile?.id;
       if (!id) return;
-      localStorage.setItem("planId", proPlan.id);
+      localStorage.setItem("planId", proPlanObj.id);
       const api = `${import.meta.env.VITE_PORT}/api/v1/subscription/subscribe/${
-        proPlan.id
+        proPlanObj.id
       }`;
       const token = localStorage.getItem("token");
       const response = await axios.post(
@@ -286,14 +177,13 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
         alert("No payment URL returned.");
       }
     } catch (error) {
-      console.error(error);
       alert("Something went wrong during upgrade.");
     }
   };
 
   const handleUpgrade = () => setShowModal(true);
 
-  // Modal UI
+  // Modal UI (plan card selector only, as per your design)
   const modal = showModal && (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -303,183 +193,63 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
       }}
     >
       <div className="absolute inset-0" onClick={() => setShowModal(false)} />
-      <div className="relative z-10 bg-white dark:bg-slate-900 rounded-2xl p-8 shadow-xl w-[95vw] max-w-2xl flex flex-col md:flex-row gap-6 items-stretch">
-        {/* Show current plan info if user is on pro plan */}
-        {isUserOnProPlan && (
-          <div className="w-full mb-4 p-4 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <FontAwesomeIcon
-                icon={faCrown}
-                className="text-yellow-300 text-xl"
-              />
-              <span className="font-bold text-lg">
-                Current Plan: {planName}
-              </span>
-            </div>
-            <p className="text-blue-100">
-              {expiryDate && `Expires on ${formatExpiryDate(expiryDate)}`}
-            </p>
-          </div>
-        )}
-
-        {/* Free Plan - Only show if user is not on pro plan */}
-        {!isUserOnProPlan && (
-          <div className="relative flex-1 border rounded-2xl bg-slate-50 dark:bg-slate-800 p-6 flex flex-col">
-            <div className="absolute right-4 top-4">
-              <span className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded-full shadow">
-                Current
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mb-2">
-              <FontAwesomeIcon icon={faGem} className="text-gray-400 text-xl" />
-              <span className="font-bold text-lg text-gray-700 dark:text-gray-200">
-                Free Plan
-              </span>
-            </div>
-            <div className="text-2xl font-extrabold mb-1 text-gray-700 dark:text-gray-200">
-              $0
-              <span className="text-base font-normal text-gray-500 ml-1">
-                /month
-              </span>
-            </div>
-            <div className="mb-3 text-gray-500 dark:text-gray-300 text-xs">
-              {freePlan.description}
-            </div>
-            <ul className="mb-6 space-y-2">
-              {freeFeatures.map((f) => (
-                <li key={f.name} className="flex gap-2 items-center">
-                  <FontAwesomeIcon
-                    icon={faCheckCircle}
-                    className="text-green-500"
-                  />
-                  <span>
-                    <span className="font-semibold">{f.name}:</span> {f.desc}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <Button
-              className="w-full bg-gray-200 text-gray-500 cursor-not-allowed"
-              disabled
-            >
-              Current Plan
-            </Button>
-          </div>
-        )}
-
-        {/* Pro Plan */}
-        {proPlan && (
+      <div className="relative z-10 bg-[#f7fafb] rounded-2xl p-8 shadow-xl w-[95vw] max-w-3xl flex flex-col items-center">
+        <div className="flex flex-col md:flex-row gap-8 w-full justify-center">
+          {/* Basic Card */}
           <div
-            className={`relative flex-1 border-2 rounded-2xl p-6 flex flex-col ${
-              isUserOnProPlan
-                ? "border-green-400 bg-green-50 dark:bg-green-950"
-                : "border-blue-400 bg-blue-50 dark:bg-blue-950"
+            className={`relative border border-gray-300 bg-white rounded-xl p-8 flex-1 max-w-md min-w-[260px] flex flex-col items-center ${
+              basicPlan.isCurrent ? "ring-2 ring-green-400" : ""
             }`}
           >
-            {isUserOnProPlan && (
-              <div className="absolute right-4 top-4">
-                <span className="bg-green-500 text-white text-xs font-bold py-1 px-2 rounded-full shadow">
-                  Active
-                </span>
-              </div>
-            )}
-            <div className="flex items-center gap-2 mb-2">
-              <FontAwesomeIcon
-                icon={isUserOnProPlan ? faCrown : faGem}
-                className={`text-xl ${
-                  isUserOnProPlan ? "text-green-500" : "text-blue-500"
-                }`}
-              />
-              <span
-                className={`font-bold text-lg ${
-                  isUserOnProPlan
-                    ? "text-green-700 dark:text-green-300"
-                    : "text-blue-700 dark:text-blue-300"
-                }`}
-              >
-                Pro Plan
-              </span>
+            <div className="font-bold text-2xl mb-2">{basicPlan.name}</div>
+            <div className="text-gray-500 mb-4 text-center">
+              {basicPlan.description}
             </div>
-            <div
-              className={`text-2xl font-extrabold mb-1 ${
-                isUserOnProPlan
-                  ? "text-green-700 dark:text-green-200"
-                  : "text-blue-700 dark:text-blue-200"
+            <button
+              className={`w-full bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black text-lg font-bold rounded-lg py-2 mt-2 shadow-none ${
+                basicPlan.isCurrent ? "cursor-not-allowed opacity-70" : ""
               }`}
+              disabled={basicPlan.isCurrent}
             >
-              ${proPlan.price}
-              <span
-                className={`text-base font-normal ml-1 ${
-                  isUserOnProPlan ? "text-green-500" : "text-blue-500"
-                }`}
-              >
-                /{proPlan.interval}
-              </span>
+              {basicPlan.button}
+            </button>
+            <div className="text-2xl font-extrabold mt-6 mb-2 text-gray-800">
+              {basicPlan.price}
             </div>
-            <div
-              className={`mb-3 text-xs ${
-                isUserOnProPlan
-                  ? "text-green-600 dark:text-green-300"
-                  : "text-blue-600 dark:text-blue-300"
-              }`}
-            >
-              {proPlan.description || "Unlock all premium features."}
-            </div>
-            <ul className="mb-6 space-y-2">
-              {proPlan.features && proPlan.features.length > 0
-                ? proPlan.features.map((f) => (
-                    <li key={f.feature.id} className="flex gap-2 items-center">
-                      <FontAwesomeIcon
-                        icon={faCheckCircle}
-                        className={
-                          isUserOnProPlan ? "text-green-500" : "text-blue-500"
-                        }
-                      />
-                      <span>
-                        <span className="font-semibold">
-                          {f.feature.name}
-                          {f.value ? ` (${f.value})` : ""}:
-                        </span>{" "}
-                        {f.feature.description}
-                      </span>
-                    </li>
-                  ))
-                : proFeatures.map((f) => (
-                    <li key={f.name} className="flex gap-2 items-center">
-                      <FontAwesomeIcon
-                        icon={faCheckCircle}
-                        className={
-                          isUserOnProPlan ? "text-green-500" : "text-blue-500"
-                        }
-                      />
-                      <span>
-                        <span className="font-semibold">{f.name}:</span>{" "}
-                        {f.desc}
-                      </span>
-                    </li>
-                  ))}
-            </ul>
-            {isUserOnProPlan ? (
-              <Button
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold cursor-not-allowed"
-                disabled
-              >
-                Current Plan
-              </Button>
-            ) : (
-              <Button
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold"
-                onClick={handleSubscribePro}
-              >
-                Subscribe Pro
-              </Button>
-            )}
           </div>
-        )}
-
+          {/* Premium Card */}
+          <div
+            className={`relative border-4 ${
+              premiumPlan.isCurrent ? "border-red-500" : "border-gray-300"
+            } bg-white rounded-xl p-8 flex-1 max-w-md min-w-[260px] flex flex-col items-center`}
+          >
+            {/* Popular badge */}
+            <div className="absolute -top-5 left-0 right-0 flex justify-center">
+              <span className="bg-red-500 text-white text-xs font-bold py-1 px-5 rounded-full shadow">
+                Popular
+              </span>
+            </div>
+            <div className="font-bold text-2xl mb-2">{premiumPlan.name}</div>
+            <div className="text-gray-500 mb-4 text-center">
+              {premiumPlan.description}
+            </div>
+            <button
+              className={`w-full bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black text-lg font-bold rounded-lg py-2 mt-2 shadow-none ${
+                premiumPlan.isCurrent ? "cursor-not-allowed opacity-70" : ""
+              }`}
+              disabled={premiumPlan.isCurrent}
+              onClick={premiumPlan.isCurrent ? undefined : handleSubscribePro}
+            >
+              {premiumPlan.button}
+            </button>
+            <div className="text-2xl font-extrabold mt-6 mb-2 text-gray-800">
+              {premiumPlan.price}
+            </div>
+          </div>
+        </div>
         {/* Close button */}
         <button
-          className="absolute top-2 right-2 bg-white border rounded-full w-8 h-8 flex items-center justify-center text-gray-500 shadow hover:bg-gray-100 z-20"
+          className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center text-gray-500 shadow hover:bg-gray-100 z-20 cursor-pointer"
           onClick={() => setShowModal(false)}
           aria-label="Close"
         >
@@ -510,7 +280,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
         <div className="flex flex-nowrap justify-end gap-2 items-center">
           <Button
             className={`h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors ${
-              isUserOnProPlan
+              premiumPlan.isCurrent
                 ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
                 : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600"
             }`}
@@ -518,22 +288,24 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
             disabled={subscriptionLoading}
           >
             <FontAwesomeIcon
-              icon={isUserOnProPlan ? faCrown : faGem}
+              icon={premiumPlan.isCurrent ? faCrown : faGem}
               className={`text-lg sm:text-xl ${
-                isUserOnProPlan
+                premiumPlan.isCurrent
                   ? "text-yellow-300"
                   : "text-blue-700 dark:text-blue-400"
               }`}
             />
             <p
               className={`font-Opensans text-lg md:block hidden xs:inline ${
-                isUserOnProPlan ? "text-white" : "text-gray-800 dark:text-white"
+                premiumPlan.isCurrent
+                  ? "text-white"
+                  : "text-gray-800 dark:text-white"
               }`}
             >
               {subscriptionLoading
                 ? "Loading..."
-                : isUserOnProPlan
-                ? `${planName} Plan`
+                : premiumPlan.isCurrent
+                ? "Premium Plan"
                 : "Upgrade to Premium"}
             </p>
           </Button>
