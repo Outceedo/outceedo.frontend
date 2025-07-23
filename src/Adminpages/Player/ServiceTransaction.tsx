@@ -9,14 +9,9 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import profile from "../../assets/images/avatar.png";
-import {
-  Trash2,
-  Pencil,
-  Eye,
-  MoreHorizontal,
-} from "lucide-react";
+import { Trash2, Pencil, Eye, MoreHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge"; // Import your Badge component
+import { Badge } from "@/components/ui/badge";
 
 const transactions = [
   {
@@ -55,7 +50,6 @@ const transactions = [
     fee: 674.0,
     status: "Approved",
   },
-  // ... more transactions
 ];
 
 const months = [
@@ -75,178 +69,189 @@ const months = [
 
 const ServiceTransaction: React.FC = () => {
   const [selectedMonth, setSelectedMonth] = useState("October");
-const [currentPage, setCurrentPage] = useState(1);
-const pageSize = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
 
-const totalPages = Math.ceil(transactions.length / pageSize);
-const paginatedTransactions = transactions.slice(
-  (currentPage - 1) * pageSize,
-  currentPage * pageSize
-);
+  const totalPages = Math.ceil(transactions.length / pageSize);
+  const paginatedTransactions = transactions.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
+
   return (
-   <div className="p-6">
+    <div className="p-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
-  <h2 className="text-xl md:text-2xl font-semibold">Service Transactions</h2>
-       <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
-    <select className="border px-3 py-2 rounded-md dark:bg-gray-900 w-full sm:w-auto">
-      {months.map((month, index) => (
-        <option key={index} value={month}>
-          {month}
-        </option>
-      ))}
-    </select>
-  </div>
+        <h2 className="text-xl md:text-2xl font-semibold">
+          Service Transactions
+        </h2>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+          <select className="border px-3 py-2 rounded-md dark:bg-gray-900 w-full sm:w-auto">
+            {months.map((month, index) => (
+              <option key={index} value={month}>
+                {month}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
-   <div className="rounded-xl border bg-white overflow-x-auto shadow-sm">
-     <Table className="min-w-[900px]">
+
+      {/* ✅ Responsive Table Wrapper */}
+      <div className="w-full overflow-x-auto rounded-xl border bg-white shadow-sm">
+        <Table className="w-full table-auto">
           <TableHeader className="bg-red-50 text-xl">
             <TableRow>
               <TableHead className="px-3 py-3 bg-red-50"></TableHead>
-              <TableHead className="px-3 py-3 bg-red-50 text-left">Player Name</TableHead>
-              <TableHead className="px-9 py-3 bg-red-50 text-left">Expert Name</TableHead>
-              <TableHead className="px-3 py-3 bg-red-50 text-left">Service Date</TableHead>
-              <TableHead className="px-3 py-3 bg-red-50 text-left">Service Type</TableHead>
-              <TableHead className="px-3 py-3 bg-red-50 text-left">Service Fees</TableHead>
-              <TableHead className="px-3 py-3 bg-red-50 text-left">Status</TableHead>
-              <TableHead className="px-3 py-3 bg-red-50 text-left">Actions</TableHead>
+              <TableHead className="px-3 py-3 bg-red-50 text-left">
+                Player Name
+              </TableHead>
+              <TableHead className="px-9 py-3 bg-red-50 text-left">
+                Expert Name
+              </TableHead>
+              <TableHead className="px-3 py-3 bg-red-50 text-left">
+                Service Date
+              </TableHead>
+              <TableHead className="px-3 py-3 bg-red-50 text-left">
+                Service Type
+              </TableHead>
+              <TableHead className="px-3 py-3 bg-red-50 text-left">
+                Service Fees
+              </TableHead>
+              <TableHead className="px-3 py-3 bg-red-50 text-left">
+                Status
+              </TableHead>
+              <TableHead className="px-3 py-3 bg-red-50 text-left">
+                Actions
+              </TableHead>
             </TableRow>
           </TableHeader>
-         <TableBody>
-                {paginatedTransactions.map((item, idx) => (
-                <TableRow
-                  key={idx}
-                  className="border-b last:border-b-0 hover:bg-gray-50"
-                >
-                  {/* Checkbox */}
-                  <TableCell className="px-4 py-3 align-middle">
-                    <Checkbox />
-                  </TableCell>
-
-                  {/* Player Name */}
-                  <TableCell className="px-4 py-3 align-middle">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={item.playerImage}
-                        alt={item.player}
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <span className="font-medium text-sm sm:text-base">{item.player}</span>
-                        <div className="text-gray-500 text-xs sm:text-sm">
-                          {item.playerSecondary}
-                        </div>
+          <TableBody>
+            {paginatedTransactions.map((item, idx) => (
+              <TableRow
+                key={idx}
+                className="border-b last:border-b-0 hover:bg-gray-50"
+              >
+                <TableCell className="px-4 py-3 align-middle">
+                  <Checkbox />
+                </TableCell>
+                <TableCell className="px-4 py-3 align-middle">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={item.playerImage}
+                      alt={item.player}
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <span className="font-medium text-sm sm:text-base">
+                        {item.player}
+                      </span>
+                      <div className="text-gray-500 text-xs sm:text-sm">
+                        {item.playerSecondary}
                       </div>
                     </div>
-                  </TableCell>
+                  </div>
+                </TableCell>
 
-                  {/* Expert Name */}
-                  <TableCell className="px-8 py-6 align-middle">
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={item.expertImage}
-                        alt={item.expert}
-                        className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover"
-                      />
-                      <div>
-                        <span className="font-medium text-sm sm:text-base">{item.expert}</span>
-                        <div className="text-gray-500 text-xs sm:text-sm">
-                          {item.expertSecondary}
-                        </div>
+                <TableCell className="px-8 py-6 align-middle">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={item.expertImage}
+                      alt={item.expert}
+                      className="w-9 h-9 sm:w-10 sm:h-10 rounded-full object-cover"
+                    />
+                    <div>
+                      <span className="font-medium text-sm sm:text-base">
+                        {item.expert}
+                      </span>
+                      <div className="text-gray-500 text-xs sm:text-sm">
+                        {item.expertSecondary}
                       </div>
                     </div>
-                  </TableCell>
+                  </div>
+                </TableCell>
 
-                  {/* Service Date */}
-                  <TableCell className="px-4 py-3 align-middle text-sm sm:text-base">
-                    {item.serviceDate}
-                  </TableCell>
-
-                  {/* Service Type */}
-                  <TableCell className="px-4 py-3 align-middle text-sm sm:text-base">
-                    {item.serviceType}
-                  </TableCell>
-
-                  {/* Fee */}
-                  <TableCell className="px-4 py-3 align-middle font-semibold text-sm sm:text-base">
-                    £{item.fee.toFixed(2)}
-                  </TableCell>
-
-                  {/* Status */}
-                  <TableCell className="px-4 py-3 align-middle">
-                    <Badge
-                      className={`p-1 px-2 w-20 text-center text-xs sm:text-sm ${
-                        item.status === "Approved"
-                          ? "bg-green-100 text-green-800"
-                          : item.status === "Rejected"
-                          ? "bg-red-100 text-red-800"
-                          : "bg-yellow-100 text-yellow-800"
-                      }`}
-                    >
-                      {item.status}
-                    </Badge>
-                  </TableCell>
-
-                  {/* Actions */}
-                  <TableCell className="px-4 py-3 align-middle">
-                    <div className="flex gap-2">
-                      <Button size="icon" variant="ghost">
-                        <Trash2 className="w-5 h-5 text-red-500" />
-                      </Button>
-                      <Button size="icon" variant="ghost">
-                        <Pencil className="w-5 h-5 text-gray-600 dark:text-white" />
-                      </Button>
-                      <Button size="icon" variant="ghost">
-                        <Eye className="w-5 h-5 text-gray-600 dark:text-white" />
-                      </Button>
-                      <Button size="icon" variant="ghost">
-                        <MoreHorizontal className="w-5 h-5 text-gray-600 dark:text-white" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-
+                <TableCell className="px-4 py-3 align-middle text-sm sm:text-base">
+                  {item.serviceDate}
+                </TableCell>
+                <TableCell className="px-4 py-3 align-middle text-sm sm:text-base">
+                  {item.serviceType}
+                </TableCell>
+                <TableCell className="px-4 py-3 align-middle font-semibold text-sm sm:text-base">
+                  £{item.fee.toFixed(2)}
+                </TableCell>
+                <TableCell className="px-4 py-3 align-middle">
+                  <Badge
+                    className={`p-1 px-2 w-20 text-center text-xs sm:text-sm ${
+                      item.status === "Approved"
+                        ? "bg-green-100 text-green-800"
+                        : item.status === "Rejected"
+                        ? "bg-red-100 text-red-800"
+                        : "bg-yellow-100 text-yellow-800"
+                    }`}
+                  >
+                    {item.status}
+                  </Badge>
+                </TableCell>
+                <TableCell className="px-4 py-3 align-middle">
+                  <div className="flex gap-2">
+                    <Button size="icon" variant="ghost">
+                      <Trash2 className="w-5 h-5 text-red-500" />
+                    </Button>
+                    <Button size="icon" variant="ghost">
+                      <Pencil className="w-5 h-5 text-gray-600 dark:text-white" />
+                    </Button>
+                    <Button size="icon" variant="ghost">
+                      <Eye className="w-5 h-5 text-gray-600 dark:text-white" />
+                    </Button>
+                    <Button size="icon" variant="ghost">
+                      <MoreHorizontal className="w-5 h-5 text-gray-600 dark:text-white" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
         </Table>
       </div>
+
       {/* Pagination */}
-<div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2 text-sm text-gray-500 dark:text-white">
-  <div className="text-center sm:text-left w-full sm:w-auto">
-    Showing {Math.min((currentPage - 1) * pageSize + 1, transactions.length)}–
-    {Math.min(currentPage * pageSize, transactions.length)} of {transactions.length}
-  </div>
+      <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2 text-sm text-gray-500 dark:text-white">
+        <div className="text-center sm:text-left w-full sm:w-auto">
+          Showing{" "}
+          {Math.min((currentPage - 1) * pageSize + 1, transactions.length)}–{" "}
+          {Math.min(currentPage * pageSize, transactions.length)} of{" "}
+          {transactions.length}
+        </div>
 
-  <div className="flex flex-wrap justify-center gap-1 w-full sm:w-auto">
-    <button
-      className="border px-2 py-1 rounded"
-      disabled={currentPage === 1}
-      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-    >
-      ⟨
-    </button>
+        <div className="flex flex-wrap justify-center gap-1 w-full sm:w-auto">
+          <button
+            className="border px-2 py-1 rounded"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+          >
+            ⟨
+          </button>
 
-    {Array.from({ length: totalPages }, (_, i) => (
-      <button
-        key={i}
-        className={`border px-3 py-1 rounded ${
-          currentPage === i + 1 ? "bg-gray-300 font-semibold" : ""
-        }`}
-        onClick={() => setCurrentPage(i + 1)}
-      >
-        {i + 1}
-      </button>
-    ))}
+          {Array.from({ length: totalPages }, (_, i) => (
+            <button
+              key={i}
+              className={`border px-3 py-1 rounded ${
+                currentPage === i + 1 ? "bg-gray-300 font-semibold" : ""
+              }`}
+              onClick={() => setCurrentPage(i + 1)}
+            >
+              {i + 1}
+            </button>
+          ))}
 
-    <button
-      className="border px-2 py-1 rounded"
-      disabled={currentPage === totalPages}
-      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-    >
-      ⟩
-    </button>
-  </div>
-</div>
-
+          <button
+            className="border px-2 py-1 rounded"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+          >
+            ⟩
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

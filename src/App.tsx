@@ -95,8 +95,10 @@ import ExpertServices from "./Adminpages/Expert/ExpertServices";
 import PaymentClaims from "./Adminpages/Expert/PaymentClaims";
 
 import Sponsor from "./Adminpages/Sponsor/Sponsor";
-import SponsorApplications from "./Adminpages/Sponsor/SponsorApplications"
+import Playersrequest from "./Adminpages/Sponsor/Playersrequest"
 import SponsorMedia from "./Adminpages/Sponsor/SponsorMedia"
+import SponsorshipOfferedTable from "./Adminpages/Sponsor/sponsorshipoffered";
+import SponsorshipTransactions from "./Adminpages/Sponsor/Sponsorshiptransactions";
 
 import  Team from "./Adminpages/Teams/Team"
 import TeamSponsorApplications from "./Adminpages/Teams/TeamSponsorApplications"
@@ -370,7 +372,10 @@ const AppContent: React.FC = () => {
   {/* Sponsor */}
   <Route path="sponsor" element={<Sponsor />} />
   <Route path="sponsor/sponsormedia" element={<SponsorMedia />} />
-  <Route path="sponsor/sponsorapplications" element={<SponsorApplications />} />
+  <Route path="sponsor/playersrequest" element={<Playersrequest />} />
+  <Route path="sponsor/sponsorshipoffered" element={<SponsorshipOfferedTable/>} />
+  <Route path="sponsor/SponsorshipTransactions" element={<SponsorshipTransactions/>} />
+
 
   {/* Team */}
   <Route path="team" element={<Team />} />

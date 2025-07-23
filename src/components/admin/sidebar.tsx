@@ -145,25 +145,38 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
   sponsor: [
    {
   id: 1,
-  name: "Sponsor",
+  name: "Registered Sponsors",
   icon: "fas fa-user-tie", 
   path: "/admin/sponsor",
 },
 {
   id: 2,
-  name: "SponsorApplications",
+  name: "Players Request",
   icon: "fas fa-file-signature", 
-  path: "/admin/sponsor/sponsorapplications",
+  path: "/admin/sponsor/playersrequest",
 },
 {
   id: 3,
-  name: "Media",
+  name: "Sponsorship Offered",
+  icon: "fas fa-file-alt", 
+  path: "/admin/sponsor/sponsorshipoffered",
+},
+{
+  id: 4,
+  name: "Awarded Sponsorships",
+  icon: "fas fa-money-check-alt", 
+  path: "/admin/sponsor/sponsorshiptransactions",
+},
+{
+  id: 5,
+  name: "Sponsors Media",
   icon: "fas fa-photo-video", 
   path: "/admin/sponsor/sponsormedia",
 },
 
+
  {
-      id: 4,
+      id: 6,
       name: "Dashboard",
       icon: "fas fa-chart-line",
       path: "/admin/dashboard",
