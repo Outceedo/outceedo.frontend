@@ -42,7 +42,7 @@ const Fandetails: React.FC<{ profileData?: ProfileData }> = ({
   const [isBioLong, setIsBioLong] = useState(false);
 
   // Set initial bio from profile data or use fallback
-  const [aboutMe, setAboutMe] = useState(profileData.bio || "");
+  const [aboutMe, setAboutMe] = useState(profileData.bio || null);
   const [isEditingAbout, setIsEditingAbout] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ApplicationForm from "./ApplicationForm";
+import Swal from "sweetalert2";
 
 interface SponsorProfile {
   id: string;
@@ -145,6 +146,17 @@ const Pagination: React.FC<{
 export default function SponsorProfiles() {
   const dispatch = useAppDispatch();
   const { profiles, status, error } = useAppSelector((state) => state.profile);
+  const {
+    isActive,
+    planName,
+    loading: subscriptionLoading,
+  } = useAppSelector((state) => state.subscription);
+
+  // Restriction check for player & premium
+  const role = localStorage.getItem("role");
+  const isUserOnPremiumPlan =
+    isActive && planName && planName.toLowerCase() !== "free";
+  const isPlayer = role === "player";
 
   // Extract sponsors and pagination info from profiles response
   const sponsorsArray = profiles?.users || [];
@@ -195,11 +207,9 @@ export default function SponsorProfiles() {
       userType: "sponsor",
     };
 
-    console.log("Fetching sponsors with params:", params); // Debug log
     dispatch(getProfiles(params));
   }, [currentPage, limit, dispatch]);
 
-  // Initial load and pagination/limit changes only
   useEffect(() => {
     fetchSponsors();
   }, [fetchSponsors]);
@@ -255,7 +265,35 @@ export default function SponsorProfiles() {
     setCurrentPage(1);
   }, [searchTerm, filters]);
 
+  // Swapped logic: show SweetAlert2 for player without premium, else open modal
   const openReportModal = (sponsor: SponsorProfile) => {
+    if (isPlayer && !isUserOnPremiumPlan) {
+      Swal.fire({
+        icon: "info",
+        title: "Premium Required",
+        html: `
+          <p class="mb-3">Only players with a <strong>Premium Plan</strong> can apply for sponsorships.</p>
+          <div class="bg-blue-50 p-3 rounded-lg mb-3 text-left">
+            <h4 class="font-semibold text-blue-800 mb-2">Premium Plan Benefits:</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Apply for sponsorships</li>
+              <li>• Access all premium features</li>
+              <li>• Priority support</li>
+            </ul>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: "Upgrade Now",
+        cancelButtonText: "Maybe Later",
+        confirmButtonColor: "#3B82F6",
+        cancelButtonColor: "#6B7280",
+      }).then((result) => {
+        if (result.isConfirmed) {
+          navigate("/plans");
+        }
+      });
+      return;
+    }
     setActiveSponsor(sponsor);
     localStorage.setItem("sponsorid", sponsor.id);
     setIsReportOpen(true);
@@ -296,7 +334,6 @@ export default function SponsorProfiles() {
   }, []);
 
   const handleFilterChange = (value: string, filterType: string) => {
-    console.log("Filter changed:", filterType, value); // Debug log
     const normalizedKey = filterType.toLowerCase();
     let stateKey = "";
     switch (normalizedKey) {
@@ -324,7 +361,6 @@ export default function SponsorProfiles() {
   };
 
   const clearAllFilters = () => {
-    console.log("Clearing all filters"); // Debug log
     setSearchTerm("");
     setFilters({
       country: "",
@@ -372,15 +408,6 @@ export default function SponsorProfiles() {
     setLimit(newLimit);
     setCurrentPage(1);
   };
-
-  console.log("Current state:", {
-    searchTerm,
-    filters,
-    currentPage,
-    status,
-    totalFilteredSponsors,
-    displayedCount: displayedSponsors.length,
-  }); // Debug log
 
   return (
     <div className="px-3 sm:px-6 py-2 w-full mx-auto dark:bg-gray-900">
@@ -677,7 +704,7 @@ export default function SponsorProfiles() {
           })}
       </div>
 
-      {/* Modal */}
+      {/* Modal for Application Form */}
       {isReportOpen && (
         <div className="fixed inset-0 lg:left-[260px] lg:top-0 lg:right-0 lg:bottom-0 z-50 bg-white dark:bg-gray-800 flex flex-col overflow-hidden">
           <div className="sticky top-0 w-full flex justify-between items-center p-3 sm:p-4 border-b dark:border-gray-700 bg-white dark:bg-gray-800 z-10">

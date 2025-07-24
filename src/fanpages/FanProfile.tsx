@@ -8,10 +8,10 @@ import {
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import follower from "../assets/images/avatar.png";
 import Reviews from "./reviews";
-import FollowingList from "../components/follower/followerlist"; // Import the new component
+import FollowingList from "../components/follower/followerlist";
 import Fandetails from "./Fandetails";
 import axios from "axios";
-import { useAppDispatch, useAppSelector } from "../store/hooks";
+import { useAppSelector } from "../store/hooks";
 
 interface Following {
   id: string;
@@ -23,7 +23,7 @@ interface Following {
   [key: string]: any;
 }
 
-interface UserProfile {
+interface currentProfile {
   id: string;
   username?: string;
   firstName?: string;
@@ -46,8 +46,6 @@ const Fanprofile = () => {
     "details" | "reviews" | "Following"
   >("details");
 
-  // State for user profile and following data
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [following, setFollowing] = useState<Following[]>([]);
   const [followingCounts, setFollowingCounts] = useState({
     players: 0,
@@ -56,101 +54,104 @@ const Fanprofile = () => {
   });
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingFollowing, setLoadingFollowing] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true); // <--- new
 
   const { currentProfile } = useAppSelector((state) => state.profile);
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
 
+  // Initial loading state before anything mounts
   useEffect(() => {
-    if (currentProfile?.id) {
-      fetchUserProfile();
-      fetchFollowingData();
+    setInitialLoading(true);
+    // Simulate a short delay for mount, or replace with: fetch profile async if needed
+    const timer = setTimeout(() => {
+      setInitialLoading(false);
+    }, 500); // 0.5s delay for smoother experience
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Properly manage loadingProfile state after profile is available
+  useEffect(() => {
+    if (currentProfile && currentProfile.id) {
+      setLoadingProfile(false);
+    } else {
+      setLoadingProfile(false); // even if no profile, don't keep loading forever
     }
   }, [currentProfile]);
 
-  const fetchUserProfile = async () => {
-    try {
-      setLoadingProfile(true);
-      const token = localStorage.getItem("token");
-      const userId = currentProfile?.id;
+  useEffect(() => {
+    const fetchFollowingData = async () => {
+      try {
+        setLoadingFollowing(true);
+        const token = localStorage.getItem("token");
+        const userId = currentProfile?.id;
 
-      if (!userId) return;
+        if (!userId) {
+          setFollowing([]);
+          setFollowingCounts({ players: 0, experts: 0, total: 0 });
+          setLoadingFollowing(false);
+          return;
+        }
 
-      const response = await axios.get(`${API_BASE_URL}/${userId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.data) {
-        setUserProfile(response.data);
-      }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-    } finally {
-      setLoadingProfile(false);
-    }
-  };
-
-  const fetchFollowingData = async () => {
-    try {
-      setLoadingFollowing(true);
-      const token = localStorage.getItem("token");
-      const userId = currentProfile?.id;
-
-      if (!userId) return;
-
-      // Fetch all following data with a higher limit
-      const response = await axios.get(`${API_BASE_URL}/${userId}/following`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          limit: 100, // Adjust as needed
-          page: 1,
-        },
-      });
-
-      if (response.data?.users) {
-        const followingList = response.data.users;
-        setFollowing(followingList);
-
-        // Count players and experts
-        const counts = followingList.reduce(
-          (acc: any, person: Following) => {
-            const role = person.role?.toLowerCase();
-            if (role === "player") {
-              acc.players++;
-            } else if (role === "expert") {
-              acc.experts++;
-            }
-            acc.total++;
-            return acc;
-          },
-          { players: 0, experts: 0, total: 0 }
+        const response = await axios.get(
+          `${API_BASE_URL}/${userId}/following`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            params: {
+              limit: 100,
+              page: 1,
+            },
+          }
         );
 
-        setFollowingCounts(counts);
+        if (response.data?.users) {
+          const followingList = response.data.users;
+          setFollowing(followingList);
+
+          const counts = followingList.reduce(
+            (acc: any, person: Following) => {
+              const role = person.role?.toLowerCase();
+              if (role === "player") {
+                acc.players++;
+              } else if (role === "expert") {
+                acc.experts++;
+              }
+              acc.total++;
+              return acc;
+            },
+            { players: 0, experts: 0, total: 0 }
+          );
+
+          setFollowingCounts(counts);
+        } else {
+          setFollowing([]);
+          setFollowingCounts({ players: 0, experts: 0, total: 0 });
+        }
+      } catch (error) {
+        console.error("Error fetching following data:", error);
+        setFollowing([]);
+        setFollowingCounts({ players: 0, experts: 0, total: 0 });
+      } finally {
+        setLoadingFollowing(false);
       }
-    } catch (error) {
-      console.error("Error fetching following data:", error);
-      setFollowing([]);
-    } finally {
-      setLoadingFollowing(false);
-    }
-  };
+    };
+
+    fetchFollowingData();
+  }, [currentProfile, API_BASE_URL]);
 
   // Get display name
   const getDisplayName = () => {
-    if (!userProfile) return "Fan Profile";
-    const fullName = `${userProfile.firstName || ""} ${
-      userProfile.lastName || ""
+    if (!currentProfile) return "Fan Profile";
+    const fullName = `${currentProfile.firstName || ""} ${
+      currentProfile.lastName || ""
     }`.trim();
-    return fullName || userProfile.username || "Fan Profile";
+    return fullName || currentProfile.username || "Fan Profile";
   };
 
   // Get social media links
   const getSocialIcons = () => {
-    const socialLinks = userProfile?.socialLinks || {};
+    const socialLinks = currentProfile?.socialLinks || {};
 
     return [
       {
@@ -178,7 +179,8 @@ const Fanprofile = () => {
 
   const icons = getSocialIcons();
 
-  if (loadingProfile) {
+  // Show loading before first mount and while profile is loading
+  if (initialLoading || loadingProfile) {
     return (
       <div className="w-full min-h-screen dark:bg-gray-900 px-10 flex items-center justify-center">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
@@ -200,7 +202,7 @@ const Fanprofile = () => {
                 Country
               </label>
               <span className="font-semibold dark:text-white">
-                {userProfile?.country || "Not specified"}
+                {currentProfile?.country || "Not specified"}
               </span>
             </div>
 
@@ -209,7 +211,7 @@ const Fanprofile = () => {
                 City
               </label>
               <span className="font-semibold dark:text-white">
-                {userProfile?.city || "Not specified"}
+                {currentProfile?.city || "Not specified"}
               </span>
             </div>
             <div>
@@ -217,7 +219,7 @@ const Fanprofile = () => {
                 Sports Interest
               </label>
               <span className="font-semibold dark:text-white">
-                {userProfile?.interests?.join(", ") || "Not specified"}
+                {currentProfile?.interests?.join(", ") || "Not specified"}
               </span>
             </div>
           </div>
@@ -262,7 +264,7 @@ const Fanprofile = () => {
 
         <div className="rounded-md overflow-hidden">
           <img
-            src={userProfile?.photo || follower}
+            src={currentProfile?.photo || follower}
             alt="Profile Photo"
             width={350}
             height={350}
@@ -290,7 +292,9 @@ const Fanprofile = () => {
         </div>
 
         <div className="mt-4">
-          {activeTab === "details" && <Fandetails userProfile={userProfile} />}
+          {activeTab === "details" && currentProfile?.bio && (
+            <Fandetails profileData={currentProfile} />
+          )}
           {activeTab === "reviews" && <Reviews />}
           {activeTab === "Following" && (
             <FollowingList following={following} loading={loadingFollowing} />
