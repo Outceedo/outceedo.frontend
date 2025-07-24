@@ -68,15 +68,6 @@ function FanHeader({ setOpen }: fanHeaderProps) {
 
       {/* Right Section: Premium Button, Notifications, Theme Toggle */}
       <div className="flex justify-end gap-3 items-center w-full">
-        <Button className="h-12 w-48 md:w-56 p-4 rounded-lg flex items-center justify-center space-x-3 bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600 transition-colors">
-          <FontAwesomeIcon
-            icon={faGem}
-            className="text-blue-700 dark:text-blue-400 text-xl"
-          />
-          <p className="text-gray-800 font-Opensans dark:text-white">
-            Upgrade to Premium
-          </p>
-        </Button>
         <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
           <FontAwesomeIcon
             icon={faBell}

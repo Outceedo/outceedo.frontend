@@ -1,14 +1,8 @@
 import React, { useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
 
-import Hero from "../../assets/images/Hero.png";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faLinkedin,
-  faFacebook,
-  faTwitter,
-  faInstagram,
-} from "@fortawesome/free-brands-svg-icons";
+import Hero from "../../assets/images/Main.png";
+
 import Navbar from "./Navbar";
 import About from "./About";
 import Features from "./Features";

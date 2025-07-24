@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -110,7 +111,9 @@ export default function PricingPlans() {
   const [loadingPlans, setLoadingPlans] = useState(false);
 
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { currentProfile } = useAppSelector((state) => state.profile);
+  const { isAuthenticated } = useAppSelector((state) => state.auth);
   const {
     isActive,
     planName,
@@ -121,10 +124,12 @@ export default function PricingPlans() {
   const API = `${import.meta.env.VITE_PORT}/api/v1/subscription/plans`;
 
   useEffect(() => {
-    dispatch(fetchSubscriptionStatus());
+    if (isAuthenticated) {
+      dispatch(fetchSubscriptionStatus());
+    }
     fetchPlans();
     // eslint-disable-next-line
-  }, [dispatch]);
+  }, [dispatch, isAuthenticated]);
 
   const fetchPlans = async () => {
     setLoadingPlans(true);
@@ -169,8 +174,7 @@ export default function PricingPlans() {
         name: "Premium",
         price: 10,
         interval: "month",
-        description:
-          "Lorem ipsum dolor sit amet pretium consectetur adipiscing elit.",
+        description: "",
         stripePriceId: "",
         stripeProductId: "",
         createdAt: "",
@@ -180,11 +184,27 @@ export default function PricingPlans() {
 
   // Subscription state
   const isUserOnProPlan =
-    isActive && planName && planName.toLowerCase() !== "free";
-  const currentPlanName = isUserOnProPlan ? proPlan.name : freePlan.name;
+    isAuthenticated &&
+    isActive &&
+    planName &&
+    planName.toLowerCase() !== "free";
+  const isUserOnFreePlan =
+    isAuthenticated &&
+    isActive &&
+    planName &&
+    planName.toLowerCase() === "free";
+  const currentPlanName = isUserOnProPlan
+    ? proPlan.name
+    : isUserOnFreePlan
+    ? freePlan.name
+    : ""; // If not authenticated, "" means no current plan
 
   // Handle subscribe
   const handleSubscribePro = async () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
     if (!proPlan) {
       alert("Premium plan not available yet. Please contact support.");
       return;
@@ -221,6 +241,15 @@ export default function PricingPlans() {
     }
   };
 
+  // Handle free plan button
+  const handleFreePlanClick = () => {
+    if (!isAuthenticated) {
+      navigate("/login");
+      return;
+    }
+    // No action for already on basic plan
+  };
+
   // Table values for free & pro
   const tableData = planComparisonData.map((row) => ({
     label: row.label,
@@ -254,10 +283,15 @@ export default function PricingPlans() {
               </div>
               <Button
                 className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
-                disabled={currentPlanName === freePlan.name}
+                disabled={
+                  isAuthenticated ? currentPlanName === freePlan.name : false // not authenticated, always enabled
+                }
+                onClick={handleFreePlanClick}
               >
-                {currentPlanName === freePlan.name
-                  ? "Current Plan"
+                {isAuthenticated
+                  ? currentPlanName === freePlan.name
+                    ? "Current Plan"
+                    : "Get Started"
                   : "Get Started"}
               </Button>
             </div>
@@ -285,13 +319,17 @@ export default function PricingPlans() {
                 className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
                 onClick={handleSubscribePro}
                 disabled={
-                  currentPlanName === proPlan.name || subscriptionLoading
+                  isAuthenticated
+                    ? currentPlanName === proPlan.name || subscriptionLoading
+                    : false
                 }
               >
-                {currentPlanName === proPlan.name
-                  ? "Current Plan"
-                  : subscriptionLoading
-                  ? "Processing..."
+                {isAuthenticated
+                  ? currentPlanName === proPlan.name
+                    ? "Current Plan"
+                    : subscriptionLoading
+                    ? "Processing..."
+                    : "Get Started"
                   : "Get Started"}
               </Button>
             </div>

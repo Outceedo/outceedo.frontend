@@ -1,69 +1,64 @@
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faFutbol } from "@fortawesome/free-solid-svg-icons";
-import { Card } from "@/components/ui/card";
+import React from "react";
+
+const playerSteps = [
+  "Create a Profile and Search an Expert",
+  "Connect with Expert",
+  "Book your assessment service",
+  "Receive your assessment reports",
+];
+
+const expertSteps = [
+  "Create a Profile",
+  "Receive Bookings from Players",
+  "Submit assessment reports",
+  "Receive your payments",
+];
 
 const Features: React.FC = () => {
   return (
-    <>
-      {/* Features Section */}
-      <div id="features" className="py-20 bg-white">
-        <div className="p-6">
-          <div className="text-center">
-            <h1 className="text-4xl font-bold mb-4 font-Raleway">
-              What We Offer
-            </h1>
-            <p className="text-lg mb-16 font-Opensans">
-              We are a passionate team dedicated to providing the best service
-              and products for our users.<br></br> Our mission is to
-              revolutionize the industry with cutting-edge solutions and a
-              user-centric approach.
-            </p>
+    <div id="features" className="py-10 md:py-20 bg-[#f4fcfb]">
+      <div className="px-4 sm:px-8 max-w-6xl mx-auto">
+        <div className="text-center">
+          <h1 className="text-3xl md:text-4xl font-bold mb-8 font-Raleway">
+            How it Works
+          </h1>
+        </div>
+        <div className="flex flex-col md:flex-row justify-center items-stretch gap-6 md:gap-8 mt-8">
+          {/* Players Card */}
+          <div className="flex-1 max-w-md w-full bg-[#fafcf3] rounded-xl shadow-md px-4 sm:px-6 md:px-8 py-8 mb-6 md:mb-0 border border-[#e6eae2] mx-auto">
+            <h2 className="text-xl font-semibold text-red-600 mb-6 text-center">
+              Players
+            </h2>
+            <ul className="space-y-4 sm:space-y-5">
+              {playerSteps.map((step, idx) => (
+                <li key={idx} className="flex items-center">
+                  <span className="bg-white rounded-lg px-3 py-2 md:px-4 text-gray-800 text-base shadow-sm w-full flex items-center border border-[#e6eae2]">
+                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-3 md:mr-4 flex-shrink-0" />
+                    {step}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
-
-          {/* Cards Section */}
-          <div className="flex flex-col sm:flex-row justify-center space-y-8 sm:space-x-8 sm:space-y-0 w-10/11 mx-auto">
-            {/* Card 1 */}
-            <div className="flex flex-col items-center p-6 text-center sm:w-auto">
-              <FontAwesomeIcon
-                icon={faFutbol}
-                style={{ fontSize: "100px", color: "#0a0a0a" }}
-              />
-              <h3 className="text-xl font-semibold mt-4">Football</h3>
-              <p className="text-md mt-2">
-                This is some text about the football service we offer. Great
-                feature for users!
-              </p>
-            </div>
-
-            {/* Card 2 */}
-            <div className="flex flex-col items-center p-6 text-center w-full sm:w-auto">
-              <FontAwesomeIcon
-                icon={faFutbol}
-                style={{ fontSize: "100px", color: "#0a0a0a" }}
-              />
-              <h3 className="text-xl font-semibold mt-4">Football</h3>
-              <p className="text-md mt-2">
-                This is another exciting feature related to football.
-                Revolutionizing the game!
-              </p>
-            </div>
-
-            {/* Card 3 */}
-            <div className="flex flex-col items-center p-6 text-center w-full sm:w-auto">
-              <FontAwesomeIcon
-                icon={faFutbol}
-                style={{ fontSize: "100px", color: "#0a0a0a" }}
-              />
-              <h3 className="text-xl font-semibold mt-4">Football</h3>
-              <p className="text-md mt-2">
-                More insights into the football-related features we bring to the
-                table.
-              </p>
-            </div>
+          {/* Experts Card */}
+          <div className="flex-1 max-w-md w-full bg-[#fafcf3] rounded-xl shadow-md px-4 sm:px-6 md:px-8 py-8 border border-[#e6eae2] mx-auto">
+            <h2 className="text-xl font-semibold text-red-600 mb-6 text-center">
+              Experts
+            </h2>
+            <ul className="space-y-4 sm:space-y-5">
+              {expertSteps.map((step, idx) => (
+                <li key={idx} className="flex items-center">
+                  <span className="bg-white rounded-lg px-3 py-2 md:px-4 text-gray-800 text-base shadow-sm w-full flex items-center border border-[#e6eae2]">
+                    <span className="inline-block w-3 h-3 rounded-full bg-red-500 mr-3 md:mr-4 flex-shrink-0" />
+                    {step}
+                  </span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
