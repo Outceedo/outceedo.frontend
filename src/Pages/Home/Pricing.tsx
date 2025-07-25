@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { CheckCircle, XCircle } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
@@ -112,6 +112,8 @@ export default function PricingPlans() {
 
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
+
   const { currentProfile } = useAppSelector((state) => state.profile);
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const {
@@ -257,15 +259,29 @@ export default function PricingPlans() {
     pro: row.pro,
   }));
 
+  // Show go back icon only if url is /plans
+  const showGoBack = location.pathname === "/plans";
+
   return (
-    <div className="w-full flex flex-col items-center py-14 px-2 md:px-0 bg-[#f7fafb] min-h-screen">
+    <div
+      className="w-full flex flex-col items-center py-14 px-2 md:px-0 bg-[#f7fafb] min-h-screen"
+      id="pricing"
+    >
       <div className="flex flex-col md:flex-row md:items-start w-full max-w-6xl gap-12">
         {/* Left: Title */}
         <div className="flex-1 md:max-w-xs flex flex-col items-start justify-start mt-2 mb-8 md:mb-0">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-left leading-tight">
-            Choose a plan
-            <br />
-            that's right for you
+          {showGoBack && (
+            <button
+              className="mb-4 flex items-center gap-2 text-gray-800 hover:text-red-500 font-medium"
+              onClick={() => navigate(-1)}
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-6 w-6" />
+              Go Back
+            </button>
+          )}
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center sm:text-left leading-tight px-3">
+            Choose a plan that's right for you
           </h2>
         </div>
         {/* Right: Plan Cards */}

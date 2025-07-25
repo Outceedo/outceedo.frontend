@@ -1,14 +1,15 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import User from "./user";
 
 const NAV_ITEMS = [
   { label: "Home", anchor: "home" },
   { label: "About", anchor: "about" },
-  { label: "Features", anchor: "features" },
+  { label: "How it Works", anchor: "features" },
+  { label: "Team", anchor: "team" },
   { label: "Pricing", anchor: "pricing" },
-  { label: "Contact Us", anchor: "contactus" }
+  { label: "Contact Us", anchor: "contactus" },
 ];
 
 export default function Navbar() {
@@ -17,14 +18,26 @@ export default function Navbar() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [activeNav, setActiveNav] = useState("Home");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Only enable scroll effect on home page
+  const isHome = location.pathname === "/";
 
   useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+    if (isHome) {
+      const handleScroll = () => {
+        setScrolled(window.scrollY > 10);
+      };
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
+    } else {
+      setScrolled(true); // Always scrolled (solid navbar) on other paths
+    }
+  }, [isHome]);
+
+  useEffect(() => {
+    document.body.style.overflow = mobileMenuOpen ? "hidden" : "auto";
+  }, [mobileMenuOpen]);
 
   const handleNavigate = (path: string) => {
     navigate(path);
@@ -33,13 +46,32 @@ export default function Navbar() {
 
   const handleSignUpClick = () => setModalOpen(true);
 
-  useEffect(() => {
-    document.body.style.overflow = mobileMenuOpen ? "hidden" : "auto";
-  }, [mobileMenuOpen]);
-
   // For scrolling to anchor & setting active nav
-  const handleNavClick = (item: {label: string, anchor: string}) => {
+  const handleNavClick = (item: { label: string; anchor: string }) => {
     setActiveNav(item.label);
+
+    if (item.label === "About") {
+      navigate("/about");
+      setMobileMenuOpen(false);
+      return;
+    }
+    if (item.label === "Team") {
+      navigate("/teams");
+      setMobileMenuOpen(false);
+      return;
+    }
+    if (item.label === "Contact Us") {
+      navigate("/contactus");
+      setMobileMenuOpen(false);
+      return;
+    }
+    if (item.label === "Home") {
+      navigate("/");
+      setMobileMenuOpen(false);
+      return;
+    }
+
+    // For others, scroll to anchor
     const section = document.getElementById(item.anchor);
     if (section) {
       section.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -69,7 +101,13 @@ export default function Navbar() {
                 key={item.label}
                 className={`
                   font-medium px-3 py-1 rounded transition-colors whitespace-nowrap
-                  ${activeNav === item.label ? " text-red-500" : scrolled ? "text-gray-800" : "text-white"}
+                  ${
+                    activeNav === item.label
+                      ? " text-red-500"
+                      : scrolled
+                      ? "text-gray-800"
+                      : "text-white"
+                  }
                   hover:bg-red-500 hover:text-white cursor-pointer
                 `}
                 onClick={() => handleNavClick(item)}
@@ -80,7 +118,11 @@ export default function Navbar() {
             <button
               className={`
                 px-4 py-2 rounded-md font-medium transition-colors whitespace-nowrap
-                ${scrolled ? "text-gray-800 hover:bg-gray-100" : "text-white hover:bg-white/10"}
+                ${
+                  scrolled
+                    ? "text-gray-800 hover:bg-gray-100"
+                    : "text-white hover:bg-white/10"
+                }
                 hover:text-red-500
               `}
               onClick={() => handleNavigate("/login")}
@@ -95,14 +137,9 @@ export default function Navbar() {
             </button>
           </div>
           {/* Mobile menu button */}
-          <button
-            className="lg:hidden"
-            onClick={() => setMobileMenuOpen(true)}
-          >
+          <button className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
             <Menu
-              className={`h-7 w-7 ${
-                scrolled ? "text-gray-800" : "text-white"
-              }`}
+              className={`h-7 w-7 ${scrolled ? "text-gray-800" : "text-white"}`}
             />
             <span className="sr-only">Open menu</span>
           </button>
@@ -125,7 +162,11 @@ export default function Navbar() {
                   key={item.label}
                   className={`
                     text-xl font-medium px-3 py-2 rounded w-full
-                    ${activeNav === item.label ? "bg-red-500 text-white" : "text-gray-800"}
+                    ${
+                      activeNav === item.label
+                        ? "bg-red-500 text-white"
+                        : "text-gray-800"
+                    }
                     hover:bg-red-500 hover:text-white
                   `}
                   onClick={() => handleNavClick(item)}

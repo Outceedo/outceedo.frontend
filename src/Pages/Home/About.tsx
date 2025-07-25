@@ -1,35 +1,48 @@
+import { Button } from "@/components/ui/button";
+
+import { FaForward } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+
 const About: React.FC = () => {
+  const navigate = useNavigate();
   return (
     <>
       {/* About Section */}
       <section
-        className="bg-[#FFF8DA] py-6 px-12 md:px-8 rounded-2xl max-w-5xl mx-auto mb-6"
+        className="bg-[#FFF8DA] py-6 px-12 md:px-8 rounded-2xl max-w-md sm:max-w-5xl mx-auto mb-6"
         id="about"
       >
         <div className="container mx-auto">
           <div className="flex flex-col md:flex-row md:gap-28 items-center">
             <div className="w-full md:w-1/2 px-4">
-              <h3 className="text-red-600 font-medium text-xl mb-3">
+              <h3 className="text-red-600 font-medium text-3xl mb-3">
                 Why Choose Us
               </h3>
-              <h2 className="text-[#0a192f] text-3xl md:text-4xl font-bold mb-6">
-                Lorem ipsum dolor sit amet pretium
-              </h2>
+
               <div className="space-y-6">
                 <p className="text-gray-600">
-                  Lorem ipsum dolor sit amet pretium consectetur adipiscing
-                  elit. Lorem consectetur adipiscing elit.Lorem ipsum dolor sit
-                  amet pretium consectetur adipiscing elit. Lorem consectetur
-                  adipiscing elit.
+                  Outceedo is a start-up company registered in Scotland and our
+                  operations are in United Kingdom. Our mission is to
+                  revolutionize the football industry with cutting-edge
+                  solutions and a user-centric approach.
                 </p>
                 <p className="text-gray-600">
-                  Lorem ipsum dolor sit amet pretium consectetur adipiscing
-                  elit. Lorem consectetur adipiscing elit. Lorem ipsum dolor sit
-                  amet pretium consectetur adipiscing elit.
+                  Outceedo is an online platform where football players connect
+                  with experts to get their sports skills and performances
+                  assessed. We serve players, managers, coach's, scouts,
+                  sponsors, fans and followers
                 </p>
+                <Button
+                  className="bg-red-500 hover:bg-red-600 text-white font-semibold px-6 py-3 rounded-lg shadow-md flex items-center"
+                  onClick={() => {
+                    navigate("/about");
+                  }}
+                >
+                  Know more <FaForward />
+                </Button>
               </div>
             </div>
-            <div className="w-1/2 md:w-1/3 hidden md:block">
+            <div className="w-1/2 md:w-1/3 hidden sm:block mt-8">
               <img
                 src="src/assets/images/aboutimg.jpg"
                 alt="Soccer ball in goal net"
