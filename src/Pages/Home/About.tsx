@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 
 import { FaForward } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
+import ball from "../../assets/images/aboutimg.jpg";
 
 const About: React.FC = () => {
   const navigate = useNavigate();
@@ -44,7 +45,7 @@ const About: React.FC = () => {
             </div>
             <div className="w-1/2 md:w-1/3 hidden sm:block mt-8">
               <img
-                src="src/assets/images/aboutimg.jpg"
+                src={ball}
                 alt="Soccer ball in goal net"
                 className="w-full h-auto rounded-lg shadow-md"
               />
