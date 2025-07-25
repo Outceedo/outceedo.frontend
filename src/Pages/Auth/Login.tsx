@@ -5,6 +5,7 @@ import football from "../../assets/images/football.jpg";
 import { loginUser, clearError } from "../../store/auth-slice";
 import User from "../Home/user";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { ArrowLeft } from "lucide-react";
 import Swal from "sweetalert2";
 
 const Login: React.FC = () => {
@@ -111,6 +112,7 @@ const Login: React.FC = () => {
         style={{ backgroundImage: `url(${football})` }}
       ></div>
       <div className="absolute inset-0 bg-black opacity-40"></div>
+      <div className="absolute inset-0 bg-black opacity-20"></div>
       {isModalOpen && (
         <>
           <div className="absolute inset-0 bg-black opacity-40 w-screen h-screen"></div>
@@ -118,9 +120,18 @@ const Login: React.FC = () => {
         </>
       )}
 
+      {/* Go Back Button */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-6 left-6 flex items-center gap-2 px-3 py-2 bg-transparent bg-opacity-80 rounded hover:bg-opacity-100 hover:text-red-500 font-medium text-white shadow transition z-30"
+      >
+        <ArrowLeft className="w-5 h-5" />
+        Go Back
+      </button>
+
       <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 mb-8 sm:mb-12 hidden lg:block">
         <h2 className="text-2xl sm:text-3xl lg:text-5xl font-Raleway mb-4">
-          Welcome To Sports App
+          Welcome To <span className="text-red-500 font-bold">Outceedo</span>
         </h2>
         <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md lg:max-w-none mx-auto lg:mx-0 font-Opensans">
           Find expert coaches and mentors to guide students in mastering their

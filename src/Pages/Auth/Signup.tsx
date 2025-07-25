@@ -7,6 +7,7 @@ import { registerUser } from "../../store/auth-slice";
 import { RootState } from "../../store/store";
 import Swal from "sweetalert2";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { ArrowLeft } from "lucide-react";
 
 type Role = "expert" | "player" | "team" | "sponser" | "user";
 
@@ -247,10 +248,18 @@ const Signup: React.FC = () => {
       ></div>
       {/* Overlay for better text visibility */}
       <div className="absolute inset-0 bg-black opacity-40"></div>
+      <div className="absolute inset-0 bg-black opacity-20"></div>
       {/* Left Side - Welcome Text */}
+      <button
+        onClick={() => navigate(-1)}
+        className="absolute top-6 left-6 flex items-center gap-2 px-3 py-2 bg-transparent bg-opacity-80 rounded hover:bg-opacity-100 hover:text-red-500 font-medium text-white shadow transition z-30 "
+      >
+        <ArrowLeft className="w-5 h-5" />
+        Go Back
+      </button>
       <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 mb-8 sm:mb-12 hidden md:block">
         <h2 className="text-2xl sm:text-3xl lg:text-5xl font-Raleway mb-4">
-          Welcome To Sports App
+          Welcome To <span className="text-red-500 font-bold">Outceedo</span>
         </h2>
         <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md lg:max-w-none mx-auto lg:mx-0 font-Opensans">
           Find expert coaches and mentors to guide students in mastering their
@@ -259,7 +268,7 @@ const Signup: React.FC = () => {
         </p>
       </div>
       {/* Right Side - Signup Form */}
-      <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-12 sm:mt-16 lg:mt-0">
+      <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-16 sm:mt-16 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Sign Up</h2>
 
         {/* Error Message */}
@@ -270,7 +279,7 @@ const Signup: React.FC = () => {
           </div>
         )}
 
-        <form onSubmit={handleSignup} className="space-y-4">
+        <form onSubmit={handleSignup} className="space-y-3 md:space-y-4">
           <div className="flex space-x-4">
             <div className="w-1/2">
               <label
