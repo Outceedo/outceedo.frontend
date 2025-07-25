@@ -5,6 +5,10 @@ const NotFound = () => {
   const navigate = useNavigate();
   const handlenav = () => {
     const role = localStorage.getItem("role");
+    if (!role) {
+      navigate("/");
+      return;
+    }
     navigate(`/${role}/profile`);
   };
   return (

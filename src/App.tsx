@@ -100,6 +100,9 @@ import Success from "./common/Success";
 import PricingPlans from "./Pages/Home/Pricing";
 import Expertinfo from "./fanpages/Expertinfo";
 import Playerinfo from "./fanpages/Playerinfo";
+import Aboutus from "./Pages/Home/aboutus";
+import Teams from "./Pages/Home/teams";
+import Contact from "./Pages/Home/Contact";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -409,6 +412,9 @@ const AppContent: React.FC = () => {
         />
 
         <Route path="/plans" element={<PricingPlans />} />
+        <Route path="/about" element={<Aboutus />} />
+        <Route path="/teams" element={<Teams />} />
+        <Route path="/contactus" element={<Contact />} />
 
         <Route path="/subscription/success" element={<Success />} />
         <Route path="*" element={<NotFound />} />

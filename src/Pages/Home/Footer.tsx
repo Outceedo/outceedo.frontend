@@ -10,17 +10,17 @@ import {
 const OutceedoFooter: React.FC = () => (
   <footer className="bg-[#002149] w-full text-white pt-12 pb-4">
     <div className="max-w-7xl mx-auto px-6">
-      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10 items-center text-center md:text-left">
         {/* Left - Logo and tagline */}
-        <div className="md:w-1/3 mb-8 md:mb-0">
+        <div className="md:w-1/3 mb-8 md:mb-0 flex flex-col items-center md:items-start">
           <h2 className="font-bold text-2xl mb-2">Outceedo</h2>
           <p className="text-base text-[#e3e9f1]">
             Outdo your sport to succeed
           </p>
         </div>
         {/* Center - Links */}
-        <div className="flex flex-1 flex-col md:flex-row justify-between gap-10">
-          <div>
+        <div className="flex flex-1 flex-col md:flex-row justify-around gap-10 items-center md:items-start">
+          <div className="flex flex-col items-center md:items-start ">
             <h3 className="font-bold mb-2 text-lg">Resources</h3>
             <ul className="space-y-1 text-[#e3e9f1]">
               <li>
@@ -68,7 +68,7 @@ const OutceedoFooter: React.FC = () => (
               </li>
             </ul>
           </div>
-          <div className="min-w-[220px]">
+          <div className="min-w-[220px] flex flex-col items-center md:items-start">
             <h3 className="font-bold mb-2 text-lg">Contact Address</h3>
             <p className="mb-5 text-[#e3e9f1]">Address</p>
             <h3 className="font-bold mb-2 text-lg">Reach Out to Us</h3>
@@ -87,9 +87,9 @@ const OutceedoFooter: React.FC = () => (
           </div>
         </div>
         {/* Right - Social */}
-        <div className="flex flex-col items-start">
-          <h3 className="font-bold mb-2 text-lg">Get Social</h3>
-          <div className="flex gap-4 mt-2">
+        <div className="flex flex-col items-center md:items-start">
+          <h3 className="font-bold mb-2 text-lg text-center">Get Social</h3>
+          <div className="flex md:grid md:grid-cols-2 gap-4 mt-2 justify-center">
             <a
               href="#"
               aria-label="Twitter"

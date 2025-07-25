@@ -43,13 +43,13 @@ const HomePage: React.FC = () => {
           <div className="absolute inset-0 bg-black opacity-65"></div>
         </>
       )}
-      <Navbar />
+
       <div className="absolute inset-0 bg-black opacity-65"></div>
 
       <div className="relative h-screen w-full mb-42" id="home">
         {/* Dark overlay */}
         {/* <div className="absolute inset-0 bg-black/40 z-10"></div> */}
-
+        <Navbar />
         {/* Background image */}
         <div className="absolute inset-0">
           <img
@@ -60,21 +60,27 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Content */}
-        <div className="relative z-20 container mx-auto px-4 h-full flex flex-col justify-center">
-          <div className="max-w-lg md:px-8">
-            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6">
-              Where Artists Can Enhance Opportunities
+        <div className="relative z-20 container mx-auto px-4 h-full flex flex-col top-50 md:top-36">
+          <div className="max-w-full md:px-8">
+            <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 text-center">
+              Outceedo
             </h1>
-            <p className="text-2xl text-white/90 mb-8">
-              Connect with experts in the entertainment industry and assess your
-              skills and performances
+            <h4 className="text-3xl md:text-4xl font-bold text-white mb-6 text-center">
+              Outdo your sport to succeed
+            </h4>
+          </div>
+          <div className="md:ml-24 flex flex-col justify-center md:justify-start mt-8">
+            <p className="text-2xl text-white/90 mb-8 font-bold w-1/3 hidden md:block">
+              Where football players can enhance their opportunities
             </p>
-            <button
-              className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-md text-lg font-medium"
-              onClick={handleSignUpClick}
-            >
-              Get Started
-            </button>
+            <div className="w-full flex justify-center md:justify-start">
+              <button
+                className="bg-red-500 hover:bg-red-600 text-white px-8 py-3 rounded-md text-lg font-medium w-42 flex justify-center"
+                onClick={handleSignUpClick}
+              >
+                Get Started
+              </button>
+            </div>
           </div>
         </div>
       </div>
