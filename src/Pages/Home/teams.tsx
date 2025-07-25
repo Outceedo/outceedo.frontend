@@ -7,6 +7,8 @@ import Nikitha from "../../assets/team/Nikitha.jpg";
 import Vamshi from "../../assets/team/Vamshi.jpg";
 import Dinesh from "../../assets/team/Dinesh.jpg";
 import Sindhu from "../../assets/team/Sindhu.jpg";
+import Riktha from "../../assets/team/Riktha.jpg";
+import Deepthika from "../../assets/team/Deepthika.jpg";
 
 // Example team data -- replace with your actual images and members!
 const managementTeam = [
@@ -54,12 +56,12 @@ const designTeam = [
   {
     name: "Riktha Reddy",
     designation: "UI/UX Designer",
-    photo: "https://randomuser.me/api/portraits/women/68.jpg",
+    photo: Riktha,
   },
   {
     name: "Deepthika",
     designation: "UI/UX Designer",
-    photo: "https://randomuser.me/api/portraits/men/12.jpg",
+    photo: Deepthika,
   },
 ];
 
