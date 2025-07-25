@@ -12,25 +12,32 @@ function Aboutus() {
           </h1>
           <div className="bg-[#f7fafb] rounded-xl shadow-md p-8 mb-8">
             <p className="text-lg text-gray-800 mb-4">
-              <span className="font-semibold text-red-500">Outceedo</span> is a
-              start-up company registered in Scotland, with operations based in
-              the United Kingdom.
-            </p>
-            <p className="text-lg text-gray-800 mb-4">
-              Our mission is to revolutionize the football industry through
-              cutting-edge technology and a user-centric approach.
+              <span className="font-bold text-red-500">Outceedo</span> is a
+              start-up company registered in Scotland, with operations in the
+              United Kingdom. Cofounded in 2025 by passionate football fans{" "}
+              <span className="font-semibold">Arun Muppana</span> and{" "}
+              <span className="font-semibold">Vamshi Gurram</span>, our mission
+              is to create the best football players for a team by connecting
+              them with worldwide experts for real-time performance assessment
+              and guidance.
             </p>
             <p className="text-lg text-gray-800 mb-4">
               Outceedo is an online platform where football players connect with
-              experts to get their sports skills and performances assessed.
-            </p>
-            <p className="text-lg text-gray-800 mb-4">
-              We proudly serve{" "}
+              global experts to get their sports skills and performances
+              assessed. We proudly serve{" "}
               <span className="font-semibold text-red-500">
                 players, managers, coaches, scouts, sponsors, fans
               </span>{" "}
               and <span className="font-semibold text-red-500">followers</span>,
               creating a dynamic and supportive football community.
+            </p>
+            <p className="text-lg text-gray-800 mb-4">
+              We know how competitive it is for players to get into the best
+              teams. It is hard to get a place in league or national teams, so
+              we believe that expert assessment is essential to understand one’s
+              skills and enter the next level in sports. Outceedo helps elevate
+              every player's game through professional guidance and expert
+              analysis.
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
@@ -38,10 +45,18 @@ function Aboutus() {
               <h2 className="text-xl font-semibold text-red-600 mb-3">
                 Our Vision
               </h2>
+              <p className="text-gray-700 text-base mb-3">
+                To revolutionize the football industry with cutting-edge
+                solutions using technology and a user-centric approach. Outceedo
+                bridges the gap between players and experts, empowering football
+                talents to grow, transform weaknesses into strengths, and excel
+                in their sporting careers.
+              </p>
               <p className="text-gray-700 text-base">
-                To empower football talents and professionals by bridging the
-                gap between players and experts, fostering growth, opportunity,
-                and excellence in the sport.
+                Whether you’re a parent seeking expert training for your child,
+                an aspiring player aiming for professional leagues, or a
+                seasoned footballer looking to refine your skills, Outceedo
+                makes it easier to find the perfect expert to guide you.
               </p>
             </div>
             <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
@@ -49,13 +64,32 @@ function Aboutus() {
                 Why Outceedo?
               </h2>
               <ul className="list-disc pl-5 space-y-2 text-gray-700">
-                <li>Connect with certified football experts easily</li>
-                <li>Receive professional skill and performance assessments</li>
+                <li>Connect with certified football experts worldwide</li>
                 <li>
-                  Grow as a player or expert within a supportive community
+                  Get real-time expert analysis of your game, skill level,
+                  strengths and weaknesses
                 </li>
-                <li>Access opportunities for sponsorship and recognition</li>
-                <li>Be part of a movement shaping the future of football</li>
+                <li>
+                  Receive actionable expert reports and personalized training
+                  guidance
+                </li>
+                <li>
+                  Enhance your opportunities for team selection, sponsorships,
+                  and career advancement
+                </li>
+                <li>
+                  Become part of a supportive community of players,
+                  professionals, and fans
+                </li>
+                <li>
+                  Expert coaches assess player performance in real time and
+                  support their growth with tailored advice.
+                </li>
+                <li>
+                  Outceedo simplifies the path for players to enter the next
+                  level in sports leagues by offering essential skill
+                  assessments and strategic insights.
+                </li>
               </ul>
             </div>
           </div>

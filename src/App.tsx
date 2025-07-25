@@ -103,6 +103,9 @@ import Playerinfo from "./fanpages/Playerinfo";
 import Aboutus from "./Pages/Home/aboutus";
 import Teams from "./Pages/Home/teams";
 import Contact from "./Pages/Home/Contact";
+import ScrollToTop from "./common/ScrollToTop";
+import Terms from "./Pages/Home/terms";
+import Privacy from "./Pages/Home/privacy";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -212,6 +215,7 @@ const AppContent: React.FC = () => {
 
   return (
     <>
+      <ScrollToTop />
       <DashboardRedirect />
       <Routes>
         {/* Root route - redirect authenticated users to their profile */}
@@ -415,6 +419,8 @@ const AppContent: React.FC = () => {
         <Route path="/about" element={<Aboutus />} />
         <Route path="/teams" element={<Teams />} />
         <Route path="/contactus" element={<Contact />} />
+        <Route path="/terms" element={<Terms />} />
+        <Route path="/privacy" element={<Privacy />} />
 
         <Route path="/subscription/success" element={<Success />} />
         <Route path="*" element={<NotFound />} />

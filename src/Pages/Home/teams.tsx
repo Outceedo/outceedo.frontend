@@ -2,18 +2,23 @@ import OutceedoFooter from "./Footer";
 import Navbar from "./Navbar";
 import Farhan from "../../assets/team/Farhan.jpg";
 import Neekunj from "../../assets/team/Neekunj.jpg";
+import Arun from "../../assets/team/Arun.jpg";
+import Nikitha from "../../assets/team/Nikitha.jpg";
+import Vamshi from "../../assets/team/Vamshi.jpg";
+import Dinesh from "../../assets/team/Dinesh.jpg";
+import Sindhu from "../../assets/team/Sindhu.jpg";
 
 // Example team data -- replace with your actual images and members!
 const managementTeam = [
   {
     name: "Arun Muppana",
     designation: "Founder & CEO",
-    photo: "https://randomuser.me/api/portraits/men/32.jpg",
+    photo: Arun,
   },
   {
     name: "Vamshi Mohana",
     designation: "Co-Founder & COO",
-    photo: "https://randomuser.me/api/portraits/women/44.jpg",
+    photo: Vamshi,
   },
 ];
 
@@ -31,17 +36,17 @@ const technicalTeam = [
   {
     name: "Sindhu",
     designation: "Frontend Developer",
-    photo: "https://randomuser.me/api/portraits/women/39.jpg",
+    photo: Sindhu,
   },
   {
     name: "Nikitha",
     designation: "Frontend Developer",
-    photo: "https://randomuser.me/api/portraits/men/56.jpg",
+    photo: Nikitha,
   },
   {
     name: "Rella Dinesh",
     designation: "Quality Assurance and Responsive Testing",
-    photo: "https://randomuser.me/api/portraits/men/56.jpg",
+    photo: Dinesh,
   },
 ];
 
@@ -74,24 +79,24 @@ function Teams() {
 
           {/* Management Team */}
           <div className="mb-14">
-            <h2 className="text-2xl font-bold text-red-500 mb-7 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-red-500 mb-7 text-center">
               Management Team
             </h2>
             <div className="flex flex-wrap gap-8 justify-center">
               {managementTeam.map((member) => (
                 <div
                   key={member.name}
-                  className="bg-[#f7fafb] rounded-xl shadow-md p-6 flex flex-col items-center w-64 "
+                  className="bg-[#f7fafb] rounded-xl shadow-md p-3 md:p-6 flex flex-col items-center w-42 md:w-64"
                 >
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="w-48 h-48 rounded-md object-cover mb-4 "
+                    className="w-32 md:w-48 h-32 md:h-48 rounded-md object-cover mb-4 "
                   />
-                  <h3 className="text-lg font-bold text-gray-800">
+                  <h3 className="text-lg font-bold text-gray-800 text-center">
                     {member.name}
                   </h3>
-                  <p className="text-sm text-red-600 font-medium mt-1">
+                  <p className="text-sm text-red-600 font-medium mt-1 text-center">
                     {member.designation}
                   </p>
                 </div>
@@ -101,21 +106,21 @@ function Teams() {
 
           {/* Technical Team */}
           <div className="mb-14">
-            <h2 className="text-2xl font-bold text-red-500 mb-7 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-red-500 mb-7 text-center">
               Technical Team
             </h2>
             <div className="flex flex-wrap gap-8 justify-center">
               {technicalTeam.map((member) => (
                 <div
                   key={member.name}
-                  className="bg-[#f7fafb] rounded-xl shadow-md p-6 flex flex-col items-center w-64"
+                  className="bg-[#f7fafb] rounded-xl shadow-md p-3 md:p-6 flex flex-col items-center w-42 md:w-64"
                 >
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="w-48 h-48 rounded-md object-cover mb-4"
+                    className="w-32 md:w-48 h-32 md:h-48 rounded-md object-cover mb-4 "
                   />
-                  <h3 className="text-lg font-bold text-gray-800">
+                  <h3 className="text-lg font-bold text-gray-800 text-center">
                     {member.name}
                   </h3>
                   <p className="text-sm text-red-600 font-medium mt-1 text-center">
@@ -127,24 +132,24 @@ function Teams() {
           </div>
 
           <div>
-            <h2 className="text-2xl font-bold text-red-500 mb-7 text-center">
+            <h2 className="text-2xl md:text-3xl font-bold text-red-500 mb-7 text-center">
               Design Team
             </h2>
             <div className="flex flex-wrap gap-8 justify-center">
               {designTeam.map((member) => (
                 <div
                   key={member.name}
-                  className="bg-[#f7fafb] rounded-xl shadow-md p-6 flex flex-col items-center w-64"
+                  className="bg-[#f7fafb] rounded-xl shadow-md p-3 md:p-6 flex flex-col items-center w-42 md:w-64"
                 >
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="w-48 h-48 rounded-md object-cover mb-4 border-1 border-red-500"
+                    className="w-32 md:w-48 h-32 md:h-48 rounded-md object-cover mb-4 "
                   />
-                  <h3 className="text-lg font-bold text-gray-800">
+                  <h3 className="text-lg font-bold text-gray-800 text-center">
                     {member.name}
                   </h3>
-                  <p className="text-sm text-red-600 font-medium mt-1">
+                  <p className="text-sm text-red-600 font-medium mt-1 text-center">
                     {member.designation}
                   </p>
                 </div>

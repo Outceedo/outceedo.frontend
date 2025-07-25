@@ -37,12 +37,6 @@ const HomePage: React.FC = () => {
           />
         </>
       )}
-      {isModalOpen && (
-        <>
-          <div className="absolute inset-0 bg-black opacity-65"></div>
-          <div className="absolute inset-0 bg-black opacity-65"></div>
-        </>
-      )}
 
       <div className="absolute inset-0 bg-black opacity-65"></div>
 
@@ -66,11 +60,11 @@ const HomePage: React.FC = () => {
               Outceedo
             </h1>
             <h4 className="text-3xl md:text-4xl font-bold text-white mb-6 text-center">
-              Outdo your sport to succeed
+              Outdo your sport to <span className="">Succeed</span>
             </h4>
           </div>
           <div className="md:ml-24 flex flex-col justify-center md:justify-start mt-8">
-            <p className="text-2xl text-white/90 mb-8 font-bold w-1/3 hidden md:block">
+            <p className="text-2xl md:text-4xl text-white/90 mb-8 font-bold w-1/3 hidden md:block">
               Where football players can enhance their opportunities
             </p>
             <div className="w-full flex justify-center md:justify-start">
@@ -94,6 +88,9 @@ const HomePage: React.FC = () => {
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50">
+          <>
+            <div className="absolute inset-0 bg-black opacity-65"></div>
+          </>
           <div className="relative">
             <button
               onClick={() => setModalOpen(false)}

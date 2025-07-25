@@ -262,9 +262,8 @@ const Signup: React.FC = () => {
           Welcome To <span className="text-red-500 font-bold">Outceedo</span>
         </h2>
         <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md lg:max-w-none mx-auto lg:mx-0 font-Opensans">
-          Find expert coaches and mentors to guide students in mastering their
-          game. Connect with top professionals for personalized training, skill
-          development, and strategic insights to elevate performance.
+          An online platform where football players connect with experts to get
+          their sports skills and performances assessed.
         </p>
       </div>
       {/* Right Side - Signup Form */}

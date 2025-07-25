@@ -6,7 +6,6 @@ import User from "./user";
 const NAV_ITEMS = [
   { label: "Home", anchor: "home" },
   { label: "About", anchor: "about" },
-  { label: "How it Works", anchor: "features" },
   { label: "Team", anchor: "team" },
   { label: "Pricing", anchor: "pricing" },
   { label: "Contact Us", anchor: "contactus" },
@@ -55,12 +54,17 @@ export default function Navbar() {
       setMobileMenuOpen(false);
       return;
     }
+    if (item.label === "Pricing" && !isHome) {
+      navigate("/plans");
+      setMobileMenuOpen(false);
+      return;
+    }
     if (item.label === "Team") {
       navigate("/teams");
       setMobileMenuOpen(false);
       return;
     }
-    if (item.label === "Contact Us") {
+    if (item.label === "Contact Us" && !isHome) {
       navigate("/contactus");
       setMobileMenuOpen(false);
       return;
@@ -90,10 +94,10 @@ export default function Navbar() {
           <button
             onClick={() => handleNavigate("/")}
             className={`font-bold text-lg lg:text-xl px-4 transition-colors ${
-              scrolled ? "text-gray-800" : "text-white"
+              scrolled ? "text-red-600" : "text-white"
             }`}
           >
-            Logo
+            Outceedo
           </button>
           <div className="hidden lg:flex items-center flex-nowrap gap-6">
             {NAV_ITEMS.map((item) => (

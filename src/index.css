@@ -123,3 +123,7 @@ button {
     @apply bg-background text-foreground;
   }
 }
+
+.primary {
+  color: #f44336;
+}

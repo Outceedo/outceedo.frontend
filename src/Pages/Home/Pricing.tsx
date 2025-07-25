@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
 import axios from "axios";
+import Navbar from "./Navbar";
+import OutceedoFooter from "./Footer";
 
 interface PlanFeature {
   feature: {
@@ -263,150 +265,158 @@ export default function PricingPlans() {
   const showGoBack = location.pathname === "/plans";
 
   return (
-    <div
-      className="w-full flex flex-col items-center py-14 px-2 md:px-0 bg-[#f7fafb] min-h-screen"
-      id="pricing"
-    >
-      <div className="flex flex-col md:flex-row md:items-start w-full max-w-6xl gap-12">
-        {/* Left: Title */}
-        <div className="flex-1 md:max-w-xs flex flex-col items-start justify-start mt-2 mb-8 md:mb-0">
-          {showGoBack && (
-            <button
-              className="mb-4 flex items-center gap-2 text-gray-800 hover:text-red-500 font-medium"
-              onClick={() => navigate(-1)}
-              aria-label="Go back"
+    <>
+      {location.pathname === "/plans" && <Navbar />}
+      <div
+        className="w-full flex flex-col items-center py-14 px-2 md:px-0 bg-[#f7fafb] min-h-screen mt-16"
+        id="pricing"
+      >
+        <div className="flex flex-col md:flex-row md:items-start w-full max-w-6xl gap-12">
+          {/* Left: Title */}
+          <div className="flex-1 md:max-w-xs flex flex-col items-start justify-start mt-2 mb-8 md:mb-0">
+            {showGoBack && (
+              <button
+                className="mb-4 flex items-center gap-2 text-gray-800 hover:text-red-500 font-medium"
+                onClick={() => navigate(-1)}
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-6 w-6" />
+                Go Back
+              </button>
+            )}
+            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center sm:text-left leading-tight px-3">
+              Choose a plan that's right for you
+            </h2>
+          </div>
+          {/* Right: Plan Cards */}
+          <div className="flex-1 flex flex-col md:flex-row gap-6 w-full md:w-auto justify-end">
+            {/* Basic Plan Card */}
+            <div
+              className={`relative border border-gray-300 bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center ${
+                currentPlanName === freePlan.name ? "ring-2 ring-green-300" : ""
+              }`}
             >
-              <ArrowLeft className="h-6 w-6" />
-              Go Back
-            </button>
-          )}
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center sm:text-left leading-tight px-3">
-            Choose a plan that's right for you
-          </h2>
-        </div>
-        {/* Right: Plan Cards */}
-        <div className="flex-1 flex flex-col md:flex-row gap-6 w-full md:w-auto justify-end">
-          {/* Basic Plan Card */}
-          <div
-            className={`relative border border-gray-300 bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center ${
-              currentPlanName === freePlan.name ? "ring-2 ring-green-300" : ""
-            }`}
-          >
-            <div className="w-full flex flex-col items-center">
-              <div className="font-bold text-2xl mb-2">{freePlan.name}</div>
-              <div className="text-gray-500 mb-4 text-center">
-                {freePlan.description}
+              <div className="w-full flex flex-col items-center">
+                <div className="font-bold text-2xl mb-2">{freePlan.name}</div>
+                <span className="text-gray-800">Free Plan</span>
+                <div className="text-gray-500 mb-4 text-center">
+                  {freePlan.description}
+                </div>
+                <Button
+                  className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
+                  disabled={
+                    isAuthenticated ? currentPlanName === freePlan.name : false // not authenticated, always enabled
+                  }
+                  onClick={handleFreePlanClick}
+                >
+                  {isAuthenticated
+                    ? currentPlanName === freePlan.name
+                      ? "Current Plan"
+                      : "Get Started"
+                    : "Get Started"}
+                </Button>
               </div>
-              <Button
-                className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
-                disabled={
-                  isAuthenticated ? currentPlanName === freePlan.name : false // not authenticated, always enabled
-                }
-                onClick={handleFreePlanClick}
-              >
-                {isAuthenticated
-                  ? currentPlanName === freePlan.name
-                    ? "Current Plan"
-                    : "Get Started"
-                  : "Get Started"}
-              </Button>
             </div>
-          </div>
-          {/* Premium Plan Card */}
-          <div
-            className={`relative border-[4px] ${
-              currentPlanName === proPlan.name
-                ? "border-red-500"
-                : "border-gray-300"
-            } bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center`}
-          >
-            {/* Popular badge */}
-            <div className="absolute -top-5 left-0 right-0 flex justify-center">
-              <span className="bg-red-500 text-white text-xs font-bold py-1 px-5 rounded-full shadow">
-                Popular
-              </span>
-            </div>
-            <div className="w-full flex flex-col items-center">
-              <div className="font-bold text-2xl mb-2">{proPlan.name}</div>
-              <div className="text-gray-500 mb-4 text-center">
-                {proPlan.description}
+            {/* Premium Plan Card */}
+            <div
+              className={`relative border-[4px] ${
+                currentPlanName === proPlan.name
+                  ? "border-red-500"
+                  : "border-gray-300"
+              } bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center`}
+            >
+              {/* Popular badge */}
+              <div className="absolute -top-5 left-0 right-0 flex justify-center">
+                <span className="bg-red-500 text-white text-xs font-bold py-1 px-5 rounded-full shadow">
+                  Popular
+                </span>
               </div>
-              <Button
-                className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
-                onClick={handleSubscribePro}
-                disabled={
-                  isAuthenticated
-                    ? currentPlanName === proPlan.name || subscriptionLoading
-                    : false
-                }
-              >
-                {isAuthenticated
-                  ? currentPlanName === proPlan.name
-                    ? "Current Plan"
-                    : subscriptionLoading
-                    ? "Processing..."
-                    : "Get Started"
-                  : "Get Started"}
-              </Button>
+              <div className="w-full flex flex-col items-center">
+                <div className="font-bold text-2xl mb-2">{proPlan.name}</div>
+                <span className="text-gray-800 font-mono">
+                  £10/Month or £100/Year
+                </span>
+                <div className="text-gray-500 mb-4 text-center">
+                  {proPlan.description}
+                </div>
+                <Button
+                  className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
+                  onClick={handleSubscribePro}
+                  disabled={
+                    isAuthenticated
+                      ? currentPlanName === proPlan.name || subscriptionLoading
+                      : false
+                  }
+                >
+                  {isAuthenticated
+                    ? currentPlanName === proPlan.name
+                      ? "Current Plan"
+                      : subscriptionLoading
+                      ? "Processing..."
+                      : "Get Started"
+                    : "Get Started"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-      {/* Plan Comparison Table */}
-      <div className="overflow-x-auto w-full mt-12 max-w-4xl rounded-xl shadow border border-gray-200">
-        <table className="w-full text-left bg-[#fcfbf6]">
-          <thead>
-            <tr>
-              <th className="w-1/2 md:w-1/3 p-4 bg-[#f7fafb] text-base font-semibold text-gray-800">
-                &nbsp;
-              </th>
-              <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
-                Basic
-              </th>
-              <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
-                Premium
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableData.map((row, idx) => (
-              <tr
-                key={row.label}
-                className={idx % 2 === 0 ? "bg-[#f8f5e8]" : "bg-white"}
-              >
-                {/* Row label */}
-                <td className="p-4 text-gray-700 font-medium border-t border-gray-200">
-                  {row.label}
-                </td>
-                {/* Free value */}
-                <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
-                  {typeof row.free === "boolean" ? (
-                    row.free ? (
-                      <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : (
-                      <XCircle className="h-6 w-6 text-red-400" />
-                    )
-                  ) : (
-                    row.free
-                  )}
-                </td>
-                {/* Pro value */}
-                <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
-                  {typeof row.pro === "boolean" ? (
-                    row.pro ? (
-                      <CheckCircle className="h-6 w-6 text-green-500" />
-                    ) : (
-                      <XCircle className="h-6 w-6 text-red-400" />
-                    )
-                  ) : (
-                    row.pro
-                  )}
-                </td>
+        {/* Plan Comparison Table */}
+        <div className="overflow-x-auto w-full mt-12 max-w-4xl rounded-xl shadow border border-gray-200">
+          <table className="w-full text-left bg-[#fcfbf6]">
+            <thead>
+              <tr>
+                <th className="w-1/2 md:w-1/3 p-4 bg-[#f7fafb] text-base font-semibold text-gray-800">
+                  &nbsp;
+                </th>
+                <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
+                  Basic
+                </th>
+                <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
+                  Premium
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {tableData.map((row, idx) => (
+                <tr
+                  key={row.label}
+                  className={idx % 2 === 0 ? "bg-[#f8f5e8]" : "bg-white"}
+                >
+                  {/* Row label */}
+                  <td className="p-4 text-gray-700 font-medium border-t border-gray-200">
+                    {row.label}
+                  </td>
+                  {/* Free value */}
+                  <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
+                    {typeof row.free === "boolean" ? (
+                      row.free ? (
+                        <CheckCircle className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <XCircle className="h-6 w-6 text-red-400" />
+                      )
+                    ) : (
+                      row.free
+                    )}
+                  </td>
+                  {/* Pro value */}
+                  <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
+                    {typeof row.pro === "boolean" ? (
+                      row.pro ? (
+                        <CheckCircle className="h-6 w-6 text-green-500" />
+                      ) : (
+                        <XCircle className="h-6 w-6 text-red-400" />
+                      )
+                    ) : (
+                      row.pro
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
+      {location.pathname === "/plans" && <OutceedoFooter />}
+    </>
   );
 }
