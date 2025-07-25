@@ -1,5 +1,7 @@
 import OutceedoFooter from "./Footer";
 import Navbar from "./Navbar";
+import Farhan from "../../assets/team/Farhan.jpg";
+import Neekunj from "../../assets/team/Neekunj.jpg";
 
 // Example team data -- replace with your actual images and members!
 const managementTeam = [
@@ -19,12 +21,12 @@ const technicalTeam = [
   {
     name: "Shakir Farhan",
     designation: "Backend Systems Engineer",
-    photo: "https://randomuser.me/api/portraits/women/68.jpg",
+    photo: Farhan,
   },
   {
     name: "Neekunj Chaturvedi",
     designation: "Frontend and Integration Engineer",
-    photo: "https://randomuser.me/api/portraits/men/12.jpg",
+    photo: Neekunj,
   },
   {
     name: "Sindhu",
@@ -84,7 +86,7 @@ function Teams() {
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="w-48 h-48 rounded-md object-cover mb-4 border-1 border-red-500"
+                    className="w-48 h-48 rounded-md object-cover mb-4 "
                   />
                   <h3 className="text-lg font-bold text-gray-800">
                     {member.name}
@@ -111,7 +113,7 @@ function Teams() {
                   <img
                     src={member.photo}
                     alt={member.name}
-                    className="w-48 h-48 rounded-md object-cover mb-4 border-1 border-red-500"
+                    className="w-48 h-48 rounded-md object-cover mb-4"
                   />
                   <h3 className="text-lg font-bold text-gray-800">
                     {member.name}
