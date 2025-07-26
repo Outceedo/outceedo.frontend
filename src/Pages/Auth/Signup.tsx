@@ -531,7 +531,15 @@ const Signup: React.FC = () => {
                   className="text-blue-600 underline"
                   target="_blank"
                 >
-                  Terms and Conditions
+                  Terms
+                </a>{" "}
+                and{" "}
+                <a
+                  href="/privacy"
+                  className="text-blue-600 underline"
+                  target="_blank"
+                >
+                  Privacy Policy
                 </a>
               </span>
             </label>
