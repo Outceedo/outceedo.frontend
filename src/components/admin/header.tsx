@@ -22,17 +22,21 @@ const menuItems = [
 
   // Player
   { path: "/player/player", name: "Players" },
-  { path: "/player/booking", name: "Booking" },
-  { path: "/player/sponsorshipapplication", name: "SponsorShip Application" },
-  { path: "/player/certifications&awards", name: "Certifications&Awards" },
-  { path: "/player/reports", name: "Reports" },
+ 
 
   // Expert
   { path: "/expert/expert", name: "Experts" },
-  { path: "/expert/expertbooking", name: "Booking" },
-  { path: "/expert/expertservices", name: "Services" },
-  { path: "/expert/expertcetification", name: "Certifications&Awards" },
-  { path: "/expert/expertreports", name: "Reports" },
+ 
+  //sponsors
+   { path: "/sponsor/sponsor", name: "Sponsor" },
+
+      
+
+   //Teams
+    { path: "/team/registeredteams", name: "RegisteredTeams" },
+
+    // Fans
+      { path: "/fans/fans", name: "Fans&Follwers" },
 ];
 
 function Header({ setOpen }: AdminHeaderProps) {

@@ -9,247 +9,286 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import profile from "../../assets/images/avatar.png";
-
+import { Input } from "@/components/ui/input";
+import { Search, FileText, FileX2 } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2, Eye, MoreVertical } from "lucide-react";
 const bookings = [
   {
-    invoice: "#923",
-    date: "Sun Nov 26 2023 11:46",
-    image: profile,
+    
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "Online Video Assessment",
-    amount: 719.0,
-    status: "Pending",
-  },
-  {
-    invoice: "#043",
-    date: "Wed Aug 09 2023 15:14",
-    image: profile,
-    player: "Player Name",
-    expert: "Expert Name",
-    assessment: "1-on-1 Online Training or advice",
+    service: "1-on-1 Online Training or advice",
     amount: 198.0,
+    date:"1 may 2020",
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#042",
-    date: "Thu Nov 23 2023 10:30",
-    image: profile,
+    
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "Online Video Assessment",
+    service: "Online Video Assessment",
     amount: 674.0,
+     date:"1 may 2020",
     status: "Completed",
+    report: false,
   },
   {
-    invoice: "#023",
-    date: "Tue Sept 12 2023 02:17",
-    image: profile,
+    
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "On-Field Live Assessment",
+    service: "On-Field Live Assessment",
     amount: 393.0,
+     date:"1 may 2020",
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#098",
-    date: "Sun Nov 26 2023 07:00",
-    image: profile,
+    
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "1-on-1 Online Training or advice",
+    service: "1-on-1 Online Training or advice",
     amount: 731.0,
+     date:"1 may 2020",
     status: "Pending",
+    report: false,
   },
   {
-    invoice: "#064",
-    date: "Mon Jul 24 2023 21:29",
-    image: profile,
+    
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "Online Video Assessment",
+    service: "Online Video Assessment",
     amount: 197.0,
+     date:"1 may 2020",
     status: "Pending",
+    report: true,
   },
   {
-    invoice: "#334",
-    date: "Sat Apr 22 2024 01:55",
-    image: profile,
+  
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "1-on-1 Online Training or advice",
+    service: "1-on-1 Online Training or advice",
     amount: 970.0,
+     date:"1 may 2020",
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#754",
-    date: "Wed Nov 22 2023 06:48",
-    image: profile,
+  
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "On-Field Live Assessment",
+    service: "On-Field Live Assessment",
     amount: 448.0,
+     date:"1 may 2020",
     status: "Pending",
+    report: false,
   },
   {
-    invoice: "#23",
-    date: "Sun Feb 04 2024 10:56",
-    image: profile,
+    
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "Online Video Assessment",
+    service: "Online Video Assessment",
     amount: 764.0,
+     date:"1 may 2020",
     status: "Completed",
+    report: true,
   },
   {
-    invoice: "#221",
-    date: "Fri Jul 21 2023 19:47:55",
-    image: profile,
+    
     player: "Player Name",
     expert: "Expert Name",
-    assessment: "On-Field Live Assessment",
+    service: "On-Field Live Assessment",
     amount: 385.0,
+     date:"1 may 2020",
     status: "Pending",
+    report: true,
   },
 ];
 
-const ExpertBooking: React.FC = () => {
+const Booking: React.FC = () => {
   const [months, setMonths] = useState<string[]>([]);
+const [currentPage, setCurrentPage] = useState(1);
+const pageSize = 10;
 
+const totalPages = Math.ceil(bookings.length / pageSize);
+const paginatedbookings = bookings.slice(
+  (currentPage - 1) * pageSize,
+  currentPage * pageSize
+);
   useEffect(() => {
-    const fetchMonths = () => {
-      const monthList = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ];
-      setTimeout(() => {
-        setMonths(monthList);
-      }, 500);
-    };
-
-    fetchMonths();
+    const monthList = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December",
+    ];
+    setTimeout(() => {
+      setMonths(monthList);
+    }, 500);
   }, []);
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Expert Booking</h2>
-        <select className="border px-3 py-2 rounded-md dark:bg-gray-900">
-          {months.map((month, index) => (
-            <option key={index} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
-      </div>
+   <div className="p-6">
+         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+     <h2 className="text-xl md:text-2xl font-semibold">Players booking</h2>
+   
+     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+       <div className="relative w-full sm:w-64 dark:bg-slate-600 dark:text-white rounded-lg">
+         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+         <Input
+           type="text"
+           placeholder="Search by name"
+           className="pl-9 w-full dark:bg-slate-700 text-sm sm:text-base"
+         />
+       </div>
+   
+       <select className="border px-3 py-2 rounded-md dark:bg-gray-900 w-full sm:w-auto">
+         {months.map((month, index) => (
+           <option key={index} value={month}>
+             {month}
+           </option>
+         ))}
+       </select>
+     </div>
+   </div>
 
-      <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-800">
+    <div className="rounded-lg shadow-sm border bg-white dark:bg-gray-800 dark:border-gray-700">
+  <Table className="min-w-[800px]">
+
+          <TableHeader className="bg-blue-100 dark:bg-blue-900 text-xl ">
             <TableRow>
               <TableHead></TableHead>
-              <TableHead>Invoice</TableHead>
-              <TableHead>Expert</TableHead>
-               <TableHead>Player</TableHead>
-              <TableHead>Assessment</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
+              <TableHead>Experts Name</TableHead>
+              <TableHead>Players Name</TableHead>
+              <TableHead>Service Request</TableHead>
+              <TableHead>Service Fee's</TableHead>
+               <TableHead>Service Dates</TableHead>
+               <TableHead>status</TableHead>
+              <TableHead>Reports</TableHead>
+              <TableHead>Actions</TableHead>
+              </TableRow>
           </TableHeader>
 
           <TableBody>
-            {bookings.map((booking, index) => (
+            {paginatedbookings.map((booking, index) => (
               <TableRow key={index}>
                 <TableCell>
                   <Checkbox />
                 </TableCell>
+                <TableCell>
+                 
+                    <Link
+                      to={`/expert-profile/${booking.expert}`}
+                      className="text-blue-600 underline font-medium"
+                    >
+                      {booking.expert}
+                    </Link>
+                  
+                </TableCell>
 
                 <TableCell>
-                  <div className="flex items-center gap-2 font-medium">
-                    <i className="far fa-file-lines text-gray-500 text-sm dark:text-gray-400"></i>
-                    <span>Invoice {booking.invoice}</span>
-                  </div>
-                  <div className="text-sm text-gray-500">{booking.date}</div>
+                 
+                    <Link
+                      to={`/player-profile/${booking.player}`}
+                      className="text-blue-600 underline font-medium"
+                    >
+                      {booking.player}
+                    </Link>
+                  
                 </TableCell>
 
-               <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={booking.image}
-                      alt={booking.expert}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{booking.expert}</span>
-                      <div className="text-sm text-gray-500">
-                        Secondary info
-                      </div>
-                    </div>
-                  </div>
-                </TableCell>
-
-
+                <TableCell>{booking.service}</TableCell>
 
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={booking.image}
-                      alt={booking.player}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{booking.player}</span>
-                      <div className="text-sm text-gray-500">
-                        Secondary info
-                      </div>
-                    </div>
+                  <div className="flex flex-col">
+                    <span className="text-base font-semibold">
+                      £{booking.amount.toFixed(2)}
+                    </span>
+                    <span
+                      className={`text-sm ${
+                        booking.status === "Completed"
+                          ? "text-green-600"
+                          : "text-yellow-600"
+                      }`}
+                    >
+                      {booking.status === "Completed" ? "Paid" : "Pending"}
+                    </span>
                   </div>
                 </TableCell>
-
-               
-
-                <TableCell>{booking.assessment}</TableCell>
-                <TableCell>{booking.amount.toFixed(2)}</TableCell>
-
+                  <TableCell>{booking.date}</TableCell>
                 <TableCell>
                   <Badge
                     className={
-                      booking.status === "Completed"
-                        ? "bg-green-200 text-green-800 w-20 p-1"
-                        : "bg-yellow-200 text-yellow-800 w-20 p-1"
+                                  booking.status === "Completed"
+                        ? "bg-green-200 text-green-800 w-20 p-2"
+                        : "bg-yellow-200 text-yellow-800 w-20 p-2"
                     }
                   >
                     {booking.status}
                   </Badge>
+                </TableCell>
+
+                <TableCell className="px-4 py-2">
+                  {booking.report ? (
+                    <FileText className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <FileX2 className="w-5 h-5 text-gray-400" />
+                  )}
+                </TableCell>
+                <TableCell className="flex gap-2 justify-center">
+                  <Button size="icon" variant="ghost">
+                    <Trash2 className="w-4 h-4 text-red-500" />
+                  </Button>
+                  <Button size="icon" variant="ghost">
+                    <Pencil className="w-4 h-4 text-gray-600 dark:text-white" />
+                  </Button>
+                  <Button size="icon" variant="ghost">
+                    <Eye className="w-4 h-4 text-gray-600 dark:text-white" />
+                  </Button>
+                  <Button size="icon" variant="ghost">
+                    <MoreVertical className="w-4 h-4 text-gray-600 dark:text-white" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+            <div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-3 text-sm text-gray-500 dark:text-white">
+              <div className="text-center sm:text-left w-full sm:w-auto">
+                Showing {Math.min((currentPage - 1) * pageSize + 1, bookings.length)}–
+                {Math.min(currentPage * pageSize, bookings.length)} of {bookings.length}
+              </div>
 
-      <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-white">
-        <div>Showing 1 out 100</div>
-        <div className="flex gap-1">
-          <button className="border px-2 rounded">⟨</button>
-          <button className="border px-2 rounded bg-gray-200">1</button>
-          <button className="border px-2 rounded">2</button>
-          <button className="border px-2 rounded">⟩</button>
-        </div>
-      </div>
+              <div className="flex flex-wrap justify-center gap-1 w-full sm:w-auto">
+                <button
+                  className="border px-2 py-1 rounded"
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                >
+                  ⟨
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => (
+                  <button
+                    key={i}
+                    className={`border px-3 py-1 rounded ${currentPage === i + 1 ? "bg-gray-300 font-semibold" : ""}`}
+                    onClick={() => setCurrentPage(i + 1)}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+                <button
+                  className="border px-2 py-1 rounded"
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                >
+                  ⟩
+                </button>
+              </div>
+            </div>
+
     </div>
   );
 };
 
-export default ExpertBooking;
+export default Booking;

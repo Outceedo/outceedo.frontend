@@ -5,6 +5,8 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
+import outceedologo from '@/assets/images/outceedologo.png'; 
+
 
 // --- Role-based Menu Definitions ---
 interface MenuItem {
@@ -49,139 +51,192 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
   player: [
     {
       id: 1,
-      name: "Players",
+      name: "Registered Players",
       icon: "fas fa-user-tie",
       path: "/admin/player",
     },
     {
       id: 2,
-      name: "Bookings",
+      name: "Booking Experts",
       icon: "fas fa-calendar-check",
-      path: "/admin/booking",
+      path: "/admin/player/booking",
     },
     {
       id: 3,
-      name: "SponsorShip Application ",
+      name: "SponsorShip Request",
       icon: " fas fa-file-signature",
-      path: "/admin/sponsorshipapplication",
+      path: "/admin/player/sponsorshipapplication",
     },
     {
       id: 4,
-      name: "Certifications&Award",
-      icon: "fas fa-award ",
-      path: "/admin/certifications&awards",
+      name: "Services Transactions",
+      icon: "fas fa-money-check-alt",
+      path: "/admin/player/ServiceTransaction",
     },
-    {
-      id: 5,
-      name: "Reports",
-      icon: "fas fa-file-alt",
-      path: "/admin/reports",
-    },
-
+        {
+     id: 5,
+       name: "Player's Media",
+      icon: "fas fa-photo-video",
+      path: "/admin/player/media",
+    }, 
+   
     {
       id: 6,
       name: "Dashboard",
-      icon: "fas fa-table-columns",
+      icon: "fas fa-chart-line",
       path: "/admin/dashboard",
     },
   ],
   expert: [
     {
       id: 1,
-      name: "Experts",
+      name: "Registered Experts",
       icon: "fas fa-user-tie",
       path: "/admin/expert",
     },
     {
       id: 2,
-      name: "Bookings",
+      name: "Players Bookings",
       icon: "fas fa-calendar-check",
-      path: "/admin/expertbooking",
+      path: "/admin/expert/booking",
     },
 
     {
       id: 3,
-      name: "Services",
+      name: "Services Offered",
       icon: "fas fa-hands-helping",
-      path: "/admin/expertservices",
-    },
-    {
-      id: 4,
-      name: "Certifications&Awards",
-      icon: "fas fa-award ",
-      path: "/admin/expertcetification",
-    },
-    {
-      id: 5,
-      name: "Reports",
-      icon: "fas fa-file-alt",
-      path: "/admin/expertreports",
+      path: "/admin/expert/services",
     },
 
-    {
+     {
+      id: 3,
+      name: "Transactions/Claims",
+      icon: "fas fa-money-check-alt",
+      path: "/admin/expert/paymentclaims",
+    },
+
+     {
+     id: 4,
+       name: "Experts Media",
+      icon: "fas fa-photo-video",
+
+      path: "/admin/expert/media",
+    },
+    
+     {
       id: 6,
       name: "Dashboard",
-      icon: "fas fa-table-columns",
+      icon: "fas fa-chart-line",
+      path: "/admin/dashboard",
+    },
+   
+  ],
+  sponsor: [
+   {
+  id: 1,
+  name: "Registered Sponsors",
+  icon: "fas fa-user-tie", 
+  path: "/admin/sponsor",
+},
+{
+  id: 2,
+  name: "Players Request",
+  icon: "fas fa-file-signature", 
+  path: "/admin/sponsor/playersrequest",
+},
+{
+  id: 3,
+  name: "Sponsorship Offered",
+  icon: "fas fa-file-alt", 
+  path: "/admin/sponsor/sponsorshipoffered",
+},
+{
+  id: 4,
+  name: "Awarded Sponsorships",
+  icon: "fas fa-money-check-alt", 
+  path: "/admin/sponsor/sponsorshiptransactions",
+},
+{
+  id: 5,
+  name: "Sponsors Media",
+  icon: "fas fa-photo-video", 
+  path: "/admin/sponsor/sponsormedia",
+},
+
+
+ {
+      id: 6,
+      name: "Dashboard",
+      icon: "fas fa-chart-line",
+      path: "/admin/dashboard",
+    },
+
+
+
+
+  ],
+
+ team: [
+  {
+    id: 1,
+    name: "Registered Teams",
+    icon: "fas fa-users", // better for groups/teams
+    path: "/admin/team",
+  },
+
+  {
+    id: 2,
+    name: "Registered Clubs",
+    icon: "fas fa-building", // represents organizations/clubs
+    path: "/admin/team/registeredclubs",
+  },
+
+  {
+    id: 3,
+    name: "Players Associations",
+    icon: "fas fa-handshake", // suitable for associations
+    path: "/admin/team/playersassociations",
+  },
+  {
+    id: 4,
+    name: "Reviews & Comments",
+    icon: "fas fa-comments", // ideal for reviews/comments
+    path: "/admin/team/reviews&comments",
+  },
+  {
+    id: 5,
+    name: "Activities",
+    icon: "fas fa-running", // perfect for activities/sports
+    path: "/admin/team/activities",
+  },
+
+
+ {
+      id: 6,
+      name: "Dashboard",
+      icon: "fas fa-chart-line",
       path: "/admin/dashboard",
     },
   ],
-  sponsor: [
-    {
-      id: 1,
-      name: "Dashboard",
-      icon: "fas fa-table-columns",
-      path: "/sponsor/dashboard",
-    },
-    {
+
+
+ fan: [
+     {
+  id: 1,
+  name: "Fans & Follwers",
+  icon: "fas fa-user-tie", 
+  path: "/admin/fan",
+},
+ {
       id: 2,
-      name: "Sponsorships",
-      icon: "fas fa-hand-holding-usd",
-      path: "/sponsor/sponsorships",
-    },
-    { id: 3, name: "Profile", icon: "fas fa-user", path: "/sponsor/profile" },
-    {
-      id: 4,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
-    },
-  ],
-  team: [
-    {
-      id: 1,
       name: "Dashboard",
-      icon: "fas fa-table-columns",
-      path: "/team/dashboard",
+      icon: "fas fa-chart-line",
+      path: "/admin/dashboard",
     },
-    { id: 2, name: "Matches", icon: "fas fa-futbol", path: "/team/matches" },
-    { id: 3, name: "Members", icon: "fas fa-users", path: "/team/members" },
-    { id: 4, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
-    {
-      id: 5,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
-    },
+
   ],
-  fan: [
-    {
-      id: 1,
-      name: "Dashboard",
-      icon: "fas fa-table-columns",
-      path: "/fan/dashboard",
-    },
-    { id: 2, name: "Favourites", icon: "fas fa-star", path: "/fan/favourites" },
-    { id: 3, name: "Profile", icon: "fas fa-user", path: "/fan/profile" },
-    {
-      id: 4,
-      name: "Logout",
-      icon: "fas fa-sign-out-alt",
-      path: "/logout",
-      isLogout: true,
-    },
-  ],
+
+
 };
 
 // --- Utility to get role from path ---
@@ -290,54 +345,25 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
         </div>
       )}
 
-      {/* Logo */}
-      <h1 className="font-bold text-center text-gray-800 dark:text-white">
-        LOGO
-      </h1>
+     {/* Logo */}
+<div className="flex mt-1 ml-5 lg:ml-6">
+  <div className="mb-8">
+    <img
+      src={outceedologo} // Update this path based on your project structure
+      alt="Outceedo Logo"
+      className="h-12 w-auto" // adjust size if needed
+    />
+  </div>
+</div>
+
+      
 
       {/* Profile Section */}
-      <div className="flex flex-col items-center gap-2 mb-2">
-        <img
-          src={currentProfile?.photo || profile}
-          alt="Profile"
-          className="rounded-full w-20 h-20 cursor-pointer object-cover"
-          onClick={() =>
-            navigate(`/${getRoleFromPath(location.pathname)}/details-form`)
-          }
-          onError={(e) => {
-            const target = e.target as HTMLImageElement;
-            target.src = profile;
-          }}
-        />
-        <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
-          {adminName}
-        </h2>
-        <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400 font-sans">
-          {currentProfile?.age
-            ? `Age ${currentProfile.age} yrs (${
-                new Date().getFullYear() - currentProfile.age
-              })`
-            : ""}
-        </p>
-        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {adminProfession.toUpperCase()}
-          {adminSubProfession
-            ? ` - ${
-                adminSubProfession.charAt(0).toUpperCase() +
-                adminSubProfession.slice(1)
-              }`
-            : ""}
-        </p>
-        <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {currentProfile?.gender
-            ? currentProfile.gender.charAt(0).toUpperCase() +
-              currentProfile.gender.slice(1)
-            : ""}
-        </p>
-        {status === "loading" && (
-          <div className="text-sm text-gray-500">Loading profile...</div>
-        )}
-      </div>
+      
+      {/* Sidebar Title */}
+      
+      
+      
 
       {/* Navigation Items */}
       <div className="flex flex-col gap-3 w-full px-4">

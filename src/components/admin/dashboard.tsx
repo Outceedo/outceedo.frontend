@@ -1,4 +1,9 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   User2,
@@ -6,8 +11,6 @@ import {
   Users,
   UserPlus2,
   UserSquare2,
-  TrendingUp,
-  TrendingDown,
 } from "lucide-react";
 import {
   XAxis,
@@ -18,7 +21,6 @@ import {
   Area,
   AreaChart,
 } from "recharts";
-
 import { useNavigate } from "react-router-dom";
 
 const metrics = [
@@ -27,36 +29,35 @@ const metrics = [
     value: "40,689",
     icon: <User2 className="w-6 h-6 text-primary" />,
     changeColor: "text-green-500",
-    bg: "bg-violet-50",
+    bg: "bg-violet-50 dark:bg-violet-900",
   },
   {
     title: "Total Experts",
     value: "10,293",
     icon: <UserCheck2 className="w-6 h-6 text-yellow-400" />,
     changeColor: "text-yellow-500",
-    bg: "bg-yellow-50",
+    bg: "bg-yellow-50 dark:bg-yellow-900",
   },
   {
     title: "Total Sponsors",
     value: "9,000",
     icon: <UserPlus2 className="w-6 h-6 text-green-400" />,
     changeColor: "text-red-500",
-
-    bg: "bg-green-50",
+    bg: "bg-green-50 dark:bg-green-900",
   },
   {
     title: "Total Teams",
     value: "2040",
     icon: <Users className="w-6 h-6 text-green-600" />,
     changeColor: "text-green-500",
-    bg: "bg-green-50",
+    bg: "bg-green-50 dark:bg-green-900",
   },
   {
     title: "Total Fans & Followers",
     value: "2040",
     icon: <UserSquare2 className="w-6 h-6 text-fuchsia-400" />,
     changeColor: "text-green-500",
-    bg: "bg-fuchsia-50",
+    bg: "bg-fuchsia-50 dark:bg-fuchsia-900",
   },
 ];
 
@@ -93,7 +94,6 @@ const categories = [
   },
 ];
 
-// Fake chart data
 const chartData = Array.from({ length: 30 }, (_, i) => ({
   name: (i * 20 + 50).toString(),
   value: Math.round(Math.random() * 50 + 30 + (i % 7 === 0 ? 30 : 0)),
@@ -102,13 +102,13 @@ const chartData = Array.from({ length: 30 }, (_, i) => ({
 export default function Dashboardadmin() {
   const nav = useNavigate();
   return (
-    <div className="w-full max-w-full p-4 bg-[#f8faff] rounded-2xl">
+    <div className="w-full max-w-full p-4 bg-[#f8faff] dark:bg-[#1f1f22] text-black dark:text-white rounded-2xl">
       {/* Top metrics cards */}
       <div className="flex gap-4 mb-4">
         {metrics.map((m, i) => (
           <Card key={i} className={`flex-1 px-3 py-2 ${m.bg} shadow-none`}>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-muted-foreground dark:text-gray-300">
                 {m.title}
               </CardTitle>
               {m.icon}
@@ -118,8 +118,7 @@ export default function Dashboardadmin() {
               <div
                 className={`flex items-center gap-1 text-xs mt-1 ${m.changeColor}`}
               >
-                {m.trendingIcon}
-                <span>{m.change}</span>
+                {/* You can add trending icon and % change here if needed */}
               </div>
             </CardContent>
           </Card>
@@ -131,11 +130,11 @@ export default function Dashboardadmin() {
         {categories.map((cat, i) => (
           <Button
             key={i}
-            className={`${cat.color} ${cat.text} flex-1 font-semibold rounded-lg shadow-none`}
+            className={`${cat.color} ${cat.text} flex-1 font-bold h-16 text-2xl rounded-lg shadow-none cursor-pointer`}
             onClick={() => {
-              const role = cat.path.split("/")[1]; // Extracts role from path
-              localStorage.setItem("role", role); // Stores it for sidebar to use
-              nav(cat.path); // Navigates to selected dashboard
+              const role = cat.path.split("/")[1];
+              localStorage.setItem("role", role);
+              nav(cat.path);
             }}
             variant="default"
             size="lg"
@@ -145,22 +144,19 @@ export default function Dashboardadmin() {
         ))}
       </div>
 
-      {/* Engagement Chart Card */}
-      <Card className="mb-4 shadow-none">
+      {/* Engagement Chart */}
+      <Card className="mb-4 shadow-none bg-white dark:bg-[#2c2c2f]">
         <CardHeader className="flex flex-row items-center justify-between pb-1">
-          <CardTitle className="text-base font-semibold">
+          <CardTitle className="text-base font-semibold dark:text-white">
             User Engagement
           </CardTitle>
-          {/* Dropdown placeholder */}
-          <div>
-            <Button
-              variant="outline"
-              size="sm"
-              className="text-xs rounded-md border-gray-200"
-            >
-              October
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs rounded-md border-gray-200 dark:border-gray-700 dark:text-gray-200"
+          >
+            October
+          </Button>
         </CardHeader>
         <CardContent className="h-[260px]">
           <ResponsiveContainer width="100%" height="100%">
@@ -171,7 +167,10 @@ export default function Dashboardadmin() {
                   <stop offset="100%" stopColor="#22c55e" stopOpacity={0.05} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 6" className="stroke-muted" />
+              <CartesianGrid
+                strokeDasharray="3 6"
+                className="stroke-muted dark:stroke-gray-700"
+              />
               <XAxis dataKey="name" hide />
               <YAxis hide domain={[20, 100]} />
               <Tooltip
@@ -197,23 +196,22 @@ export default function Dashboardadmin() {
         </CardContent>
       </Card>
 
-      {/* User Details Section placeholder */}
-      <Card className="shadow-none">
+      {/* User Details */}
+      <Card className="shadow-none bg-white dark:bg-[#2c2c2f]">
         <CardHeader className="flex flex-row items-center justify-between pb-1">
-          <CardTitle className="text-base font-semibold">
+          <CardTitle className="text-base font-semibold dark:text-white">
             User Details
           </CardTitle>
           <Button
             variant="outline"
             size="sm"
-            className="text-xs rounded-md border-gray-200"
+            className="text-xs rounded-md border-gray-200 dark:border-gray-700 dark:text-gray-200"
           >
             October
           </Button>
         </CardHeader>
         <CardContent>
-          {/* Add User Details table or content here */}
-          <div className="text-muted-foreground text-sm">
+          <div className="text-muted-foreground text-sm dark:text-gray-400">
             No user details to display.
           </div>
         </CardContent>

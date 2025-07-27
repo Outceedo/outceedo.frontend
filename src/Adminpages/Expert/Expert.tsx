@@ -1,35 +1,113 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Table,
   TableBody,
   TableCell,
   TableHead,
-  TableHeader,
   TableRow,
+  TableHeader,
 } from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, Eye, MoreVertical } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import profile from "../../assets/images/avatar.png";
+import { Link } from "react-router-dom";
 
-const expert = [
-  { image: profile, name: "User name", joined: "18th June 2025", header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025", header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Inactive" },
-  { image: profile, name: "User name", joined: "18th June 2025",  header: "Active" },
-  { image: profile, name: "User name", joined: "18th June 2025", header: "Inactive" },
+const experts = [
+  {
+    id: 1,
+    name: "User One",
+    joined: "18th June 2025",
+    Service: "Online Video Assessment",
+    fee: "400",
+    status: "Inactive",
+  },
+  {
+    id: 2,
+    name: "User Two",
+    joined: "18th June 2025",
+    Service: "1-on-1 Online Training or advice",
+    fee: "500.00",
+    status: "Active",
+  },
+  {
+    id: 3,
+    name: "User Three",
+    joined: "18th June 2025",
+    Service: "1-on-1 Online Training or advice",
+    fee: "400",
+    status: "Active",
+  },
+  {
+    id: 4,
+    name: "User Four",
+    joined: "18th June 2025",
+    Service: "Online Video Assessment",
+    fee: "500.00",
+    status: "Active",
+  },
+  {
+    id: 5,
+    name: "User Five",
+    joined: "18th June 2025",
+    Service: "On-Field Live Assessment",
+    fee: "400",
+    status: "Inactive",
+  },
+  {
+    id: 6,
+    name: "User Six",
+    joined: "18th June 2025",
+    Service: "Online Video Assessment",
+    fee: "500.00",
+    status: "Active",
+  },
+  {
+    id: 7,
+    name: "User Seven",
+    joined: "18th June 2025",
+    Service: "On-Field Live Assessment",
+    fee: "400",
+    status: "Inactive",
+  },
+  {
+    id: 8,
+    name: "User Eight",
+    joined: "18th June 2025",
+    Service: "Online Video Assessment",
+    fee: "500.00",
+    status: "Inactive",
+  },
+  {
+    id: 9,
+    name: "User Nine",
+    joined: "18th June 2025",
+   Service: "On-Field Live Assessment",
+    fee: "500.00",
+    status: "Active",
+  },
+  {
+    id: 10,
+    name: "User Ten",
+    joined: "18th June 2025",
+    Service: "Online Video Assessment",
+    fee: "500.00",
+    status: "Inactive",
+  },
 ];
 
-const Expert: React.FC = () => {
+const expert: React.FC = () => {
   const [months, setMonths] = useState<string[]>([]);
+const [currentPage, setCurrentPage] = useState(1);
+const pageSize = 10;
 
+const totalPages = Math.ceil(experts.length / pageSize);
+const paginatedexperts = experts.slice(
+  (currentPage - 1) * pageSize,
+  currentPage * pageSize
+);
   useEffect(() => {
     const fetchMonths = () => {
       const monthList = [
@@ -46,63 +124,73 @@ const Expert: React.FC = () => {
 
   return (
     <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Expert Details</h2>
-        <select className="border px-3 py-2 rounded-md dark:bg-gray-900">
-          {months.map((month, index) => (
-            <option key={index} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
-      </div>
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
+  <h2 className="text-xl md:text-2xl font-semibold">Registered Experts</h2>
 
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-800">
+  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
+    <div className="relative w-full sm:w-64 dark:bg-slate-600 dark:text-white rounded-lg">
+      <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
+      <Input
+        type="text"
+        placeholder="Search by name"
+        className="pl-9 w-full dark:bg-slate-700 text-sm sm:text-base"
+      />
+    </div>
+
+    <select className="border px-3 py-2 rounded-md dark:bg-gray-900 w-full sm:w-auto">
+      {months.map((month, index) => (
+        <option key={index} value={month}>
+          {month}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
+
+      <div className="rounded-lg shadow-sm border bg-white dark:bg-gray-800 dark:border-gray-700">
+      <Table className="min-w-[800px]">
+          <TableHeader className="bg-blue-100 dark:bg-blue-900 text-xl">
             <TableRow>
-              <TableHead></TableHead>
-              <TableHead>Expert Names</TableHead>
-              <TableHead>Joined</TableHead>
-              <TableHead>Header</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead  />
+              <TableHead >Expert Name</TableHead>
+              <TableHead >Registration Date</TableHead>
+              <TableHead >Service Type</TableHead>
+              <TableHead >Service Fee</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead >Actions</TableHead>
             </TableRow>
           </TableHeader>
-
           <TableBody>
-            {expert.map((expert, index) => (
+            {paginatedexperts.map((expert, index) => (
               <TableRow key={index}>
                 <TableCell>
                   <Checkbox />
                 </TableCell>
-
                 <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={expert.image}
-                      alt={expert.name}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <span>{expert.name}</span>
-                  </div>
+                 
+                    <Link
+                      to={`/expert-profile/${expert.id}`}
+                      className="text-blue-600 underline" >
+                      {expert.name}
+                    </Link>
+                  
                 </TableCell>
-
                 <TableCell>{expert.joined}</TableCell>
-                
-
-                <TableCell>
+                <TableCell>{expert.Service}</TableCell>
+                <TableCell className="font-bold">£{Number(expert.fee).toFixed(2)}</TableCell>
+               <TableCell>
                   <Badge
                     className={
-                      expert.header === "Active"
-                        ? "bg-green-200 text-green-800 p-1 w-16"
-                        : "bg-yellow-200 text-yellow-800 p-1 w-16"
+                      expert.status === "Active"
+                        ? "bg-green-200 text-green-800 p-2 w-20"
+                        : "bg-yellow-200 text-yellow-800 p-2 w-20"
                     }
                   >
-                    {expert.header}
+                    {expert.status}
                   </Badge>
                 </TableCell>
 
-                <TableCell className="flex gap-2 justify-end">
+                <TableCell className="flex gap-2 justify-center">
                   <Button size="icon" variant="ghost">
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
@@ -121,18 +209,38 @@ const Expert: React.FC = () => {
           </TableBody>
         </Table>
       </div>
+<div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2 text-sm text-gray-500 dark:text-white">
+  <div>
+    Showing {Math.min((currentPage - 1) * pageSize + 1, experts.length)}–{Math.min(currentPage * pageSize, experts.length)} out of {experts.length}
+  </div>
+  <div className="flex gap-1">
+    <button
+      className="border px-2 rounded"
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+    >
+      ⟨
+    </button>
+    {Array.from({ length: totalPages }, (_, i) => (
+      <button
+        key={i}
+        className={`border px-2 rounded ${currentPage === i + 1 ? "bg-gray-300" : ""}`}
+        onClick={() => setCurrentPage(i + 1)}
+      >
+        {i + 1}
+      </button>
+    ))}
 
-      <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-white">
-        <div>Showing 1 out 100</div>
-        <div className="flex gap-1">
-          <button className="border px-2 rounded">⟨</button>
-          <button className="border px-2 rounded bg-gray-200">1</button>
-          <button className="border px-2 rounded">2</button>
-          <button className="border px-2 rounded">⟩</button>
-        </div>
-      </div>
+    <button
+      className="border px-2 rounded"
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+    >
+      ⟩
+    </button>
+  </div>
+</div>
     </div>
   );
 };
-
-export default Expert;
+export default expert;

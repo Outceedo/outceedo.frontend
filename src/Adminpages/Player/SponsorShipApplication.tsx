@@ -7,25 +7,79 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import profile from "../../assets/images/avatar.png";
+import { Edit2, Eye, Trash2, MoreHorizontal } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const applications = [
-  { invoice: "#923", date: "Sun Nov 26 2023 11:46", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 719.0, showDate: "12-06-2025" },
-  { invoice: "#043", date: "Wed Aug 09 2023 15:14", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 198.0, showDate: "12-06-2025" },
-  { invoice: "#042", date: "Thu Nov 23 2023 10:30", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 674.0, showDate: "12-06-2025" },
-  { invoice: "#023", date: "Tue Sep 12 2023 02:17", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 393.0, showDate: "12-06-2025" },
-  { invoice: "#098", date: "Sun Nov 26 2023 07:00", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 731.0, showDate: "12-06-2025" },
-  { invoice: "#064", date: "Sun Apr 21 2024 21:29", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 197.0, showDate: "12-06-2025" },
-  { invoice: "#334", date: "Thu Feb 15 2024 01:55", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 970.0, showDate: "12-06-2025" },
-  { invoice: "#754", date: "Wed Nov 22 2023 06:48", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 448.0, showDate: "12-06-2025" },
-  { invoice: "#23", date: "Sun Feb 04 2024 10:56", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 764.0, showDate: "12-06-2025" },
-  { invoice: "#221", date: "Fri Jul 21 2023 19:47:52", sponsor: "Text cell lg", image: profile, player: "Text cell lg", amount: 385.0, showDate: "12-06-2025" },
+  {
+    sponsor: "Sponsor A",
+    sponsorSecondary: "Secondary info",
+    player: "Player X",
+    playerSecondary: "Secondary info",
+    applicationDate: "12-06-2025",
+    type: "Monetary",
+    allocatedDate: "12-06-2025",
+    amount: "£ 380",
+    status: "Pending",
+  },
+  {
+    sponsor: "Sponsor B",
+    sponsorSecondary: "Secondary info",
+    player: "Player Y",
+    playerSecondary: "Secondary info",
+    applicationDate: "12-06-2025",
+    type: "Product",
+    allocatedDate: "12-06-2025",
+    amount: "£ 380",
+    status: "Approved",
+  },
+  {
+    sponsor: "Sponsor C",
+    sponsorSecondary: "Secondary info",
+    player: "Player Z",
+    playerSecondary: "Secondary info",
+    applicationDate: "12-06-2025",
+    type: "Product",
+    allocatedDate: "12-06-2025",
+    amount: "£ 380",
+    status: "Approved",
+  },
+  {
+    sponsor: "Sponsor D",
+    sponsorSecondary: "Secondary info",
+    player: "Player W",
+    playerSecondary: "Secondary info",
+    applicationDate: "12-06-2025",
+    type: "Monetary",
+    allocatedDate: "12-06-2025",
+    amount: "£ 380",
+    status: "Pending",
+  },
+  {
+    sponsor: "Sponsor E",
+    sponsorSecondary: "Secondary info",
+    player: "Player T",
+    playerSecondary: "Secondary info",
+    applicationDate: "12-06-2025",
+    type: "Product",
+    allocatedDate: "12-06-2025",
+    amount: "£ 380",
+    status: "Rejected",
+  },
 ];
-
+ 
 const SponsorShipApplication: React.FC = () => {
-  const [months, setMonths] = useState<string[]>([]);
+  const [, setMonths] = useState<string[]>([]);
+const [currentPage, setCurrentPage] = useState(1);
+const pageSize = 10;
 
+const totalPages = Math.ceil(applications.length / pageSize);
+const paginatedSponsor = applications.slice(
+  (currentPage - 1) * pageSize,
+  currentPage * pageSize
+);
   useEffect(() => {
     const fetchMonths = () => {
       const monthList = [
@@ -41,91 +95,141 @@ const SponsorShipApplication: React.FC = () => {
   }, []);
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-2xl font-semibold">Sponsor Applications</h2>
-        <select className="border px-3 py-2 rounded-md dark:bg-gray-800">
-          {months.map((month, index) => (
-            <option key={index} value={month}>
-              {month}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <div className="rounded-lg border overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-red-50 dark:bg-gray-700">
+ <div className="p-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+  <h2 className="text-xl sm:text-2xl font-semibold">Sponsorship Request</h2>
+  </div>
+<div className="rounded-lg shadow-sm border bg-white dark:bg-gray-800 dark:border-gray-700">
+  <Table className="min-w-[800px]">
+          <TableHeader className="bg-blue-100 dark:bg-blue-900 text-xl">
             <TableRow>
-              <TableHead></TableHead>
-              <TableHead>Invoice</TableHead>
-              <TableHead>Sponsor</TableHead>
-              <TableHead>Player</TableHead>
-              <TableHead>Amount</TableHead>
-              <TableHead>Date</TableHead>
+              <TableHead ></TableHead>
+              <TableHead>Player's Name</TableHead>
+              <TableHead >Sponsor's Name</TableHead>
+              <TableHead >Application Date</TableHead>
+              <TableHead >Sponsorship Type</TableHead>
+              <TableHead >Allocated Date</TableHead>
+              <TableHead >Sponsorship</TableHead>
+              <TableHead >Status</TableHead>
+              <TableHead >Actions</TableHead>
             </TableRow>
           </TableHeader>
-
           <TableBody>
-            {applications.map((app, index) => (
-              <TableRow key={index}>
-                <TableCell>
+            {paginatedSponsor.map((app, index) => (
+              <TableRow key={index} className="border-b last:border-b-0 ">
+                <TableCell className="px-2 sm:px-4 py-2 align-middle">
                   <Checkbox />
                 </TableCell>
+               
+               {/* Player's Name */}
+<TableCell className="px-2 sm:px-4 py-2 align-middle">
+  <Link to={`/players/${app.player}`} className="font-medium text-xs sm:text-sm md:text-base text-blue-600 underline hover:opacity-80">
+    {app.player}
+  </Link>
+  <div className="text-[10px] sm:text-xs text-gray-500 dark:text-white">{app.playerSecondary}</div>
+</TableCell>
 
-                <TableCell>
-                  <div className="flex items-center gap-2 font-medium">
-                    <i className="far fa-file-lines text-gray-500 text-sm dark:text-gray-400"></i>
-                    <span>Application {app.invoice}</span>
-                  </div>
-                  <div className="text-sm text-gray-500">{app.date}</div>
+{/* Sponsor's Name */}
+<TableCell className="px-2 sm:px-4 py-2 align-middle">
+  <Link to={`/sponsors/${app.sponsor }`} className="font-medium text-xs sm:text-sm md:text-base text-blue-600 underline hover:opacity-80">
+    {app.sponsor}
+  </Link>
+  <div className="text-[10px] sm:text-xs text-gray-500 dark:text-white">{app.sponsorSecondary}</div>
+</TableCell>
+               
+
+                {/* Application Date */}
+                <TableCell className="px-2 sm:px-4 py-2 align-middle">
+                  <span className="text-xs sm:text-sm">{app.applicationDate}</span>
                 </TableCell>
 
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={app.image}
-                      alt={app.sponsor}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{app.sponsor}</span>
-                      <div className="text-sm text-gray-500">Secondary info</div>
-                    </div>
-                  </div>
+                {/* Type */}
+                <TableCell className="px-2 sm:px-4 py-2 align-middle">
+                  <span className="text-xs sm:text-sm">{app.type}</span>
                 </TableCell>
 
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={app.image}
-                      alt={app.player}
-                      className="w-8 h-8 rounded-full object-cover"
-                    />
-                    <div className="flex flex-col">
-                      <span className="font-medium">{app.player}</span>
-                      <div className="text-sm text-gray-500">Secondary info</div>
-                    </div>
-                  </div>
+                {/* Allocated Date */}
+                <TableCell className="px-2 sm:px-4 py-2 align-middle">
+                  <span className="text-xs sm:text-sm">{app.allocatedDate}</span>
                 </TableCell>
 
-                <TableCell>{app.amount.toFixed(2)}</TableCell>
-                <TableCell>{app.showDate}</TableCell>
+                {/* Sponsorship Amount */}
+                <TableCell className="px-2 sm:px-4 py-2 align-middle font-semibold">
+                  <span className="text-xs sm:text-sm">{app.amount}</span>
+                </TableCell>
+
+                {/* Status */}
+                <TableCell className="px-2 sm:px-4 py-2 align-middle">
+                  <Badge
+                    className={
+                      app.status === "Approved"
+                        ? "bg-green-100 text-green-800 p-1 w-20 text-xs sm:text-sm"
+                        : app.status === "Rejected"
+                        ? "bg-red-100 text-red-800 p-1 w-20 text-xs sm:text-sm"
+                        : "bg-yellow-100 text-yellow-800 p-1 w-20 text-xs sm:text-sm"
+                    }
+                  >
+                    {app.status}
+                  </Badge>
+                </TableCell>
+
+                {/* Actions */}
+                <TableCell className="px-2 sm:px-4 py-2 align-middle">
+                  <div className="flex gap-1 sm:gap-2">
+                    <button className="text-red-600 hover:bg-red-50 rounded-full p-1">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                    <button className="text-gray-700 hover:bg-blue-50 rounded-full p-1 dark:text-white">
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button className="text-gray-700 hover:bg-gray-100 rounded-full p-1 dark:text-white">
+                      <Eye className="w-4 h-4" />
+                    </button>
+                    <button className="text-gray-700 hover:bg-gray-100 rounded-full p-1 dark:text-white">
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
-      </div>
+</div>
+<div className="flex flex-col sm:flex-row items-center justify-between mt-4 gap-2 text-sm text-gray-500 dark:text-white">
+  <div className="text-center sm:text-left w-full sm:w-auto">
+    Showing {Math.min((currentPage - 1) * pageSize + 1, applications.length)}–
+    {Math.min(currentPage * pageSize, applications.length)} out of {applications.length}
+  </div>
 
-      <div className="flex items-center justify-between mt-4 text-sm text-gray-500 dark:text-white">
-        <div>Showing 1 out 100</div>
-        <div className="flex gap-1">
-          <button className="border px-2 rounded">⟨</button>
-          <button className="border px-2 rounded bg-gray-200">1</button>
-          <button className="border px-2 rounded">2</button>
-          <button className="border px-2 rounded">⟩</button>
-        </div>
-      </div>
+  <div className="flex flex-wrap justify-center gap-1">
+    <button
+      className="border px-2 py-1 rounded"
+      disabled={currentPage === 1}
+      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+    >
+      ⟨
+    </button>
+
+    {Array.from({ length: totalPages }, (_, i) => (
+      <button
+        key={i}
+        className={`border px-3 py-1 rounded ${currentPage === i + 1 ? "bg-gray-300 font-semibold" : ""}`}
+        onClick={() => setCurrentPage(i + 1)}
+      >
+        {i + 1}
+      </button>
+    ))}
+
+    <button
+      className="border px-2 py-1 rounded"
+      disabled={currentPage === totalPages}
+      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+    >
+      ⟩
+    </button>
+  </div>
+</div>
+
     </div>
   );
 };
