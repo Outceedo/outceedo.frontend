@@ -1,0 +1,16 @@
+# Git
+.git
+.gitignore
+
+# Dependencies
+node_modules
+
+# Vite build output
+dist
+
+# Environment files
+.env*
+
+# Docker
+Dockerfile
+.dockerignore
