@@ -7,6 +7,7 @@ import User from "../Home/user";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ArrowLeft } from "lucide-react";
 import Swal from "sweetalert2";
+import logo from "../../assets/images/outceedologo.png";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -129,11 +130,12 @@ const Login: React.FC = () => {
         Go Back
       </button>
 
-      <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 mb-8 sm:mb-12 hidden lg:block">
+      <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 md:mb-8">
         <h2 className="text-2xl sm:text-3xl lg:text-5xl font-Raleway mb-4">
-          Welcome To <span className="text-red-500 font-bold">Outceedo</span>
+          {/* Welcome To <span className="text-red-500 font-bold">Outceedo</span> */}
+          <img src={logo} alt="logo" className="w-96" />
         </h2>
-        <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md mx-auto lg:mx-0 ">
+        <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md mx-auto lg:mx-0 hidden lg:block ">
           An online platform where football players connect with experts to get
           their sports skills and performances assessed.
         </p>

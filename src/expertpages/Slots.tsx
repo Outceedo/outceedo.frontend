@@ -80,6 +80,7 @@ interface BlockedSlot {
 const GUIDE_CARDS_KEY = "expert_availability_guide_dismissed";
 
 const ExpertAvailabilityManager = () => {
+  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const currentDate = new Date();
   const [activeTab, setActiveTab] = useState("calendar");
   const [selectedDate, setSelectedDate] = useState(new Date(currentDate));
@@ -478,7 +479,7 @@ const ExpertAvailabilityManager = () => {
     const formattedDate = formatDateString(selectedDate);
     try {
       const response = await axiosInstance.get(
-        `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}`
+        `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}?timezone=${userTimeZone}`
       );
       const transformedSlots: TimeSlot[] = response.data.map((slot: any) => ({
         id: slot.id || generateId(),
@@ -667,6 +668,7 @@ const ExpertAvailabilityManager = () => {
             endTime: "17:00",
           },
         ],
+        timezone: userTimeZone,
       };
 
       await axiosInstance.post(`${API_BASE_URL}`, payload);
@@ -742,6 +744,7 @@ const ExpertAvailabilityManager = () => {
           startTime: slot.startTime,
           endTime: slot.endTime,
         })),
+        timezone: userTimeZone,
       };
 
       await axiosInstance.post(`${API_BASE_URL}`, payload);
@@ -806,6 +809,7 @@ const ExpertAvailabilityManager = () => {
           startTime: slot.startTime,
           endTime: slot.endTime,
         })),
+        timezone: userTimeZone,
       };
 
       await axiosInstance.post(`${API_BASE_URL}`, payload);

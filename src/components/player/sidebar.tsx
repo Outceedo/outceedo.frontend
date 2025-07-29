@@ -1,11 +1,11 @@
-import { Fragment, MouseEvent, useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Sheet, SheetContent } from "../ui/sheet";
 import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
-import { subYears } from "date-fns";
+import logo from "../../assets/images/outceedologo.png";
 
 interface MenuItem {
   id: number;
@@ -162,9 +162,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
       )}
 
       {/* Logo */}
-      <h1 className="font-bold text-center text-gray-800 dark:text-white">
-        LOGO
-      </h1>
+      <img src={logo} alt="logo" className="w-36 mx-auto" />
 
       {/* Profile Section */}
       <div className="flex flex-col items-center gap-2 mb-2">

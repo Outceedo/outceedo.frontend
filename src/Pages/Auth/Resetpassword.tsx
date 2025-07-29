@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { resetPassword } from "../../store/auth-slice";
+import logo from "../../assets/images/outceedologo.png";
+import football from "../../assets/images/football.jpg";
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
@@ -99,8 +101,15 @@ const ResetPassword: React.FC = () => {
     newPassword && confirmPassword && newPassword === confirmPassword;
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gray-100">
-      <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+      <div
+        className="absolute inset-0 bg-cover bg-center"
+        style={{ backgroundImage: `url(${football})` }}
+      ></div>
+      <div className="absolute inset-0 bg-black opacity-40"></div>
+      <div className="absolute inset-0 bg-black opacity-20"></div>
+      <img src={logo} alt="logo" className="w-96 mb-8 z-10" />
+      <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md z-10">
         <h2 className="text-3xl font-bold text-center font-Raleway mb-4">
           Reset Password
         </h2>

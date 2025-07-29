@@ -8,6 +8,7 @@ import { RootState } from "../../store/store";
 import Swal from "sweetalert2";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { ArrowLeft } from "lucide-react";
+import logo from "../../assets/images/outceedologo.png";
 
 type Role = "expert" | "player" | "team" | "sponser" | "user";
 
@@ -252,22 +253,23 @@ const Signup: React.FC = () => {
       {/* Left Side - Welcome Text */}
       <button
         onClick={() => navigate(-1)}
-        className="absolute top-6 left-6 flex items-center gap-2 px-3 py-2 bg-transparent bg-opacity-80 rounded hover:bg-opacity-100 hover:text-red-500 font-medium text-white shadow transition z-30 "
+        className="absolute top-6 left-6 flex items-center gap-2 px-3 py-2 bg-transparent bg-opacity-80 rounded hover:bg-opacity-100 hover:text-red-500 font-medium text-white shadow transition z-30 mb-12"
       >
         <ArrowLeft className="w-5 h-5" />
         Go Back
       </button>
-      <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 mb-8 sm:mb-12 hidden md:block">
+      <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 md:mb-8 mt-12 md:mt-2  ">
         <h2 className="text-2xl sm:text-3xl lg:text-5xl font-Raleway mb-4">
-          Welcome To <span className="text-red-500 font-bold">Outceedo</span>
+          {/* Welcome To <span className="text-red-500 font-bold">Outceedo</span> */}
+          <img src={logo} alt="logo" className="w-96" />
         </h2>
-        <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md lg:max-w-none mx-auto lg:mx-0 font-Opensans">
+        <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md lg:max-w-none mx-auto lg:mx-0 font-Opensans hidden md:block">
           An online platform where football players connect with experts to get
-          their sports skills and performances assessed.
+          their sports skills and performances assessed.
         </p>
       </div>
       {/* Right Side - Signup Form */}
-      <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-16 sm:mt-16 lg:mt-0">
+      <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-16 sm:mt-8 lg:mt-0">
         <h2 className="text-3xl font-bold text-black mb-6">Sign Up</h2>
 
         {/* Error Message */}

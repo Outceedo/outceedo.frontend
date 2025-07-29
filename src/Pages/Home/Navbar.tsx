@@ -2,13 +2,14 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import User from "./user";
+import logo from "../../assets/images/outceedologo.png";
 
 const NAV_ITEMS = [
-  { label: "Home", anchor: "home" },
-  { label: "About", anchor: "about" },
-  { label: "Team", anchor: "team" },
-  { label: "Pricing", anchor: "pricing" },
-  { label: "Contact Us", anchor: "contactus" },
+  { label: "Home", anchor: "home", path: "/" },
+  { label: "About", anchor: "about", path: "/about" },
+  { label: "Team", anchor: "team", path: "/teams" },
+  { label: "Pricing", anchor: "pricing", path: "/plans" },
+  { label: "Contact Us", anchor: "contactus", path: "/contactus" },
 ];
 
 export default function Navbar() {
@@ -19,9 +20,9 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Only enable scroll effect on home page
   const isHome = location.pathname === "/";
 
+  // Effect to handle navbar background on scroll
   useEffect(() => {
     if (isHome) {
       const handleScroll = () => {
@@ -30,10 +31,21 @@ export default function Navbar() {
       window.addEventListener("scroll", handleScroll);
       return () => window.removeEventListener("scroll", handleScroll);
     } else {
-      setScrolled(true); // Always scrolled (solid navbar) on other paths
+      setScrolled(true);
     }
   }, [isHome]);
 
+  // Effect to set active nav based on URL path
+  useEffect(() => {
+    const currentItem = NAV_ITEMS.find(
+      (item) => item.path === location.pathname
+    );
+    if (currentItem) {
+      setActiveNav(currentItem.label);
+    }
+  }, [location.pathname]);
+
+  // Effect to disable body scroll when mobile menu is open
   useEffect(() => {
     document.body.style.overflow = mobileMenuOpen ? "hidden" : "auto";
   }, [mobileMenuOpen]);
@@ -45,42 +57,29 @@ export default function Navbar() {
 
   const handleSignUpClick = () => setModalOpen(true);
 
-  // For scrolling to anchor & setting active nav
-  const handleNavClick = (item: { label: string; anchor: string }) => {
+  // For navigating or scrolling to anchor
+  const handleNavClick = (item: (typeof NAV_ITEMS)[0]) => {
     setActiveNav(item.label);
-
-    if (item.label === "About") {
-      navigate("/about");
-      setMobileMenuOpen(false);
-      return;
-    }
-    if (item.label === "Pricing" && !isHome) {
-      navigate("/plans");
-      setMobileMenuOpen(false);
-      return;
-    }
-    if (item.label === "Team") {
-      navigate("/teams");
-      setMobileMenuOpen(false);
-      return;
-    }
-    if (item.label === "Contact Us" && !isHome) {
-      navigate("/contactus");
-      setMobileMenuOpen(false);
-      return;
-    }
-    if (item.label === "Home") {
-      navigate("/");
-      setMobileMenuOpen(false);
-      return;
-    }
-
-    // For others, scroll to anchor
-    const section = document.getElementById(item.anchor);
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
     setMobileMenuOpen(false);
+
+    // If on a different page, navigate first, then scroll on the home page.
+    if (!isHome && item.path === "/") {
+      navigate("/");
+      // Use timeout to allow page to render before scrolling
+      setTimeout(() => {
+        const section = document.getElementById(item.anchor);
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 100);
+    } else if (isHome && item.path === "/") {
+      const section = document.getElementById(item.anchor);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+      }
+    } else {
+      navigate(item.path);
+    }
   };
 
   return (
@@ -97,7 +96,7 @@ export default function Navbar() {
               scrolled ? "text-red-600" : "text-white"
             }`}
           >
-            Outceedo
+            <img src={logo} className="w-56" alt="Outceed Logo" />
           </button>
           <div className="hidden lg:flex items-center flex-nowrap gap-6">
             {NAV_ITEMS.map((item) => (
@@ -107,7 +106,7 @@ export default function Navbar() {
                   font-medium px-3 py-1 rounded transition-colors whitespace-nowrap
                   ${
                     activeNav === item.label
-                      ? " text-red-500"
+                      ? "bg-red-500 text-white"
                       : scrolled
                       ? "text-gray-800"
                       : "text-white"

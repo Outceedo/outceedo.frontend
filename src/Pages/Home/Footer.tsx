@@ -8,7 +8,7 @@ import {
   faGithub,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
-
+import logo from "../../assets/images/outceedologo.png";
 const OutceedoFooter: React.FC = () => {
   const navigate = useNavigate();
 
@@ -18,7 +18,8 @@ const OutceedoFooter: React.FC = () => {
         <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10 items-center text-center md:text-left">
           {/* Left - Logo and tagline */}
           <div className="md:w-1/3 mb-8 md:mb-0 flex flex-col items-center md:items-start">
-            <h2 className="font-bold text-3xl mb-2 text-red-500 ">Outceedo</h2>
+            {/* <h2 className="font-bold text-3xl mb-2 text-red-500 ">Outceedo</h2> */}
+            <img src={logo} className="w-56" />
             <p className="text-base text-[#e3e9f1]">
               Outdo your sport to <span className="text-red-500">Succeed</span>
             </p>

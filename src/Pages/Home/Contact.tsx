@@ -4,6 +4,7 @@ import contactus from "../../assets/images/contactform.png";
 import { ArrowLeft } from "lucide-react";
 import OutceedoFooter from "./Footer";
 import Navbar from "./Navbar";
+import logo from "../../assets/images/outceedologo.png";
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -50,9 +51,7 @@ const Contact = () => {
             Go Back
           </button>
         )}
-        <div className="text-red-500 text-center p-3 text-3xl mb-8 mt-8 font-bold">
-          Reach Out to us
-        </div>
+        <img src={logo} alt="logo" className="w-96 mb-8 mx-auto" />
         <div
           className="flex flex-col md:flex-row bg-yellow-50 rounded-lg shadow-md max-w-6xl mx-8 sm:mx-auto mb-8 space-x-4 "
           id="contactus"
@@ -136,7 +135,7 @@ const Contact = () => {
                     placeholder="Code"
                     value={formData.phoneCode}
                     onChange={handleChange}
-                    className="w-1/8 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-1/4 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   <input
                     type="tel"
@@ -183,7 +182,11 @@ const Contact = () => {
                 >
                   I'd like to receive more information about company. I
                   understand and agree to the{" "}
-                  <a href="#" className="text-blue-600 hover:text-blue-800">
+                  <a
+                    href="/privacy"
+                    className="text-blue-600 hover:text-blue-800"
+                    target="_blank"
+                  >
                     Privacy Policy
                   </a>
                 </label>

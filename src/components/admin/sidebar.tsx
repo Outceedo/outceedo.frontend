@@ -5,8 +5,7 @@ import "@fortawesome/fontawesome-free/css/all.min.css";
 import profile from "../../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
-import outceedologo from '@/assets/images/outceedologo.png'; 
-
+import outceedologo from "@/assets/images/outceedologo.png";
 
 // --- Role-based Menu Definitions ---
 interface MenuItem {
@@ -73,13 +72,13 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
       icon: "fas fa-money-check-alt",
       path: "/admin/player/ServiceTransaction",
     },
-        {
-     id: 5,
-       name: "Player's Media",
+    {
+      id: 5,
+      name: "Player's Media",
       icon: "fas fa-photo-video",
       path: "/admin/player/media",
-    }, 
-   
+    },
+
     {
       id: 6,
       name: "Dashboard",
@@ -108,110 +107,61 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
       path: "/admin/expert/services",
     },
 
-     {
+    {
       id: 3,
       name: "Transactions/Claims",
       icon: "fas fa-money-check-alt",
       path: "/admin/expert/paymentclaims",
     },
 
-     {
-     id: 4,
-       name: "Experts Media",
+    {
+      id: 4,
+      name: "Experts Media",
       icon: "fas fa-photo-video",
 
       path: "/admin/expert/media",
     },
-    
-     {
+
+    {
       id: 6,
       name: "Dashboard",
       icon: "fas fa-chart-line",
       path: "/admin/dashboard",
     },
-   
   ],
   sponsor: [
-   {
-  id: 1,
-  name: "Registered Sponsors",
-  icon: "fas fa-user-tie", 
-  path: "/admin/sponsor",
-},
-{
-  id: 2,
-  name: "Players Request",
-  icon: "fas fa-file-signature", 
-  path: "/admin/sponsor/playersrequest",
-},
-{
-  id: 3,
-  name: "Sponsorship Offered",
-  icon: "fas fa-file-alt", 
-  path: "/admin/sponsor/sponsorshipoffered",
-},
-{
-  id: 4,
-  name: "Awarded Sponsorships",
-  icon: "fas fa-money-check-alt", 
-  path: "/admin/sponsor/sponsorshiptransactions",
-},
-{
-  id: 5,
-  name: "Sponsors Media",
-  icon: "fas fa-photo-video", 
-  path: "/admin/sponsor/sponsormedia",
-},
-
-
- {
-      id: 6,
-      name: "Dashboard",
-      icon: "fas fa-chart-line",
-      path: "/admin/dashboard",
+    {
+      id: 1,
+      name: "Registered Sponsors",
+      icon: "fas fa-user-tie",
+      path: "/admin/sponsor",
+    },
+    {
+      id: 2,
+      name: "Players Request",
+      icon: "fas fa-file-signature",
+      path: "/admin/sponsor/playersrequest",
+    },
+    {
+      id: 3,
+      name: "Sponsorship Offered",
+      icon: "fas fa-file-alt",
+      path: "/admin/sponsor/sponsorshipoffered",
+    },
+    {
+      id: 4,
+      name: "Awarded Sponsorships",
+      icon: "fas fa-money-check-alt",
+      path: "/admin/sponsor/sponsorshiptransactions",
+    },
+    {
+      id: 5,
+      name: "Sponsors Media",
+      icon: "fas fa-photo-video",
+      path: "/admin/sponsor/sponsormedia",
     },
 
-
-
-
-  ],
-
- team: [
-  {
-    id: 1,
-    name: "Registered Teams",
-    icon: "fas fa-users", // better for groups/teams
-    path: "/admin/team",
-  },
-
-  {
-    id: 2,
-    name: "Registered Clubs",
-    icon: "fas fa-building", // represents organizations/clubs
-    path: "/admin/team/registeredclubs",
-  },
-
-  {
-    id: 3,
-    name: "Players Associations",
-    icon: "fas fa-handshake", // suitable for associations
-    path: "/admin/team/playersassociations",
-  },
-  {
-    id: 4,
-    name: "Reviews & Comments",
-    icon: "fas fa-comments", // ideal for reviews/comments
-    path: "/admin/team/reviews&comments",
-  },
-  {
-    id: 5,
-    name: "Activities",
-    icon: "fas fa-running", // perfect for activities/sports
-    path: "/admin/team/activities",
-  },
-
-
- {
+    {
       id: 6,
       name: "Dashboard",
       icon: "fas fa-chart-line",
@@ -219,24 +169,62 @@ export const sidebarMenus: Record<string, MenuItem[]> = {
     },
   ],
 
+  team: [
+    {
+      id: 1,
+      name: "Registered Teams",
+      icon: "fas fa-users", // better for groups/teams
+      path: "/admin/team",
+    },
 
- fan: [
-     {
-  id: 1,
-  name: "Fans & Follwers",
-  icon: "fas fa-user-tie", 
-  path: "/admin/fan",
-},
- {
+    {
+      id: 2,
+      name: "Registered Clubs",
+      icon: "fas fa-building", // represents organizations/clubs
+      path: "/admin/team/registeredclubs",
+    },
+
+    {
+      id: 3,
+      name: "Players Associations",
+      icon: "fas fa-handshake", // suitable for associations
+      path: "/admin/team/playersassociations",
+    },
+    {
+      id: 4,
+      name: "Reviews & Comments",
+      icon: "fas fa-comments", // ideal for reviews/comments
+      path: "/admin/team/reviews&comments",
+    },
+    {
+      id: 5,
+      name: "Activities",
+      icon: "fas fa-running", // perfect for activities/sports
+      path: "/admin/team/activities",
+    },
+
+    {
+      id: 6,
+      name: "Dashboard",
+      icon: "fas fa-chart-line",
+      path: "/admin/dashboard",
+    },
+  ],
+
+  fan: [
+    {
+      id: 1,
+      name: "Fans & Follwers",
+      icon: "fas fa-user-tie",
+      path: "/admin/fan",
+    },
+    {
       id: 2,
       name: "Dashboard",
       icon: "fas fa-chart-line",
       path: "/admin/dashboard",
     },
-
   ],
-
-
 };
 
 // --- Utility to get role from path ---
@@ -345,25 +333,18 @@ function MenuItems({ setOpen, menuItems }: MenuItemsProps) {
         </div>
       )}
 
-     {/* Logo */}
-<div className="flex mt-1 ml-5 lg:ml-6">
-  <div className="mb-8">
-    <img
-      src={outceedologo} // Update this path based on your project structure
-      alt="Outceedo Logo"
-      className="h-12 w-auto" // adjust size if needed
-    />
-  </div>
-</div>
-
-      
+      {/* Logo */}
+      <div className="flex mt-1 ml-5 lg:ml-6">
+        <div className="mb-8">
+          <img
+            src={outceedologo} // Update this path based on your project structure
+            alt="Outceedo Logo"
+            className="h-12 w-auto" // adjust size if needed
+          />
+        </div>
+      </div>
 
       {/* Profile Section */}
-      
-      {/* Sidebar Title */}
-      
-      
-      
 
       {/* Navigation Items */}
       <div className="flex flex-col gap-3 w-full px-4">

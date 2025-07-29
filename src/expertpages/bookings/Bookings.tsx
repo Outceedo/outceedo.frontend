@@ -380,7 +380,7 @@ const BookingExpertside: React.FC = () => {
         return "ON GROUND ASSESSMENT";
       case "other":
       default:
-        return "ONLINE ASSESSMENT";
+        return "ON GROUND TRAINING";
     }
   };
 
