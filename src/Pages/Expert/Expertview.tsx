@@ -138,7 +138,7 @@ const Expertview = () => {
 
   // Determine if user is on a premium plan
   const isUserOnPremiumPlan =
-    isActive && planName && planName.toLowerCase() !== "free";
+    isActive && planName && planName.toLowerCase() !== "free" || true;
 
   // Check if service/follow is allowed for current plan
   const isServiceAllowed = (serviceId: string) => {

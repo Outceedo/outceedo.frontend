@@ -24,7 +24,7 @@ import {
   faDollar,
 } from "@fortawesome/free-solid-svg-icons";
 import AssessmentEvaluationForm from "../evaluation";
-import { FaCross, FaWindowClose } from "react-icons/fa";
+import { FaWindowClose } from "react-icons/fa";
 import { X } from "lucide-react";
 import axios from "axios";
 import AssessmentReport from "./AssessmentReport";
@@ -32,13 +32,13 @@ import AssessmentReport from "./AssessmentReport";
 interface Expert {
   id: string;
   username: string;
-  photo: string;
+  photo: string | null;
 }
 
 interface Player {
   id: string;
   username: string;
-  photo: string;
+  photo: string | null;
 }
 
 interface ServiceDetails {
@@ -62,9 +62,9 @@ interface Booking {
   expertId: string;
   serviceId: string;
   status: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  startAt: string;
+  endAt: string;
+  timezone: string;
   location: string | null;
   meetLink: string | null;
   recordedVideo: string | null;
@@ -76,6 +76,12 @@ interface Booking {
   player: Player;
   service: Service;
   review?: string;
+  price?: number;
+  paymentIntentId?: string | null;
+  paymentIntentClientSecret?: string | null;
+  agora?: any;
+  playerMarkedComplete?: boolean;
+  expertMarkedComplete?: boolean;
 }
 
 interface BookingTableProps {
@@ -141,6 +147,8 @@ const BookingTable: React.FC<BookingTableProps> = ({
       return "online";
     } else if (booking.service?.serviceId === "3") {
       return "in-person";
+    } else if (booking.service?.serviceId === "4") {
+      return "on-ground";
     }
     return "other";
   };
@@ -152,6 +160,8 @@ const BookingTable: React.FC<BookingTableProps> = ({
       case "online":
         return faLaptop;
       case "in-person":
+        return faChalkboardTeacher;
+      case "on-ground":
         return faChalkboardTeacher;
       default:
         return faInfoCircle;
@@ -220,21 +230,25 @@ const BookingTable: React.FC<BookingTableProps> = ({
     }
   };
 
-  const formatDate = (dateStr: string, startTime: string) => {
-    const date = new Date(dateStr);
+  // Updated to use startAt (ISO) and timezone
+  const formatDate = (startAt: string, timezone?: string) => {
+    const date = new Date(startAt);
     const formattedDate = date.toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
     });
 
-    const [hours, minutes] = startTime.split(":");
-    let hour = parseInt(hours, 10);
-    const ampm = hour >= 12 ? "pm" : "am";
-    hour = hour % 12;
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    let hour = hours % 12;
     hour = hour ? hour : 12;
+    const ampm = hours >= 12 ? "pm" : "am";
+    const mins = minutes.toString().padStart(2, "0");
 
-    return `${formattedDate} at ${hour}:${minutes}${ampm}`;
+    return `${formattedDate} at ${hour}:${mins}${ampm}${
+      timezone ? ` (${timezone})` : ""
+    }`;
   };
 
   const truncateUsername = (username: string, maxLength: number = 15) => {
@@ -430,7 +444,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    {formatDate(booking.date, booking.startTime)}
+                    {formatDate(booking.startAt, booking.timezone)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -446,7 +460,9 @@ const BookingTable: React.FC<BookingTableProps> = ({
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>${booking.price || "N/A"}</TableCell>
+                  <TableCell>
+                    ${booking.price ?? booking.service?.price ?? "N/A"}
+                  </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

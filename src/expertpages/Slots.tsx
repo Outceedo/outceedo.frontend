@@ -81,6 +81,7 @@ const GUIDE_CARDS_KEY = "expert_availability_guide_dismissed";
 
 const ExpertAvailabilityManager = () => {
   const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  // const userTimeZone = "Asia/Kolkata";
   const currentDate = new Date();
   const [activeTab, setActiveTab] = useState("calendar");
   const [selectedDate, setSelectedDate] = useState(new Date(currentDate));
@@ -428,15 +429,30 @@ const ExpertAvailabilityManager = () => {
   const fetchCalendarSlotsForMonth = async () => {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let newCalendarSlots: Record<string, TimeSlot[]> = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Midnight for comparison
+
     for (let day = 1; day <= daysInMonth; day++) {
       const dateObj = new Date(currentYear, currentMonth, day);
+      dateObj.setHours(0, 0, 0, 0); // Midnight for comparison
+
+      // Skip API calls for days before today
+      if (dateObj < today) {
+        newCalendarSlots[formatDateString(dateObj)] = [];
+        continue;
+      }
+
       const formattedDate = formatDateString(dateObj);
       try {
         const response = await axiosInstance.get(
-          `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}`
+          `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}&timezone=${userTimeZone}`
         );
-        if (response.data && response.data.length > 0) {
-          newCalendarSlots[formattedDate] = response.data;
+        if (
+          response.data &&
+          Array.isArray(response.data.slots) &&
+          response.data.slots.length > 0
+        ) {
+          newCalendarSlots[formattedDate] = response.data.slots;
         } else {
           newCalendarSlots[formattedDate] = [];
         }
@@ -479,20 +495,43 @@ const ExpertAvailabilityManager = () => {
     const formattedDate = formatDateString(selectedDate);
     try {
       const response = await axiosInstance.get(
-        `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}?timezone=${userTimeZone}`
+        `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}&timezone=${userTimeZone}`
       );
-      const transformedSlots: TimeSlot[] = response.data.map((slot: any) => ({
-        id: slot.id || generateId(),
-        date: formattedDate,
-        startTime: slot.startTime,
-        endTime: slot.endTime,
-        available: slot.isAvailable,
-        reason: slot.reason,
-        blockid: slot.blockId,
-      }));
+      const addHalfHour = (time: string) => {
+        // time: 'HH:mm'
+        if (!time || typeof time !== "string" || !time.includes(":"))
+          return time;
+        let [hour, minute] = time.split(":").map(Number);
+        minute += 30;
+        if (minute >= 60) {
+          hour += 1;
+          minute -= 60;
+        }
+        // Wrap hour if > 23 to 0 (optional, for 24hr format)
+        if (hour > 23) hour = hour - 24;
+        return `${hour.toString().padStart(2, "0")}:${minute
+          .toString()
+          .padStart(2, "0")}`;
+      };
+
+      const transformedSlots: TimeSlot[] = response.data.slots.map(
+        (slot: any) => ({
+          id: slot.id || generateId(),
+          date: formattedDate,
+          startTime: slot.displayStartTime,
+          endTime:
+            slot.displayEndTime && typeof slot.displayEndTime === "string"
+              ? slot.displayEndTime
+              : addHalfHour(slot.displayStartTime),
+          available: slot.isAvailable,
+          reason: slot.reason,
+          blockid: slot.blockId,
+        })
+      );
       console.log(transformedSlots);
       setTimeSlots(transformedSlots);
     } catch (error) {
+      console.log(error);
       Swal.fire("Error", "Failed to load time slots", "error");
       if (!monthlyAvailability[formattedDate]) {
         setTimeSlots([]);
@@ -513,10 +552,17 @@ const ExpertAvailabilityManager = () => {
     const formattedDate = formatDateString(date);
 
     try {
-      const payload: any = { date: formattedDate, reason: reason };
+      // Start with a base payload containing details for any block operation.
+      const payload: any = {
+        date: formattedDate,
+        reason: reason,
+        timezone: userTimeZone,
+      };
+
+      // If a specific timeSlot object is provided, add its properties to the payload.
       if (timeSlot) {
         payload.startTime = timeSlot.startTime;
-        payload.endTime = timeSlot.endTime;
+        payload.endTime = timeSlot.endTime; // Explicitly adding endTime here.
       }
 
       const response = await axiosInstance.patch(
@@ -524,8 +570,9 @@ const ExpertAvailabilityManager = () => {
         payload
       );
 
+      // Update the UI based on the response.
       if (!timeSlot) {
-        // Blocking entire day
+        // Logic for blocking an entire day
         setMonthlyAvailability((prev) => ({
           ...prev,
           [formattedDate]: false,
@@ -534,63 +581,21 @@ const ExpertAvailabilityManager = () => {
           setSelectedDayAvailability(false);
           setTimeSlots([]);
         }
-
-        // Update blocked dates map
         if (response.data?.id) {
           setBlockedDatesMap((prev) => ({
             ...prev,
             [formattedDate]: response.data.id,
           }));
         }
-
         Swal.fire(
           "Success",
           `${formatDateForDisplay(date)} has been marked as unavailable.`,
           "success"
         );
       } else {
-        // Blocking specific time slot - update state immediately
-        if (isSameDay(date, selectedDate)) {
-          setTimeSlots((prev) =>
-            prev.map((slot) => {
-              if (
-                slot.startTime === timeSlot.startTime &&
-                slot.endTime === timeSlot.endTime
-              ) {
-                return {
-                  ...slot,
-                  available: false,
-                  reason,
-                  blockid: response.data?.id || slot.blockid || generateId(),
-                };
-              }
-              return slot;
-            })
-          );
-        }
-
-        // Also update calendar slots for the month view
-        setCalendarTimeSlots((prev) => ({
-          ...prev,
-          [formattedDate]: (prev[formattedDate] || []).map((slot) => {
-            if (
-              slot.startTime === timeSlot.startTime &&
-              slot.endTime === timeSlot.endTime
-            ) {
-              return {
-                ...slot,
-                available: false,
-                reason,
-                blockid: response.data?.blockId || slot.blockid || generateId(),
-              };
-            }
-            return slot;
-          }),
-        }));
-
-        // Fetch availability patterns after blocking a specific time slot
-        fetchAvailabilityPatterns();
-
+        // Logic for blocking a specific time slot
+        fetchTimeSlotsForSelectedDate(); // Refetch slots to show the update
+        fetchCalendarSlotsForMonth(); // Update calendar view as well
         Swal.fire(
           "Success",
           `Time slot from ${formatTimeForDisplay(
@@ -1018,9 +1023,11 @@ const ExpertAvailabilityManager = () => {
     return `${day}-${month}-${year}`;
   };
 
-  const formatTimeForDisplay = (time: string): string => {
+  const formatTimeForDisplay = (time: string | undefined | null): string => {
+    if (!time || typeof time !== "string" || !time.includes(":")) return "--";
     const [hour, minute] = time.split(":");
     const hourNum = parseInt(hour, 10);
+    if (isNaN(hourNum)) return time;
     if (hourNum === 0) {
       return `12:${minute}am`;
     } else if (hourNum === 12) {

@@ -18,7 +18,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faSearch,
@@ -51,13 +50,13 @@ import AgoraVideoModal from "./AgoraVideoModal";
 interface Expert {
   id: string;
   username: string;
-  photo: string;
+  photo: string | null;
 }
 
 interface Player {
   id: string;
   username: string;
-  photo: string;
+  photo: string | null;
 }
 
 interface ServiceDetails {
@@ -87,9 +86,9 @@ interface Booking {
   expertId: string;
   serviceId: string;
   status: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  startAt: string;
+  endAt: string;
+  timezone: string;
   location: string | null;
   meetLink: string | null;
   recordedVideo: string | null;
@@ -106,6 +105,7 @@ interface Booking {
   agora?: AgoraCredentials;
   expertMarkedComplete?: boolean;
   playerMarkedComplete?: boolean;
+  price?: number;
 }
 
 const BookingExpertside: React.FC = () => {
@@ -138,8 +138,8 @@ const BookingExpertside: React.FC = () => {
     null
   );
   const [rescheduleDate, setRescheduleDate] = useState("");
-  const [rescheduleStartTime, setRescheduleStartTime] = useState("");
-  const [rescheduleEndTime, setRescheduleEndTime] = useState("");
+  const [rescheduleStartAt, setRescheduleStartAt] = useState("");
+  const [rescheduleEndAt, setRescheduleEndAt] = useState("");
   const [rescheduling, setRescheduling] = useState(false);
 
   const [isFullscreenVideoOpen, setIsFullscreenVideoOpen] = useState(false);
@@ -167,56 +167,31 @@ const BookingExpertside: React.FC = () => {
     return booking.service?.service?.id === "1" && booking.recordedVideo;
   };
 
-  const isPaid = (booking: Booking) => {
-    return booking.status === "SCHEDULED";
-  };
+  const isPaid = (booking: Booking) => booking.status === "SCHEDULED";
 
   const canGoLive = (booking: Booking) => {
     if (booking.service?.serviceId !== "2") return false;
-
     if (!isPaid(booking)) return false;
-
     const now = new Date();
-    const sessionDate = new Date(booking.date);
-    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
-    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
-
-    const sessionStart = new Date(sessionDate);
-    sessionStart.setHours(startHours, startMinutes, 0, 0);
-
-    const sessionEnd = new Date(sessionDate);
-    if (endHours < startHours) {
-      sessionEnd.setDate(sessionEnd.getDate() + 1);
-    }
-    sessionEnd.setHours(endHours, endMinutes, 0, 0);
-
+    const sessionStart = new Date(booking.startAt);
+    const sessionEnd = new Date(booking.endAt);
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
     const isSessionOver = now > sessionEnd;
     const isTooEarly = now < goLiveTime;
-    const canGoLiveNow = !isTooEarly && !isSessionOver;
-
-    return canGoLiveNow;
+    return !isTooEarly && !isSessionOver;
   };
 
   const isUpcomingSession = (booking: Booking) => {
     if (!isPaid(booking)) return false;
-
     const now = new Date();
-    const sessionDate = new Date(booking.date);
-    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
-
-    const sessionStart = new Date(sessionDate);
-    sessionStart.setHours(startHours, startMinutes, 0, 0);
-
+    const sessionStart = new Date(booking.startAt);
     const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-
     return sessionStart >= now && sessionStart <= next7Days;
   };
 
   const isSessionToday = (booking: Booking) => {
     const today = new Date();
-    const sessionDate = new Date(booking.date);
-
+    const sessionDate = new Date(booking.startAt);
     return (
       today.getFullYear() === sessionDate.getFullYear() &&
       today.getMonth() === sessionDate.getMonth() &&
@@ -226,20 +201,12 @@ const BookingExpertside: React.FC = () => {
 
   const getTimeUntilGoLive = (booking: Booking) => {
     const now = new Date();
-    const sessionDate = new Date(booking.date);
-    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
-
-    const sessionStart = new Date(sessionDate);
-    sessionStart.setHours(startHours, startMinutes, 0, 0);
-
+    const sessionStart = new Date(booking.startAt);
     const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
     const timeDiff = goLiveTime.getTime() - now.getTime();
-
     if (timeDiff <= 0) return null;
-
     const hours = Math.floor(timeDiff / (1000 * 60 * 60));
     const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-
     if (hours > 0) {
       return `${hours}h ${minutes}m`;
     }
@@ -248,12 +215,7 @@ const BookingExpertside: React.FC = () => {
 
   const isSessionOver = (booking: Booking) => {
     const now = new Date();
-    const sessionDate = new Date(booking.date);
-    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
-
-    const sessionEnd = new Date(sessionDate);
-    sessionEnd.setHours(endHours, endMinutes, 0, 0);
-
+    const sessionEnd = new Date(booking.endAt);
     return now > sessionEnd;
   };
 
@@ -269,9 +231,7 @@ const BookingExpertside: React.FC = () => {
           },
         }
       );
-
       const agoraCredentials = response.data;
-
       if (
         !agoraCredentials ||
         !agoraCredentials.token ||
@@ -286,7 +246,6 @@ const BookingExpertside: React.FC = () => {
         });
         return;
       }
-
       if (!canGoLive(booking)) {
         if (isSessionOver(booking)) {
           Swal.fire({
@@ -308,16 +267,11 @@ const BookingExpertside: React.FC = () => {
         });
         return;
       }
-
-      const expertUID = agoraCredentials.uid;
-
       const agoraConfig: AgoraCredentials = {
         channel: agoraCredentials.channel,
         token: agoraCredentials.token,
-        uid: expertUID,
+        uid: agoraCredentials.uid,
       };
-      console.log(agoraConfig);
-
       setAgora(agoraConfig);
       setBooking(booking);
       setIsAgoraModalOpen(true);
@@ -338,21 +292,21 @@ const BookingExpertside: React.FC = () => {
     setBooking(null);
   };
 
-  const formatTimeRange = (startTime: string, endTime: string) => {
-    const formatTime = (time: string) => {
-      const [hours, minutes] = time.split(":");
-      let hour = parseInt(hours, 10);
+  const formatTimeRange = (startAt: string, endAt: string) => {
+    const formatTime = (iso: string) => {
+      const date = new Date(iso);
+      let hour = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, "0");
       const ampm = hour >= 12 ? "PM" : "AM";
       hour = hour % 12;
       hour = hour ? hour : 12;
       return `${hour}:${minutes} ${ampm}`;
     };
-
-    return `${formatTime(startTime)} - ${formatTime(endTime)}`;
+    return `${formatTime(startAt)} - ${formatTime(endAt)}`;
   };
 
-  const formatShortDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  const formatShortDate = (iso: string) => {
+    const date = new Date(iso);
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -378,7 +332,6 @@ const BookingExpertside: React.FC = () => {
         return "ONLINE TRAINING";
       case "in-person":
         return "ON GROUND ASSESSMENT";
-      case "other":
       default:
         return "ON GROUND TRAINING";
     }
@@ -429,7 +382,6 @@ const BookingExpertside: React.FC = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-
         setBookings(response.data.bookings);
       } catch (err) {
         setError("Could not load bookings. Please try refreshing the page.");
@@ -438,7 +390,6 @@ const BookingExpertside: React.FC = () => {
         setLoading(false);
       }
     };
-
     fetchBookings();
   }, []);
 
@@ -479,9 +430,7 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  const handleReviewClick = (bookingId: string) => {
-    openReviewModal(bookingId);
-  };
+  const handleReviewClick = (bookingId: string) => {};
 
   const openBookingDetails = (booking: Booking) => {
     setSelectedBooking(booking);
@@ -498,7 +447,6 @@ const BookingExpertside: React.FC = () => {
   const openRejectConfirmDialog = (bookingId: string) => {
     setBookingToReject(bookingId);
     setIsRejectConfirmOpen(true);
-
     if (selectedBooking?.id !== bookingId) {
       setIsBookingDetailsOpen(false);
     }
@@ -512,7 +460,6 @@ const BookingExpertside: React.FC = () => {
   const openAcceptConfirmDialog = (bookingId: string) => {
     setBookingToAccept(bookingId);
     setIsAcceptConfirmOpen(true);
-
     if (selectedBooking?.id !== bookingId) {
       setIsBookingDetailsOpen(false);
     }
@@ -527,11 +474,10 @@ const BookingExpertside: React.FC = () => {
     const booking = bookings.find((b) => b.id === bookingId);
     if (booking) {
       setBookingToReschedule(bookingId);
-      setRescheduleDate(booking.date.split("T")[0]);
-      setRescheduleStartTime(booking.startTime);
-      setRescheduleEndTime(booking.endTime);
+      setRescheduleDate(booking.startAt.split("T")[0]);
+      setRescheduleStartAt(booking.startAt.substring(11, 16));
+      setRescheduleEndAt(booking.endAt.substring(11, 16));
       setIsRescheduleModalOpen(true);
-
       if (selectedBooking?.id !== bookingId) {
         setIsBookingDetailsOpen(false);
       }
@@ -542,15 +488,14 @@ const BookingExpertside: React.FC = () => {
     setIsRescheduleModalOpen(false);
     setBookingToReschedule(null);
     setRescheduleDate("");
-    setRescheduleStartTime("");
-    setRescheduleEndTime("");
+    setRescheduleStartAt("");
+    setRescheduleEndAt("");
   };
 
   const handleAcceptBooking = async (bookingId: string) => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-
       await axios.patch(
         `${API_BASE_URL}/booking/${bookingId}/accept`,
         {},
@@ -561,7 +506,6 @@ const BookingExpertside: React.FC = () => {
           },
         }
       );
-
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
@@ -569,17 +513,13 @@ const BookingExpertside: React.FC = () => {
             : booking
         )
       );
-
       if (selectedBooking && selectedBooking.id === bookingId) {
         setSelectedBooking({ ...selectedBooking, status: "ACCEPTED" });
       }
-
       closeAcceptConfirmDialog();
-
       if (isBookingDetailsOpen) {
         closeBookingDetails();
       }
-
       await Swal.fire({
         icon: "success",
         title: "Booking Accepted!",
@@ -603,7 +543,6 @@ const BookingExpertside: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-
       await axios.patch(
         `${API_BASE_URL}/booking/${bookingId}/reject`,
         {},
@@ -614,7 +553,6 @@ const BookingExpertside: React.FC = () => {
           },
         }
       );
-
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
@@ -622,14 +560,11 @@ const BookingExpertside: React.FC = () => {
             : booking
         )
       );
-
       if (selectedBooking && selectedBooking.id === bookingId) {
         setSelectedBooking({ ...selectedBooking, status: "REJECTED" });
       }
-
       closeRejectConfirmDialog();
       closeBookingDetails();
-
       await Swal.fire({
         icon: "info",
         title: "Booking Rejected",
@@ -644,7 +579,6 @@ const BookingExpertside: React.FC = () => {
         text: "Failed to reject booking. Please try again.",
         confirmButtonColor: "#EF4444",
       });
-
       closeRejectConfirmDialog();
     } finally {
       setLoading(false);
@@ -655,8 +589,8 @@ const BookingExpertside: React.FC = () => {
     if (
       !bookingToReschedule ||
       !rescheduleDate ||
-      !rescheduleStartTime ||
-      !rescheduleEndTime
+      !rescheduleStartAt ||
+      !rescheduleEndAt
     ) {
       Swal.fire({
         icon: "warning",
@@ -666,17 +600,15 @@ const BookingExpertside: React.FC = () => {
       });
       return;
     }
-
     try {
       setRescheduling(true);
       const token = localStorage.getItem("token");
-
+      const startAt = `${rescheduleDate}T${rescheduleStartAt}:00.000Z`;
+      const endAt = `${rescheduleDate}T${rescheduleEndAt}:00.000Z`;
       const rescheduleData = {
-        date: rescheduleDate,
-        startTime: rescheduleStartTime,
-        endTime: rescheduleEndTime,
+        startAt,
+        endAt,
       };
-
       await axios.patch(
         `${API_BASE_URL}/booking/${bookingToReschedule}/reschedule`,
         rescheduleData,
@@ -687,34 +619,28 @@ const BookingExpertside: React.FC = () => {
           },
         }
       );
-
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingToReschedule
             ? {
                 ...booking,
                 status: "RESCHEDULED",
-                date: `${rescheduleDate}T00:00:00.000Z`,
-                startTime: rescheduleStartTime,
-                endTime: rescheduleEndTime,
+                startAt,
+                endAt,
               }
             : booking
         )
       );
-
       if (selectedBooking && selectedBooking.id === bookingToReschedule) {
         setSelectedBooking({
           ...selectedBooking,
           status: "RESCHEDULED",
-          date: `${rescheduleDate}T00:00:00.000Z`,
-          startTime: rescheduleStartTime,
-          endTime: rescheduleEndTime,
+          startAt,
+          endAt,
         });
       }
-
       closeRescheduleModal();
       closeBookingDetails();
-
       await Swal.fire({
         icon: "success",
         title: "Booking Rescheduled!",
@@ -739,7 +665,6 @@ const BookingExpertside: React.FC = () => {
     try {
       setLoading(true);
       const token = localStorage.getItem("token");
-
       await axios.patch(
         `${API_BASE_URL}/booking/${bookingId}/complete`,
         {},
@@ -750,7 +675,6 @@ const BookingExpertside: React.FC = () => {
           },
         }
       );
-
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
@@ -758,11 +682,9 @@ const BookingExpertside: React.FC = () => {
             : booking
         )
       );
-
       if (selectedBooking && selectedBooking.id === bookingId) {
         setSelectedBooking({ ...selectedBooking, status: "COMPLETED" });
       }
-
       closeBookingDetails();
       await Swal.fire({
         icon: "success",
@@ -781,25 +703,6 @@ const BookingExpertside: React.FC = () => {
       setError("Failed to complete booking. Please try again.");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleEvaluation = (
-    e: React.MouseEvent<HTMLButtonElement, MouseEvent>,
-    booking: Booking
-  ) => {
-    e.stopPropagation();
-    if (booking.player?.username) {
-      localStorage.setItem("playerName", booking.player.username);
-    }
-    if (booking.player?.photo) {
-      localStorage.setItem("playerPhoto", booking.player.photo);
-    }
-    if (booking.player?.id) {
-      localStorage.setItem("playerId", booking.player.id);
-    }
-    if (booking.id) {
-      localStorage.setItem("bookingId", booking.id);
     }
   };
 
@@ -865,20 +768,18 @@ const BookingExpertside: React.FC = () => {
     }
   };
 
-  const formatDate = (dateStr: string, startTime: string) => {
-    const date = new Date(dateStr);
+  const formatDate = (iso: string) => {
+    const date = new Date(iso);
     const formattedDate = date.toLocaleDateString("en-US", {
       month: "long",
       day: "numeric",
       year: "numeric",
     });
-
-    const [hours, minutes] = startTime.split(":");
-    let hour = parseInt(hours, 10);
+    let hour = date.getHours();
+    const minutes = date.getMinutes().toString().padStart(2, "0");
     const ampm = hour >= 12 ? "pm" : "am";
     hour = hour % 12;
     hour = hour ? hour : 12;
-
     return `${formattedDate} at ${hour}:${minutes}${ampm}`;
   };
 
@@ -889,13 +790,10 @@ const BookingExpertside: React.FC = () => {
 
   const matchesDateFilter = (booking: Booking) => {
     if (!dateFilter) return true;
-
-    const bookingDate = new Date(booking.date);
+    const bookingDate = new Date(booking.startAt);
     bookingDate.setHours(0, 0, 0, 0);
-
     const filterDate = new Date(dateFilter);
     filterDate.setHours(0, 0, 0, 0);
-
     return bookingDate.getTime() === filterDate.getTime();
   };
 
@@ -922,7 +820,6 @@ const BookingExpertside: React.FC = () => {
       (actionFilter === "Pending" &&
         booking.status === "WAITING_EXPERT_APPROVAL") ||
       (actionFilter === "Scheduled" && booking.status === "SCHEDULED");
-
     return (
       matchesSearch &&
       matchesStatus &&
@@ -938,7 +835,6 @@ const BookingExpertside: React.FC = () => {
       isPaid(booking) &&
       isSessionOver(booking) &&
       booking.status !== "COMPLETED";
-
     return (
       (isScheduled || isOverAndPaid) &&
       booking.status !== "REJECTED" &&
@@ -959,15 +855,14 @@ const BookingExpertside: React.FC = () => {
       );
     })
     .sort((a, b) => {
-      const dateA = new Date(`${a.date} ${a.startTime}`);
-      const dateB = new Date(`${b.date} ${b.startTime}`);
+      const dateA = new Date(a.startAt);
+      const dateB = new Date(b.startAt);
       return dateA.getTime() - dateB.getTime();
     });
 
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
       <h1 className="text-2xl font-bold mb-6">Your Bookings</h1>
-
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="relative w-full sm:w-1/5">
           <FontAwesomeIcon
@@ -982,7 +877,6 @@ const BookingExpertside: React.FC = () => {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
         <div className="relative sm:w-auto flex min-w-[120px]">
           <FontAwesomeIcon
             icon={faCalendarAlt}
@@ -997,7 +891,6 @@ const BookingExpertside: React.FC = () => {
             min="2020-01-01"
           />
         </div>
-
         <Select value={bookingStatus} onValueChange={setBookingStatus}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Payment Status" />
@@ -1009,7 +902,6 @@ const BookingExpertside: React.FC = () => {
             <SelectItem value="Pending">Pending</SelectItem>
           </SelectContent>
         </Select>
-
         <Select value={actionFilter} onValueChange={setActionFilter}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Booking Status" />
@@ -1023,7 +915,6 @@ const BookingExpertside: React.FC = () => {
             <SelectItem value="Pending">Pending</SelectItem>
           </SelectContent>
         </Select>
-
         <Select value={serviceTypeFilter} onValueChange={setServiceTypeFilter}>
           <SelectTrigger className="w-full sm:w-[180px]">
             <SelectValue placeholder="Service Type" />
@@ -1038,7 +929,6 @@ const BookingExpertside: React.FC = () => {
             <SelectItem value="other">ONLINE ASSESSMENT</SelectItem>
           </SelectContent>
         </Select>
-
         {filtersApplied && (
           <Button
             variant="outline"
@@ -1050,13 +940,11 @@ const BookingExpertside: React.FC = () => {
           </Button>
         )}
       </div>
-
       {error && (
         <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md">
           {error}
         </div>
       )}
-
       <BookingTable
         bookings={filteredBookings}
         loading={loading}
@@ -1068,7 +956,6 @@ const BookingExpertside: React.FC = () => {
         onVideoClick={handleVideoClick}
         onReviewClick={handleReviewClick}
       />
-
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Upcoming Live Sessions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1098,7 +985,7 @@ const BookingExpertside: React.FC = () => {
                         booking.player?.photo ||
                         `https://i.pravatar.cc/60?u=${booking.playerId}`
                       }
-                      alt={booking.player?.username}
+                      alt={booking.player?.username || "Player"}
                       className="w-6 h-6 rounded-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
@@ -1131,15 +1018,14 @@ const BookingExpertside: React.FC = () => {
                     Paid ✓
                   </Badge>
                   <div className="text-xs text-gray-500">
-                    {formatShortDate(booking.date)}
+                    {formatShortDate(booking.startAt)}
                   </div>
                 </div>
               </div>
-
               <div className="mb-3">
                 <div className="text-sm text-gray-600 flex items-center gap-1 mb-1">
                   <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
-                  {formatTimeRange(booking.startTime, booking.endTime)}
+                  {formatTimeRange(booking.startAt, booking.endAt)}
                 </div>
                 <div className="flex items-center gap-2">
                   {isSessionToday(booking) && (
@@ -1154,12 +1040,10 @@ const BookingExpertside: React.FC = () => {
                   )}
                 </div>
               </div>
-
               <div className="flex justify-between items-center">
                 <span className="text-gray-600 font-medium">
                   ${booking.price || "N/A"}
                 </span>
-
                 {canGoLive(booking) ? (
                   <Button
                     className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto flex items-center gap-1"
@@ -1198,7 +1082,6 @@ const BookingExpertside: React.FC = () => {
                   </Button>
                 )}
               </div>
-
               {isSessionToday(booking) &&
                 !canGoLive(booking) &&
                 booking.status === "SCHEDULED" && (
@@ -1209,7 +1092,6 @@ const BookingExpertside: React.FC = () => {
                 )}
             </div>
           ))}
-
           {upcomingPaidSessions.length === 0 && (
             <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-8 text-gray-500">
               <FontAwesomeIcon
@@ -1224,7 +1106,6 @@ const BookingExpertside: React.FC = () => {
           )}
         </div>
       </div>
-
       <div className="mt-4">
         <h3 className="font-medium mb-2">Active Sessions</h3>
         <div className="space-y-2">
@@ -1261,7 +1142,7 @@ const BookingExpertside: React.FC = () => {
                   </p>
                   <p className="text-sm text-gray-500">
                     {booking.service?.service?.name} -{" "}
-                    {formatDate(booking.date, booking.startTime)}
+                    {formatDate(booking.startAt)}
                     {isSessionOver(booking) && (
                       <span className="ml-2 text-red-600 font-medium">
                         (Session Ended)
@@ -1290,7 +1171,6 @@ const BookingExpertside: React.FC = () => {
           )}
         </div>
       </div>
-
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <h3 className="font-medium text-blue-800">Total Bookings</h3>
@@ -1315,7 +1195,6 @@ const BookingExpertside: React.FC = () => {
           </p>
         </div>
       </div>
-
       {selectedBooking && (
         <Dialog
           open={isBookingDetailsOpen}
@@ -1325,7 +1204,6 @@ const BookingExpertside: React.FC = () => {
             <DialogHeader>
               <DialogTitle className="text-xl">Booking Details</DialogTitle>
             </DialogHeader>
-
             <div className="py-4">
               <div className="flex justify-between items-center mb-4">
                 <Badge
@@ -1341,7 +1219,6 @@ const BookingExpertside: React.FC = () => {
                   {getPaymentStatus(selectedBooking.status)}
                 </Badge>
               </div>
-
               {isPaid(selectedBooking) &&
                 selectedBooking.status === "SCHEDULED" && (
                   <div
@@ -1401,15 +1278,13 @@ const BookingExpertside: React.FC = () => {
                             ? "Your session is currently live. You can start the video call now."
                             : isSessionToday(selectedBooking)
                             ? `Your session starts at ${formatTimeRange(
-                                selectedBooking.startTime,
-                                selectedBooking.endTime
+                                selectedBooking.startAt,
+                                selectedBooking.endAt
                               )}. Video call will be available 10 minutes before the session.`
                             : `Session scheduled for ${formatDate(
-                                selectedBooking.date,
-                                selectedBooking.startTime
+                                selectedBooking.startAt
                               )}`}
                         </p>
-
                         <div className="mt-3">
                           {canGoLive(selectedBooking) ? (
                             <Button
@@ -1446,7 +1321,6 @@ const BookingExpertside: React.FC = () => {
                     </div>
                   </div>
                 )}
-
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
                   <FontAwesomeIcon
@@ -1478,7 +1352,6 @@ const BookingExpertside: React.FC = () => {
                   </div>
                 </div>
               </div>
-
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-lg font-semibold flex items-center">
@@ -1505,7 +1378,6 @@ const BookingExpertside: React.FC = () => {
                   </p>
                 )}
               </div>
-
               <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                 <h3 className="text-lg font-semibold mb-2 flex items-center">
                   <FontAwesomeIcon
@@ -1516,11 +1388,14 @@ const BookingExpertside: React.FC = () => {
                 </h3>
                 <p className="mb-1">
                   <span className="font-medium">Date & Time:</span>{" "}
-                  {formatDate(selectedBooking.date, selectedBooking.startTime)}
+                  {formatDate(selectedBooking.startAt)}
                 </p>
                 <p className="mb-1">
                   <span className="font-medium">Duration:</span>{" "}
-                  {selectedBooking.startTime} - {selectedBooking.endTime}
+                  {formatTimeRange(
+                    selectedBooking.startAt,
+                    selectedBooking.endAt
+                  )}
                 </p>
                 {selectedBooking.location && (
                   <p className="mb-1 flex items-start">

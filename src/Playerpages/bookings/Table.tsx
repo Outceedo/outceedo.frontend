@@ -61,9 +61,9 @@ interface Booking {
   expertId: string;
   serviceId: string;
   status: string;
-  date: string;
-  startTime: string;
-  endTime: string;
+  startAt: string;
+  endAt: string;
+  timezone: string;
   location: string | null;
   meetLink: string | null;
   recordedVideo: string | null;
@@ -252,8 +252,10 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  const formatShortDate = (dateStr: string) => {
-    const date = new Date(dateStr);
+  // New: format date from startAt
+  const formatShortDate = (startAt: string, timezone?: string) => {
+    const date = new Date(startAt);
+    // Optionally, you can use timezone param if you want
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -363,7 +365,7 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
           <TableBody>
             {bookings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} className="text-center py-4">
+                <TableCell colSpan={11} className="text-center py-4">
                   No bookings found
                 </TableCell>
               </TableRow>
@@ -403,7 +405,7 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {formatShortDate(booking.date)}
+                    {formatShortDate(booking.startAt, booking.timezone)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

@@ -38,13 +38,18 @@ interface AvailabilityData {
   [date: string]: boolean;
 }
 
-interface TimeSlot {
-  startTime: string;
-  endTime: string;
-  isAvailable: boolean;
+interface SlotApiResponse {
+  expertTimeZone: string;
+  slots: Array<{
+    displayStartTime: string;
+    date: string;
+    startTime: string;
+    isAvailable: boolean;
+  }>;
 }
 
 const BookingCalendar: React.FC = () => {
+  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const navigate = useNavigate();
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -91,7 +96,15 @@ const BookingCalendar: React.FC = () => {
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>(
     {}
   );
-  const [availableTimeSlots, setAvailableTimeSlots] = useState<TimeSlot[]>([]);
+  // For new API, we store slots as array of slot objects
+  const [availableSlots, setAvailableSlots] = useState<
+    Array<{
+      displayStartTime: string;
+      date: string;
+      startTime: string;
+      isAvailable: boolean;
+    }>
+  >([]);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const BLOCK_API_URL = `${
@@ -167,32 +180,26 @@ const BookingCalendar: React.FC = () => {
     return `$${price.toFixed(2)}`;
   };
 
-  // Get all unique time slots for selection
+  // Get all unique time slots for selection (from API: all available start times)
   const getAllTimeSlots = (): string[] => {
-    const timeSlots: string[] = [];
-    availableTimeSlots.forEach((slot) => {
-      if (!timeSlots.includes(slot.startTime)) {
-        timeSlots.push(slot.startTime);
-      }
-      if (!timeSlots.includes(slot.endTime)) {
-        timeSlots.push(slot.endTime);
-      }
-    });
-    return timeSlots.sort();
+    const times = availableSlots
+      .filter((slot) => slot.isAvailable)
+      .map((slot) => slot.startTime);
+    // Ensure sorted
+    return [...new Set(times)].sort();
   };
 
   // Check if a time slot is selectable for end time
   const isValidEndTime = (time: string): boolean => {
     if (!selectedStartTime) return false;
-
     const duration = calculateDurationInMinutes(selectedStartTime, time);
     return duration >= 60 && duration <= 120; // 1-2 hours
   };
 
   // Check if a time slot is available
   const isTimeSlotAvailable = (time: string): boolean => {
-    return availableTimeSlots.some(
-      (slot) => slot.startTime === time || slot.endTime === time
+    return availableSlots.some(
+      (slot) => slot.startTime === time && slot.isAvailable
     );
   };
 
@@ -231,7 +238,9 @@ const BookingCalendar: React.FC = () => {
         const token = localStorage.getItem("token");
         const API_AV = `${import.meta.env.VITE_PORT}/api/v1/user/availability/${
           service.expertId
-        }/monthly?month=${selectedMonthIndex + 1}&year=${selectedYear}`;
+        }/monthly?month=${
+          selectedMonthIndex + 1
+        }&year=${selectedYear}&timezone=${userTimeZone}`;
         const response = await fetch(API_AV, {
           method: "GET",
           headers: {
@@ -256,7 +265,7 @@ const BookingCalendar: React.FC = () => {
             setSelectedDate(null);
             setSelectedStartTime(null);
             setSelectedEndTime(null);
-            setAvailableTimeSlots([]);
+            setAvailableSlots([]);
           }
         }
       } catch (error) {
@@ -274,12 +283,13 @@ const BookingCalendar: React.FC = () => {
     };
 
     fetchExpertAvailability();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service, selectedMonthIndex, selectedYear]);
 
   // 3. Fetch time slots after service loads and a date is selected
   useEffect(() => {
     if (!service || !service.expertId || !selectedDate) {
-      setAvailableTimeSlots([]);
+      setAvailableSlots([]);
       return;
     }
 
@@ -294,7 +304,7 @@ const BookingCalendar: React.FC = () => {
         );
         const API_AV = `${import.meta.env.VITE_PORT}/api/v1/user/availability/${
           service.expertId
-        }/slots?date=${formattedDate}`;
+        }/slots?date=${formattedDate}&timezone=${userTimeZone}`;
         const response = await fetch(API_AV, {
           method: "GET",
           headers: {
@@ -305,19 +315,18 @@ const BookingCalendar: React.FC = () => {
 
         if (!response.ok) throw new Error("Failed to fetch time slots");
 
-        const data: TimeSlot[] = await response.json();
-        const availableSlots = data.filter((slot) => slot.isAvailable);
-        setAvailableTimeSlots(availableSlots);
+        const data: SlotApiResponse = await response.json();
+        // Only keep available slots
+        const available = (data.slots || []).filter((slot) => slot.isAvailable);
+        setAvailableSlots(available);
 
         // Reset selections if they're no longer valid
-        if (selectedStartTime) {
-          const isStartTimeAvailable = availableSlots.some(
-            (slot) => slot.startTime === selectedStartTime
-          );
-          if (!isStartTimeAvailable) {
-            setSelectedStartTime(null);
-            setSelectedEndTime(null);
-          }
+        if (
+          selectedStartTime &&
+          !available.some((slot) => slot.startTime === selectedStartTime)
+        ) {
+          setSelectedStartTime(null);
+          setSelectedEndTime(null);
         }
       } catch (error) {
         console.error("Error fetching time slots:", error);
@@ -334,6 +343,7 @@ const BookingCalendar: React.FC = () => {
     };
 
     fetchTimeSlots();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [service, selectedDate, selectedMonthIndex, selectedYear]);
 
   useEffect(() => {
@@ -560,6 +570,7 @@ const BookingCalendar: React.FC = () => {
         location: bookingLocation,
         description: bookingDescription,
         price: finalPrice,
+        timezone: userTimeZone,
       };
 
       console.log("Booking data being sent:", bookingData);
@@ -698,15 +709,22 @@ const BookingCalendar: React.FC = () => {
     }
   };
 
-  // Get time slots for start time selection (original slots)
-  const startTimeSlots = availableTimeSlots.map((slot) => slot.startTime);
-  const startTimeSlotRows = organizeTimeSlotsIntoRows([
-    ...new Set(startTimeSlots),
-  ]);
+  // Get time slots for start time selection (all available slots)
+  const startTimeSlotRows = organizeTimeSlotsIntoRows(getAllTimeSlots());
 
-  // Get time slots for end time selection (all available times)
-  const allTimeSlots = getAllTimeSlots();
-  const endTimeSlotRows = organizeTimeSlotsIntoRows(allTimeSlots);
+  // Get time slots for end time selection (must be after start time, duration 1-2h, and available)
+  const getValidEndTimes = () => {
+    if (!selectedStartTime) return [];
+    const allTimes = getAllTimeSlots();
+    return allTimes.filter(
+      (time) =>
+        isTimeSlotAvailable(time) &&
+        isValidEndTime(time) &&
+        calculateDurationInMinutes(selectedStartTime, time) > 0
+    );
+  };
+
+  const endTimeSlotRows = organizeTimeSlotsIntoRows(getValidEndTimes());
 
   return (
     <div className="flex flex-col justify-center items-center">
@@ -899,7 +917,7 @@ const BookingCalendar: React.FC = () => {
                   <div className="flex justify-center items-center h-[100px]">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-red-500"></div>
                   </div>
-                ) : availableTimeSlots.length === 0 ? (
+                ) : availableSlots.length === 0 ? (
                   <p className="text-gray-500 text-sm italic">
                     No available time slots for this date
                   </p>
@@ -939,33 +957,47 @@ const BookingCalendar: React.FC = () => {
                     Choose an end time (1-2 hours from start time)
                   </p>
                   <div className="space-y-3">
-                    {endTimeSlotRows.map((row, rowIndex) => (
-                      <div key={rowIndex} className="grid grid-cols-4 gap-2">
-                        {row.map((time) => {
-                          const isValid = isValidEndTime(time);
-                          const isAvailable = isTimeSlotAvailable(time);
-                          return (
+                    {endTimeSlotRows.length === 0 ? (
+                      <div className="text-gray-400 italic text-xs">
+                        No valid end times available
+                      </div>
+                    ) : (
+                      endTimeSlotRows.map((row, rowIndex) => (
+                        <div key={rowIndex} className="grid grid-cols-4 gap-2">
+                          {row.map((time) => (
                             <button
                               key={time}
                               onClick={() => handleEndTimeSelect(time)}
-                              disabled={!isValid || !isAvailable}
+                              disabled={
+                                !isValidEndTime(time) ||
+                                !isTimeSlotAvailable(time) ||
+                                calculateDurationInMinutes(
+                                  selectedStartTime,
+                                  time
+                                ) <= 0
+                              }
                               className={`
                                 py-2 px-3 border rounded-md text-sm
                                 ${
                                   selectedEndTime === time
                                     ? "border-red-500 bg-red-50 text-red-500"
-                                    : isValid && isAvailable
+                                    : isValidEndTime(time) &&
+                                      isTimeSlotAvailable(time) &&
+                                      calculateDurationInMinutes(
+                                        selectedStartTime,
+                                        time
+                                      ) > 0
                                     ? "border-gray-200 hover:border-gray-300 text-gray-800"
-                                    : "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed hidden"
+                                    : "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
                                 }
                               `}
                             >
                               {formatTime(time)}
                             </button>
-                          );
-                        })}
-                      </div>
-                    ))}
+                          ))}
+                        </div>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
