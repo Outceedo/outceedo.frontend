@@ -19,7 +19,7 @@ const managementTeam = [
   },
   {
     name: "Vamshi Mohana",
-    designation: "Co-Founder & COO",
+    designation: "Co-Founder & CTO",
     photo: Vamshi,
   },
 ];
