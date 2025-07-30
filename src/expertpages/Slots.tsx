@@ -78,10 +78,62 @@ interface BlockedSlot {
 }
 
 const GUIDE_CARDS_KEY = "expert_availability_guide_dismissed";
+const TIMEZONES = [
+  "UTC",
+  "America/New_York", // Eastern Time (US & Canada)
+  "America/Chicago", // Central Time (US & Canada)
+  "America/Denver", // Mountain Time (US & Canada)
+  "America/Los_Angeles", // Pacific Time (US & Canada)
+  "America/Toronto", // Canada/Eastern
+  "America/Vancouver", // Canada/Pacific
+  "America/Sao_Paulo", // Brazil/Sao Paulo
+  "Europe/London", // UK
+  "Europe/Berlin", // Germany
+  "Europe/Paris", // France
+  "Europe/Madrid", // Spain
+  "Europe/Rome", // Italy
+  "Europe/Amsterdam", // Netherlands
+  "Europe/Zurich", // Switzerland
+  "Europe/Istanbul", // Turkey
+  "Europe/Moscow", // Russia
+  "Asia/Dubai", // UAE
+  "Asia/Jerusalem", // Israel
+  "Asia/Riyadh", // Saudi Arabia
+  "Asia/Kolkata", // India
+  "Asia/Bangkok", // Thailand
+  "Asia/Hong_Kong", // Hong Kong
+  "Asia/Shanghai", // China
+  "Asia/Singapore", // Singapore
+  "Asia/Tokyo", // Japan
+  "Asia/Seoul", // South Korea
+  "Asia/Kuala_Lumpur", // Malaysia
+  "Asia/Jakarta", // Indonesia
+  "Asia/Manila", // Philippines
+  "Asia/Karachi", // Pakistan
+  "Asia/Kathmandu", // Nepal
+  "Asia/Colombo", // Sri Lanka
+  "Australia/Sydney", // Australia (East)
+  "Australia/Melbourne", // Australia (South-East)
+  "Australia/Perth", // Australia (West)
+  "Pacific/Auckland", // New Zealand
+  "Africa/Johannesburg", // South Africa
+  "Africa/Cairo", // Egypt
+  "Africa/Nairobi", // Kenya
+  "America/Mexico_City", // Mexico
+  "America/Bogota", // Colombia
+  "America/Lima", // Peru
+  "America/Argentina/Buenos_Aires", // Argentina
+  "America/Santiago", // Chile
+  "America/Anchorage", // Alaska
+  "Pacific/Honolulu", // Hawaii
+  "Pacific/Fiji", // Fiji
+  "Pacific/Guam",
+];
 
 const ExpertAvailabilityManager = () => {
-  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  // const userTimeZone = "Asia/Kolkata";
+  const [userTimeZone, setUserTimeZone] = useState("UTC");
+  console.log("User Time Zone:", userTimeZone);
+
   const currentDate = new Date();
   const [activeTab, setActiveTab] = useState("calendar");
   const [selectedDate, setSelectedDate] = useState(new Date(currentDate));
@@ -1232,6 +1284,35 @@ const ExpertAvailabilityManager = () => {
                     >
                       <HelpCircle className="h-5 w-5 text-blue-500" />
                     </Button>
+                  </div>
+                  <div className="flex items-center">
+                    {/* TIMEZONE DROPDOWN */}
+                    <div className="mr-4 flex items-center">
+                      <Label
+                        htmlFor="timezone-select"
+                        className="mr-2 text-sm font-medium"
+                      >
+                        Timezone:
+                      </Label>
+                      <Select
+                        value={userTimeZone}
+                        onValueChange={(v) => setUserTimeZone(v)}
+                      >
+                        <SelectTrigger
+                          id="timezone-select"
+                          className="w-[180px]"
+                        >
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIMEZONES.map((tz) => (
+                            <SelectItem key={tz} value={tz}>
+                              {tz}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="flex items-center">
                     <Button

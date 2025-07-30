@@ -21,6 +21,7 @@ import {
   faVideoCamera,
   faChalkboardTeacher,
   faPlay,
+  faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import AssessmentReport from "./AssessmentReport";
@@ -110,67 +111,170 @@ interface Booking {
   price?: number;
   agora?: any;
 }
+const getTimezoneOffset = (timezone: string): number => {
+  try {
+    const now = new Date();
+    const utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
+    const targetTime = new Date(
+      utc.toLocaleString("en-US", { timeZone: timezone })
+    );
+    const targetOffset =
+      (utc.getTime() - targetTime.getTime()) / (1000 * 60 * 60);
+    return -targetOffset;
+  } catch (error) {
+    console.warn("Error getting timezone offset:", error);
+    return 0;
+  }
+};
 
 const getZonedDate = (iso: string, timezone?: string) => {
   if (!timezone) return new Date(iso);
+
   try {
-    const dt = new Date(iso);
-    const formatter = new Intl.DateTimeFormat("en-US", {
+    // Create a date object in the specified timezone
+    const date = new Date(iso);
+
+    // Get the offset difference between UTC and the target timezone
+    const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
+
+    // Create a temporary date to get the timezone offset
+    const tempDate = new Date(utcTime + getTimezoneOffset(timezone) * 3600000);
+
+    return tempDate;
+  } catch (error) {
+    console.warn("Error handling timezone:", error);
+    return new Date(iso);
+  }
+};
+const getZonedDateIntl = (iso: string, timezone?: string) => {
+  if (!timezone) return new Date(iso);
+
+  try {
+    const date = new Date(iso);
+
+    // Use Intl.DateTimeFormat to format in the target timezone
+    const formatter = new Intl.DateTimeFormat("en-CA", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false,
+      second: "2-digit",
       timeZone: timezone,
+      hour12: false,
     });
-    const parts = formatter.formatToParts(dt);
+
+    const parts = formatter.formatToParts(date);
     const values: any = {};
     parts.forEach((p) => (values[p.type] = p.value));
+
+    // Create a new date object using the timezone-adjusted values
     return new Date(
-      `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:00`
+      `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`
     );
-  } catch {
+  } catch (error) {
+    console.warn("Error handling timezone with Intl:", error);
     return new Date(iso);
   }
 };
+
 const getLocalDateString = (iso: string, timezone?: string) => {
-  const d = getZonedDate(iso, timezone);
+  const d = getZonedDateIntl(iso, timezone);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
     2,
     "0"
   )}-${String(d.getDate()).padStart(2, "0")}`;
 };
+
 const getLocalTimeString = (iso: string, timezone?: string) => {
-  const d = getZonedDate(iso, timezone);
+  const d = getZonedDateIntl(iso, timezone);
   return `${String(d.getHours()).padStart(2, "0")}:${String(
     d.getMinutes()
   ).padStart(2, "0")}`;
 };
+
 const formatDate = (iso: string, timezone?: string) => {
-  const d = getZonedDate(iso, timezone);
-  return d.toLocaleDateString("en-US", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
+  try {
+    const date = new Date(iso);
+
+    if (timezone) {
+      // Use the timezone when formatting
+      const formattedDate = date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: timezone,
+      });
+
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: timezone,
+      };
+
+      const formattedTime = date.toLocaleTimeString("en-US", timeOptions);
+
+      return `${formattedDate} at ${formattedTime}`;
+    } else {
+      // Fallback to local timezone
+      const formattedDate = date.toLocaleDateString("en-US", {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+      });
+
+      let hour = date.getHours();
+      const minutes = date.getMinutes().toString().padStart(2, "0");
+      const ampm = hour >= 12 ? "pm" : "am";
+      hour = hour % 12;
+      hour = hour ? hour : 12;
+
+      return `${formattedDate} at ${hour}:${minutes}${ampm}`;
+    }
+  } catch (error) {
+    console.warn("Error formatting date:", error);
+    return new Date(iso).toLocaleString();
+  }
 };
+
 const formatShortDate = (iso: string, timezone?: string) => {
-  const d = getZonedDate(iso, timezone);
-  return d.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  try {
+    const date = new Date(iso);
+    const options: Intl.DateTimeFormatOptions = {
+      month: "short",
+      day: "numeric",
+      ...(timezone && { timeZone: timezone }),
+    };
+
+    return date.toLocaleDateString("en-US", options);
+  } catch (error) {
+    console.warn("Error formatting short date:", error);
+    const d = getZonedDateIntl(iso, timezone);
+    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
 };
 const formatTime = (iso: string, timezone?: string) => {
-  const d = getZonedDate(iso, timezone);
-  let hour = d.getHours();
-  const min = String(d.getMinutes()).padStart(2, "0");
-  const ampm = hour >= 12 ? "pm" : "am";
-  hour = hour % 12;
-  hour = hour ? hour : 12;
-  return `${hour}:${min}${ampm}`;
+  try {
+    const date = new Date(iso);
+    const options: Intl.DateTimeFormatOptions = {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      ...(timezone && { timeZone: timezone }),
+    };
+
+    return date.toLocaleTimeString("en-US", options);
+  } catch (error) {
+    console.warn("Error formatting time:", error);
+    const d = getZonedDateIntl(iso, timezone);
+    let hour = d.getHours();
+    const min = String(d.getMinutes()).padStart(2, "0");
+    const ampm = hour >= 12 ? "pm" : "am";
+    hour = hour % 12;
+    hour = hour ? hour : 12;
+    return `${hour}:${min}${ampm}`;
+  }
 };
 const formatTimeRange = (startAt: string, endAt: string, timezone?: string) => {
   return `${formatTime(startAt, timezone)} - ${formatTime(endAt, timezone)}`;
@@ -260,27 +364,93 @@ const MyBooking: React.FC = () => {
   };
 
   const isSessionOver = (booking: Booking) => {
-    const now = new Date();
-    const end = getZonedDate(booking.endAt, booking.timezone);
-    return now > end;
+    try {
+      const now = new Date();
+      let sessionEnd: Date;
+
+      if (booking.timezone) {
+        // Convert the session end time to the booking's timezone, then compare with current time
+        sessionEnd = new Date(booking.endAt);
+
+        // Get current time in the booking's timezone for proper comparison
+        const nowInBookingTz = new Date(
+          now.toLocaleString("en-US", { timeZone: booking.timezone })
+        );
+        const sessionEndInBookingTz = new Date(
+          sessionEnd.toLocaleString("en-US", { timeZone: booking.timezone })
+        );
+
+        // Compare using UTC timestamps to avoid timezone confusion
+        return now.getTime() > sessionEnd.getTime();
+      } else {
+        sessionEnd = new Date(booking.endAt);
+        return now > sessionEnd;
+      }
+    } catch (error) {
+      console.warn("Error checking if session is over:", error);
+      const sessionEnd = new Date(booking.endAt);
+      return new Date() > sessionEnd;
+    }
   };
 
   const canGoLive = (booking: Booking) => {
     if (booking.service?.serviceId !== "2") return false;
-    if (!isPaid(booking)) return false;
-    const now = new Date();
-    const start = getZonedDate(booking.startAt, booking.timezone);
-    const end = getZonedDate(booking.endAt, booking.timezone);
-    const goLiveTime = new Date(start.getTime() - 10 * 60 * 1000);
-    return now >= goLiveTime && now < end;
+    if (!(booking.status === "SCHEDULED")) return false;
+
+    try {
+      const now = new Date();
+      let sessionStart: Date;
+      let sessionEnd: Date;
+
+      if (booking.timezone) {
+        sessionStart = new Date(booking.startAt);
+        sessionEnd = new Date(booking.endAt);
+
+        // Calculate go-live time (10 minutes before session start)
+        const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
+
+        // Check if session is over
+        const isOver = now.getTime() > sessionEnd.getTime();
+
+        // Check if it's too early (more than 10 minutes before start)
+        const isTooEarly = now.getTime() < goLiveTime.getTime();
+
+        return !isTooEarly && !isOver;
+      } else {
+        sessionStart = new Date(booking.startAt);
+        sessionEnd = new Date(booking.endAt);
+        const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
+        const isOver = now > sessionEnd;
+        const isTooEarly = now < goLiveTime;
+
+        return !isTooEarly && !isOver;
+      }
+    } catch (error) {
+      console.warn("Error checking if can go live:", error);
+      return false;
+    }
   };
 
   const isUpcomingSession = (booking: Booking) => {
     if (!isPaid(booking)) return false;
-    const now = new Date();
-    const start = getZonedDate(booking.startAt, booking.timezone);
-    const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    return start >= now && start <= next7Days && !isSessionOver(booking);
+
+    try {
+      const now = new Date();
+      let start: Date;
+
+      if (booking.timezone) {
+        start = new Date(booking.startAt);
+      } else {
+        start = getZonedDateIntl(booking.startAt, booking.timezone);
+      }
+
+      const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      return start >= now && start <= next7Days && !isSessionOver(booking);
+    } catch (error) {
+      console.warn("Error checking if upcoming session:", error);
+      return false;
+    }
   };
 
   const handleCompleteSession = async (bookingId: string) => {
@@ -347,27 +517,67 @@ const MyBooking: React.FC = () => {
   });
 
   const isSessionToday = (booking: Booking) => {
-    const today = new Date();
-    const session = getZonedDate(booking.startAt, booking.timezone);
-    return (
-      today.getFullYear() === session.getFullYear() &&
-      today.getMonth() === session.getMonth() &&
-      today.getDate() === session.getDate()
-    );
+    try {
+      const today = new Date();
+      let session: Date;
+
+      if (booking.timezone) {
+        // Get today's date in the booking's timezone
+        const todayInTz = new Date(
+          today.toLocaleString("en-US", { timeZone: booking.timezone })
+        );
+        session = new Date(
+          new Date(booking.startAt).toLocaleString("en-US", {
+            timeZone: booking.timezone,
+          })
+        );
+
+        return (
+          todayInTz.getFullYear() === session.getFullYear() &&
+          todayInTz.getMonth() === session.getMonth() &&
+          todayInTz.getDate() === session.getDate()
+        );
+      } else {
+        session = getZonedDateIntl(booking.startAt, booking.timezone);
+        return (
+          today.getFullYear() === session.getFullYear() &&
+          today.getMonth() === session.getMonth() &&
+          today.getDate() === session.getDate()
+        );
+      }
+    } catch (error) {
+      console.warn("Error checking if session is today:", error);
+      return false;
+    }
   };
 
   const getTimeUntilGoLive = (booking: Booking) => {
-    const now = new Date();
-    const start = getZonedDate(booking.startAt, booking.timezone);
-    const goLiveTime = new Date(start.getTime() - 10 * 60 * 1000);
-    const timeDiff = goLiveTime.getTime() - now.getTime();
-    if (timeDiff <= 0) return null;
-    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+    try {
+      const now = new Date();
+      let start: Date;
+
+      if (booking.timezone) {
+        start = new Date(booking.startAt);
+      } else {
+        start = getZonedDateIntl(booking.startAt, booking.timezone);
+      }
+
+      const goLiveTime = new Date(start.getTime() - 10 * 60 * 1000);
+      const timeDiff = goLiveTime.getTime() - now.getTime();
+
+      if (timeDiff <= 0) return null;
+
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
+    } catch (error) {
+      console.warn("Error calculating time until go live:", error);
+      return null;
     }
-    return `${minutes}m`;
   };
 
   const truncateText = (text: string, maxLength: number = 15) => {
@@ -828,10 +1038,28 @@ const MyBooking: React.FC = () => {
       .replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
-  const matchesDateFilter = (booking: Booking) => {
+  const matchesDateFilter = (booking: Booking, dateFilter: string) => {
     if (!dateFilter) return true;
-    const bookingDate = getLocalDateString(booking.startAt, booking.timezone);
-    return bookingDate === dateFilter;
+
+    try {
+      let bookingDate: string;
+
+      if (booking.timezone) {
+        const date = new Date(booking.startAt);
+        bookingDate = date.toLocaleDateString("en-CA", {
+          timeZone: booking.timezone,
+        }); // Returns YYYY-MM-DD format
+      } else {
+        bookingDate = getLocalDateString(booking.startAt, booking.timezone);
+      }
+
+      return bookingDate === dateFilter;
+    } catch (error) {
+      console.warn("Error matching date filter:", error);
+      return (
+        getLocalDateString(booking.startAt, booking.timezone) === dateFilter
+      );
+    }
   };
 
   const matchesActionFilter = (booking: Booking) => {

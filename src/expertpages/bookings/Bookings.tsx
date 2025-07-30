@@ -46,6 +46,7 @@ import { createPortal } from "react-dom";
 import Swal from "sweetalert2";
 import BookingTable from "./table";
 import AgoraVideoModal from "./AgoraVideoModal";
+import avatar from "@/assets/images/avatar.png";
 
 interface Expert {
   id: string;
@@ -141,6 +142,8 @@ const BookingExpertside: React.FC = () => {
   const [rescheduleStartAt, setRescheduleStartAt] = useState("");
   const [rescheduleEndAt, setRescheduleEndAt] = useState("");
   const [rescheduling, setRescheduling] = useState(false);
+  const [rescheduleStartTime, setRescheduleStartTime] = useState("");
+  const [rescheduleEndTime, setRescheduleEndTime] = useState("");
 
   const [isFullscreenVideoOpen, setIsFullscreenVideoOpen] = useState(false);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string | null>(null);
@@ -168,55 +171,131 @@ const BookingExpertside: React.FC = () => {
   };
 
   const isPaid = (booking: Booking) => booking.status === "SCHEDULED";
-
-  const canGoLive = (booking: Booking) => {
+  const canGoLive = (booking: Booking): boolean => {
+    if (!booking) return false;
     if (booking.service?.serviceId !== "2") return false;
     if (!isPaid(booking)) return false;
-    const now = new Date();
-    const sessionStart = new Date(booking.startAt);
-    const sessionEnd = new Date(booking.endAt);
-    const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
-    const isSessionOver = now > sessionEnd;
-    const isTooEarly = now < goLiveTime;
-    return !isTooEarly && !isSessionOver;
-  };
 
-  const isUpcomingSession = (booking: Booking) => {
-    if (!isPaid(booking)) return false;
-    const now = new Date();
-    const sessionStart = new Date(booking.startAt);
-    const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    return sessionStart >= now && sessionStart <= next7Days;
-  };
+    try {
+      const now = new Date();
+      const sessionStart = new Date(booking.startAt);
+      const sessionEnd = new Date(booking.endAt);
 
-  const isSessionToday = (booking: Booking) => {
-    const today = new Date();
-    const sessionDate = new Date(booking.startAt);
-    return (
-      today.getFullYear() === sessionDate.getFullYear() &&
-      today.getMonth() === sessionDate.getMonth() &&
-      today.getDate() === sessionDate.getDate()
-    );
-  };
+      // Calculate go-live time (10 minutes before session start)
+      const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
 
-  const getTimeUntilGoLive = (booking: Booking) => {
-    const now = new Date();
-    const sessionStart = new Date(booking.startAt);
-    const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
-    const timeDiff = goLiveTime.getTime() - now.getTime();
-    if (timeDiff <= 0) return null;
-    const hours = Math.floor(timeDiff / (1000 * 60 * 60));
-    const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
+      // Use UTC timestamps for accurate comparison
+      const nowTime = now.getTime();
+      const goLiveTimestamp = goLiveTime.getTime();
+      const sessionEndTimestamp = sessionEnd.getTime();
+
+      const isOver = nowTime > sessionEndTimestamp;
+      const isTooEarly = nowTime < goLiveTimestamp;
+
+      return !isTooEarly && !isOver;
+    } catch (error) {
+      console.warn("Error checking if can go live:", error);
+      return false;
     }
-    return `${minutes}m`;
   };
 
-  const isSessionOver = (booking: Booking) => {
-    const now = new Date();
-    const sessionEnd = new Date(booking.endAt);
-    return now > sessionEnd;
+  const isUpcomingSession = (booking: Booking): boolean => {
+    if (!booking || !isPaid(booking)) return false;
+
+    try {
+      const now = new Date();
+      const sessionStart = new Date(booking.startAt);
+      const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      const nowTime = now.getTime();
+      const sessionStartTime = sessionStart.getTime();
+      const next7DaysTime = next7Days.getTime();
+
+      return (
+        sessionStartTime >= nowTime &&
+        sessionStartTime <= next7DaysTime &&
+        !isSessionOver(booking)
+      );
+    } catch (error) {
+      console.warn("Error checking if upcoming session:", error);
+      return false;
+    }
+  };
+
+  const isSessionToday = (booking: Booking): boolean => {
+    if (!booking?.startAt) return false;
+
+    try {
+      const now = new Date();
+
+      if (booking.timezone) {
+        // Get today's date in the booking's timezone
+        const todayInTz = new Date(
+          now.toLocaleString("en-US", { timeZone: booking.timezone })
+        );
+        const sessionInTz = new Date(
+          new Date(booking.startAt).toLocaleString("en-US", {
+            timeZone: booking.timezone,
+          })
+        );
+
+        return (
+          todayInTz.getFullYear() === sessionInTz.getFullYear() &&
+          todayInTz.getMonth() === sessionInTz.getMonth() &&
+          todayInTz.getDate() === sessionInTz.getDate()
+        );
+      } else {
+        const sessionDate = new Date(booking.startAt);
+        return (
+          now.getFullYear() === sessionDate.getFullYear() &&
+          now.getMonth() === sessionDate.getMonth() &&
+          now.getDate() === sessionDate.getDate()
+        );
+      }
+    } catch (error) {
+      console.warn("Error checking if session is today:", error);
+      return false;
+    }
+  };
+
+  const getTimeUntilGoLive = (booking: Booking): string | null => {
+    if (!booking?.startAt) return null;
+
+    try {
+      const now = new Date();
+      const sessionStart = new Date(booking.startAt);
+      const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
+
+      const timeDiff = goLiveTime.getTime() - now.getTime();
+
+      if (timeDiff <= 0) return null;
+
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
+    } catch (error) {
+      console.warn("Error calculating time until go live:", error);
+      return null;
+    }
+  };
+
+  const isSessionOver = (booking: Booking): boolean => {
+    if (!booking?.endAt) return false;
+
+    try {
+      const now = new Date();
+      const sessionEnd = new Date(booking.endAt);
+
+      // Use UTC timestamps for accurate comparison regardless of timezone
+      return now.getTime() > sessionEnd.getTime();
+    } catch (error) {
+      console.warn("Error checking if session is over:", error);
+      return false;
+    }
   };
 
   const handleGoLive = async (booking: Booking) => {
@@ -292,25 +371,58 @@ const BookingExpertside: React.FC = () => {
     setBooking(null);
   };
 
-  const formatTimeRange = (startAt: string, endAt: string) => {
-    const formatTime = (iso: string) => {
-      const date = new Date(iso);
-      let hour = date.getHours();
-      const minutes = date.getMinutes().toString().padStart(2, "0");
-      const ampm = hour >= 12 ? "PM" : "AM";
-      hour = hour % 12;
-      hour = hour ? hour : 12;
-      return `${hour}:${minutes} ${ampm}`;
+  const formatTimeRange = (
+    startAt: string,
+    endAt: string,
+    timezone?: string
+  ): string => {
+    const formatTime = (iso: string): string => {
+      if (!iso) return "Invalid Time";
+
+      try {
+        const date = new Date(iso);
+
+        if (timezone) {
+          const options: Intl.DateTimeFormatOptions = {
+            hour: "numeric",
+            minute: "2-digit",
+            hour12: true,
+            timeZone: timezone,
+          };
+          return date.toLocaleTimeString("en-US", options);
+        } else {
+          let hour = date.getHours();
+          const minutes = date.getMinutes().toString().padStart(2, "0");
+          const ampm = hour >= 12 ? "PM" : "AM";
+          hour = hour % 12;
+          hour = hour ? hour : 12;
+          return `${hour}:${minutes} ${ampm}`;
+        }
+      } catch (error) {
+        console.warn("Error formatting time in formatTimeRange:", error);
+        return "Invalid Time";
+      }
     };
+
     return `${formatTime(startAt)} - ${formatTime(endAt)}`;
   };
 
-  const formatShortDate = (iso: string) => {
-    const date = new Date(iso);
-    return date.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    });
+  const formatShortDate = (iso: string, timezone?: string): string => {
+    if (!iso) return "Invalid Date";
+
+    try {
+      const date = new Date(iso);
+      const options: Intl.DateTimeFormatOptions = {
+        month: "short",
+        day: "numeric",
+        ...(timezone && { timeZone: timezone }),
+      };
+
+      return date.toLocaleDateString("en-US", options);
+    } catch (error) {
+      console.warn("Error formatting short date:", error);
+      return "Invalid Date";
+    }
   };
 
   const getServiceType = (booking: Booking): string => {
@@ -767,34 +879,117 @@ const BookingExpertside: React.FC = () => {
         return "Pending";
     }
   };
+  const getZonedDate = (iso: string, timezone?: string): Date => {
+    if (!iso) return new Date();
 
-  const formatDate = (iso: string) => {
-    const date = new Date(iso);
-    const formattedDate = date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-    let hour = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-    const ampm = hour >= 12 ? "pm" : "am";
-    hour = hour % 12;
-    hour = hour ? hour : 12;
-    return `${formattedDate} at ${hour}:${minutes}${ampm}`;
+    try {
+      const date = new Date(iso);
+
+      // If no timezone specified, return the original date
+      if (!timezone) return date;
+
+      // Use Intl.DateTimeFormat for accurate timezone conversion
+      const formatter = new Intl.DateTimeFormat("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        timeZone: timezone,
+        hour12: false,
+      });
+
+      const parts = formatter.formatToParts(date);
+      const values: Record<string, string> = {};
+      parts.forEach((p) => (values[p.type] = p.value));
+
+      return new Date(
+        `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`
+      );
+    } catch (error) {
+      console.warn("Error handling timezone in getZonedDate:", error);
+      return new Date(iso);
+    }
   };
 
-  const truncateUsername = (username: string, maxLength: number = 15) => {
+  const formatDate = (iso: string, timezone?: string): string => {
+    if (!iso) return "Invalid Date";
+
+    try {
+      const date = new Date(iso);
+
+      if (timezone) {
+        const dateOptions: Intl.DateTimeFormatOptions = {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+          timeZone: timezone,
+        };
+
+        const timeOptions: Intl.DateTimeFormatOptions = {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+          timeZone: timezone,
+        };
+
+        const formattedDate = date.toLocaleDateString("en-US", dateOptions);
+        const formattedTime = date.toLocaleTimeString("en-US", timeOptions);
+
+        return `${formattedDate} at ${formattedTime}`;
+      } else {
+        // Fallback to local timezone
+        const formattedDate = date.toLocaleDateString("en-US", {
+          month: "long",
+          day: "numeric",
+          year: "numeric",
+        });
+
+        let hour = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, "0");
+        const ampm = hour >= 12 ? "pm" : "am";
+        hour = hour % 12;
+        hour = hour ? hour : 12;
+
+        return `${formattedDate} at ${hour}:${minutes}${ampm}`;
+      }
+    } catch (error) {
+      console.warn("Error formatting date:", error);
+      return "Invalid Date";
+    }
+  };
+
+  const truncateUsername = (
+    username: string,
+    maxLength: number = 15
+  ): string => {
+    if (!username) return "";
     if (username.length <= maxLength) return username;
     return `${username.substring(0, maxLength)}...`;
   };
 
-  const matchesDateFilter = (booking: Booking) => {
-    if (!dateFilter) return true;
-    const bookingDate = new Date(booking.startAt);
-    bookingDate.setHours(0, 0, 0, 0);
-    const filterDate = new Date(dateFilter);
-    filterDate.setHours(0, 0, 0, 0);
-    return bookingDate.getTime() === filterDate.getTime();
+  const matchesDateFilter = (booking: Booking, dateFilter: string): boolean => {
+    if (!dateFilter || !booking?.startAt) return true;
+
+    try {
+      if (booking.timezone) {
+        const date = new Date(booking.startAt);
+        const bookingDate = date.toLocaleDateString("en-CA", {
+          timeZone: booking.timezone,
+        }); // Returns YYYY-MM-DD format
+        return bookingDate === dateFilter;
+      } else {
+        const bookingDate = new Date(booking.startAt);
+        bookingDate.setHours(0, 0, 0, 0);
+        const filterDate = new Date(dateFilter);
+        filterDate.setHours(0, 0, 0, 0);
+        return bookingDate.getTime() === filterDate.getTime();
+      }
+    } catch (error) {
+      console.warn("Error matching date filter:", error);
+      return false;
+    }
   };
 
   const matchesServiceTypeFilter = (booking: Booking) => {
@@ -981,15 +1176,12 @@ const BookingExpertside: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <img
-                      src={
-                        booking.player?.photo ||
-                        `https://i.pravatar.cc/60?u=${booking.playerId}`
-                      }
+                      src={booking.player?.photo || avatar}
                       alt={booking.player?.username || "Player"}
                       className="w-6 h-6 rounded-full object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = `https://i.pravatar.cc/60?u=${booking.playerId}`;
+                        target.src = avatar;
                       }}
                     />
                     <p
@@ -1117,15 +1309,12 @@ const BookingExpertside: React.FC = () => {
             >
               <div className="flex items-center gap-3 mb-2 sm:mb-0">
                 <img
-                  src={
-                    booking.player?.photo ||
-                    `https://i.pravatar.cc/60?u=${booking.playerId}`
-                  }
+                  src={booking.player?.photo || avatar}
                   alt="Player"
                   className="w-8 h-8 rounded-full object-cover"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
-                    target.src = `https://i.pravatar.cc/60?u=${booking.playerId}`;
+                    target.src = avatar;
                   }}
                 />
                 <div>
@@ -1331,15 +1520,12 @@ const BookingExpertside: React.FC = () => {
                 </h3>
                 <div className="flex items-center gap-3 mb-2">
                   <img
-                    src={
-                      selectedBooking.player?.photo ||
-                      `https://i.pravatar.cc/60?u=${selectedBooking.playerId}`
-                    }
+                    src={selectedBooking.player?.photo || avatar}
                     alt="Player"
                     className="w-12 h-12 rounded-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = `https://i.pravatar.cc/60?u=${selectedBooking.playerId}`;
+                      target.src = avatar;
                     }}
                   />
                   <div>
@@ -1686,8 +1872,7 @@ const BookingExpertside: React.FC = () => {
                 <p className="text-sm">
                   <span className="font-semibold">Date:</span>{" "}
                   {formatDate(
-                    bookings.find((b) => b.id === bookingToReject)?.date || "",
-                    bookings.find((b) => b.id === bookingToReject)?.startTime ||
+                    bookings.find((b) => b.id === bookingToReject)?.startAt ||
                       ""
                   )}
                 </p>
@@ -1744,8 +1929,7 @@ const BookingExpertside: React.FC = () => {
                 <p className="text-sm">
                   <span className="font-semibold">Date:</span>{" "}
                   {formatDate(
-                    bookings.find((b) => b.id === bookingToAccept)?.date || "",
-                    bookings.find((b) => b.id === bookingToAccept)?.startTime ||
+                    bookings.find((b) => b.id === bookingToAccept)?.startAt ||
                       ""
                   )}
                 </p>
@@ -1810,9 +1994,7 @@ const BookingExpertside: React.FC = () => {
                   {bookings.find((b) => b.id === bookingToReschedule) &&
                     formatDate(
                       bookings.find((b) => b.id === bookingToReschedule)
-                        ?.date || "",
-                      bookings.find((b) => b.id === bookingToReschedule)
-                        ?.startTime || ""
+                        ?.startAt || ""
                     )}
                 </p>
               </div>

@@ -47,9 +47,62 @@ interface SlotApiResponse {
     isAvailable: boolean;
   }>;
 }
+const TIMEZONES = [
+  "UTC",
+  "America/New_York", // Eastern Time (US & Canada)
+  "America/Chicago", // Central Time (US & Canada)
+  "America/Denver", // Mountain Time (US & Canada)
+  "America/Los_Angeles", // Pacific Time (US & Canada)
+  "America/Toronto", // Canada/Eastern
+  "America/Vancouver", // Canada/Pacific
+  "America/Sao_Paulo", // Brazil/Sao Paulo
+  "Europe/London", // UK
+  "Europe/Berlin", // Germany
+  "Europe/Paris", // France
+  "Europe/Madrid", // Spain
+  "Europe/Rome", // Italy
+  "Europe/Amsterdam", // Netherlands
+  "Europe/Zurich", // Switzerland
+  "Europe/Istanbul", // Turkey
+  "Europe/Moscow", // Russia
+  "Asia/Dubai", // UAE
+  "Asia/Jerusalem", // Israel
+  "Asia/Riyadh", // Saudi Arabia
+  "Asia/Kolkata", // India
+  "Asia/Bangkok", // Thailand
+  "Asia/Hong_Kong", // Hong Kong
+  "Asia/Shanghai", // China
+  "Asia/Singapore", // Singapore
+  "Asia/Tokyo", // Japan
+  "Asia/Seoul", // South Korea
+  "Asia/Kuala_Lumpur", // Malaysia
+  "Asia/Jakarta", // Indonesia
+  "Asia/Manila", // Philippines
+  "Asia/Karachi", // Pakistan
+  "Asia/Kathmandu", // Nepal
+  "Asia/Colombo", // Sri Lanka
+  "Australia/Sydney", // Australia (East)
+  "Australia/Melbourne", // Australia (South-East)
+  "Australia/Perth", // Australia (West)
+  "Pacific/Auckland", // New Zealand
+  "Africa/Johannesburg", // South Africa
+  "Africa/Cairo", // Egypt
+  "Africa/Nairobi", // Kenya
+  "America/Mexico_City", // Mexico
+  "America/Bogota", // Colombia
+  "America/Lima", // Peru
+  "America/Argentina/Buenos_Aires", // Argentina
+  "America/Santiago", // Chile
+  "America/Anchorage", // Alaska
+  "Pacific/Honolulu", // Hawaii
+  "Pacific/Fiji", // Fiji
+  "Pacific/Guam",
+];
 
 const BookingCalendar: React.FC = () => {
-  const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const [userTimeZone, setUserTimeZone] = useState(
+    Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata"
+  );
   const navigate = useNavigate();
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -876,6 +929,29 @@ const BookingCalendar: React.FC = () => {
                     </div>
                   </>
                 )}
+              </div>
+              <div className="mb-4 flex items-center">
+                <Label
+                  htmlFor="timezone-select"
+                  className="text-sm font-medium mr-2"
+                >
+                  Timezone:
+                </Label>
+                <select
+                  id="timezone-select"
+                  className="border border-gray-200 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
+                  value={userTimeZone}
+                  onChange={(e) => setUserTimeZone(e.target.value)}
+                >
+                  {TIMEZONES.map((tz) => (
+                    <option value={tz} key={tz}>
+                      {tz}
+                    </option>
+                  ))}
+                </select>
+                <span className="ml-3 text-xs text-gray-500">
+                  (Affects available slots display)
+                </span>
               </div>
               {/* Selected date and time */}
               <div className="mb-6">

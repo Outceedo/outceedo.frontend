@@ -138,7 +138,7 @@ const Expertview = () => {
 
   // Determine if user is on a premium plan
   const isUserOnPremiumPlan =
-    isActive && planName && planName.toLowerCase() !== "free" || true;
+    (isActive && planName && planName.toLowerCase() !== "free") || true;
 
   // Check if service/follow is allowed for current plan
   const isServiceAllowed = (serviceId: string) => {
@@ -484,7 +484,7 @@ const Expertview = () => {
     "1": "RECORDED VIDEO ASSESSMENT",
     "2": "ONLINE TRAINING",
     "3": "ON GROUND ASSESSMENT",
-    "4": "ONLINE ASSESSMENT",
+    "4": "ON GROUND TRAINING",
   };
 
   const getServiceNameById = (
@@ -735,6 +735,7 @@ const Expertview = () => {
         endTime: "00:00",
         description: videoDescription || "",
         status: "WAITING_EXPERT_APPROVAL",
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
       Object.entries(bookingData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {
