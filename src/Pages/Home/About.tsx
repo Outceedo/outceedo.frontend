@@ -26,7 +26,7 @@ const About: React.FC = () => {
                   operations are in United Kingdom.
                 </p>
                 <p className="text-gray-600">
-                  Our mission is to revolutionize the football industry with
+                  Our vision is to revolutionize the football industry with
                   cutting-edge solutions and a user-centric approach.
                 </p>
                 <p className="text-gray-600">

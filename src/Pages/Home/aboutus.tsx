@@ -16,11 +16,16 @@ function Aboutus() {
               start-up company registered in Scotland, with operations in the
               United Kingdom. Cofounded in 2025 by passionate football fans{" "}
               <span className="font-semibold">Arun Muppana</span> and{" "}
-              <span className="font-semibold">Karthik Reddy</span>, our mission
-              is to create the best football players for a team by connecting
-              them with worldwide experts for real-time performance assessment
-              and guidance.
+              <span className="font-semibold">Karthik Reddy</span>
             </p>
+            <span className="text-lg text-gray-800 mb-4 font-bold text-red-500">
+              Our mission is to create the best football players for a team by
+              connecting them with worldwide experts for real-time performance
+              assessment and guidance.
+            </span>
+            <br />
+            <br />
+
             <p className="text-lg text-gray-800 mb-4">
               Outceedo is an online platform where football players connect with
               global experts to get their sports skills and performances

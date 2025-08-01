@@ -222,14 +222,13 @@ export default function PricingPlans() {
                 <div className="text-gray-500 mb-4 text-center">
                   Get started with our core features.
                 </div>
+                <div className="text-gray-500 mb-4 text-center">Free Plan</div>
                 <Button
                   className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
                   disabled={currentPlanLabel === "Basic"}
                   onClick={handleFreePlanClick}
                 >
-                  {currentPlanLabel === "Basic"
-                    ? "Current Plan"
-                    : "Get Started"}
+                  {currentPlanLabel === "Basic" && "Get Started"}
                 </Button>
               </div>
             </div>

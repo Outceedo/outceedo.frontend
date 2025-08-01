@@ -123,7 +123,7 @@ const Login: React.FC = () => {
 
       {/* Go Back Button */}
       <button
-        onClick={() => navigate(-1)}
+        onClick={() => navigate("/")}
         className="absolute top-6 left-6 flex items-center gap-2 px-3 py-2 bg-transparent bg-opacity-80 rounded hover:bg-opacity-100 hover:text-red-500 font-medium text-white shadow transition z-30"
       >
         <ArrowLeft className="w-5 h-5" />
