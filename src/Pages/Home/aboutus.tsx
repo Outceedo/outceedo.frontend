@@ -16,7 +16,7 @@ function Aboutus() {
               start-up company registered in Scotland, with operations in the
               United Kingdom. Cofounded in 2025 by passionate football fans{" "}
               <span className="font-semibold">Arun Muppana</span> and{" "}
-              <span className="font-semibold">Vamshi Gurram</span>, our mission
+              <span className="font-semibold">Karthik Reddy</span>, our mission
               is to create the best football players for a team by connecting
               them with worldwide experts for real-time performance assessment
               and guidance.

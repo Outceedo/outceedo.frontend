@@ -18,7 +18,7 @@ const managementTeam = [
     photo: Arun,
   },
   {
-    name: "Vamshi Mohana",
+    name: "Karthik Reddy",
     designation: "Co-Founder & CTO",
     photo: Vamshi,
   },
