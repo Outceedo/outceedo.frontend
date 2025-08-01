@@ -51,7 +51,7 @@ interface Country {
   cca2: string;
 }
 
-// Enhanced Pagination Component
+// Enhanced Pagination Component (always show controls)
 const Pagination: React.FC<{
   totalPages: number;
   currentPage: number;
@@ -70,7 +70,6 @@ const Pagination: React.FC<{
     const range = [];
     const rangeWithDots = [];
 
-    // Always show first page
     if (totalPages === 1) return [1];
 
     for (
@@ -95,11 +94,10 @@ const Pagination: React.FC<{
       rangeWithDots.push(totalPages);
     }
 
-    return [...new Set(rangeWithDots)]; // Remove duplicates
+    return [...new Set(rangeWithDots)];
   };
 
-  if (totalPages <= 1) return null;
-
+  // Always show pagination even if only 1 page
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
       <Button
@@ -111,7 +109,6 @@ const Pagination: React.FC<{
       >
         <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
-
       <div className="flex space-x-1 sm:space-x-2">
         {getVisiblePages().map((page, index) => (
           <span
@@ -129,7 +126,6 @@ const Pagination: React.FC<{
           </span>
         ))}
       </div>
-
       <Button
         variant="outline"
         size="sm"
@@ -160,6 +156,9 @@ export default function SponsorProfiles() {
 
   // Extract sponsors and pagination info from profiles response
   const sponsorsArray = profiles?.users || [];
+  const backendTotalPages = profiles?.totalPages || 1;
+  const backendPage = profiles?.page || 1;
+  const totalSponsorCount = profiles?.totalCount || sponsorsArray.length;
 
   const [searchTerm, setSearchTerm] = useState("");
   const [countries, setCountries] = useState<Country[]>([]);
@@ -169,7 +168,7 @@ export default function SponsorProfiles() {
   const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(
     null
   );
-  const [allSponsors, setAllSponsors] = useState<SponsorProfile[]>([]); // Store all sponsors for client-side filtering
+  const [allSponsors, setAllSponsors] = useState<SponsorProfile[]>([]);
 
   const [filters, setFilters] = useState({
     country: "",
@@ -199,14 +198,13 @@ export default function SponsorProfiles() {
     []
   );
 
-  // Fetch sponsors only on initial load, page change, or limit change
+  // Fetch sponsors with backend paging
   const fetchSponsors = useCallback(() => {
     const params: any = {
       page: currentPage,
       limit,
       userType: "sponsor",
     };
-
     dispatch(getProfiles(params));
   }, [currentPage, limit, dispatch]);
 
@@ -214,11 +212,10 @@ export default function SponsorProfiles() {
     fetchSponsors();
   }, [fetchSponsors]);
 
-  // Client-side filtering and searching
+  // Client-side filtering and searching (only on current page)
   const filteredAndSearchedSponsors = useMemo(() => {
     let filtered = [...allSponsors];
 
-    // Apply search filter
     if (searchTerm.trim()) {
       const query = searchTerm.toLowerCase().trim();
       filtered = filtered.filter((sponsor) => {
@@ -238,7 +235,6 @@ export default function SponsorProfiles() {
       });
     }
 
-    // Apply filters
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
         filtered = filtered.filter((sponsor) => {
@@ -250,22 +246,17 @@ export default function SponsorProfiles() {
     return filtered;
   }, [allSponsors, searchTerm, filters]);
 
-  // Calculate pagination for filtered results
-  const totalFilteredSponsors = filteredAndSearchedSponsors.length;
-  const totalPages = Math.ceil(totalFilteredSponsors / limit);
-  const startIndex = (currentPage - 1) * limit;
-  const endIndex = startIndex + limit;
-  const displayedSponsors = filteredAndSearchedSponsors.slice(
-    startIndex,
-    endIndex
-  );
+  // For backend paging, just use filteredAndSearchedSponsors as displayed sponsors
+  const displayedSponsors = filteredAndSearchedSponsors;
 
-  // Reset to page 1 when filters or search change
+  // Pagination info: backend paging
+  const startIndex = (backendPage - 1) * limit;
+  const endIndex = startIndex + displayedSponsors.length;
+
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filters]);
 
-  // Swapped logic: show SweetAlert2 for player without premium, else open modal
   const openReportModal = (sponsor: SponsorProfile) => {
     if (isPlayer && !isUserOnPremiumPlan) {
       Swal.fire({
@@ -396,14 +387,13 @@ export default function SponsorProfiles() {
     return (sum / reviews.length).toFixed(1);
   };
 
-  // Handle page change
+  // Handle page change (backend paging)
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle limit change
+  // Handle limit change (backend paging)
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
     setCurrentPage(1);
@@ -427,15 +417,7 @@ export default function SponsorProfiles() {
 
       {/* Responsive Filters */}
       <div className="w-full mb-4 sm:mb-6">
-        <div
-          className="
-          grid grid-cols-1
-          sm:grid-cols-2
-          md:grid-cols-3
-          lg:grid-cols-5
-          gap-3 sm:gap-4 pt-1
-        "
-        >
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 pt-1">
           {/* Country Filter */}
           <div className="w-full">
             <Select
@@ -740,9 +722,8 @@ export default function SponsorProfiles() {
       )}
 
       {/* Enhanced Pagination Section */}
-      {status === "succeeded" && totalPages > 0 && (
+      {status === "succeeded" && backendTotalPages >= 1 && (
         <div className="flex flex-col items-center mt-8 space-y-4 pb-6">
-          {/* Items per page selector */}
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
             <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Items per page:
@@ -760,24 +741,22 @@ export default function SponsorProfiles() {
             </select>
           </div>
 
-          {/* Pagination Controls */}
           <Pagination
-            totalPages={totalPages}
-            currentPage={currentPage}
+            totalPages={backendTotalPages}
+            currentPage={backendPage}
             onPageChange={handlePageChange}
           />
 
-          {/* Results Info */}
           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
             <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
               <span>
-                Showing {Math.min(startIndex + 1, totalFilteredSponsors)} to{" "}
-                {Math.min(endIndex, totalFilteredSponsors)} of{" "}
-                {totalFilteredSponsors} sponsors
+                Showing {Math.min(startIndex + 1, totalSponsorCount)} to{" "}
+                {Math.min(endIndex, totalSponsorCount)} of {totalSponsorCount}{" "}
+                sponsors
               </span>
               <span className="hidden sm:inline">•</span>
               <span>
-                Page {currentPage} of {totalPages}
+                Page {backendPage} of {backendTotalPages}
               </span>
             </div>
           </div>

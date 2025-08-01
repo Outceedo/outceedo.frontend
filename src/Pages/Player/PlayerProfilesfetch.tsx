@@ -91,7 +91,7 @@ export interface Profile {
   [key: string]: any;
 }
 
-// Enhanced Pagination Component
+// Pagination Component updated to always show controls
 const Pagination: React.FC<{
   totalPages: number;
   currentPage: number;
@@ -110,7 +110,6 @@ const Pagination: React.FC<{
     const range = [];
     const rangeWithDots = [];
 
-    // Always show first page
     if (totalPages === 1) return [1];
 
     for (
@@ -135,11 +134,10 @@ const Pagination: React.FC<{
       rangeWithDots.push(totalPages);
     }
 
-    return [...new Set(rangeWithDots)]; // Remove duplicates
+    return [...new Set(rangeWithDots)];
   };
 
-  if (totalPages <= 1) return null;
-
+  // Always show pagination even if only 1 page
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
       <Button
@@ -151,7 +149,6 @@ const Pagination: React.FC<{
       >
         <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
-
       <div className="flex space-x-1 sm:space-x-2">
         {getVisiblePages().map((page, index) => (
           <span
@@ -169,7 +166,6 @@ const Pagination: React.FC<{
           </span>
         ))}
       </div>
-
       <Button
         variant="outline"
         size="sm"
@@ -196,16 +192,18 @@ const PlayerProfiles: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [allProfiles, setAllProfiles] = useState<Profile[]>([]); // Store all profiles for client-side filtering
+  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Get profiles from Redux store
+  // Get profiles and pagination from Redux store
   const { profiles, status, error } = useAppSelector((state) => state.profile);
 
-  // Extract users array and pagination info from the profiles response
+  // Backend pagination info
   const usersArray = profiles?.users || [];
+  const backendTotalPages = profiles?.totalPages || 1;
+  const backendPage = profiles?.page || 1;
 
   // Store all profiles when data is fetched
   useEffect(() => {
@@ -226,7 +224,6 @@ const PlayerProfiles: React.FC = () => {
   const extractFilterOptions = useCallback(
     (key: keyof Profile, dataArray: Profile[]): string[] => {
       const options = new Set<string>();
-
       dataArray.forEach((profile: Profile) => {
         if (key === "language" && profile.language) {
           const langs = Array.isArray(profile.language)
@@ -236,7 +233,6 @@ const PlayerProfiles: React.FC = () => {
             if (lang) options.add(lang);
           });
         } else if (key === "sports" || key === "sport") {
-          // Handle sports (both array and single string formats)
           if (profile.sports && Array.isArray(profile.sports)) {
             profile.sports.forEach((sport) => {
               if (sport) options.add(sport);
@@ -249,30 +245,26 @@ const PlayerProfiles: React.FC = () => {
           if (value && typeof value === "string") options.add(value);
         }
       });
-
       return Array.from(options);
     },
     []
   );
 
-  // Fetch profiles only on initial load, page change, or limit change
+  // Fetch profiles from backend with pagination params
   const fetchProfiles = useCallback(() => {
     const params: any = {
       page: currentPage,
       limit,
       userType: profileType,
     };
-
-    console.log("Fetching profiles with params:", params); // Debug log
     dispatch(getProfiles(params));
   }, [currentPage, limit, profileType, dispatch]);
 
-  // Initial load and pagination/limit changes only
   useEffect(() => {
     fetchProfiles();
   }, [fetchProfiles]);
 
-  // Client-side filtering and searching
+  // Client-side filtering and searching (only on current page for backend paging)
   const filteredAndSearchedProfiles = useMemo(() => {
     let filtered = [...allProfiles];
 
@@ -303,7 +295,6 @@ const PlayerProfiles: React.FC = () => {
       if (value) {
         filtered = filtered.filter((profile) => {
           if (key === "sport") {
-            // Handle both sports array and sport string
             if (profile.sports && Array.isArray(profile.sports)) {
               return profile.sports.some((sport) => sport === value);
             } else if (profile.sport) {
@@ -328,52 +319,10 @@ const PlayerProfiles: React.FC = () => {
     return filtered;
   }, [allProfiles, searchQuery, filters]);
 
-  // Calculate pagination for filtered results
-  const totalFilteredProfiles = filteredAndSearchedProfiles.length;
-  const totalPages = Math.ceil(totalFilteredProfiles / limit);
-  const startIndex = (currentPage - 1) * limit;
-  const endIndex = startIndex + limit;
-  const displayedProfiles = filteredAndSearchedProfiles.slice(
-    startIndex,
-    endIndex
-  );
+  // For backend paging, show only the profiles returned for the current page
+  const displayedProfiles = filteredAndSearchedProfiles;
 
-  // Reset to page 1 when filters or search change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [searchQuery, filters]);
-
-  const handleFilterChange = (value: string, filterType: string) => {
-    console.log("Filter changed:", filterType, value); // Debug log
-    setFilters({
-      ...filters,
-      [filterType.toLowerCase()]: value,
-    });
-  };
-
-  // Clear all filters
-  const clearAllFilters = () => {
-    console.log("Clearing all filters"); // Debug log
-    setFilters({
-      sport: "",
-      profession: "",
-      city: "",
-      country: "",
-      gender: "",
-      language: "",
-    });
-    setSearchQuery("");
-    setCurrentPage(1);
-  };
-
-  // Check if any filters are active
-  const hasActiveFilters = () => {
-    return (
-      searchQuery !== "" || Object.values(filters).some((value) => value !== "")
-    );
-  };
-
-  // Get filter options from all profiles (not just current page)
+  // Filter options from all current loaded profiles
   const sportOptions = [
     ...extractFilterOptions("sports", allProfiles),
     ...extractFilterOptions("sport", allProfiles),
@@ -384,7 +333,6 @@ const PlayerProfiles: React.FC = () => {
   const genderOptions = extractFilterOptions("gender", allProfiles);
   const languageOptions = extractFilterOptions("language", allProfiles);
 
-  // Default sports if none found in data
   const defaultSports = [
     "Football",
     "Basketball",
@@ -398,7 +346,6 @@ const PlayerProfiles: React.FC = () => {
   const finalSportOptions =
     sportOptions.length > 0 ? [...new Set(sportOptions)] : defaultSports;
 
-  // Generate filter configuration
   const filterConfig = [
     {
       name: "Sport",
@@ -437,7 +384,32 @@ const PlayerProfiles: React.FC = () => {
     },
   ];
 
-  // Handle profile view
+  const handleFilterChange = (value: string, filterType: string) => {
+    setFilters({
+      ...filters,
+      [filterType.toLowerCase()]: value,
+    });
+  };
+
+  const clearAllFilters = () => {
+    setFilters({
+      sport: "",
+      profession: "",
+      city: "",
+      country: "",
+      gender: "",
+      language: "",
+    });
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  const hasActiveFilters = () => {
+    return (
+      searchQuery !== "" || Object.values(filters).some((value) => value !== "")
+    );
+  };
+
   const handleViewProfile = (profile: Profile) => {
     localStorage.setItem("viewplayerusername", profile.username);
 
@@ -454,31 +426,24 @@ const PlayerProfiles: React.FC = () => {
     }
   };
 
-  // Handle page change
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top when page changes
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  // Handle limit change
   const handleLimitChange = (newLimit: number) => {
     setLimit(newLimit);
     setCurrentPage(1);
   };
 
-  console.log("Current state:", {
-    searchQuery,
-    filters,
-    currentPage,
-    status,
-    totalFilteredProfiles,
-    displayedCount: displayedProfiles.length,
-  }); // Debug log
+  // Info for results display (for current page only, since backend does paging)
+  const totalFilteredProfiles =
+    profiles?.totalCount || displayedProfiles.length;
+  const startIndex = (backendPage - 1) * limit;
+  const endIndex = startIndex + displayedProfiles.length;
 
   return (
     <div className="flex bg">
-      {/* Main Content */}
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
         <div className="min-h-screen px-3 sm:px-6 mt-2 rounded-xl">
           {/* Search Box */}
@@ -499,16 +464,7 @@ const PlayerProfiles: React.FC = () => {
 
           {/* Responsive Filters Section */}
           <div className="w-full mb-4 sm:mb-6">
-            <div
-              className="
-              grid grid-cols-1
-              sm:grid-cols-2
-              md:grid-cols-3
-              lg:grid-cols-4
-              xl:grid-cols-6
-              gap-3 sm:gap-4 pt-1
-            "
-            >
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 pt-1">
               {filterConfig.map((filter) => (
                 <div key={filter.name} className="w-full">
                   <Select
@@ -538,7 +494,6 @@ const PlayerProfiles: React.FC = () => {
                 </div>
               ))}
 
-              {/* Clear Filters Button */}
               {hasActiveFilters() && (
                 <div className="w-full flex items-center">
                   <Button
@@ -553,14 +508,12 @@ const PlayerProfiles: React.FC = () => {
             </div>
           </div>
 
-          {/* Loading State */}
           {status === "loading" && (
             <div className="flex justify-center items-center h-32 sm:h-64">
               <div className="animate-spin rounded-full h-8 w-8 sm:h-16 sm:w-16 border-t-2 border-b-2 border-red-600"></div>
             </div>
           )}
 
-          {/* Error State */}
           {status === "failed" && error && (
             <div className="text-center p-4 sm:p-6 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
               <p className="text-base sm:text-lg font-semibold">
@@ -576,7 +529,6 @@ const PlayerProfiles: React.FC = () => {
             </div>
           )}
 
-          {/* No Profiles State */}
           {status === "succeeded" &&
             displayedProfiles.length === 0 &&
             allProfiles.length > 0 && (
@@ -587,7 +539,6 @@ const PlayerProfiles: React.FC = () => {
               </div>
             )}
 
-          {/* No Profiles Loaded */}
           {status === "succeeded" && allProfiles.length === 0 && (
             <div className="text-center p-6 sm:p-10">
               <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
@@ -596,26 +547,16 @@ const PlayerProfiles: React.FC = () => {
             </div>
           )}
 
-          {/* Profiles Grid */}
           {status === "succeeded" && displayedProfiles.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
               {displayedProfiles.map((profile: Profile, index: number) => {
-                // Create a display name from available fields
                 const displayName = `${profile.firstName || ""} ${
                   profile.lastName || ""
                 }`.trim();
-
-                // Calculate rating and reviews count (or use defaults)
                 const rating = profile.rating || 0;
                 const reviews = profile.reviews || 0;
-
-                // Use photo from profile or fallback to default images
                 const profileImage = profile.photo || avatar;
-
-                // Random verified status if not specified
                 const isVerified = Math.random() > 0.5;
-
-                // Get player sports
                 const playerSports = profile.sports
                   ? Array.isArray(profile.sports)
                     ? profile.sports.join(", ")
@@ -649,14 +590,11 @@ const PlayerProfiles: React.FC = () => {
                           ? ` • ${profile.city}, ${profile.country}`
                           : ""}
                       </p>
-
-                      {/* Display sports */}
                       {playerSports && (
                         <p className="text-blue-600 text-xs sm:text-sm font-medium dark:text-blue-300 my-1 line-clamp-1">
                           {playerSports.toUpperCase()}
                         </p>
                       )}
-
                       <p className="text-gray-600 text-xs sm:text-sm dark:text-gray-300 line-clamp-1">
                         {profile.subProfession
                           ? profile.subProfession.charAt(0).toUpperCase() +
@@ -700,10 +638,9 @@ const PlayerProfiles: React.FC = () => {
             </div>
           )}
 
-          {/* Enhanced Pagination Section */}
-          {status === "succeeded" && totalPages > 0 && (
+          {/* Pagination Section - always show if there is at least one page */}
+          {status === "succeeded" && backendTotalPages >= 1 && (
             <div className="flex flex-col items-center mt-8 space-y-4 pb-6">
-              {/* Items per page selector */}
               <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
                 <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Items per page:
@@ -721,14 +658,12 @@ const PlayerProfiles: React.FC = () => {
                 </select>
               </div>
 
-              {/* Pagination Controls */}
               <Pagination
-                totalPages={totalPages}
-                currentPage={currentPage}
+                totalPages={backendTotalPages}
+                currentPage={backendPage}
                 onPageChange={handlePageChange}
               />
 
-              {/* Results Info */}
               <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
                 <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
                   <span>
@@ -738,7 +673,7 @@ const PlayerProfiles: React.FC = () => {
                   </span>
                   <span className="hidden sm:inline">•</span>
                   <span>
-                    Page {currentPage} of {totalPages}
+                    Page {backendPage} of {backendTotalPages}
                   </span>
                 </div>
               </div>

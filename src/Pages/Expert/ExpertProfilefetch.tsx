@@ -93,44 +93,61 @@ const Pagination: React.FC<{
     return [...new Set(rangeWithDots)];
   };
 
-  if (totalPages <= 1) return null;
-
+  // Always show pagination controls, even when totalPages is 1
   return (
-    <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
+    <div className="flex justify-center items-center mt-6 space-x-1 sm:space-x-2">
+      {/* Previous Button */}
       <Button
         variant="outline"
         size="sm"
         onClick={handlePrev}
         disabled={currentPage === 1}
-        className="px-2 sm:px-3"
+        className="px-2 sm:px-3 h-8 sm:h-10 min-w-[32px] sm:min-w-[40px]"
       >
         <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
 
+      {/* Page Numbers */}
       <div className="flex space-x-1 sm:space-x-2">
-        {getVisiblePages().map((page, index) => (
-          <span
-            key={`page-${index}-${page}`}
-            className={`px-2 py-1 sm:px-3 sm:py-1 rounded-md cursor-pointer text-sm ${
-              typeof page === "number" && currentPage === page
-                ? "bg-red-500 text-white"
-                : typeof page === "number"
-                ? "bg-gray-200 dark:bg-slate-600 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-500"
-                : "bg-transparent cursor-default"
-            }`}
-            onClick={() => typeof page === "number" && onPageChange(page)}
-          >
-            {page}
-          </span>
-        ))}
+        {getVisiblePages().map((page, index) => {
+          if (typeof page === "string") {
+            // Render dots
+            return (
+              <span
+                key={`dots-${index}`}
+                className="px-2 py-1 sm:px-3 sm:py-2 text-sm text-gray-500 dark:text-gray-400 flex items-center justify-center min-w-[32px] sm:min-w-[40px] h-8 sm:h-10"
+              >
+                {page}
+              </span>
+            );
+          }
+
+          // Render page numbers as buttons
+          return (
+            <Button
+              key={`page-${index}-${page}`}
+              variant={currentPage === page ? "default" : "outline"}
+              size="sm"
+              onClick={() => onPageChange(page)}
+              className={`px-2 py-1 sm:px-3 sm:py-2 text-sm min-w-[32px] sm:min-w-[40px] h-8 sm:h-10 ${
+                currentPage === page
+                  ? "bg-red-500 text-white hover:bg-red-600 border-red-500"
+                  : "bg-white dark:bg-slate-700 text-gray-700 dark:text-white border-gray-300 dark:border-slate-600 hover:bg-gray-50 dark:hover:bg-slate-600"
+              }`}
+            >
+              {page}
+            </Button>
+          );
+        })}
       </div>
 
+      {/* Next Button */}
       <Button
         variant="outline"
         size="sm"
         onClick={handleNext}
         disabled={currentPage === totalPages}
-        className="px-2 sm:px-3"
+        className="px-2 sm:px-3 h-8 sm:h-10 min-w-[32px] sm:min-w-[40px]"
       >
         <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
@@ -159,12 +176,23 @@ const ExpertProfiles: React.FC = () => {
 
   const expertsArray = profiles?.users || [];
 
-  // Store all experts when data is fetched
+  // Store all experts when data is fetched - for client-side filtering
   useEffect(() => {
     if (expertsArray.length > 0) {
-      setAllExperts(expertsArray);
+      // If no filters are active, replace allExperts with new data
+      // If filters are active, keep existing data for filtering
+      const hasClientSideFilters =
+        searchQuery.trim() !== "" ||
+        Object.values(filters).some((value) => value !== "");
+
+      if (!hasClientSideFilters) {
+        setAllExperts(expertsArray);
+      } else if (allExperts.length === 0) {
+        // Initialize allExperts if empty (first load)
+        setAllExperts(expertsArray);
+      }
     }
-  }, [expertsArray]);
+  }, [expertsArray, searchQuery, filters, allExperts.length]);
 
   const extractFilterOptions = useCallback(
     (key: keyof Expert, dataArray: Expert[]): string[] => {
@@ -197,22 +225,36 @@ const ExpertProfiles: React.FC = () => {
     []
   );
 
-  // Fetch profiles only on initial load, page change, or limit change
+  // Fetch profiles only on initial load, page change, or limit change (not for filters/search)
   const fetchProfiles = useCallback(() => {
-    const params: any = {
-      page: currentPage,
-      limit,
-      userType: "expert",
-    };
+    // Only fetch from server if no client-side filters are active
+    const hasClientSideFilters =
+      searchQuery.trim() !== "" ||
+      Object.values(filters).some((value) => value !== "");
 
-    console.log("Fetching profiles with params:", params); // Debug log
-    dispatch(getProfiles(params));
-  }, [currentPage, limit, dispatch]);
+    if (!hasClientSideFilters) {
+      const params: any = {
+        page: currentPage,
+        limit,
+        userType: "expert",
+      };
 
-  // Initial load and pagination/limit changes only
+      console.log("Fetching profiles with params:", params); // Debug log
+      dispatch(getProfiles(params));
+    }
+  }, [currentPage, limit, dispatch, searchQuery, filters]);
+
+  // Initial load only - don't refetch on filter/search changes
   useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
+    // Only fetch on initial load or when no filters/search are active
+    const hasClientSideFilters =
+      searchQuery.trim() !== "" ||
+      Object.values(filters).some((value) => value !== "");
+
+    if (!hasClientSideFilters || allExperts.length === 0) {
+      fetchProfiles();
+    }
+  }, [currentPage, limit]); // Removed fetchProfiles from dependencies to avoid infinite loops
 
   // Client-side filtering and searching
   const filteredAndSearchedExperts = useMemo(() => {
@@ -268,15 +310,32 @@ const ExpertProfiles: React.FC = () => {
     return filtered;
   }, [allExperts, searchQuery, filters]);
 
-  // Calculate pagination for filtered results
-  const totalFilteredExperts = filteredAndSearchedExperts.length;
-  const totalPages = Math.ceil(totalFilteredExperts / limit);
-  const startIndex = (currentPage - 1) * limit;
-  const endIndex = startIndex + limit;
-  const displayedExperts = filteredAndSearchedExperts.slice(
-    startIndex,
-    endIndex
-  );
+  // Get total pages from API response for server-side pagination
+  const apiTotalPages = profiles?.totalPages || 1;
+  const apiCurrentPage = profiles?.page || 1;
+
+  // If we have filters or search active, use client-side pagination
+  const hasClientSideFilters =
+    searchQuery.trim() !== "" ||
+    Object.values(filters).some((value) => value !== "");
+
+  let totalPages, displayedExperts, totalFilteredExperts, startIndex, endIndex;
+
+  if (hasClientSideFilters) {
+    // Client-side pagination for filtered results
+    totalFilteredExperts = filteredAndSearchedExperts.length;
+    totalPages = Math.ceil(totalFilteredExperts / limit);
+    startIndex = (currentPage - 1) * limit;
+    endIndex = startIndex + limit;
+    displayedExperts = filteredAndSearchedExperts.slice(startIndex, endIndex);
+  } else {
+    // Server-side pagination for unfiltered results
+    totalPages = apiTotalPages;
+    totalFilteredExperts = allExperts.length;
+    startIndex = (apiCurrentPage - 1) * limit;
+    endIndex = startIndex + Math.min(limit, allExperts.length);
+    displayedExperts = allExperts; // Show all experts from current API page
+  }
 
   // Reset to page 1 when filters or search change
   useEffect(() => {
@@ -415,22 +474,52 @@ const ExpertProfiles: React.FC = () => {
   };
 
   const handlePageChange = (page: number) => {
+    console.log("Page changed to:", page); // Debug log
     setCurrentPage(page);
+
+    // Only scroll to top and fetch new data if no client-side filters are active
+    const hasClientSideFilters =
+      searchQuery.trim() !== "" ||
+      Object.values(filters).some((value) => value !== "");
+
+    if (!hasClientSideFilters) {
+      // Server-side pagination - fetch new data
+      const params: any = {
+        page: page,
+        limit,
+        userType: "expert",
+      };
+      dispatch(getProfiles(params));
+    }
+
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleLimitChange = (newLimit: number) => {
+    console.log("Limit changed to:", newLimit); // Debug log
     setLimit(newLimit);
     setCurrentPage(1);
+
+    // Fetch new data with new limit
+    const params: any = {
+      page: 1,
+      limit: newLimit,
+      userType: "expert",
+    };
+    dispatch(getProfiles(params));
   };
 
   console.log("Current state:", {
     searchQuery,
     filters,
     currentPage,
+    totalPages,
+    apiTotalPages,
+    hasClientSideFilters,
     status,
     totalFilteredExperts,
     displayedCount: displayedExperts.length,
+    allExpertsCount: allExperts.length,
   }); // Debug log
 
   return (

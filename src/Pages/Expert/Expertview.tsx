@@ -122,6 +122,8 @@ const Expertview = () => {
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
 
+  const [serviceCount, setServiceCount] = useState(0);
+
   const dispatch = useAppDispatch();
   const { viewedProfile, status, error } = useAppSelector(
     (state) => state.profile
@@ -138,7 +140,7 @@ const Expertview = () => {
 
   // Determine if user is on a premium plan
   const isUserOnPremiumPlan =
-    (isActive && planName && planName.toLowerCase() !== "free") || true;
+    isActive && planName && planName.toLowerCase() !== "free";
 
   // Check if service/follow is allowed for current plan
   const isServiceAllowed = (serviceId: string) => {
@@ -185,6 +187,10 @@ const Expertview = () => {
     }
   }, [followersLimit, followersPage, isFollowersModalOpen]);
 
+  useEffect(() => {
+    getExpertServiceCount();
+  });
+
   const checkFollowStatus = async () => {
     try {
       const token = localStorage.getItem("token");
@@ -204,6 +210,24 @@ const Expertview = () => {
       console.error("Error checking follow status:", error);
       // If endpoint doesn't exist, default to false
       setIsFollowing(false);
+    }
+  };
+
+  const getExpertServiceCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_BOOKING_URL}/expert/${viewedProfile?.id}/count`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setServiceCount(response.data?.count || 0);
+    } catch (e) {
+      console.log(e);
     }
   };
 
@@ -916,7 +940,7 @@ const Expertview = () => {
           </div>
           <div className="text-center">
             <p className="text-red-500 text-2xl sm:text-3xl font-bold">
-              {expertData.assessments}+
+              {serviceCount}+
             </p>
             <p className="text-gray-500 text-xs sm:text-base">
               Services Completed
