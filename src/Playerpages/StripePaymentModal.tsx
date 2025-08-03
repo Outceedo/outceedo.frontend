@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCreditCard,
@@ -22,6 +23,9 @@ import {
   faUser,
   faClock,
   faCheckCircle,
+  faInfoCircle,
+  faDollarSign,
+  faBuilding,
 } from "@fortawesome/free-solid-svg-icons";
 
 const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
@@ -93,7 +97,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
               card: cardElement,
               billing_details: {
                 name: booking.player.username || "Customer",
-                email: "customer@example.com",
+                email: booking.player.email || "customer@example.com",
               },
             },
           }
@@ -119,7 +123,6 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
             paymentIntentId: paymentIntent.id,
             amount: paymentIntent.amount,
             currency: paymentIntent.currency,
-            
             expertId: booking.expertId,
             serviceId: booking.serviceId,
             sessionDate: booking.date,
@@ -165,119 +168,171 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
     }
   };
 
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "GBP",
+      minimumFractionDigits: 2,
+    }).format(amount);
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   return (
-    <div className="max-w-md mx-auto">
+    <div className="max-w-lg mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
-        <div className="text-center pb-4 border-b border-gray-200">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <FontAwesomeIcon
-              icon={faCreditCard}
-              className="text-2xl text-blue-600"
-            />
+        {/* Header Section */}
+        <div className="text-center pb-6 border-b border-gray-100">
+          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <FontAwesomeIcon icon={faLock} className="text-2xl text-white" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-800">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Secure Payment
           </h2>
-          <p className="text-sm text-gray-600 mt-1">
-            Complete your booking payment
+          <p className="text-gray-600">
+            Your payment is protected by industry-leading security
           </p>
         </div>
 
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-5">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="font-semibold text-gray-800 text-lg">
-              Booking Summary
-            </h3>
-            <div className="text-2xl font-bold text-blue-600">
-              ${booking.price}
+        {/* Booking Summary Card */}
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl font-bold text-gray-900">Booking Summary</h3>
+            <div className="text-right">
+              <div className="text-3xl font-bold text-blue-600">
+                {formatCurrency(booking.price)}
+              </div>
+              <div className="text-sm text-gray-500">Total Amount</div>
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-center text-sm">
-              <FontAwesomeIcon
-                icon={faUser}
-                className="w-4 h-4 text-gray-500 mr-3"
-              />
-              <span className="text-gray-600">Expert:</span>
-              <span className="ml-2 font-medium text-gray-800">
-                {booking.expert.username}
-              </span>
-            </div>
-
-            <div className="flex items-center text-sm">
-              <FontAwesomeIcon
-                icon={faCalendar}
-                className="w-4 h-4 text-gray-500 mr-3"
-              />
-              <span className="text-gray-600">Date:</span>
-              <span className="ml-2 font-medium text-gray-800">
-                {new Date(booking.date).toLocaleDateString("en-US", {
-                  weekday: "long",
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </span>
-            </div>
-
-            <div className="flex items-center text-sm">
-              <FontAwesomeIcon
-                icon={faClock}
-                className="w-4 h-4 text-gray-500 mr-3"
-              />
-              <span className="text-gray-600">Time:</span>
-              <span className="ml-2 font-medium text-gray-800">
-                {booking.startTime} - {booking.endTime}
-              </span>
-            </div>
-
-            <div className="pt-2 border-t border-blue-200">
-              <div className="font-medium text-gray-800">
-                {booking.service.service.name}
+          <div className="space-y-4">
+            {/* Service Information */}
+            <div className="bg-gray-50 rounded-xl p-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <FontAwesomeIcon
+                    icon={faBuilding}
+                    className="text-blue-600"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h4 className="font-semibold text-gray-900 text-lg">
+                    {booking.service.service.name}
+                  </h4>
+                </div>
               </div>
-              <div className="text-sm text-gray-600 mt-1">
-                Session with {booking.player.username}
+            </div>
+
+            {/* Session Details */}
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                  <FontAwesomeIcon
+                    icon={faUser}
+                    className="text-green-600 text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-600">Expert</div>
+                  <div className="font-semibold text-gray-900">
+                    {booking.expert.username}
+                  </div>
+                </div>
               </div>
+
+              {/* <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                  <FontAwesomeIcon
+                    icon={faCalendar}
+                    className="text-purple-600 text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-600">Session Date</div>
+                  <div className="font-semibold text-gray-900">
+                    {formatDate(booking.date)}
+                  </div>
+                </div>
+              </div> */}
+
+              {/* <div className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-orange-100 rounded-lg flex items-center justify-center">
+                  <FontAwesomeIcon
+                    icon={faClock}
+                    className="text-orange-600 text-sm"
+                  />
+                </div>
+                <div className="flex-1">
+                  <div className="text-sm text-gray-600">Time Slot</div>
+                  <div className="font-semibold text-gray-900">
+                    {booking.startTime} - {booking.endTime}
+                  </div>
+                </div>
+              </div> */}
+            </div>
+
+            {/* Player Information */}
+            <div className="pt-4 border-t border-gray-100">
+              <div className="text-sm text-gray-600 mb-1">Booked by</div>
+              <div className="font-medium text-gray-900">
+                {booking.player.username}
+              </div>
+              <Badge variant="secondary" className="mt-2">
+                Booking ID: #{booking.id.slice(-8)}
+              </Badge>
             </div>
           </div>
         </div>
 
+        {/* Payment Method Section */}
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="block text-sm font-semibold text-gray-700">
-              Payment Information
-            </label>
+            <h3 className="text-lg font-bold text-gray-900">Payment Method</h3>
             <div className="flex items-center space-x-2">
               <img
                 src="https://js.stripe.com/v3/fingerprinted/img/visa-365725566f9578a9589553aa9296d178.svg"
                 alt="Visa"
-                className="h-6"
+                className="h-6 opacity-80"
               />
               <img
                 src="https://js.stripe.com/v3/fingerprinted/img/mastercard-4d8844094130711885b5e41b28c9848f.svg"
                 alt="Mastercard"
-                className="h-6"
+                className="h-6 opacity-80"
               />
               <img
                 src="https://js.stripe.com/v3/fingerprinted/img/amex-a49b82f46c5cd6a96a6e418a6ca1717c.svg"
-                alt="Amex"
-                className="h-6"
+                alt="American Express"
+                className="h-6 opacity-80"
+              />
+              <img
+                src="https://js.stripe.com/v3/fingerprinted/img/discover-ac52cd46f89fa40a29a0bfb954e33173.svg"
+                alt="Discover"
+                className="h-6 opacity-80"
               />
             </div>
           </div>
 
           <div className="relative">
-            <div className="p-4 border-2 border-gray-200 rounded-lg bg-white focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-200 transition-all duration-200">
+            <div className="p-4 border-2 border-gray-200 rounded-xl bg-white focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-50 transition-all duration-200">
               <CardElement
                 options={{
-                  hidePostalCode: true,
+                  hidePostalCode: false,
                   style: {
                     base: {
                       fontSize: "16px",
                       color: "#1f2937",
-                      fontFamily: "system-ui, -apple-system, sans-serif",
+                      fontFamily:
+                        "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
                       fontWeight: "500",
+                      lineHeight: "24px",
                       "::placeholder": {
                         color: "#9ca3af",
                         fontWeight: "400",
@@ -296,68 +351,84 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
               />
             </div>
           </div>
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="text-xs text-blue-700 font-medium mb-1">
-              💳 Test Mode - Use test card details:
-            </div>
-            <div className="text-xs text-blue-600 space-y-1">
-              <div>Card: 4242 4242 4242 4242</div>
-              <div>Expiry: Any future date (e.g., 12/30)</div>
-              <div>CVC: Any 3 digits (e.g., 123)</div>
-            </div>
-          </div>
         </div>
 
-        <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+        {/* Security Features */}
+        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl p-4">
           <div className="flex items-start space-x-3">
-            <FontAwesomeIcon
-              icon={faShieldAlt}
-              className="text-green-600 mt-0.5"
-            />
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center flex-shrink-0">
+              <FontAwesomeIcon
+                icon={faShieldAlt}
+                className="text-green-600 text-lg"
+              />
+            </div>
             <div className="flex-1">
-              <div className="flex items-center space-x-2 mb-2">
-                <FontAwesomeIcon
-                  icon={faLock}
-                  className="text-green-600 text-sm"
-                />
-                <span className="text-sm font-medium text-green-800">
-                  256-bit SSL encryption
-                </span>
-              </div>
-              <div className="text-xs text-green-700 space-y-1">
+              <h4 className="font-semibold text-green-900 mb-2">
+                Your Payment is Secure
+              </h4>
+              <div className="space-y-2 text-sm text-green-800">
                 <div className="flex items-center space-x-2">
-                  <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
-                  <span>PCI DSS compliant payment processing</span>
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-xs flex-shrink-0"
+                  />
+                  <span>256-bit SSL encryption</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <FontAwesomeIcon icon={faCheckCircle} className="text-xs" />
-                  <span>Your card details are never stored on our servers</span>
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-xs flex-shrink-0"
+                  />
+                  <span>PCI DSS Level 1 compliant</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-xs flex-shrink-0"
+                  />
+                  <span>Card details never stored</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-xs flex-shrink-0"
+                  />
+                  <span>Powered by Stripe</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Error State */}
         {!booking.paymentIntentClientSecret && (
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg text-sm">
-            <div className="flex items-center space-x-2">
-              <FontAwesomeIcon icon={faExclamationTriangle} />
-              <span className="font-medium">Payment Unavailable</span>
+          <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+            <div className="flex items-start space-x-3">
+              <FontAwesomeIcon
+                icon={faExclamationTriangle}
+                className="text-red-600 mt-0.5 flex-shrink-0"
+              />
+              <div>
+                <h4 className="font-semibold text-red-900">
+                  Payment Unavailable
+                </h4>
+                <p className="text-sm text-red-800 mt-1">
+                  Payment intent could not be initialized. Please refresh the
+                  page and try again.
+                </p>
+              </div>
             </div>
-            <p className="mt-1">
-              Payment intent not available. Please refresh and try again.
-            </p>
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-3 pt-4">
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4 pt-4">
           <Button
             type="button"
             variant="outline"
             onClick={onCancel}
             disabled={processing}
-            className="h-12 border-gray-300 hover:bg-gray-50"
+            className="h-12 border-gray-300 hover:bg-gray-50 font-semibold"
           >
             Cancel
           </Button>
@@ -366,7 +437,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
             disabled={
               !stripe || processing || !booking.paymentIntentClientSecret
             }
-            className="h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg"
+            className="h-12 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold shadow-lg hover:shadow-xl transition-shadow"
           >
             {processing ? (
               <div className="flex items-center space-x-2">
@@ -390,31 +461,53 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                <span>Processing...</span>
+                <span>Processing Payment...</span>
               </div>
             ) : (
               <div className="flex items-center space-x-2">
                 <FontAwesomeIcon icon={faLock} />
-                <span>Pay ${booking.price}</span>
+                <span>Pay {formatCurrency(booking.price)}</span>
               </div>
             )}
           </Button>
         </div>
 
-        <div className="text-center text-xs text-gray-500 pt-4 border-t border-gray-200">
-          <p>
-            By completing this payment, you agree to our{" "}
-            <a href="#" className="text-blue-600 hover:underline">
-              Terms of Service
-            </a>{" "}
-            and{" "}
-            <a href="#" className="text-blue-600 hover:underline">
-              Privacy Policy
-            </a>
-          </p>
-          <p className="mt-1">
-            Current Time: 2025-06-16 17:18:41 UTC | User: 22951a3363
-          </p>
+        {/* Footer Information */}
+        <div className="text-center pt-6 border-t border-gray-100">
+          <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mb-3">
+            <FontAwesomeIcon icon={faInfoCircle} />
+            <span>
+              Transaction ID: {booking.id} | Current Time:{" "}
+              {new Date().toLocaleString()} UTC
+            </span>
+          </div>
+
+          <div className="text-xs text-gray-500 space-y-1">
+            <p>
+              By completing this payment, you agree to our{" "}
+              <a
+                href="/terms"
+                className="text-blue-600 hover:underline font-medium"
+                target="_blank"
+              >
+                Terms of Service
+              </a>{" "}
+              and{" "}
+              <a
+                href="/privacy"
+                className="text-blue-600 hover:underline font-medium"
+                target="_blank"
+              >
+                Privacy Policy
+              </a>
+            </p>
+            <p className="flex items-center justify-center space-x-1">
+              <FontAwesomeIcon icon={faLock} className="text-green-600" />
+              <span>
+                Powered by Stripe • Your payment is secure and encrypted
+              </span>
+            </p>
+          </div>
         </div>
       </form>
     </div>
@@ -441,12 +534,13 @@ const StripePaymentModal = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto p-0">
-        <div className="p-6">
-          <DialogHeader className="text-center mb-4">
-            <DialogTitle className="text-2xl font-bold text-gray-800">
-              Complete Payment
+      <DialogContent className="sm:max-w-[680px] max-h-[95vh] overflow-y-auto p-0 bg-gray-50">
+        <div className="p-6 sm:p-8">
+          <DialogHeader className="text-center mb-6">
+            <DialogTitle className="text-3xl font-bold text-gray-900 mb-2">
+              Complete Your Payment
             </DialogTitle>
+            <p className="text-gray-600">Secure checkout powered by Stripe</p>
           </DialogHeader>
           <Elements stripe={stripePromise}>
             <PaymentForm

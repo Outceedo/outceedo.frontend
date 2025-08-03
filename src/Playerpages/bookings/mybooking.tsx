@@ -2342,7 +2342,7 @@ const MyBooking: React.FC = () => {
             stripePromise={stripePromise}
           />
         )}
-
+        {console.log(selectedBookingForPayment)}
         {/* AGORA VIDEO MODAL */}
         {booking && (
           <AgoraVideoModal

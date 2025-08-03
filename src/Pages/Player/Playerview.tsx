@@ -219,7 +219,7 @@ const Playerview: React.FC = () => {
       if (!token || !profileData?.id) return;
 
       const response = await axios.get(
-        `${API_FOLLOW_URL}/${profileData.id}/follow-status`,
+        `${API_FOLLOW_URL}/${viewedProfile.id}/isfollowing`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
