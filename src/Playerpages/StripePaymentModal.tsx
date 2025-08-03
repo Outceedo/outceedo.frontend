@@ -119,8 +119,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
             paymentIntentId: paymentIntent.id,
             amount: paymentIntent.amount,
             currency: paymentIntent.currency,
-            timestamp: "2025-06-16 17:18:41",
-            user: "22951a3363",
+            
             expertId: booking.expertId,
             serviceId: booking.serviceId,
             sessionDate: booking.date,

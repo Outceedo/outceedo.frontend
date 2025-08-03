@@ -57,12 +57,14 @@ interface TimeSlot {
   reason?: string;
   blockid: string;
 }
+
 interface AvailabilityPattern {
   id?: string;
   dayOfWeek: number;
   startTime: string;
   endTime: string;
 }
+
 interface DailyAvailability {
   [date: string]: boolean;
 }
@@ -80,60 +82,58 @@ interface BlockedSlot {
 const GUIDE_CARDS_KEY = "expert_availability_guide_dismissed";
 const TIMEZONES = [
   "UTC",
-  "America/New_York", // Eastern Time (US & Canada)
-  "America/Chicago", // Central Time (US & Canada)
-  "America/Denver", // Mountain Time (US & Canada)
-  "America/Los_Angeles", // Pacific Time (US & Canada)
-  "America/Toronto", // Canada/Eastern
-  "America/Vancouver", // Canada/Pacific
-  "America/Sao_Paulo", // Brazil/Sao Paulo
-  "Europe/London", // UK
-  "Europe/Berlin", // Germany
-  "Europe/Paris", // France
-  "Europe/Madrid", // Spain
-  "Europe/Rome", // Italy
-  "Europe/Amsterdam", // Netherlands
-  "Europe/Zurich", // Switzerland
-  "Europe/Istanbul", // Turkey
-  "Europe/Moscow", // Russia
-  "Asia/Dubai", // UAE
-  "Asia/Jerusalem", // Israel
-  "Asia/Riyadh", // Saudi Arabia
-  "Asia/Kolkata", // India
-  "Asia/Bangkok", // Thailand
-  "Asia/Hong_Kong", // Hong Kong
-  "Asia/Shanghai", // China
-  "Asia/Singapore", // Singapore
-  "Asia/Tokyo", // Japan
-  "Asia/Seoul", // South Korea
-  "Asia/Kuala_Lumpur", // Malaysia
-  "Asia/Jakarta", // Indonesia
-  "Asia/Manila", // Philippines
-  "Asia/Karachi", // Pakistan
-  "Asia/Kathmandu", // Nepal
-  "Asia/Colombo", // Sri Lanka
-  "Australia/Sydney", // Australia (East)
-  "Australia/Melbourne", // Australia (South-East)
-  "Australia/Perth", // Australia (West)
-  "Pacific/Auckland", // New Zealand
-  "Africa/Johannesburg", // South Africa
-  "Africa/Cairo", // Egypt
-  "Africa/Nairobi", // Kenya
-  "America/Mexico_City", // Mexico
-  "America/Bogota", // Colombia
-  "America/Lima", // Peru
-  "America/Argentina/Buenos_Aires", // Argentina
-  "America/Santiago", // Chile
-  "America/Anchorage", // Alaska
-  "Pacific/Honolulu", // Hawaii
-  "Pacific/Fiji", // Fiji
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Berlin",
+  "Europe/Paris",
+  "Europe/Madrid",
+  "Europe/Rome",
+  "Europe/Amsterdam",
+  "Europe/Zurich",
+  "Europe/Istanbul",
+  "Europe/Moscow",
+  "Asia/Dubai",
+  "Asia/Jerusalem",
+  "Asia/Riyadh",
+  "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Asia/Kuala_Lumpur",
+  "Asia/Jakarta",
+  "Asia/Manila",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Colombo",
+  "Australia/Sydney",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Pacific/Auckland",
+  "Africa/Johannesburg",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "America/Mexico_City",
+  "America/Bogota",
+  "America/Lima",
+  "America/Argentina/Buenos_Aires",
+  "America/Santiago",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Pacific/Fiji",
   "Pacific/Guam",
 ];
 
 const ExpertAvailabilityManager = () => {
   const [userTimeZone, setUserTimeZone] = useState("UTC");
-  console.log("User Time Zone:", userTimeZone);
-
   const currentDate = new Date();
   const [activeTab, setActiveTab] = useState("calendar");
   const [selectedDate, setSelectedDate] = useState(new Date(currentDate));
@@ -164,17 +164,12 @@ const ExpertAvailabilityManager = () => {
   const [calendarTimeSlots, setCalendarTimeSlots] = useState<
     Record<string, TimeSlot[]>
   >({});
-
-  // New state to store blocked dates with their IDs
   const [blockedDatesMap, setBlockedDatesMap] = useState<
     Record<string, string>
   >({});
-
-  // Popper guide state and refs
   const [guideStep, setGuideStep] = useState<number>(0);
   const [showGuide, setShowGuide] = useState<boolean>(false);
 
-  // Button refs for popper positioning
   const prevMonthBtnRef = useRef<HTMLButtonElement>(null);
   const nextMonthBtnRef = useRef<HTMLButtonElement>(null);
   const helpBtnRef = useRef<HTMLButtonElement>(null);
@@ -220,7 +215,6 @@ const ExpertAvailabilityManager = () => {
     localStorage.getItem("userId") ||
     localStorage.getItem("userid") ||
     localStorage.getItem("user_id");
-
   const token = localStorage.getItem("token");
   const axiosInstance = axios.create({
     headers: {
@@ -252,18 +246,33 @@ const ExpertAvailabilityManager = () => {
     "00:00",
   ];
 
-  // New function to fetch blocked slots
+  // Helper function to add 30 minutes to a time string
+  const addThirtyMinutes = (time: string): string => {
+    if (!time || typeof time !== "string" || !time.includes(":")) return time;
+    const [hour, minute] = time.split(":").map(Number);
+    let newMinute = minute + 30;
+    let newHour = hour;
+
+    if (newMinute >= 60) {
+      newHour += 1;
+      newMinute -= 60;
+    }
+
+    if (newHour > 23) newHour = 0; // Handle midnight rollover
+
+    return `${newHour.toString().padStart(2, "0")}:${newMinute
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
   const fetchBlockedSlots = async () => {
     try {
       const response = await axiosInstance.get(`${API_BASE_URL}/slots/blocked`);
       const blockedSlots: BlockedSlot[] = response.data;
-
-      // Create a map of date -> id for blocked dates (only those with reason and null startTime/endTime)
       const blockedDatesMapping: Record<string, string> = {};
 
       blockedSlots.forEach((slot) => {
         if (slot.reason && slot.startTime === null && slot.endTime === null) {
-          // This is a blocked day (not a specific time slot)
           const date = new Date(slot.date);
           const formattedDate = formatDateString(date);
           blockedDatesMapping[formattedDate] = slot.id;
@@ -271,7 +280,6 @@ const ExpertAvailabilityManager = () => {
       });
 
       setBlockedDatesMap(blockedDatesMapping);
-      console.log("Blocked dates map:", blockedDatesMapping);
     } catch (error) {
       console.error("Failed to fetch blocked slots:", error);
     }
@@ -279,7 +287,7 @@ const ExpertAvailabilityManager = () => {
 
   useEffect(() => {
     fetchAvailabilityPatterns();
-    fetchBlockedSlots(); // Fetch blocked slots on component mount
+    fetchBlockedSlots();
     if (!localStorage.getItem(GUIDE_CARDS_KEY)) {
       setShowGuide(true);
       setGuideStep(0);
@@ -289,14 +297,14 @@ const ExpertAvailabilityManager = () => {
   useEffect(() => {
     fetchMonthlyAvailability();
     fetchCalendarSlotsForMonth();
-    fetchBlockedSlots(); // Refresh blocked slots when month/year changes
+    fetchBlockedSlots();
   }, [currentMonth, currentYear]);
 
   useEffect(() => {
     if (selectedDate) {
       fetchTimeSlotsForSelectedDate();
     }
-  }, [selectedDate]);
+  }, [selectedDate, userTimeZone]); // Added userTimeZone as dependency
 
   useEffect(() => {
     if (selectedDate) {
@@ -398,7 +406,6 @@ const ExpertAvailabilityManager = () => {
         if (stepCard.focusRef === nextMonthBtnRef) {
           left = rect.left - popperWidth - 12;
           top = rect.top - 60;
-
           if (left < 10) {
             left = rect.left + rect.width / 2 - popperWidth / 2;
             top = rect.bottom + 12;
@@ -408,16 +415,15 @@ const ExpertAvailabilityManager = () => {
         if (stepCard.focusRef === addSlotBtnRef) {
           left = rect.left - popperWidth - 12;
           top = rect.top - 60;
-
           if (left < 10) {
             left = rect.left + rect.width / 2 - popperWidth / 2;
             top = rect.bottom + 12;
           }
         }
+
         if (stepCard.focusRef === switchWrapperRef) {
           left = rect.left + 50;
           top = rect.top - 100;
-
           if (left < 10) {
             left = rect.left + rect.width / 2 - popperWidth / 2;
             top = rect.bottom;
@@ -482,13 +488,12 @@ const ExpertAvailabilityManager = () => {
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     let newCalendarSlots: Record<string, TimeSlot[]> = {};
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Midnight for comparison
+    today.setHours(0, 0, 0, 0);
 
     for (let day = 1; day <= daysInMonth; day++) {
       const dateObj = new Date(currentYear, currentMonth, day);
-      dateObj.setHours(0, 0, 0, 0); // Midnight for comparison
+      dateObj.setHours(0, 0, 0, 0);
 
-      // Skip API calls for days before today
       if (dateObj < today) {
         newCalendarSlots[formatDateString(dateObj)] = [];
         continue;
@@ -504,6 +509,13 @@ const ExpertAvailabilityManager = () => {
           Array.isArray(response.data.slots) &&
           response.data.slots.length > 0
         ) {
+          // Update user timezone from API response
+          if (
+            response.data.expertTimeZone &&
+            response.data.expertTimeZone !== userTimeZone
+          ) {
+            setUserTimeZone(response.data.expertTimeZone);
+          }
           newCalendarSlots[formattedDate] = response.data.slots;
         } else {
           newCalendarSlots[formattedDate] = [];
@@ -549,38 +561,27 @@ const ExpertAvailabilityManager = () => {
       const response = await axiosInstance.get(
         `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}&timezone=${userTimeZone}`
       );
-      const addHalfHour = (time: string) => {
-        // time: 'HH:mm'
-        if (!time || typeof time !== "string" || !time.includes(":"))
-          return time;
-        let [hour, minute] = time.split(":").map(Number);
-        minute += 30;
-        if (minute >= 60) {
-          hour += 1;
-          minute -= 60;
-        }
-        // Wrap hour if > 23 to 0 (optional, for 24hr format)
-        if (hour > 23) hour = hour - 24;
-        return `${hour.toString().padStart(2, "0")}:${minute
-          .toString()
-          .padStart(2, "0")}`;
-      };
+
+      // Update user timezone from API response
+      if (
+        response.data.expertTimeZone &&
+        response.data.expertTimeZone !== userTimeZone
+      ) {
+        setUserTimeZone(response.data.expertTimeZone);
+      }
 
       const transformedSlots: TimeSlot[] = response.data.slots.map(
         (slot: any) => ({
           id: slot.id || generateId(),
           date: formattedDate,
-          startTime: slot.displayStartTime,
-          endTime:
-            slot.displayEndTime && typeof slot.displayEndTime === "string"
-              ? slot.displayEndTime
-              : addHalfHour(slot.displayStartTime),
+          startTime: slot.startTime, // Use startTime instead of displayStartTime
+          endTime: slot.endTime || addThirtyMinutes(slot.startTime), // If no endTime, add 30 minutes
           available: slot.isAvailable,
           reason: slot.reason,
-          blockid: slot.blockId,
+          blockid: slot.blockId || "",
         })
       );
-      console.log(transformedSlots);
+
       setTimeSlots(transformedSlots);
     } catch (error) {
       console.log(error);
@@ -595,7 +596,6 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  // Updated blockDate function with immediate state updates and fetchAvailabilityPatterns call
   const blockDate = async (
     date: Date,
     reason: string,
@@ -604,17 +604,15 @@ const ExpertAvailabilityManager = () => {
     const formattedDate = formatDateString(date);
 
     try {
-      // Start with a base payload containing details for any block operation.
       const payload: any = {
         date: formattedDate,
         reason: reason,
         timezone: userTimeZone,
       };
 
-      // If a specific timeSlot object is provided, add its properties to the payload.
       if (timeSlot) {
         payload.startTime = timeSlot.startTime;
-        payload.endTime = timeSlot.endTime; // Explicitly adding endTime here.
+        payload.endTime = timeSlot.endTime;
       }
 
       const response = await axiosInstance.patch(
@@ -622,9 +620,7 @@ const ExpertAvailabilityManager = () => {
         payload
       );
 
-      // Update the UI based on the response.
       if (!timeSlot) {
-        // Logic for blocking an entire day
         setMonthlyAvailability((prev) => ({
           ...prev,
           [formattedDate]: false,
@@ -645,14 +641,11 @@ const ExpertAvailabilityManager = () => {
           "success"
         );
       } else {
-        // Logic for blocking a specific time slot
-        fetchTimeSlotsForSelectedDate(); // Refetch slots to show the update
-        fetchCalendarSlotsForMonth(); // Update calendar view as well
+        fetchTimeSlotsForSelectedDate();
+        fetchCalendarSlotsForMonth();
         Swal.fire(
           "Success",
-          `Time slot from ${formatTimeForDisplay(
-            timeSlot.startTime
-          )} to ${formatTimeForDisplay(timeSlot.endTime)} has been blocked.`,
+          `Time slot from ${timeSlot.startTime} to ${timeSlot.endTime} has been blocked.`,
           "success"
         );
       }
@@ -661,25 +654,19 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  // Updated function to unblock an entire day with fallback API
   const unblockDay = async (date: Date) => {
     const formattedDate = formatDateString(date);
     const blockId = blockedDatesMap[formattedDate];
 
     if (blockId) {
-      // Primary method: Use the block ID to unblock
       try {
-        const response = await axiosInstance.delete(
-          `${API_BASE_URL}/${blockId}/unblock`,
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
+        await axiosInstance.delete(`${API_BASE_URL}/${blockId}/unblock`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-        // Update state immediately
         setMonthlyAvailability((prev) => ({
           ...prev,
           [formattedDate]: true,
@@ -689,17 +676,15 @@ const ExpertAvailabilityManager = () => {
           setSelectedDayAvailability(true);
         }
 
-        // Remove from blocked dates map
         setBlockedDatesMap((prev) => {
           const newMap = { ...prev };
           delete newMap[formattedDate];
           return newMap;
         });
 
-        // Refresh data to reflect changes
         fetchTimeSlotsForSelectedDate();
         fetchCalendarSlotsForMonth();
-        fetchBlockedSlots(); // Refresh blocked slots
+        fetchBlockedSlots();
 
         Swal.fire(
           "Success",
@@ -714,7 +699,6 @@ const ExpertAvailabilityManager = () => {
       }
     }
 
-    // Fallback method: Use availability API to create availability for the day
     try {
       const dayOfWeek = date.getDay();
       const payload = {
@@ -730,7 +714,6 @@ const ExpertAvailabilityManager = () => {
 
       await axiosInstance.post(`${API_BASE_URL}`, payload);
 
-      // Update state immediately
       setMonthlyAvailability((prev) => ({
         ...prev,
         [formattedDate]: true,
@@ -740,24 +723,22 @@ const ExpertAvailabilityManager = () => {
         setSelectedDayAvailability(true);
       }
 
-      // Remove from blocked dates map if it was there
       setBlockedDatesMap((prev) => {
         const newMap = { ...prev };
         delete newMap[formattedDate];
         return newMap;
       });
 
-      // Refresh data to reflect changes
       fetchTimeSlotsForSelectedDate();
       fetchAvailabilityPatterns();
       fetchCalendarSlotsForMonth();
-      fetchBlockedSlots(); // Refresh blocked slots
+      fetchBlockedSlots();
 
       Swal.fire(
         "Success",
         `${formatDateForDisplay(
           date
-        )} has been made available with default time slots (9:00 AM - 5:00 PM).`,
+        )} has been made available with default time slots (09:00 - 17:00).`,
         "success"
       );
     } catch (error: any) {
@@ -773,11 +754,9 @@ const ExpertAvailabilityManager = () => {
     startTime: string,
     endTime: string
   ): { startTime: string; endTime: string }[] => {
-    // Return a single slot with the exact start and end times selected by the user
     return [{ startTime, endTime }];
   };
 
-  // This function works like the original addTimeSlot - adds multiple slots based on range
   const addTimeSlots = async () => {
     try {
       const generatedSlots = generateTimeSlots(
@@ -794,7 +773,6 @@ const ExpertAvailabilityManager = () => {
         return false;
       }
 
-      // Use the same logic as the original working version
       const payload = {
         availabilities: generatedSlots.map((slot) => ({
           dayOfWeek: dayOfWeekMap[dayOfWeekReverseMap[selectedDate.getDay()]],
@@ -815,11 +793,7 @@ const ExpertAvailabilityManager = () => {
       fetchCalendarSlotsForMonth();
       Swal.fire(
         "Success",
-        `${
-          generatedSlots.length
-        } time slots (1 hour each) added from ${formatTimeForDisplay(
-          newSlotStartTime
-        )} to ${formatTimeForDisplay(newSlotEndTime)}.`,
+        `${generatedSlots.length} time slots added from ${newSlotStartTime} to ${newSlotEndTime}.`,
         "success"
       );
       return true;
@@ -829,10 +803,8 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  // Update time slots - delete existing and add new ones
   const updateTimeSlots = async () => {
     try {
-      // First delete all existing patterns for this day
       const dayOfWeek = selectedDate.getDay();
       const patternsToDelete = availabilityPatterns.filter(
         (pattern) => pattern.dayOfWeek === dayOfWeek
@@ -845,7 +817,6 @@ const ExpertAvailabilityManager = () => {
         await axiosInstance.delete(`${API_BASE_URL}`, { data: deletePayload });
       }
 
-      // Then add new slots with the updated range
       const generatedSlots = generateTimeSlots(
         newSlotStartTime,
         newSlotEndTime
@@ -872,16 +843,12 @@ const ExpertAvailabilityManager = () => {
       await axiosInstance.post(`${API_BASE_URL}`, payload);
 
       fetchTimeSlotsForSelectedDate();
-      fetchAvailabilityPatterns();
+      fetchAvailabilityPattern();
       fetchCalendarSlotsForMonth();
 
       Swal.fire(
         "Success",
-        `Time slots updated! ${
-          generatedSlots.length
-        } slots (1 hour each) now available from ${formatTimeForDisplay(
-          newSlotStartTime
-        )} to ${formatTimeForDisplay(newSlotEndTime)}.`,
+        `Time slots updated! ${generatedSlots.length} slots now available from ${newSlotStartTime} to ${newSlotEndTime}.`,
         "success"
       );
       return true;
@@ -891,7 +858,6 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  // Delete all time slots for the selected day
   const deleteAllTimeSlots = async () => {
     try {
       const dayOfWeek = selectedDate.getDay();
@@ -943,7 +909,6 @@ const ExpertAvailabilityManager = () => {
     }
   };
 
-  // Updated unblockTimeSlot function with fetchAvailabilityPatterns call
   const unblockTimeSlot = async (blockid: string) => {
     if (!blockid) {
       Swal.fire("Error", "Block ID is missing for this slot.", "error");
@@ -959,10 +924,8 @@ const ExpertAvailabilityManager = () => {
         },
       });
 
-      // Update state immediately
       const formattedDate = formatDateString(selectedDate);
 
-      // Update timeSlots state
       setTimeSlots((prev) =>
         prev.map((slot) => {
           if (slot.blockid === blockid) {
@@ -977,7 +940,6 @@ const ExpertAvailabilityManager = () => {
         })
       );
 
-      // Update calendar slots for month view
       setCalendarTimeSlots((prev) => ({
         ...prev,
         [formattedDate]: (prev[formattedDate] || []).map((slot) => {
@@ -993,7 +955,6 @@ const ExpertAvailabilityManager = () => {
         }),
       }));
 
-      // Fetch availability patterns after unblocking
       fetchAvailabilityPatterns();
 
       Swal.fire(
@@ -1038,15 +999,7 @@ const ExpertAvailabilityManager = () => {
     for (let hour = startHour; hour < endHour; hour++) {
       for (let minutes of ["00", "30"]) {
         const startTime = `${hour.toString().padStart(2, "0")}:${minutes}`;
-        let endHour = hour;
-        let endMinutes = parseInt(minutes) + 30;
-        if (endMinutes >= 60) {
-          endHour += 1;
-          endMinutes -= 60;
-        }
-        const endTime = `${endHour.toString().padStart(2, "0")}:${endMinutes
-          .toString()
-          .padStart(2, "0")}`;
+        const endTime = addThirtyMinutes(startTime);
         const isAvailable = Math.random() > 0.3;
         dummySlots.push({
           id: generateId(),
@@ -1070,25 +1023,9 @@ const ExpertAvailabilityManager = () => {
 
   const formatDateForDisplay = (date: Date): string => {
     const day = String(date.getDate()).padStart(2, "0");
-    const month = String(date.getMonth() + 1).padStart(2, "0"); // getMonth is zero-based
+    const month = String(date.getMonth() + 1).padStart(2, "0");
     const year = date.getFullYear();
     return `${day}-${month}-${year}`;
-  };
-
-  const formatTimeForDisplay = (time: string | undefined | null): string => {
-    if (!time || typeof time !== "string" || !time.includes(":")) return "--";
-    const [hour, minute] = time.split(":");
-    const hourNum = parseInt(hour, 10);
-    if (isNaN(hourNum)) return time;
-    if (hourNum === 0) {
-      return `12:${minute}am`;
-    } else if (hourNum === 12) {
-      return `12:${minute}pm`;
-    } else if (hourNum > 12) {
-      return `${hourNum - 12}:${minute}pm`;
-    } else {
-      return `${hourNum}:${minute}am`;
-    }
   };
 
   const isSameDay = (date1: Date, date2: Date): boolean => {
@@ -1137,7 +1074,6 @@ const ExpertAvailabilityManager = () => {
       setBlockingTimeSlot(null);
       setBlockReasonDialogOpen(true);
     } else {
-      // Call the new unblock day API
       await unblockDay(selectedDate);
     }
   };
@@ -1209,7 +1145,6 @@ const ExpertAvailabilityManager = () => {
   };
 
   const handleOpenUpdateDialog = () => {
-    // Set current time range based on existing slots
     if (timeSlots.length > 0) {
       const sortedSlots = [...timeSlots].sort((a, b) =>
         a.startTime.localeCompare(b.startTime)
@@ -1262,7 +1197,6 @@ const ExpertAvailabilityManager = () => {
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="calendar">Calendar View</TabsTrigger>
             <TabsTrigger value="list">List View</TabsTrigger>
-            {/* <TabsTrigger value="bulk">Bulk Edit</TabsTrigger> */}
           </TabsList>
           <TabsContent value="calendar" className="space-y-6">
             <Card>
@@ -1286,7 +1220,6 @@ const ExpertAvailabilityManager = () => {
                     </Button>
                   </div>
                   <div className="flex items-center">
-                    {/* TIMEZONE DROPDOWN */}
                     <div className="mr-4 flex items-center">
                       <Label
                         htmlFor="timezone-select"
@@ -1531,8 +1464,7 @@ const ExpertAvailabilityManager = () => {
                           <DialogHeader>
                             <DialogTitle>Add Time Slots</DialogTitle>
                             <DialogDescription>
-                              Create 30-minute time slots by specifying a range
-                              for{" "}
+                              Create time slots by specifying a range for{" "}
                               {selectedDate.toLocaleDateString("en-US", {
                                 weekday: "long",
                                 year: "numeric",
@@ -1558,7 +1490,7 @@ const ExpertAvailabilityManager = () => {
                                         key={`start-${time}`}
                                         value={time}
                                       >
-                                        {formatTimeForDisplay(time)}
+                                        {time}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -1579,7 +1511,7 @@ const ExpertAvailabilityManager = () => {
                                         key={`end-${time}`}
                                         value={time}
                                       >
-                                        {formatTimeForDisplay(time)}
+                                        {time}
                                       </SelectItem>
                                     ))}
                                   </SelectContent>
@@ -1587,9 +1519,8 @@ const ExpertAvailabilityManager = () => {
                               </div>
                             </div>
                             <div className="text-sm text-gray-600">
-                              This will create 30-minute slots between{" "}
-                              {formatTimeForDisplay(newSlotStartTime)} and{" "}
-                              {formatTimeForDisplay(newSlotEndTime)}.
+                              This will create time slots between{" "}
+                              {newSlotStartTime} and {newSlotEndTime}.
                             </div>
                           </div>
                           <DialogFooter>
@@ -1634,8 +1565,8 @@ const ExpertAvailabilityManager = () => {
                     {Object.entries(groupedTimeSlots).map(([hour, slots]) => (
                       <div key={hour} className="space-y-2">
                         <h3 className="text-sm font-medium text-gray-700">
-                          {formatTimeForDisplay(`${hour}:00`).split(":")[0]}{" "}
-                          {parseInt(hour) < 12 ? "AM" : "PM"}
+                          {hour}:00 -{" "}
+                          {String(parseInt(hour) + 1).padStart(2, "0")}:00
                         </h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                           {slots.map((slot) => (
@@ -1653,8 +1584,7 @@ const ExpertAvailabilityManager = () => {
                               <div className="flex justify-between items-center">
                                 <div>
                                   <span className="text-sm font-medium">
-                                    {formatTimeForDisplay(slot.startTime)} -{" "}
-                                    {formatTimeForDisplay(slot.endTime)}
+                                    {slot.startTime} - {slot.endTime}
                                   </span>
 
                                   {!slot.available && slot.blockid && (
@@ -1781,13 +1711,9 @@ const ExpertAvailabilityManager = () => {
               </CardContent>
             </Card>
           </TabsContent>
-          <TabsContent value="bulk" className="space-y-6">
-            <BulkAvailabilityManager />
-          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Update Slots Dialog */}
       <Dialog
         open={updateSlotDialogOpen}
         onOpenChange={setUpdateSlotDialogOpen}
@@ -1796,7 +1722,7 @@ const ExpertAvailabilityManager = () => {
           <DialogHeader>
             <DialogTitle>Update Time Slots</DialogTitle>
             <DialogDescription>
-              Update the time range for 30-minute slots on{" "}
+              Update the time range for slots on{" "}
               {selectedDate.toLocaleDateString("en-US", {
                 weekday: "long",
                 year: "numeric",
@@ -1819,7 +1745,7 @@ const ExpertAvailabilityManager = () => {
                   <SelectContent>
                     {timeOptions.map((time) => (
                       <SelectItem key={`update-start-${time}`} value={time}>
-                        {formatTimeForDisplay(time)}
+                        {time}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1837,7 +1763,7 @@ const ExpertAvailabilityManager = () => {
                   <SelectContent>
                     {timeOptions.map((time) => (
                       <SelectItem key={`update-end-${time}`} value={time}>
-                        {formatTimeForDisplay(time)}
+                        {time}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1845,9 +1771,8 @@ const ExpertAvailabilityManager = () => {
               </div>
             </div>
             <div className="text-sm text-gray-600">
-              This will replace all existing slots with new 30-minute slots
-              between {formatTimeForDisplay(newSlotStartTime)} and{" "}
-              {formatTimeForDisplay(newSlotEndTime)}.
+              This will replace all existing slots with new slots between{" "}
+              {newSlotStartTime} and {newSlotEndTime}.
             </div>
           </div>
           <DialogFooter>
@@ -1873,9 +1798,7 @@ const ExpertAvailabilityManager = () => {
             </DialogTitle>
             <DialogDescription>
               {blockingTimeSlot
-                ? `Block the time slot from ${formatTimeForDisplay(
-                    blockingTimeSlot.startTime
-                  )} to ${formatTimeForDisplay(blockingTimeSlot.endTime)}`
+                ? `Block the time slot from ${blockingTimeSlot.startTime} to ${blockingTimeSlot.endTime}`
                 : `Mark ${blockingDate?.toLocaleDateString("en-US", {
                     weekday: "long",
                     month: "long",

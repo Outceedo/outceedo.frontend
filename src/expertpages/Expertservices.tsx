@@ -261,43 +261,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
       console.log("Custom service counter set to:", maxId + 1);
     } else {
       // Fallback to localStorage if no API data
-      const localServices = JSON.parse(
-        localStorage.getItem("expertServices") ||
-          JSON.stringify([
-            {
-              id: "service-1",
-              serviceId: "1",
-              name: "ONLINE ASSESSMENT",
-              description: "Video Assessment. Report.",
-              price: 50,
-              isActive: true,
-            },
-            {
-              id: "service-2",
-              serviceId: "2",
-              name: "ONLINE TRAINING",
-              description: "Live Assessment. Report",
-              price: 30,
-              isActive: false,
-            },
-            {
-              id: "service-3",
-              serviceId: "3",
-              name: "ON GROUND ASSESSMENT",
-              description: "1 on 1 advise. doubts",
-              price: 80,
-              isActive: true,
-            },
-            {
-              id: "service-4",
-              serviceId: "4",
-              name: "RECORDED VIDEO ASSESSMENT",
-              description: "1 on 1 advise. doubts",
-              price: 80,
-              isActive: true,
-            },
-          ])
-      );
+      const localServices = JSON.parse(localStorage.getItem("expertServices"));
       setServices(localServices);
     }
   }, [expertData]);
