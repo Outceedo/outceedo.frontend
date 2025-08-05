@@ -461,7 +461,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell>
-                    ${booking.price ?? booking.service?.price ?? "N/A"}
+                    £{booking.price ?? booking.service?.price ?? "N/A"}
                   </TableCell>
                   <TableCell>
                     <Badge

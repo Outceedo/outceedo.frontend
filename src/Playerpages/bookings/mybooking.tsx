@@ -1382,7 +1382,7 @@ const MyBooking: React.FC = () => {
 
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600 font-medium">
-                      ${booking.price || "N/A"}
+                      £{booking.price || "N/A"}
                     </span>
 
                     {/* Different buttons based on service type */}
@@ -1841,7 +1841,7 @@ const MyBooking: React.FC = () => {
                               icon={faMoneyBill}
                               className="mr-1"
                             />
-                            ${selectedBooking.price || "N/A"}
+                            £{selectedBooking.price || "N/A"}
                           </div>
                         </div>
                         <h4 className="font-medium mb-2 break-words">
@@ -2187,7 +2187,7 @@ const MyBooking: React.FC = () => {
                             icon={faCreditCard}
                             className="mr-2"
                           />
-                          Pay Now (${selectedBooking.price})
+                          Pay Now (£{selectedBooking.price})
                         </Button>
                       )}
 

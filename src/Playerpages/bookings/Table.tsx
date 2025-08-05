@@ -424,7 +424,7 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
                       </span>
                     </div>
                   </TableCell>
-                  <TableCell>${booking.price || "N/A"}</TableCell>
+                  <TableCell>£{booking.price || "N/A"}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
