@@ -49,7 +49,7 @@ const HomePage: React.FC = () => {
           <img
             src={Hero}
             alt="Stadium background"
-            className="w-full h-full object-cover"
+            className="w-full h-full "
           />
         </div>
 

@@ -123,10 +123,10 @@ export default function Navbar() {
                 px-4 py-2 rounded-md font-medium transition-colors whitespace-nowrap
                 ${
                   scrolled
-                    ? "text-gray-800 hover:bg-gray-100"
-                    : "text-white hover:bg-white/10"
+                    ? "text-gray-800 hover:bg-red-600"
+                    : "text-white hover:bg-red-600"
                 }
-                hover:text-red-500
+                hover:text-white
               `}
               onClick={() => handleNavigate("/login")}
             >
