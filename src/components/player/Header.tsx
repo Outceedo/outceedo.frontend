@@ -58,9 +58,9 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [showModal, setShowModal] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
-  const [selectedInterval, setSelectedInterval] = useState<"month" | "year">(
-    "month"
-  );
+  const [selectedInterval, setSelectedInterval] = useState<
+    "month" | "year" | "day"
+  >("month");
 
   const dispatch = useAppDispatch();
   const {
@@ -157,11 +157,15 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
     price: "Free",
     isCurrent: !isPremiumUser,
   };
-
+  const dailyPlan = plans.find((p) => p.interval === "day");
   const monthlyPlan = plans.find((p) => p.interval === "month");
   const yearlyPlan = plans.find((p) => p.interval === "year");
   const selectedPremiumPlan =
-    selectedInterval === "month" ? monthlyPlan : yearlyPlan;
+    selectedInterval === "month"
+      ? monthlyPlan
+      : selectedInterval === "year"
+      ? yearlyPlan
+      : dailyPlan;
 
   const modal = showModal && (
     <div
@@ -210,6 +214,16 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
 
               {/* --- Interval Toggle --- */}
               <div className="bg-gray-200 rounded-full p-1 flex w-full max-w-xs mb-4">
+                <button
+                  onClick={() => setSelectedInterval("day")}
+                  className={`flex-1 py-1 rounded-full font-semibold transition-colors ${
+                    selectedInterval === "day"
+                      ? "bg-white shadow"
+                      : "text-gray-600"
+                  }`}
+                >
+                  Daily(test)
+                </button>
                 <button
                   onClick={() => setSelectedInterval("month")}
                   className={`flex-1 py-1 rounded-full font-semibold transition-colors ${
