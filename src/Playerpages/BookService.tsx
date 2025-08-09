@@ -228,9 +228,9 @@ const BookingCalendar: React.FC = () => {
   // Format price as string with dollar sign
   const formatPrice = (price: number): string => {
     if (isNaN(price) || price < 0) {
-      return "$25.00";
+      return "£00.00";
     }
-    return `$${price.toFixed(2)}`;
+    return `£${price.toFixed(2)}`;
   };
 
   // Get all unique time slots for selection (from API: all available start times)
