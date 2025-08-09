@@ -38,7 +38,7 @@ const HomePage: React.FC = () => {
         </>
       )}
 
-      <div className="absolute inset-0 bg-black opacity-65"></div>
+      <div className="absolute inset-0 bg-black opacity-30 z-3"></div>
 
       <div className="relative h-screen w-full mb-42" id="home">
         {/* Dark overlay */}
@@ -46,11 +46,7 @@ const HomePage: React.FC = () => {
         <Navbar />
         {/* Background image */}
         <div className="absolute inset-0">
-          <img
-            src={Hero}
-            alt="Stadium background"
-            className="w-full h-full object-cover"
-          />
+          <img src={Hero} alt="Stadium background" className="w-full h-full" />
         </div>
 
         {/* Content */}

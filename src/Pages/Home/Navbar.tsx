@@ -126,7 +126,7 @@ export default function Navbar() {
                     ? "text-gray-800 hover:bg-gray-100"
                     : "text-white hover:bg-white/10"
                 }
-                hover:text-red-500
+                hover:text-white
               `}
               onClick={() => handleNavigate("/login")}
             >

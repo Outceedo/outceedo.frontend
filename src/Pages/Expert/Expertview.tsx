@@ -566,8 +566,8 @@ const Expertview = () => {
         description: displayDescription,
         price:
           typeof service.price === "number"
-            ? `$${service.price}/h`
-            : `$${service.price || 0}/h`,
+            ? `£${service.price}/h`
+            : `£${service.price || 0}/h`,
       };
     }) || [];
 

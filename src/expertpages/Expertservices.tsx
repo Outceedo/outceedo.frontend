@@ -700,7 +700,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
   // Format price display
   const formatPrice = (price: string | number): string => {
     const numericPrice = parsePrice(price);
-    return `$${numericPrice}`;
+    return `£${numericPrice}`;
   };
 
   // Check if a service is a platform service (IDs 1-4)
@@ -845,7 +845,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                      Set Your Price ($) *
+                      Set Your Price (£) *
                     </label>
                     <Input
                       type="number"
@@ -972,7 +972,7 @@ const ExpertServices: React.FC<ExpertServicesProps> = ({ expertData = {} }) => {
 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Price ($)
+                        Price (£)
                       </label>
                       <Input
                         type="number"
