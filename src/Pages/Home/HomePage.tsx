@@ -38,7 +38,7 @@ const HomePage: React.FC = () => {
         </>
       )}
 
-      <div className="absolute inset-0 bg-black opacity-30 z-3"></div>
+      <div className="absolute h-screen inset-0 bg-black opacity-30 z-3"></div>
 
       <div className="relative h-screen w-full mb-42" id="home">
         {/* Dark overlay */}
