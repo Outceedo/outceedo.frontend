@@ -682,16 +682,17 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   };
 
   const getSessionProgress = () => {
-    const [startHours, startMinutes] = booking.startTime.split(":").map(Number);
-    const [endHours, endMinutes] = booking.endTime.split(":").map(Number);
+    // Ensure booking.startAt and booking.endAt are valid ISO strings
+    const startDate = new Date(booking.startAt);
+    const endDate = new Date(booking.endAt);
 
-    let sessionDurationMinutes =
-      endHours * 60 + endMinutes - (startHours * 60 + startMinutes);
-    if (sessionDurationMinutes <= 0) {
-      sessionDurationMinutes += 24 * 60;
+    // Compute session duration in seconds
+    let sessionDurationSeconds = (endDate - startDate) / 1000;
+    if (sessionDurationSeconds <= 0) {
+      // If end is before start, assume it's the next day
+      sessionDurationSeconds += 24 * 60 * 60;
     }
 
-    const sessionDurationSeconds = sessionDurationMinutes * 60;
     if (sessionDurationSeconds <= 0) return 0;
 
     const progress = (callDuration / sessionDurationSeconds) * 100;
@@ -1167,7 +1168,15 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                           />
                           <span className="font-medium">Time:</span>
                           <span className="ml-1">
-                            {booking.startTime} - {booking.endTime}
+                            {new Date(booking.startAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}{" "}
+                            -{" "}
+                            {new Date(booking.endAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </span>
                         </p>
                         <p className="flex items-center justify-center">

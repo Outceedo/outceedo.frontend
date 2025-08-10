@@ -2192,7 +2192,7 @@ const BookingExpertside: React.FC = () => {
                   );
                 })()}
                 <p className="text-sm">
-                  <span className="font-semibold">Price:</span> $
+                  <span className="font-semibold">Price:</span> £
                   {bookings.find((b) => b.id === bookingToAccept)?.price ||
                     "N/A"}
                 </p>
