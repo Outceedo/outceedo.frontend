@@ -229,7 +229,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
         return "Pending";
     }
   };
-
+  
   // Updated to use startAt (ISO) and timezone
   const formatDate = (startAt: string, timezone?: string) => {
     const date = new Date(startAt);

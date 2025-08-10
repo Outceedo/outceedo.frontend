@@ -1039,7 +1039,15 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                           />
                           <span className="font-medium">Time:</span>
                           <span className="ml-1">
-                            {booking.startTime} - {booking.endTime}
+                            {new Date(booking.startAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}{" "}
+                            -{" "}
+                            {new Date(booking.endAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
                           </span>
                         </p>
                         <p className="flex items-center justify-center">
