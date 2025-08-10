@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Download, Share2, Star } from "lucide-react";
+import { Download, Share2, Star, Lock } from "lucide-react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import axios from "axios";
+import logo from "../../assets/images/outceedologo.png";
 import {
   pdf,
   Document,
@@ -13,10 +14,13 @@ import {
   View,
   StyleSheet,
   Svg,
-  Circle,
   Path,
+  Image,
 } from "@react-pdf/renderer";
 import { saveAs } from "file-saver";
+import { useNavigate } from "react-router-dom";
+import { useAppSelector } from "@/store/hooks"; // Adjust import path as needed
+import Swal from "sweetalert2";
 
 interface ReportData {
   category: {
@@ -201,17 +205,24 @@ const PDFDocument: React.FC<{
       padding: 30,
       fontFamily: "Helvetica",
     },
+    image: {
+      width: 200,
+      height: 50,
+      marginBottom: 20,
+      alignSelf: "center",
+      objectFit: "contain",
+    },
     header: {
       fontSize: 24,
       textAlign: "center",
-      marginBottom: 20,
+      marginBottom: 40,
       fontWeight: "bold",
       color: "red-500",
     },
     header2: {
       fontSize: 20,
       textAlign: "center",
-      marginBottom: 20,
+      marginBottom: 40,
       fontWeight: "bold",
       color: "#000000",
     },
@@ -427,8 +438,8 @@ const PDFDocument: React.FC<{
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
-        <Text style={styles.header}>Outceedo</Text>
-        {/* <Text style={styles.header2}>Assessment Report</Text> */}
+        <Image style={styles.image} src={logo} />
+        <Text style={styles.header2}>Assessment Report</Text>
 
         {/* Info Section */}
         <View style={styles.infoSection}>
@@ -587,6 +598,25 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
   const [shareLoading, setShareLoading] = useState(false);
   const reportRef = useRef<HTMLDivElement>(null);
 
+  const navigate = useNavigate();
+
+  // Get subscription status from Redux store
+  const {
+    isActive,
+    planName,
+    loading: subscriptionLoading,
+  } = useAppSelector((state) => state.subscription);
+
+  // Determine if user is on a premium plan
+  const isUserOnPremiumPlan =
+    (isActive && planName && planName.toLowerCase() !== "free") ||
+    localStorage.getItem("role") === "expert";
+
+  // Check if PDF download/share is allowed for current plan
+  const isPDFFeatureAllowed = () => {
+    return isUserOnPremiumPlan;
+  };
+
   useEffect(() => {
     const fetchReviewData = async () => {
       setLoading(true);
@@ -667,7 +697,55 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
     return `Assessment_Report_${playerName.replace(/\s+/g, "_")}_${date}.pdf`;
   };
 
+  // Show upgrade modal for PDF features
+  const showUpgradeModal = (featureType: "download" | "share") => {
+    const currentPlanName = planName || "Free";
+    const featureName =
+      featureType === "download" ? "PDF Download" : "PDF Sharing";
+
+    Swal.fire({
+      icon: "info",
+      title: "Upgrade to Premium",
+      html: `
+        <div class="text-left">
+          <p class="mb-3">${featureName} is only available for Premium members.</p>
+          <div class="bg-blue-50 p-3 rounded-lg mb-3">
+            <h4 class="font-semibold text-blue-800 mb-2">Premium Benefits:</h4>
+            <ul class="text-sm text-blue-700 space-y-1">
+              <li>• Reports download & share</li>
+              <li>• Access to all expert services</li>
+              <li>• Unlimited bookings</li>
+              <li>• Priority support</li>
+              <li>• Enhanced storage capacity</li>
+              <li>• Worldwide expert search</li>
+              <li>• Follow your favorite experts</li>
+            </ul>
+          </div>
+          <p class="text-sm text-gray-600">Your current plan: <strong>${currentPlanName}</strong></p>
+          <p class="text-xs text-gray-500 mt-2">Free plan has limited features</p>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: "Upgrade Now",
+      cancelButtonText: "Maybe Later",
+      confirmButtonColor: "#3B82F6",
+      cancelButtonColor: "#6B7280",
+      customClass: {
+        popup: "swal-wide",
+      },
+    }).then((result) => {
+      if (result.isConfirmed) {
+        navigate("/plans");
+      }
+    });
+  };
+
   const handleDownloadPDF = async () => {
+    if (!isPDFFeatureAllowed()) {
+      showUpgradeModal("download");
+      return;
+    }
+
     setDownloadLoading(true);
     try {
       const blob = await generatePDFBlob();
@@ -682,6 +760,11 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
   };
 
   const handleShare = async () => {
+    if (!isPDFFeatureAllowed()) {
+      showUpgradeModal("share");
+      return;
+    }
+
     setShareLoading(true);
     try {
       const playerName = formatFullName(
@@ -808,8 +891,7 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
   return (
     <div ref={reportRef} className="p-6 bg-white space-y-6">
       <div className="flex justify-center items-center mb-14">
-        <h2 className="text-2xl font-semibold">Outceedo</h2>
-        {/* <h2 className="text-2xl font-semibold">Assessment Report</h2> */}
+        <img src={logo} alt="logo" className="w-56" />
       </div>
 
       <div className="flex justify-between text-sm mb-6">
@@ -864,26 +946,89 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
         </div>
 
         <div className="flex gap-4 justify-end items-end pdf-exclude">
+          {/* Plan Info Banner for Free Users */}
+          {!subscriptionLoading && !isPDFFeatureAllowed() && (
+            <div className="absolute top-0 right-0 -mt-16 mr-0">
+              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 text-xs">
+                <p className="text-blue-700 dark:text-blue-300">
+                  <Lock className="w-3 h-3 inline mr-1" />
+                  PDF features require{" "}
+                  <button
+                    onClick={() => navigate("/plans")}
+                    className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+                  >
+                    Premium
+                  </button>
+                </p>
+              </div>
+            </div>
+          )}
+
           <button
             onClick={handleDownloadPDF}
             disabled={downloadLoading}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title="Download as PDF"
+            className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+              isPDFFeatureAllowed()
+                ? "bg-blue-500 hover:bg-blue-600 text-white"
+                : "bg-gray-400 hover:bg-gray-500 text-white cursor-pointer"
+            } ${downloadLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            title={
+              isPDFFeatureAllowed()
+                ? "Download as PDF"
+                : "Upgrade to Premium for PDF download"
+            }
           >
+            {!isPDFFeatureAllowed() && <Lock className="w-4 h-4" />}
             <Download className="w-4 h-4" />
-            {downloadLoading ? "Generating..." : "PDF"}
+            {downloadLoading
+              ? "Generating..."
+              : isPDFFeatureAllowed()
+              ? "PDF"
+              : "Upgrade to Download"}
           </button>
+
           <button
             onClick={handleShare}
             disabled={shareLoading}
-            className="flex items-center gap-2 px-3 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            title="Share PDF Report"
+            className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
+              isPDFFeatureAllowed()
+                ? "bg-green-500 hover:bg-green-600 text-white"
+                : "bg-gray-400 hover:bg-gray-500 text-white cursor-pointer"
+            } ${shareLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+            title={
+              isPDFFeatureAllowed()
+                ? "Share PDF Report"
+                : "Upgrade to Premium for PDF sharing"
+            }
           >
+            {!isPDFFeatureAllowed() && <Lock className="w-4 h-4" />}
             <Share2 className="w-4 h-4" />
-            {shareLoading ? "Sharing..." : "Share PDF"}
+            {shareLoading
+              ? "Sharing..."
+              : isPDFFeatureAllowed()
+              ? "Share PDF"
+              : "Upgrade to Share"}
           </button>
         </div>
       </div>
+
+      {/* Plan Info Banner - Full Width for Free Users */}
+      {!subscriptionLoading && !isPDFFeatureAllowed() && (
+        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
+          <p className="text-sm text-blue-700 dark:text-blue-300 text-center">
+            <Lock className="w-4 h-4 inline mr-2" />
+            You're on the <strong>{planName || "Free"}</strong> plan. PDF
+            download and sharing features are available for{" "}
+            <button
+              onClick={() => navigate("/plans")}
+              className="text-blue-600 dark:text-blue-400 hover:underline font-medium"
+            >
+              Premium members
+            </button>
+            . Upgrade to unlock these features and get full access to reports.
+          </p>
+        </div>
+      )}
 
       <CardContent className="bg-amber-100 mx-auto rounded-xl shadow-md">
         <div className="py-6">
@@ -1071,6 +1216,13 @@ const AssessmentReport: React.FC<AssessmentReportProps> = ({
           <p>Loading review data...</p>
         </div>
       )}
+
+      {/* Add CSS for wider SweetAlert modals */}
+      <style jsx global>{`
+        .swal-wide {
+          width: 600px !important;
+        }
+      `}</style>
     </div>
   );
 };

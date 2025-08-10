@@ -24,8 +24,8 @@ import {
   faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
-import AssessmentReport from "./AssessmentReport";
-import { ArrowLeft, Star, X } from "lucide-react";
+import AssessmentReport from "../../Pages/common/AssessmentReport";
+import { Star, X } from "lucide-react";
 import profile from "../../assets/images/avatar.png";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -1901,6 +1901,11 @@ const MyBooking: React.FC = () => {
                                   selectedBooking.timezone
                                 )}
                               </p>
+                              <p className="font-medium mt-2">Time Zone:</p>
+                              <p className="text-gray-600">
+                                {selectedBooking.timezone}
+                              </p>
+
                               {selectedBooking.description && (
                                 <>
                                   <p className="font-medium mt-2">

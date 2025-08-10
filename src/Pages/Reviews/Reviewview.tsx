@@ -353,7 +353,7 @@ const Reviewview: React.FC<ReviewviewProps> = ({ Data }) => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Verified
+                    Service
                   </span>
                 </div>
               )}
