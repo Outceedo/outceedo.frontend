@@ -339,6 +339,10 @@ const Profile: React.FC = () => {
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
 
+  useEffect(() => {
+    fetchFollowers(100, followersPage);
+  });
+
   const handleInputChange = (
     field: keyof EditableProfileData,
     value: string
@@ -520,7 +524,7 @@ const Profile: React.FC = () => {
       );
       const data = await response.json();
       setFollowers(data?.users || []);
-      setFollowersCount(data?.totalCount || 0); // If API provides total count
+      setFollowersCount(data?.users.length || 0); // If API provides total count
     } catch (error) {
       setFollowers([]);
       setFollowersCount(0);

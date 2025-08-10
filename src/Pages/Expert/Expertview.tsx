@@ -140,7 +140,7 @@ const Expertview = () => {
 
   // Determine if user is on a premium plan
   const isUserOnPremiumPlan =
-    isActive && planName && planName.toLowerCase() !== "free" ||true;
+    isActive && planName && planName.toLowerCase() !== "free";
 
   // Check if service/follow is allowed for current plan
   const isServiceAllowed = (serviceId: string) => {
@@ -189,6 +189,7 @@ const Expertview = () => {
 
   useEffect(() => {
     getExpertServiceCount();
+    fetchFollowers(100, followersPage);
   });
 
   const checkFollowStatus = async () => {
@@ -197,7 +198,7 @@ const Expertview = () => {
       if (!token || !viewedProfile?.id) return;
 
       const response = await axios.get(
-        `${API_FOLLOW_URL}/${viewedProfile.id}/follow-status`,
+        `${API_FOLLOW_URL}/${viewedProfile.id}/isFollowing`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -250,6 +251,12 @@ const Expertview = () => {
         }
       );
       setFollowers(response.data?.users || []);
+      if (typeof response.data?.totalCount === "number") {
+        setFollowersCount(response.data.totalCount);
+      } else if (Array.isArray(response.data?.users)) {
+        // fallback if no totalCount, just use array length for this page
+        setFollowersCount(response.data.users.length);
+      }
     } catch (error) {
       console.error("Error fetching followers:", error);
       setFollowers([]);

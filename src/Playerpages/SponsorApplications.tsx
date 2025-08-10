@@ -333,6 +333,13 @@ const SponsorApplicationpage = () => {
                   <span className="font-semibold">Sponsorship Type: </span>
                   {modalData.sponsorshipType || "-"}
                 </div>
+                {modalData.budget && (
+                  <div>
+                    <span className="font-semibold">Budget: </span>
+                    {modalData.budget || "-"}
+                  </div>
+                )}
+
                 <div>
                   <span className="font-semibold">
                     Reason for Sponsorship:{" "}

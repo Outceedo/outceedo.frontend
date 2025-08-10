@@ -1737,6 +1737,10 @@ const BookingExpertside: React.FC = () => {
                             selectedBooking.endAt
                           )}
                         </p>
+                        <p className="mb-1">
+                          <span className="font-medium">Time Zone:</span>{" "}
+                          {selectedBooking.timezone}
+                        </p>
                         {selectedBooking.location && (
                           <p className="mb-1 flex items-start">
                             <FontAwesomeIcon

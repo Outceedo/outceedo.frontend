@@ -29,10 +29,19 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { Button } from "react-day-picker";
 import FollowList from "../components/follower/followerlist";
+import axios from "axios";
+
+interface Follower {
+  id: string;
+  username?: string;
+  firstName?: string;
+  lastName?: string;
+  photo?: string;
+  role?: string;
+  [key: string]: any;
+}
 
 const icons = [
   { icon: faLinkedin, color: "#0077B5", link: "" },
@@ -83,6 +92,15 @@ const ExpertProfile = () => {
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
+  const [serviceCount, setServiceCount] = useState(0);
+
+  // Follower states
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followersLimit, setFollowersLimit] = useState(10);
+  const [followersPage, setFollowersPage] = useState(1);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [followers, setFollowers] = useState<Follower[]>([]);
+  const [loadingFollowers, setLoadingFollowers] = useState(false);
 
   // Get profile state from Redux store
   const { currentProfile, status, error } = useAppSelector(
@@ -90,14 +108,25 @@ const ExpertProfile = () => {
   );
   const navigate = useNavigate();
 
+  // API URLs
+  const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
+  const API_BOOKING_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+
   // Fetch profile data on component mount
   useEffect(() => {
-    // Get username from localStorage
     const username = localStorage.getItem("username");
     if (username) {
       dispatch(getProfile(username));
     }
+    getExpertServiceCount();
   }, [dispatch]);
+
+  // Fetch followers count when profile loads
+  useEffect(() => {
+    if (currentProfile?.id) {
+      fetchFollowers(100, 1); // Fetch initial followers with a high limit
+    }
+  }, [currentProfile]);
 
   useEffect(() => {
     const navigationTimer = setTimeout(async () => {
@@ -135,6 +164,68 @@ const ExpertProfile = () => {
     return () => clearTimeout(navigationTimer);
   }, [navigate, currentProfile]);
 
+  // Fetch followers count only (for the stats display)
+
+  // Fetch followers list with pagination
+  const fetchFollowers = async (
+    limit = followersLimit,
+    page = followersPage
+  ) => {
+    if (!currentProfile?.id) return;
+
+    setLoadingFollowers(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_FOLLOW_URL}/${currentProfile.id}/followers?limit=${limit}&page=${page}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setFollowers(response.data?.users || []);
+
+      // Update followers count from the detailed API response if available
+      if (typeof response.data?.totalCount === "number") {
+        setFollowersCount(response.data.totalCount);
+      } else if (Array.isArray(response.data?.users) && page === 1) {
+        // Only update count from users array length if it's the first page
+        // and we don't have totalCount
+        setFollowersCount(response.data.users.length);
+      }
+    } catch (error) {
+      console.error("Error fetching followers:", error);
+      setFollowers([]);
+    } finally {
+      setLoadingFollowers(false);
+    }
+  };
+
+  // Handle followers modal open
+  const handleFollowersClick = () => {
+    setIsFollowersModalOpen(true);
+    fetchFollowers();
+  };
+
+  const getExpertServiceCount = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_BOOKING_URL}/expert/${currentProfile?.id}/count`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setServiceCount(response.data?.count || 0);
+    } catch (e) {
+      console.log(e);
+    }
+  };
+
   const formatExpertData = () => {
     if (!currentProfile)
       return {
@@ -145,7 +236,7 @@ const ExpertProfile = () => {
         travelLimit: "",
         certificationLevel: "",
         reviews: 0,
-        followers: 0,
+        followers: followersCount, // Use dynamic followers count
         assessments: 0,
         profileImage: "",
         about: "",
@@ -193,7 +284,7 @@ const ExpertProfile = () => {
       travelLimit: profile.travelLimit ? `${profile.travelLimit} kms` : "N/A",
       certificationLevel: profile.certificationLevel || "N/A",
       reviews: profile.reviews || 0,
-      followers: profile.followers || 0,
+      followers: followersCount, // Use dynamic followers count
       assessments: profile.assessments || "0",
       profileImage: profileImage,
       about: profile.bio || "",
@@ -276,7 +367,7 @@ const ExpertProfile = () => {
     totalReviews === 0
       ? 0
       : reviewsArray.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
-      totalReviews;
+        totalReviews;
 
   // Show loading state
   if (status === "loading" && !currentProfile) {
@@ -353,7 +444,6 @@ const ExpertProfile = () => {
               </div>
             </div>
 
-            {/* Expert Info - First row - MODIFIED FOR 2 COLUMNS ON SM */}
             {/* Expert Info - All fields in one grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6">
               <div>
@@ -365,7 +455,9 @@ const ExpertProfile = () => {
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Club</p>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Club
+                </p>
                 <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.club || "Not specified"}
                 </p>
@@ -436,7 +528,10 @@ const ExpertProfile = () => {
               className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
             >
               <div className="text-white text-center">
-                <FontAwesomeIcon icon={faCamera} className="text-xl sm:text-2xl mb-2" />
+                <FontAwesomeIcon
+                  icon={faCamera}
+                  className="text-xl sm:text-2xl mb-2"
+                />
                 <p className="text-xs sm:text-sm font-medium">
                   {expertData.profileImage ? "Change Photo" : "Add Photo"}
                 </p>
@@ -480,34 +575,101 @@ const ExpertProfile = () => {
                 )}
               </p>
             </div>
-            <Dialog>
-              {/* Trigger: the follower count block */}
+
+            {/* Followers Dialog */}
+            <Dialog
+              open={isFollowersModalOpen}
+              onOpenChange={setIsFollowersModalOpen}
+            >
               <DialogTrigger asChild>
-                <div className="text-center cursor-pointer">
+                <div
+                  className="text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
+                  onClick={handleFollowersClick}
+                >
                   <p className="text-red-500 text-2xl sm:text-3xl font-bold">
-                    {expertData.followers || 0}
+                    {followersCount}
                   </p>
-                  <p className="text-gray-500 dark:text-white text-sm sm:text-base">Followers</p>
+                  <p className="text-gray-500 dark:text-white text-sm sm:text-base">
+                    Followers
+                  </p>
                 </div>
               </DialogTrigger>
 
-              {/* Dialog content that shows the FollowList component */}
-              <DialogContent className="max-w-xs sm:max-w-md max-h-[80vh] overflow-y-auto">
+              <DialogContent className="max-w-xs sm:max-w-md max-h-[80vh] overflow-hidden">
                 <DialogHeader>
                   <DialogTitle className="text-base sm:text-lg font-semibold text-center">
-                    People who Follow
+                    Followers ({followersCount})
                   </DialogTitle>
                 </DialogHeader>
-                {/* Render the follow list here */}
-                <FollowList />
+
+                {/* Pagination controls */}
+                <div className="flex items-center justify-between mb-4 px-2">
+                  <div className="flex items-center gap-2">
+                    <label className="text-sm font-medium">Show:</label>
+                    <select
+                      value={followersLimit}
+                      onChange={(e) => {
+                        setFollowersLimit(Number(e.target.value));
+                        setFollowersPage(1);
+                        fetchFollowers(Number(e.target.value), 1);
+                      }}
+                      className="border rounded px-2 py-1 text-sm"
+                      disabled={loadingFollowers}
+                    >
+                      {[5, 10, 20, 50].map((val) => (
+                        <option key={val} value={val}>
+                          {val}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      disabled={followersPage === 1 || loadingFollowers}
+                      onClick={() => {
+                        const newPage = followersPage - 1;
+                        setFollowersPage(newPage);
+                        fetchFollowers(followersLimit, newPage);
+                      }}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                    >
+                      Prev
+                    </button>
+                    <span className="text-sm font-medium">
+                      Page {followersPage}
+                    </span>
+                    <button
+                      disabled={
+                        followers.length < followersLimit || loadingFollowers
+                      }
+                      onClick={() => {
+                        const newPage = followersPage + 1;
+                        setFollowersPage(newPage);
+                        fetchFollowers(followersLimit, newPage);
+                      }}
+                      className="px-3 py-1 text-sm border rounded disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+
+                {/* Followers list */}
+                <div className="overflow-y-auto max-h-96">
+                  <FollowList
+                    followers={followers}
+                    loading={loadingFollowers}
+                  />
+                </div>
               </DialogContent>
             </Dialog>
+
             <div className="text-center">
               <p className="text-red-500 text-2xl sm:text-3xl font-bold">
-                {expertData.assessments || 0}
+                {serviceCount || 0}
               </p>
               <p className="text-gray-500 dark:text-white text-sm sm:text-base">
-                Assessments Evaluated
+                Services Completed
               </p>
             </div>
           </div>
@@ -521,10 +683,11 @@ const ExpertProfile = () => {
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${activeTab === tab
+                  className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
+                    activeTab === tab
                       ? "text-red-600 border-red-600"
                       : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
-                    }`}
+                  }`}
                 >
                   {tab}
                 </button>

@@ -27,7 +27,7 @@ import AssessmentEvaluationForm from "../evaluation";
 import { FaWindowClose } from "react-icons/fa";
 import { X } from "lucide-react";
 import axios from "axios";
-import AssessmentReport from "./AssessmentReport";
+import AssessmentReport from "../../Pages/common/AssessmentReport";
 
 interface Expert {
   id: string;
@@ -229,7 +229,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
         return "Pending";
     }
   };
-  
+
   // Updated to use startAt (ISO) and timezone
   const formatDate = (startAt: string, timezone?: string) => {
     const date = new Date(startAt);
@@ -246,9 +246,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
     const ampm = hours >= 12 ? "pm" : "am";
     const mins = minutes.toString().padStart(2, "0");
 
-    return `${formattedDate} at ${hour}:${mins}${ampm}${
-      timezone ? ` (${timezone})` : ""
-    }`;
+    return `${formattedDate} ${hour}:${mins}${ampm}`;
   };
 
   const truncateUsername = (username: string, maxLength: number = 15) => {

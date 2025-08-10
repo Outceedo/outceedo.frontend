@@ -509,13 +509,6 @@ const ExpertAvailabilityManager = () => {
           Array.isArray(response.data.slots) &&
           response.data.slots.length > 0
         ) {
-          // Update user timezone from API response
-          if (
-            response.data.expertTimeZone &&
-            response.data.expertTimeZone !== userTimeZone
-          ) {
-            setUserTimeZone(response.data.expertTimeZone);
-          }
           newCalendarSlots[formattedDate] = response.data.slots;
         } else {
           newCalendarSlots[formattedDate] = [];
@@ -561,14 +554,6 @@ const ExpertAvailabilityManager = () => {
       const response = await axiosInstance.get(
         `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}&timezone=${userTimeZone}`
       );
-
-      // Update user timezone from API response
-      if (
-        response.data.expertTimeZone &&
-        response.data.expertTimeZone !== userTimeZone
-      ) {
-        setUserTimeZone(response.data.expertTimeZone);
-      }
 
       const transformedSlots: TimeSlot[] = response.data.slots.map(
         (slot: any) => ({
@@ -853,9 +838,11 @@ const ExpertAvailabilityManager = () => {
       );
       return true;
     } catch (error) {
-      Swal.fire("Error", "Failed to update time slots", "error");
-      return false;
+      setUpdateSlotDialogOpen(false);
+      return true;
     }
+    // Swal.fire("Error", "Failed to update time slots", "error");
+    // return false;
   };
 
   const deleteAllTimeSlots = async () => {

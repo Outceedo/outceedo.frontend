@@ -24,7 +24,7 @@ import Matches from "./Playerpages/matches";
 import MyBooking from "./Playerpages/bookings/mybooking";
 import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
-import AssessmentReport from "./Playerpages/bookings/AssessmentReport";
+import AssessmentReport from "./Pages/common/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
 import PlayerSponsors from "./Playerpages/PlayerSponsors";
 import SponsorApplicationpage from "./Playerpages/SponsorApplications";

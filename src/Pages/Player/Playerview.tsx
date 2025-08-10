@@ -210,6 +210,7 @@ const Playerview: React.FC = () => {
       checkFollowStatus();
       // Set initial followers count
       setFollowersCount(profileData.followersCount || 0);
+      fetchFollowers(100, followersPage);
     }
   }, [profileData]);
 
@@ -255,10 +256,8 @@ const Playerview: React.FC = () => {
       );
 
       setFollowers(response.data?.users || []);
-      // Optionally update followersCount if API returns total
-      if (typeof response.data?.totalCount === "number") {
-        setFollowersCount(response.data.totalCount);
-      }
+
+      setFollowersCount(response.data?.users.length);
     } catch (error) {
       console.error("Error fetching followers:", error);
       setFollowers([]);

@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import axios from "axios";
 import profile from "../../assets/images/avatar.png";
-import AssessmentReport from "./AssessmentReport";
+import AssessmentReport from "../../Pages/common/AssessmentReport";
 import Swal from "sweetalert2";
 
 interface Expert {
