@@ -164,7 +164,7 @@ const Reviewnoedit: React.FC<ReviewnoeditProps> = ({ Data }) => {
                         clipRule="evenodd"
                       />
                     </svg>
-                    Verified
+                    Service
                   </span>
                 </div>
               )}
