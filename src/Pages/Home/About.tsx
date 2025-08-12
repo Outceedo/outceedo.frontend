@@ -21,10 +21,6 @@ const About: React.FC = () => {
               </h3>
 
               <div className="space-y-6">
-                <p className="text-gray-900 font-bold text-xl">
-                  Outceedo is a start-up company registered in Scotland and our
-                  operations are in United Kingdom.
-                </p>
                 <p className="text-gray-600">
                   Our vision is to revolutionize the football industry with
                   cutting-edge solutions and a user-centric approach.
