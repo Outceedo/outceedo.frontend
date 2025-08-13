@@ -2,6 +2,7 @@ import OutceedoFooter from "./Footer";
 import Navbar from "./Navbar";
 
 function Aboutus() {
+  
   return (
     <div>
       <Navbar />
@@ -11,13 +12,11 @@ function Aboutus() {
             About Us
           </h1>
           <div className="bg-[#f7fafb] rounded-xl shadow-md p-8 mb-8">
-            <p className="text-lg text-gray-800 mb-4">
-              <span className="font-bold text-red-500">Outceedo</span> is a
-              start-up company registered in Scotland, with operations in the
-              United Kingdom. Cofounded in 2025 by passionate football fans{" "}
-              <span className="font-semibold">Arun Muppana</span> and{" "}
-              <span className="font-semibold">Karthik Reddy</span>
+            <p className="text-lg text-gray-800 mb-4 ">
+             Outceedo is a UK registered company.  
+
             </p>
+            <p className="text-lg text-gray-800 mb-4 "><span className=" text-red-500 font-bold">Arun Muppana</span>{" "} and <span className=" text-red-500 font-bold">Karthik Reddy</span>{","} a passionate football fans cofounded this company in 2025.</p>
             <span className="text-lg text-gray-800 mb-4 font-bold text-red-500">
               Our mission is to create the best football players for a team by
               connecting them with worldwide experts for real-time performance
@@ -37,13 +36,9 @@ function Aboutus() {
               creating a dynamic and supportive football community.
             </p>
             <p className="text-lg text-gray-800 mb-4">
-              We know how competitive it is for players to get into the best
-              teams. It is hard to get a place in league or national teams, so
-              we believe that expert assessment is essential to understand one’s
-              skills and enter the next level in sports. Outceedo helps elevate
-              every player's game through professional guidance and expert
-              analysis.
+              We know how competitive it is for players to get into the best teams. It is hard to get a place in league or national teams, so we believe that expert assessment is essential to understand one’s skills and enter the next level in sports. 
             </p>
+            <p className="text-lg text-gray-800 mb-4">Outceedo helps elevate every player's game through professional guidance and expert analysis.</p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
             <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
