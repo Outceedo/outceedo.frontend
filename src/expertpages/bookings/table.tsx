@@ -391,8 +391,9 @@ const BookingTable: React.FC<BookingTableProps> = ({
         </div>
       )}
 
-      <div className="rounded-md border overflow-x-auto">
-        <Table>
+      
+      <div className="rounded-md border w-full">
+        <Table className="min-w-[900px]">
           <TableHeader>
             <TableRow>
               <TableHead className="w-[80px]">ID</TableHead>
@@ -568,7 +569,6 @@ const BookingTable: React.FC<BookingTableProps> = ({
                       <FontAwesomeIcon icon={faFileAlt} />
                     </Button>
                   </TableCell>
-
                   <TableCell className="text-center">
                     <Button
                       variant="ghost"

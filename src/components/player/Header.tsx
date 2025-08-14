@@ -28,7 +28,7 @@ interface Plan {
   stripeProductId: string;
   createdAt: string;
   updatedAt: string;
-  features: any[]; // Assuming features can be any for now
+  features: any[];
 }
 
 const menuItems = [
@@ -198,7 +198,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
                 {basicPlan.price}
               </div>
             </div>
-
             {/* Premium Card */}
             <div
               className={`relative border-4 ${
@@ -211,7 +210,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
                 </span>
               </div>
               <div className="font-bold text-2xl mb-2">Premium</div>
-
               {/* --- Interval Toggle --- */}
               <div className="bg-gray-200 rounded-full p-1 flex w-full max-w-xs mb-4">
                 <button
@@ -245,7 +243,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
                   Yearly
                 </button>
               </div>
-
               <button
                 className={`w-full bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black text-lg font-bold rounded-lg py-2 mt-2 shadow-none ${
                   isPremiumUser ? "cursor-not-allowed opacity-70" : ""
@@ -257,7 +254,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
               >
                 {isPremiumUser ? "Current Plan" : "Get Started"}
               </button>
-
               <div className="text-2xl font-extrabold mt-6 mb-2 text-gray-800">
                 {selectedPremiumPlan
                   ? `£${selectedPremiumPlan.price}/${selectedPremiumPlan.interval}`
@@ -279,8 +275,8 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
 
   return (
     <>
-      <header className="flex flex-wrap items-center justify-between gap-2 px-3 py-3 bg-background dark:bg-slate-950">
-        <div className="flex items-center gap-2">
+      <header className="flex flex-nowrap items-center justify-between gap-2 px-3 py-3 bg-background dark:bg-slate-950 w-full">
+        <div className="flex items-center gap-2 min-w-0">
           <Button
             onClick={() => setOpen(true)}
             className="lg:hidden bg-white dark:bg-slate-700 dark:text-white text-black hover:bg-slate-100 dark:hover:bg-slate-600 p-2"
@@ -289,11 +285,11 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
             <AlignJustify className="h-5 w-5" />
             <span className="sr-only">Toggle Menu</span>
           </Button>
-          <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white truncate max-w-[150px] sm:max-w-xs md:max-w-md">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-800 dark:text-white truncate max-w-[120px] sm:max-w-xs md:max-w-md">
             {currentTitle}
           </h2>
         </div>
-        <div className="flex flex-nowrap justify-end gap-2 items-center">
+        <div className="flex flex-nowrap justify-end gap-2 items-center flex-shrink-0">
           <Button
             className={`h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors ${
               isPremiumUser

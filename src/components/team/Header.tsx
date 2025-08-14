@@ -55,7 +55,7 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
   };
 
   return (
-    <header className="flex flex-wrap items-center justify-between px-4 py-3 bg-background dark:bg-slate-950 ">
+    <header className="flex items-center justify-between px-4 py-3 bg-background dark:bg-slate-950 ">
       {/* Left Section: Menu Button + Page Title */}
       <div className="flex items-center gap-4 w-full sm:w-auto">
         <Button
@@ -72,7 +72,7 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
       </div>
 
       {/* Right Section: Premium Button, Notifications, Theme Toggle */}
-      <div className="flex flex-wrap justify-end gap-3 items-center w-full sm:w-auto mt-4 sm:mt-0">
+      <div className="flex flex-wrap justify-end gap-3 items-center w-full sm:w-auto mt-3 sm:mt-0">
         <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
           <FontAwesomeIcon
             icon={faBell}

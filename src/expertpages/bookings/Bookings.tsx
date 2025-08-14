@@ -1056,7 +1056,7 @@ const BookingExpertside: React.FC = () => {
     });
 
   return (
-    <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
+    <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md w-full">
       <h1 className="text-2xl font-bold mb-6">Your Bookings</h1>
 
       {/* Helper function to check if service is recorded video assessment */}
@@ -1163,6 +1163,7 @@ const BookingExpertside: React.FC = () => {
           {error}
         </div>
       )}
+      <div className="w-xs md:w-full">
       <BookingTable
         bookings={filteredBookings}
         loading={loading}
@@ -1174,6 +1175,8 @@ const BookingExpertside: React.FC = () => {
         onVideoClick={handleVideoClick}
         onReviewClick={handleReviewClick}
       />
+      </div>
+    
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Upcoming Live Sessions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
