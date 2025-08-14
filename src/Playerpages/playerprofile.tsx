@@ -340,7 +340,6 @@ const Profile: React.FC = () => {
   }, [navigate, currentProfile]);
 
   useEffect(() => {
-    // Only fetch followers count when profile loads, not the full list
     if (currentProfile?.id) {
       fetchFollowers();
     }
