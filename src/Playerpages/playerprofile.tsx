@@ -340,8 +340,10 @@ const Profile: React.FC = () => {
   }, [navigate, currentProfile]);
 
   useEffect(() => {
-    fetchFollowers(100, followersPage);
-  });
+    if (currentProfile?.id) {
+      fetchFollowers();
+    }
+  }, [currentProfile?.id]);
 
   const handleInputChange = (
     field: keyof EditableProfileData,
