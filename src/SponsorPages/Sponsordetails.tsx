@@ -100,14 +100,14 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
       }
 
       setSponsorshipInfo({
-        range: profileData.budgetRange || "$4000-5500",
-        type: profileData.sponsorshipType || "Cash/ Gift",
-        country: profileData.sponsorshipCountryPreferred || "England",
+        range: profileData.budgetRange || "Not Specified",
+        type: profileData.sponsorshipType || "Not Specified",
+        country: profileData.sponsorshipCountryPreferred || "Not Specified",
       });
       setTempSponsorship({
-        range: profileData.budgetRange || "$4000-5500",
-        type: profileData.sponsorshipType || "Cash/ Gift",
-        country: profileData.sponsorshipCountryPreferred || "England",
+        range: profileData.budgetRange || "Not specified",
+        type: profileData.sponsorshipType || "Not specified",
+        country: profileData.sponsorshipCountryPreferred || "Not specified",
       });
     }
   }, [profileData]);

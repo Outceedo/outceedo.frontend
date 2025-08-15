@@ -50,6 +50,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const nav = useNavigate();
 
+  // Get current user role
+  const currentUserRole = localStorage.getItem("role");
+  const isPlayerRole = currentUserRole === "player";
+
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
@@ -122,14 +126,25 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const handleAdd = () => {
     if (!canAddMore()) {
+      const upgradeContent =
+        isPlayerRole && planLimits.planName === "Free"
+          ? `
+        <div class="mt-3 p-2 bg-blue-50 rounded">
+          <p class="text-sm text-blue-700">Upgrade to Premium for more storage!</p>
+        </div>
+      `
+          : "";
+
       Swal.fire({
         icon: "warning",
         title: "Upload Limit Reached",
         html: `
           <div class="text-left">
-            <p class="mb-2">You've reached your ${activeTab} upload limit for the <strong>${
-          planLimits.planName
-        }</strong> plan.</p>
+            <p class="mb-2">You've reached your ${activeTab} upload limit${
+          isPlayerRole
+            ? ` for the <strong>${planLimits.planName}</strong> plan`
+            : ""
+        }.</p>
             <p class="text-sm text-gray-600">
               Current: ${
                 activeTab === "photo"
@@ -137,15 +152,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
                   : currentCounts.videos
               }/${activeTab === "photo" ? planLimits.photos : planLimits.videos}
             </p>
-            ${
-              planLimits.planName === "Free"
-                ? `
-              <div class="mt-3 p-2 bg-blue-50 rounded">
-                <p class="text-sm text-blue-700">Upgrade to Premium for more storage!</p>
-              </div>
-            `
-                : ""
-            }
+            ${upgradeContent}
           </div>
         `,
         confirmButtonText: "Got it",
@@ -183,10 +190,14 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
     // Check if current tab allows uploads
     if (!canUploadCurrentTab) {
+      const upgradeMessage = isPlayerRole
+        ? `You've reached your ${activeTab} upload limit. Please upgrade your plan for more storage.`
+        : `You've reached your ${activeTab} upload limit.`;
+
       Swal.fire({
         icon: "warning",
         title: "Upload Not Allowed",
-        text: `You've reached your ${activeTab} upload limit. Please upgrade your plan for more storage.`,
+        text: upgradeMessage,
         confirmButtonColor: "#3B82F6",
       });
       return;
@@ -282,10 +293,14 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
     // Double-check upload limits
     if (!canUploadCurrentTab) {
+      const limitMessage = isPlayerRole
+        ? `You've reached your ${activeTab} upload limit for the ${planLimits.planName} plan.`
+        : `You've reached your ${activeTab} upload limit.`;
+
       Swal.fire({
         icon: "error",
         title: "Upload Limit Exceeded",
-        text: `You've reached your ${activeTab} upload limit for the ${planLimits.planName} plan.`,
+        text: limitMessage,
       });
       return;
     }
@@ -364,37 +379,38 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       const current =
         tab === "photo" ? currentCounts.photos : currentCounts.videos;
 
+      const upgradeContent =
+        isPlayerRole && planLimits.planName === "Free"
+          ? `
+        <div class="mt-3 p-2 bg-blue-50 rounded">
+          <p class="text-sm text-blue-700">Upgrade to Premium for more storage!</p>
+        </div>
+      `
+          : "";
+
+      const showUpgradeButton = isPlayerRole && planLimits.planName === "Free";
+
       Swal.fire({
         icon: "info",
         title: `${
           tab.charAt(0).toUpperCase() + tab.slice(1)
         } Upload Limit Reached`,
         html: `
-    <div class="text-left">
-      <p class="mb-2">You've reached your ${tab} upload limit.</p>
-      <p class="text-sm text-gray-600">Current: ${current}/${limit}</p>
-      ${
-        planLimits.planName === "Free"
-          ? `
-        <div class="mt-3 p-2 bg-blue-50 rounded">
-          <p class="text-sm text-blue-700">Upgrade to Premium for more storage!</p>
-        </div>
-      `
-          : ""
-      }
-    </div>
-  `,
-        showCancelButton: planLimits.planName === "Free",
+          <div class="text-left">
+            <p class="mb-2">You've reached your ${tab} upload limit${
+          isPlayerRole ? "" : ""
+        }.</p>
+            <p class="text-sm text-gray-600">Current: ${current}/${limit}</p>
+            ${upgradeContent}
+          </div>
+        `,
+        showCancelButton: showUpgradeButton,
         confirmButtonText: "Got it",
-        cancelButtonText:
-          planLimits.planName === "Free" ? "Upgrade Now" : undefined,
+        cancelButtonText: showUpgradeButton ? "Upgrade Now" : undefined,
         confirmButtonColor: "#3B82F6",
         cancelButtonColor: "#10B981",
       }).then((result) => {
-        if (
-          result.dismiss === Swal.DismissReason.cancel &&
-          planLimits.planName === "Free"
-        ) {
+        if (result.dismiss === Swal.DismissReason.cancel && showUpgradeButton) {
           nav("/plans");
         }
       });
@@ -428,8 +444,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       <div className="sticky top-0 bg-white dark:bg-gray-700 pb-2 z-10">
         <h2 className="text-xl font-Raleway font-semibold">Upload Media</h2>
 
-        {/* Plan Info */}
-        {localStorage.getItem("role") === "player" && (
+        {/* Plan Info - Only show for players */}
+        {isPlayerRole && (
           <div
             className={`text-xs p-2 rounded mb-2 ${
               planLimits.planName === "Free"
@@ -509,9 +525,9 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
             <span>
               {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} upload
               limit reached.
-              {planLimits.planName === "Free" && (
+              {isPlayerRole && planLimits.planName === "Free" && (
                 <button
-                  onClick={() => (window.location.href = "/player/dashboard")}
+                  onClick={() => nav("/plans")}
                   className="ml-2 underline hover:no-underline"
                 >
                   Upgrade to Premium
