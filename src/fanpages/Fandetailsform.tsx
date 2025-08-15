@@ -62,28 +62,21 @@ export default function Fandetailsform() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [existingProfilePhoto, setExistingProfilePhoto] = useState<
-    string | null
-  >(null);
+  const [existingProfilePhoto, setExistingProfilePhoto] = useState<string | null>(null);
   const [profilePhotoChanged, setProfilePhotoChanged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string>
-  >({});
-
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [userData, setUserData] = useState<UserData | null>(null);
   const [countryCode, setCountryCode] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [isLoading, setIsLoading] = useState(true);
-
   const [countries, setCountries] = useState<Country[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [citySearchTerm, setCitySearchTerm] = useState<string>("");
-  const [showCountryDropdown, setShowCountryDropdown] =
-    useState<boolean>(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
 
   const dispatch = useAppDispatch();
@@ -150,8 +143,6 @@ export default function Fandetailsform() {
           setCountries(formattedCountries);
         }
       } catch (error) {
-        console.error("Error fetching countries:", error);
-
         const fallbackCountries = [
           { name: "United States", iso2: "US" },
           { name: "United Kingdom", iso2: "GB" },
@@ -172,7 +163,6 @@ export default function Fandetailsform() {
 
   useEffect(() => {
     if (!selectedCountry) return;
-
     const fetchCities = async () => {
       try {
         const response = await fetch(
@@ -187,9 +177,7 @@ export default function Fandetailsform() {
             }),
           }
         );
-
         if (!response.ok) throw new Error("Failed to fetch cities");
-
         const cityData = await response.json();
         if (cityData.error === false && cityData.data) {
           const cityList = cityData.data.map((city: string) => ({
@@ -199,8 +187,6 @@ export default function Fandetailsform() {
           setCities(cityList);
         }
       } catch (error) {
-        console.error("Error fetching cities:", error);
-
         const fallbackCities = [
           { name: "New York", country: selectedCountry.name },
           { name: "Los Angeles", country: selectedCountry.name },
@@ -211,7 +197,6 @@ export default function Fandetailsform() {
         setCities(fallbackCities);
       }
     };
-
     fetchCities();
   }, [selectedCountry]);
 
@@ -237,11 +222,7 @@ export default function Fandetailsform() {
         setIsLoading(true);
         const token = getAuthToken();
         const username = localStorage.getItem("username");
-
-        if (!username) {
-          throw new Error("Username not found in localStorage");
-        }
-
+        if (!username) throw new Error("Username not found in localStorage");
         const response = await axios.get(
           `${API_BASE_URL}/auth/user/${username}`,
           {
@@ -250,10 +231,8 @@ export default function Fandetailsform() {
             },
           }
         );
-
         const data = response.data;
         setUserData(data);
-
         if (data.mobileNumber) {
           const parts = data.mobileNumber.split(" ");
           if (parts.length === 2) {
@@ -263,39 +242,27 @@ export default function Fandetailsform() {
             setPhoneNumber(data.mobileNumber);
           }
         }
-
         setForm((prev) => ({
           ...prev,
           email: data.email || "",
         }));
-
-        console.log("User data fetched successfully:", data);
         setIsLoading(false);
       } catch (error) {
-        console.error("Error fetching user data:", error);
         setError("Failed to fetch user data");
         setIsLoading(false);
       }
     };
-
     fetchUserData();
   }, [API_BASE_URL]);
 
   const validateCurrentStep = (): boolean => {
     setError(null);
     const errors: Record<string, string> = {};
-
     if (step === 1) {
-      if (!form.country) {
-        errors.country = "Country is required";
-      }
-      if (!form.city) {
-        errors.city = "City is required";
-      }
+      if (!form.country) errors.country = "Country is required";
+      if (!form.city) errors.city = "City is required";
     }
-
     setValidationErrors(errors);
-
     if (Object.keys(errors).length > 0) {
       setError("Please correct the highlighted fields");
       return false;
@@ -303,35 +270,20 @@ export default function Fandetailsform() {
     return true;
   };
 
-  const createAuthAxios = () => {
-    const token = getAuthToken();
-    return axios.create({
-      baseURL: API_BASE_URL,
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-    });
-  };
-
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
     if (file.size > 2 * 1024 * 1024) {
       setError("File size should not exceed 2MB.");
       return;
     }
-
     setProfilePhoto(file);
     setProfilePhotoChanged(true);
     setError(null);
   };
 
   const handleSocialMedia = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
     if (name.startsWith("socialLinks.")) {
@@ -346,7 +298,6 @@ export default function Fandetailsform() {
     } else {
       setForm((prev) => ({ ...prev, [name]: value }));
     }
-
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -360,31 +311,20 @@ export default function Fandetailsform() {
   useEffect(() => {
     if (username) {
       dispatch(getProfile(username));
-    } else {
-      console.error("No username found in localStorage");
     }
   }, [dispatch, username]);
 
   useEffect(() => {
     if (profileData) {
-      if (profileData.photo) {
-        setExistingProfilePhoto(profileData.photo);
-      }
-
+      if (profileData.photo) setExistingProfilePhoto(profileData.photo);
       if (profileData.country) {
         setSearchTerm(profileData.country);
         const country = countries.find(
           (c) => c.name.toLowerCase() === profileData.country?.toLowerCase()
         );
-        if (country) {
-          setSelectedCountry(country);
-        }
+        if (country) setSelectedCountry(country);
       }
-
-      if (profileData.city) {
-        setCitySearchTerm(profileData.city);
-      }
-
+      if (profileData.city) setCitySearchTerm(profileData.city);
       setForm({
         FirstName: profileData.firstName || "",
         LastName: profileData.lastName || "",
@@ -414,16 +354,13 @@ export default function Fandetailsform() {
   }, [profileState.status, profileState.error]);
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({
       ...prev,
       [name]: value,
     }));
-
     if (validationErrors[name]) {
       setValidationErrors((prev) => {
         const updated = { ...prev };
@@ -435,17 +372,13 @@ export default function Fandetailsform() {
 
   const submitForm = async () => {
     if (!validateCurrentStep()) return;
-
     setIsSubmitting(true);
     setError(null);
-
     try {
       let photoUrl = existingProfilePhoto;
-
       if (profilePhoto && profilePhotoChanged) {
         try {
           const resultAction = await dispatch(updateProfilePhoto(profilePhoto));
-
           if (updateProfilePhoto.fulfilled.match(resultAction)) {
             const updatedProfile = resultAction.payload;
             photoUrl = updatedProfile.photo || photoUrl;
@@ -453,13 +386,11 @@ export default function Fandetailsform() {
             throw new Error("Failed to upload profile photo.");
           }
         } catch (error) {
-          console.error("Error uploading profile photo:", error);
           setError("Failed to upload profile photo. Please try again.");
           setIsSubmitting(false);
           return;
         }
       }
-
       const fanData = {
         sport: form.SportsInterest,
         firstName: form.FirstName.trim(),
@@ -476,12 +407,9 @@ export default function Fandetailsform() {
           twitter: form.socialLinks.twitter || "",
         },
       };
-
       const updateProfileResult = await dispatch(updateProfile(fanData));
-
       if (updateProfile.fulfilled.match(updateProfileResult)) {
         setSuccess("Fan details saved successfully!");
-
         setTimeout(() => {
           navigate("/fan/profile");
         }, 1500);
@@ -489,18 +417,14 @@ export default function Fandetailsform() {
         throw new Error("Failed to update profile.");
       }
     } catch (error: any) {
-      console.error("Error submitting fan data:", error);
-
       if (error.response?.data?.message) {
         setError(error.response.data.message);
       } else if (error.response?.data?.errors) {
         const apiErrors = error.response.data.errors;
         const formattedErrors: Record<string, string> = {};
-
         Object.keys(apiErrors).forEach((key) => {
           formattedErrors[key] = apiErrors[key].message || apiErrors[key];
         });
-
         setValidationErrors(formattedErrors);
         setError("Please correct the errors in the form.");
       } else {
@@ -523,7 +447,7 @@ export default function Fandetailsform() {
   }
 
   return (
-    <div className="w-full px-20 mx-auto dark:bg-gray-900">
+    <div className="w-full px-4 sm:px-8 md:px-16 lg:px-20 mx-auto dark:bg-gray-900">
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-semibold">Error</p>
@@ -537,45 +461,50 @@ export default function Fandetailsform() {
           )}
         </div>
       )}
-
       {success && (
         <div className="mb-4 p-4 bg-green-100 text-green-700 rounded-md">
           <p className="font-semibold">Success</p>
           <p>{success}</p>
         </div>
       )}
-
       <button
         onClick={goBack}
         className="flex items-center text-gray-700 hover:text-black text-sm font-medium mb-4 dark:text-white cursor-pointer"
       >
         <ArrowLeft className="w-5 h-5 mr-1" />
       </button>
-
       <div className="flex flex-col items-center mb-12">
+        {/* Responsive stepper */}
         <div className="flex w-full max-w-lg items-center relative">
-          {[1, 2].map((stepNum) => (
-            <React.Fragment key={stepNum}>
-              <div className="relative flex flex-col items-center w-1/4">
-                <div
-                  className={`w-8 h-8 ${
-                    step >= stepNum ? "bg-red-500" : "bg-gray-300"
-                  } rounded-full flex items-center justify-center text-white font-bold text-sm`}
-                >
-                  {stepNum}
-                </div>
-              </div>
-              {stepNum < 2 && (
-                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-14 relative">
-                  <div
-                    className={`absolute top-0 left-0 h-1 rounded-full ${
-                      step > stepNum ? "bg-red-500 w-full" : "w-0"
-                    } transition-all duration-500`}
-                  ></div>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
+          {/* Step 1 */}
+          <div className="flex flex-col items-center z-10">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                step >= 1 ? "bg-red-500 text-white" : "bg-gray-300 text-white"
+              }`}
+            >
+              1
+            </div>
+          </div>
+          {/* Progress Line */}
+          <div className="flex-1 h-1 bg-gray-300 rounded-full   relative">
+            <div
+              className={`absolute h-1 rounded-full transition-all duration-500 ${
+                step > 1 ? "bg-red-500 w-full" : "bg-red-500 w-0"
+              }`}
+              style={{ left: 0, top: 0, transition: "width 0.5s" }}
+            ></div>
+          </div>
+          {/* Step 2 */}
+          <div className="flex flex-col items-center z-10">
+            <div
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm ${
+                step >= 2 ? "bg-red-500 text-white" : "bg-gray-300 text-white"
+              }`}
+            >
+              2
+            </div>
+          </div>
         </div>
         <div className="flex w-full max-w-lg justify-between mt-2 ">
           <div className="w-1/4 text-center text-sm font-medium">
@@ -586,12 +515,11 @@ export default function Fandetailsform() {
           </div>
         </div>
       </div>
-
       {step === 1 && (
         <>
           <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
           <Label className="text-sm text-gray-400 mb-1">PROFILE PICTURE</Label>
-          <Card className="border-dashed border border-gray-300 p-4 w-5/6 flex items-center justify-between">
+          <Card className="border-dashed border border-gray-300 p-4 w-full sm:w-5/6 flex items-center justify-between">
             <div className="flex items-center gap-3">
               {existingProfilePhoto && !profilePhoto && (
                 <img
@@ -621,7 +549,6 @@ export default function Fandetailsform() {
               </label>
             </div>
           </Card>
-
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
@@ -634,7 +561,6 @@ export default function Fandetailsform() {
                 placeholder="Enter first name"
               />
             </div>
-
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Last Name
@@ -646,7 +572,6 @@ export default function Fandetailsform() {
                 placeholder="Enter last name"
               />
             </div>
-
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Email
@@ -658,7 +583,6 @@ export default function Fandetailsform() {
                 readOnly
               />
             </div>
-
             <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Country*
@@ -700,7 +624,6 @@ export default function Fandetailsform() {
                 </ul>
               )}
             </div>
-
             <div className="relative">
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 City*
@@ -742,7 +665,6 @@ export default function Fandetailsform() {
                 </ul>
               )}
             </div>
-
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Address
@@ -754,7 +676,6 @@ export default function Fandetailsform() {
                 onChange={handleChange}
               />
             </div>
-
             <div className="flex gap-4 items-end">
               <div className="w-full">
                 <label className="text-sm font-medium text-gray-900 dark:text-white">
@@ -767,7 +688,6 @@ export default function Fandetailsform() {
                 />
               </div>
             </div>
-
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 Sports Interest
@@ -784,7 +704,6 @@ export default function Fandetailsform() {
               </select>
             </div>
           </div>
-
           <div className="text-right mt-6">
             <Button
               onClick={nextStep}
@@ -795,7 +714,6 @@ export default function Fandetailsform() {
           </div>
         </>
       )}
-
       {step === 2 && (
         <>
           <h2 className="text-xl font-semibold mb-4 dark:text-white">
@@ -815,7 +733,7 @@ export default function Fandetailsform() {
           <Label className="text-md font-semibold mb-2 dark:text-white">
             Social Media Links
           </Label>
-          <div className="space-y-4 mt-4 w-1/3">
+          <div className="space-y-4 mt-4 w-full sm:w-2/3 md:w-1/2 lg:w-1/3">
             {[
               {
                 icon: faInstagram,
@@ -861,11 +779,10 @@ export default function Fandetailsform() {
               </div>
             ))}
           </div>
-
-          <div className="flex justify-end mt-6">
+          <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
             <Button
               onClick={prevStep}
-              className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-50 rounded mr-9 cursor-pointer"
+              className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-100 rounded cursor-pointer"
               disabled={isSubmitting}
               type="button"
             >

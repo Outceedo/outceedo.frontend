@@ -196,7 +196,7 @@ const Fanprofile = () => {
           <h1 className="text-2xl font-bold dark:text-white">
             {getDisplayName()}
           </h1>
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-sm text-gray-600">
             <div>
               <label className="block text-sm text-gray-500 dark:text-white mb-1">
                 Country

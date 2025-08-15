@@ -203,7 +203,7 @@ const SponsorApplication = () => {
   return (
     <div className="p-6 ">
       <div className="flex gap-4 mb-4">
-        <div className="relative w-1/3">
+        <div className="relative w-1/2 md:w-[1/3]">
           <FontAwesomeIcon
             icon={faSearch}
             className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
@@ -228,7 +228,7 @@ const SponsorApplication = () => {
           </SelectContent>
         </Select>
       </div>
-      <div className="dark:bg-gray-800">
+      <div className="dark:bg-gray-800 w-xs md:w-full">
         <Table>
           <TableHeader>
             <TableRow>

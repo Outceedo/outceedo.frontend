@@ -66,15 +66,11 @@ export default function SponsorDetailsForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [existingProfilePhoto, setExistingProfilePhoto] = useState<
-    string | null
-  >(null);
+  const [existingProfilePhoto, setExistingProfilePhoto] = useState<string | null>(null);
   const [profilePhotoChanged, setProfilePhotoChanged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string>
-  >({});
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -83,8 +79,7 @@ export default function SponsorDetailsForm() {
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [citySearchTerm, setCitySearchTerm] = useState<string>("");
-  const [showCountryDropdown, setShowCountryDropdown] =
-    useState<boolean>(false);
+  const [showCountryDropdown, setShowCountryDropdown] = useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
@@ -137,8 +132,6 @@ export default function SponsorDetailsForm() {
           setCountries(formattedCountries);
         }
       } catch (error) {
-        console.error("Error fetching countries:", error);
-
         const fallbackCountries = [
           { name: "United States", iso2: "US" },
           { name: "United Kingdom", iso2: "GB" },
@@ -186,8 +179,6 @@ export default function SponsorDetailsForm() {
           setCities(cityList);
         }
       } catch (error) {
-        console.error("Error fetching cities:", error);
-
         const fallbackCities = [
           { name: "New York", country: selectedCountry.name },
           { name: "Los Angeles", country: selectedCountry.name },
@@ -534,7 +525,7 @@ export default function SponsorDetailsForm() {
   }
 
   return (
-    <div className="w-full px-20 mx-auto dark:bg-gray-900">
+    <div className="w-full px-2 sm:px-6 md:px-10 lg:px-20 xl:px-40 mx-auto dark:bg-gray-900">
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-semibold">Error</p>
@@ -574,7 +565,7 @@ export default function SponsorDetailsForm() {
                 </div>
               </div>
               {stepNum < 2 && (
-                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-14 relative">
+                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-9 md:-mx-12 relative">
                   <div
                     className={`absolute top-0 left-0 h-1 rounded-full ${
                       step > stepNum ? "bg-red-500 w-full" : "w-0"
@@ -585,11 +576,11 @@ export default function SponsorDetailsForm() {
             </React.Fragment>
           ))}
         </div>
-        <div className="flex w-full max-w-lg justify-between mt-2 ">
-          <div className="w-1/4 text-center text-sm font-medium">
+        <div className="flex w-full max-w-lg justify-between mt-2">
+          <div className="w-1/4 text-center text-xs sm:text-sm font-medium">
             Profile Details
           </div>
-          <div className="w-1/4 text-center text-sm font-medium">
+          <div className="w-1/4 text-center text-xs sm:text-sm font-medium">
             More Details
           </div>
         </div>
@@ -598,7 +589,7 @@ export default function SponsorDetailsForm() {
         <>
           <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
           <Label className="text-sm text-gray-400 mb-1">PROFILE PICTURE</Label>
-          <Card className="border-dashed border border-gray-300 p-4 w-5/6 flex items-center justify-between">
+          <Card className="border-dashed border border-gray-300 p-4 w-full sm:w-5/6 flex flex-col sm:flex-row items-center justify-center">
             <div className="flex items-center gap-3">
               {existingProfilePhoto && !profilePhoto && (
                 <img
@@ -628,7 +619,7 @@ export default function SponsorDetailsForm() {
               </label>
             </div>
           </Card>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
                 First Name
@@ -863,7 +854,7 @@ export default function SponsorDetailsForm() {
           <h2 className="text-xl font-semibold mb-4 dark:text-white">
             More Details
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
             <div className="w-full">
               <label className="text-sm font-medium text-gray-900 mb-1 block dark:text-white">
                 Budget Range
@@ -873,7 +864,7 @@ export default function SponsorDetailsForm() {
                 placeholder="$"
                 value={form.BudegetRange}
                 onChange={handleChange}
-                className="w-full md:w-60"
+                className="w-full"
               />
             </div>
             <div className="w-full">
@@ -884,7 +875,7 @@ export default function SponsorDetailsForm() {
                 name="SponsorshipType"
                 value={form.SponsorshipType}
                 onChange={handleChange}
-                className="border p-2 rounded text-sm text-gray-700 w-full md:w-60"
+                className="border p-2 rounded text-sm text-gray-700 w-full"
               >
                 <option value="">Select type</option>
                 <option value="cash">Cash</option>
@@ -901,7 +892,7 @@ export default function SponsorDetailsForm() {
                 name="SponsorshipCountryPreferred"
                 value={form.SponsorshipCountryPreferred}
                 onChange={handleChange}
-                className="w-full md:w-60"
+                className="w-full"
               />
             </div>
           </div>
@@ -921,7 +912,7 @@ export default function SponsorDetailsForm() {
           <Label className="text-md font-semibold mb-2 dark:text-white">
             Social Media Links
           </Label>
-          <div className="space-y-4 mt-4 w-1/3">
+          <div className="space-y-4 mt-4 w-full sm:w-2/3 md:w-1/2 lg:w-1/3">
             {[
               {
                 icon: faInstagram,
@@ -967,10 +958,10 @@ export default function SponsorDetailsForm() {
               </div>
             ))}
           </div>
-          <div className="flex justify-end mt-6">
+          <div className="flex flex-col sm:flex-row justify-end mt-6 gap-3">
             <Button
               onClick={prevStep}
-              className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-50 rounded mr-9 cursor-pointer"
+              className="border border-gray-400 text-black bg-amber-50 hover:bg-amber-50 rounded cursor-pointer"
               disabled={isSubmitting}
               type="button"
             >
