@@ -23,7 +23,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Search, X, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Search,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  CheckCircle,
+} from "lucide-react";
 
 type Role = "player" | "expert" | "sponsor";
 
@@ -57,6 +63,23 @@ export interface SocialLinks {
   twitter?: string;
 }
 
+interface Review {
+  id: string;
+  reviewerId: string;
+  revieweeId: string;
+  rating: number;
+  comment: string;
+  bookingId?: string;
+  createdAt: string;
+  updatedAt: string;
+  reviewer?: {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+  };
+}
+
 export interface Profile {
   id: string;
   username: string;
@@ -88,8 +111,49 @@ export interface Profile {
   updatedAt?: string;
   rating?: number;
   reviews?: number;
+  reviewsReceived?: Review[];
+  verified?: boolean;
   [key: string]: any;
 }
+
+// Star Rating Component
+const StarRating: React.FC<{
+  rating: number;
+  totalStars?: number;
+  showRating?: boolean;
+  size?: "sm" | "md" | "lg";
+}> = ({ rating, totalStars = 5, showRating = true, size = "sm" }) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating - fullStars >= 0.5;
+  const emptyStars = totalStars - fullStars - (hasHalfStar ? 1 : 0);
+
+  const sizeClasses = {
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex">
+        {/* Full Stars */}
+
+        <FontAwesomeIcon
+          icon={faStar}
+          className={`text-yellow-400 ${sizeClasses[size]}`}
+        />
+      </div>
+
+      {showRating && (
+        <span
+          className={`text-gray-600 dark:text-gray-300 ${sizeClasses[size]} ml-1`}
+        >
+          ({rating.toFixed(1)})
+        </span>
+      )}
+    </div>
+  );
+};
 
 // Pagination Component updated to always show controls
 const Pagination: React.FC<{
@@ -221,6 +285,25 @@ const PlayerProfiles: React.FC = () => {
       ? "player"
       : "player";
 
+  // Helper function to calculate average rating from reviews
+  const calculateAverageRating = useCallback(
+    (reviews: Review[] = []): number => {
+      if (!reviews || reviews.length === 0) return 0;
+
+      const totalRating = reviews.reduce(
+        (sum, review) => sum + (review.rating || 0),
+        0
+      );
+      return totalRating / reviews.length;
+    },
+    []
+  );
+
+  // Helper function to get total reviews count
+  const getTotalReviewsCount = useCallback((reviews: Review[] = []): number => {
+    return reviews?.length || 0;
+  }, []);
+
   const extractFilterOptions = useCallback(
     (key: keyof Profile, dataArray: Profile[]): string[] => {
       const options = new Set<string>();
@@ -230,22 +313,22 @@ const PlayerProfiles: React.FC = () => {
             ? profile.language
             : [profile.language];
           langs.forEach((lang) => {
-            if (lang) options.add(lang);
+            if (lang) options.add(lang.trim());
           });
         } else if (key === "sports" || key === "sport") {
           if (profile.sports && Array.isArray(profile.sports)) {
             profile.sports.forEach((sport) => {
-              if (sport) options.add(sport);
+              if (sport) options.add(sport.trim());
             });
           } else if (profile.sport && typeof profile.sport === "string") {
-            options.add(profile.sport);
+            options.add(profile.sport.trim());
           }
         } else {
           const value = profile[key];
-          if (value && typeof value === "string") options.add(value);
+          if (value && typeof value === "string") options.add(value.trim());
         }
       });
-      return Array.from(options);
+      return Array.from(options).sort();
     },
     []
   );
@@ -296,9 +379,9 @@ const PlayerProfiles: React.FC = () => {
         filtered = filtered.filter((profile) => {
           if (key === "sport") {
             if (profile.sports && Array.isArray(profile.sports)) {
-              return profile.sports.some((sport) => sport === value);
+              return profile.sports.some((sport) => sport?.trim() === value);
             } else if (profile.sport) {
-              return profile.sport === value;
+              return profile.sport.trim() === value;
             }
             return false;
           } else if (key === "language") {
@@ -306,11 +389,11 @@ const PlayerProfiles: React.FC = () => {
               const langs = Array.isArray(profile.language)
                 ? profile.language
                 : [profile.language];
-              return langs.includes(value);
+              return langs.some((lang) => lang?.trim() === value);
             }
             return false;
           } else {
-            return profile[key] === value;
+            return profile[key]?.trim() === value;
           }
         });
       }
@@ -344,7 +427,7 @@ const PlayerProfiles: React.FC = () => {
     "Volleyball",
   ];
   const finalSportOptions =
-    sportOptions.length > 0 ? [...new Set(sportOptions)] : defaultSports;
+    sportOptions.length > 0 ? [...new Set(sportOptions)].sort() : defaultSports;
 
   const filterConfig = [
     {
@@ -553,10 +636,17 @@ const PlayerProfiles: React.FC = () => {
                 const displayName = `${profile.firstName || ""} ${
                   profile.lastName || ""
                 }`.trim();
-                const rating = profile.rating || 0;
-                const reviews = profile.reviews || 0;
+
+                // Calculate average rating from reviewsReceived
+                const avgRating = calculateAverageRating(
+                  profile.reviewsReceived
+                );
+                const totalReviews = getTotalReviewsCount(
+                  profile.reviewsReceived
+                );
+
                 const profileImage = profile.photo || avatar;
-                const isVerified = Math.random() > 0.5;
+                const isVerified = profile.verified || false;
                 const playerSports = profile.sports
                   ? Array.isArray(profile.sports)
                     ? profile.sports.join(", ")
@@ -578,6 +668,11 @@ const PlayerProfiles: React.FC = () => {
                           target.src = avatar;
                         }}
                       />
+                      {isVerified && (
+                        <div className="absolute top-4 right-4 bg-green-500 rounded-full p-1 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
+                          <CheckCircle className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
+                        </div>
+                      )}
                     </div>
                     <CardHeader className="px-3 sm:px-4 pb-0">
                       <h3 className="text-base sm:text-lg font-semibold line-clamp-1">
@@ -604,23 +699,30 @@ const PlayerProfiles: React.FC = () => {
                     </CardHeader>
                     <CardContent className="px-2 sm:px-3 -mt-4">
                       <div className="flex justify-between items-center">
-                        <div className="flex items-center">
-                          <span className="text-yellow-300 text-sm sm:text-lg">
-                            <FontAwesomeIcon icon={faStar} />
-                          </span>
-                          <span className="ml-1 text-gray-700 dark:text-gray-300 text-xs sm:text-sm">
-                            {rating}/5
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-red-600 text-lg sm:text-xl font-bold flex justify-center item-center">
-                            {reviews}+
-                          </p>
-                          <p className="text-gray-700 text-xs sm:text-sm dark:text-white">
-                            {profileType === "player"
-                              ? "Assessments"
-                              : "Assessments Evaluated"}
-                          </p>
+                        <div className="flex flex-col">
+                          {totalReviews > 0 ? (
+                            <>
+                              <StarRating
+                                rating={avgRating}
+                                size="sm"
+                                showRating={false}
+                              />
+                              <span className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                {avgRating.toFixed(1)}/5
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <StarRating
+                                rating={0}
+                                size="sm"
+                                showRating={false}
+                              />
+                              <span className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                                No reviews yet
+                              </span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </CardContent>
