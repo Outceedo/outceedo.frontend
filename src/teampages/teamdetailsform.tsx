@@ -560,7 +560,7 @@ export default function TeamDetailsForm() {
                 </div>
               </div>
               {stepNum < 2 && (
-                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-8 relative">
+                <div className="flex-1 h-1 bg-gray-300 rounded-full -mx-9 md:-mx-12 relative">
                   <div
                     className={`absolute top-0 left-0 h-1 rounded-full ${
                       step > stepNum ? "bg-red-500 w-full" : "w-0"
