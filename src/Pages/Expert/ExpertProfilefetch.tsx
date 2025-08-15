@@ -26,6 +26,23 @@ import { getProfiles } from "@/store/profile-slice";
 
 const defaultImages = [avatar];
 
+interface Review {
+  id: string;
+  reviewerId: string;
+  revieweeId: string;
+  rating: number;
+  comment: string;
+  bookingId?: string;
+  createdAt: string;
+  updatedAt: string;
+  reviewer?: {
+    id: string;
+    username: string;
+    firstName?: string;
+    lastName?: string;
+  };
+}
+
 interface Expert {
   id: string;
   username: string;
@@ -45,8 +62,48 @@ interface Expert {
   rating?: number;
   reviews?: number;
   subProfession?: string;
+  reviewsReceived?: Review[];
   [key: string]: any;
 }
+
+// Star Rating Component
+const StarRating: React.FC<{
+  rating: number;
+  totalStars?: number;
+  showRating?: boolean;
+  size?: "sm" | "md" | "lg";
+}> = ({ rating, totalStars = 5, showRating = true, size = "sm" }) => {
+  const fullStars = Math.floor(rating);
+  const hasHalfStar = rating - fullStars >= 0.5;
+  const emptyStars = totalStars - fullStars - (hasHalfStar ? 1 : 0);
+
+  const sizeClasses = {
+    sm: "text-sm",
+    md: "text-base",
+    lg: "text-lg",
+  };
+
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex">
+        {/* Full Stars */}
+
+        <FontAwesomeIcon
+          icon={faStar}
+          className={`text-yellow-400 ${sizeClasses[size]}`}
+        />
+      </div>
+
+      {showRating && (
+        <span
+          className={`text-gray-600 dark:text-gray-300 ${sizeClasses[size]} ml-1`}
+        >
+          ({rating.toFixed(1)})
+        </span>
+      )}
+    </div>
+  );
+};
 
 const Pagination: React.FC<{
   totalPages: number;
@@ -93,10 +150,8 @@ const Pagination: React.FC<{
     return [...new Set(rangeWithDots)];
   };
 
-  // Always show pagination controls, even when totalPages is 1
   return (
     <div className="flex justify-center items-center mt-6 space-x-1 sm:space-x-2">
-      {/* Previous Button */}
       <Button
         variant="outline"
         size="sm"
@@ -107,11 +162,9 @@ const Pagination: React.FC<{
         <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
       </Button>
 
-      {/* Page Numbers */}
       <div className="flex space-x-1 sm:space-x-2">
         {getVisiblePages().map((page, index) => {
           if (typeof page === "string") {
-            // Render dots
             return (
               <span
                 key={`dots-${index}`}
@@ -122,7 +175,6 @@ const Pagination: React.FC<{
             );
           }
 
-          // Render page numbers as buttons
           return (
             <Button
               key={`page-${index}-${page}`}
@@ -141,7 +193,6 @@ const Pagination: React.FC<{
         })}
       </div>
 
-      {/* Next Button */}
       <Button
         variant="outline"
         size="sm"
@@ -167,7 +218,7 @@ const ExpertProfiles: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [allExperts, setAllExperts] = useState<Expert[]>([]); // Store all experts for client-side filtering
+  const [allExperts, setAllExperts] = useState<Expert[]>([]);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -176,11 +227,38 @@ const ExpertProfiles: React.FC = () => {
 
   const expertsArray = profiles?.users || [];
 
+  // Helper function to calculate average rating from reviews
+  const calculateAverageRating = useCallback(
+    (reviews: Review[] = []): number => {
+      if (!reviews || reviews.length === 0) return 0;
+
+      const totalRating = reviews.reduce(
+        (sum, review) => sum + (review.rating || 0),
+        0
+      );
+      return totalRating / reviews.length;
+    },
+    []
+  );
+
+  // Helper function to get total completed services count
+  const getCompletedServicesCount = useCallback(
+    (reviews: Review[] = []): number => {
+      if (!reviews || reviews.length === 0) return 0;
+
+      return reviews.filter(
+        (review) =>
+          review.bookingId !== null &&
+          review.bookingId !== undefined &&
+          review.bookingId !== ""
+      ).length;
+    },
+    []
+  );
+
   // Store all experts when data is fetched - for client-side filtering
   useEffect(() => {
     if (expertsArray.length > 0) {
-      // If no filters are active, replace allExperts with new data
-      // If filters are active, keep existing data for filtering
       const hasClientSideFilters =
         searchQuery.trim() !== "" ||
         Object.values(filters).some((value) => value !== "");
@@ -188,7 +266,6 @@ const ExpertProfiles: React.FC = () => {
       if (!hasClientSideFilters) {
         setAllExperts(expertsArray);
       } else if (allExperts.length === 0) {
-        // Initialize allExperts if empty (first load)
         setAllExperts(expertsArray);
       }
     }
@@ -204,30 +281,29 @@ const ExpertProfiles: React.FC = () => {
             ? expert.language
             : [expert.language];
           langs.forEach((lang) => {
-            if (lang) options.add(lang);
+            if (lang) options.add(lang.trim());
           });
         } else if (key === "sports" || key === "sport") {
           if (expert.sports && Array.isArray(expert.sports)) {
             expert.sports.forEach((sport) => {
-              if (sport) options.add(sport);
+              if (sport) options.add(sport.trim());
             });
           } else if (expert.sport && typeof expert.sport === "string") {
-            options.add(expert.sport);
+            options.add(expert.sport.trim());
           }
         } else {
           const value = expert[key];
-          if (value && typeof value === "string") options.add(value);
+          if (value && typeof value === "string") options.add(value.trim());
         }
       });
 
-      return Array.from(options);
+      return Array.from(options).sort();
     },
     []
   );
 
   // Fetch profiles only on initial load, page change, or limit change (not for filters/search)
   const fetchProfiles = useCallback(() => {
-    // Only fetch from server if no client-side filters are active
     const hasClientSideFilters =
       searchQuery.trim() !== "" ||
       Object.values(filters).some((value) => value !== "");
@@ -239,14 +315,13 @@ const ExpertProfiles: React.FC = () => {
         userType: "expert",
       };
 
-      console.log("Fetching profiles with params:", params); // Debug log
+      console.log("Fetching profiles with params:", params);
       dispatch(getProfiles(params));
     }
   }, [currentPage, limit, dispatch, searchQuery, filters]);
 
   // Initial load only - don't refetch on filter/search changes
   useEffect(() => {
-    // Only fetch on initial load or when no filters/search are active
     const hasClientSideFilters =
       searchQuery.trim() !== "" ||
       Object.values(filters).some((value) => value !== "");
@@ -254,7 +329,7 @@ const ExpertProfiles: React.FC = () => {
     if (!hasClientSideFilters || allExperts.length === 0) {
       fetchProfiles();
     }
-  }, [currentPage, limit]); // Removed fetchProfiles from dependencies to avoid infinite loops
+  }, [currentPage, limit]);
 
   // Client-side filtering and searching
   const filteredAndSearchedExperts = useMemo(() => {
@@ -285,11 +360,10 @@ const ExpertProfiles: React.FC = () => {
       if (value) {
         filtered = filtered.filter((expert) => {
           if (key === "sport") {
-            // Handle both sports array and sport string
             if (expert.sports && Array.isArray(expert.sports)) {
-              return expert.sports.some((sport) => sport === value);
+              return expert.sports.some((sport) => sport?.trim() === value);
             } else if (expert.sport) {
-              return expert.sport === value;
+              return expert.sport.trim() === value;
             }
             return false;
           } else if (key === "language") {
@@ -297,11 +371,11 @@ const ExpertProfiles: React.FC = () => {
               const langs = Array.isArray(expert.language)
                 ? expert.language
                 : [expert.language];
-              return langs.includes(value);
+              return langs.some((lang) => lang?.trim() === value);
             }
             return false;
           } else {
-            return expert[key] === value;
+            return expert[key]?.trim() === value;
           }
         });
       }
@@ -334,7 +408,7 @@ const ExpertProfiles: React.FC = () => {
     totalFilteredExperts = allExperts.length;
     startIndex = (apiCurrentPage - 1) * limit;
     endIndex = startIndex + Math.min(limit, allExperts.length);
-    displayedExperts = allExperts; // Show all experts from current API page
+    displayedExperts = allExperts;
   }
 
   // Reset to page 1 when filters or search change
@@ -343,7 +417,7 @@ const ExpertProfiles: React.FC = () => {
   }, [searchQuery, filters]);
 
   const handleFilterChange = (value: string, filterType: string) => {
-    console.log("Filter changed:", filterType, value); // Debug log
+    console.log("Filter changed:", filterType, value);
     const normalizedKey = filterType.toLowerCase();
     let stateKey = "";
 
@@ -377,7 +451,7 @@ const ExpertProfiles: React.FC = () => {
   };
 
   const clearAllFilters = () => {
-    console.log("Clearing all filters"); // Debug log
+    console.log("Clearing all filters");
     setSearchQuery("");
     setFilters({
       profession: "",
@@ -396,7 +470,7 @@ const ExpertProfiles: React.FC = () => {
     );
   };
 
-  // Get filter options from all experts (not just current page)
+  // Get filter options from all experts
   const professionOptions = extractFilterOptions("profession", allExperts);
   const cityOptions = extractFilterOptions("city", allExperts);
   const countryOptions = extractFilterOptions("country", allExperts);
@@ -419,7 +493,7 @@ const ExpertProfiles: React.FC = () => {
   ];
 
   const finalSportOptions =
-    sportOptions.length > 0 ? [...new Set(sportOptions)] : defaultSports;
+    sportOptions.length > 0 ? [...new Set(sportOptions)].sort() : defaultSports;
 
   const filterConfig = [
     {
@@ -474,16 +548,14 @@ const ExpertProfiles: React.FC = () => {
   };
 
   const handlePageChange = (page: number) => {
-    console.log("Page changed to:", page); // Debug log
+    console.log("Page changed to:", page);
     setCurrentPage(page);
 
-    // Only scroll to top and fetch new data if no client-side filters are active
     const hasClientSideFilters =
       searchQuery.trim() !== "" ||
       Object.values(filters).some((value) => value !== "");
 
     if (!hasClientSideFilters) {
-      // Server-side pagination - fetch new data
       const params: any = {
         page: page,
         limit,
@@ -496,11 +568,10 @@ const ExpertProfiles: React.FC = () => {
   };
 
   const handleLimitChange = (newLimit: number) => {
-    console.log("Limit changed to:", newLimit); // Debug log
+    console.log("Limit changed to:", newLimit);
     setLimit(newLimit);
     setCurrentPage(1);
 
-    // Fetch new data with new limit
     const params: any = {
       page: 1,
       limit: newLimit,
@@ -520,11 +591,10 @@ const ExpertProfiles: React.FC = () => {
     totalFilteredExperts,
     displayedCount: displayedExperts.length,
     allExpertsCount: allExperts.length,
-  }); // Debug log
+  });
 
   return (
     <div className="flex">
-      {/* Main Content */}
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
         <div className="min-h-screen px-3 sm:px-6 py-2 rounded-xl dark:bg-slate-800">
           {/* Search Box */}
@@ -580,7 +650,6 @@ const ExpertProfiles: React.FC = () => {
                 </div>
               ))}
 
-              {/* Clear Filters Button */}
               {hasActiveFilters() && (
                 <div className="w-full flex items-center">
                   <Button
@@ -647,15 +716,16 @@ const ExpertProfiles: React.FC = () => {
                   expert.username ||
                   "Expert User";
 
-                const rating = expert.rating || 0;
-                const reviews = expert.reviews || 0;
+                // Calculate average rating from reviewsReceived
+                const avgRating = calculateAverageRating(
+                  expert.reviewsReceived
+                );
+                const totalReviews = getCompletedServicesCount(
+                  expert.reviewsReceived
+                );
 
                 const expertImage = expert.photo || avatar;
-
-                const isVerified =
-                  expert.verified !== undefined
-                    ? expert.verified
-                    : Math.random() > 0.5;
+                const isVerified = expert.verified || false;
 
                 const expertSports = expert.sports
                   ? Array.isArray(expert.sports)
@@ -707,24 +777,41 @@ const ExpertProfiles: React.FC = () => {
                       )}
 
                       {expert.subProfession && (
-                        <p className="text-gray-600 text-xs sm:text-sm dark:text-gray-300 line-clamp-1">
+                        <p className="text-gray-600 text-xs sm:text-sm dark:text-gray-300 line-clamp-1 mb-2">
                           {expert.subProfession}
                         </p>
                       )}
 
+                      {/* Star Rating and Reviews */}
                       <div className="flex items-center justify-between mt-3 sm:mt-4">
-                        <div className="flex items-center">
-                          <FontAwesomeIcon
-                            className="text-yellow-400 text-sm"
-                            icon={faStar}
-                          />
-                          <span className="ml-1 text-gray-700 dark:text-white text-xs sm:text-sm">
-                            {rating}/5
-                          </span>
+                        <div className="flex flex-col">
+                          {totalReviews > 0 ? (
+                            <>
+                              <StarRating
+                                rating={avgRating}
+                                size="sm"
+                                showRating={false}
+                              />
+                              <span className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                                {avgRating.toFixed(1)}/5
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <StarRating
+                                rating={0}
+                                size="sm"
+                                showRating={false}
+                              />
+                              <span className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+                                No reviews yet
+                              </span>
+                            </>
+                          )}
                         </div>
                         <div className="text-right">
                           <p className="text-red-600 text-lg sm:text-xl font-bold">
-                            {reviews}+
+                            {totalReviews}
                           </p>
                           <p className="text-gray-700 text-xs dark:text-gray-300">
                             Services Completed
