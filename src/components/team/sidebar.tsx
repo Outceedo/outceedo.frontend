@@ -160,7 +160,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           src={currentProfile?.photo || profile}
           alt="Profile"
           className="rounded-full w-20 h-20 cursor-pointer object-cover"
-          onClick={() => navigate("/player/details-form")}
+          onClick={() => navigate("/team/details-form")}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
             target.src = profile;

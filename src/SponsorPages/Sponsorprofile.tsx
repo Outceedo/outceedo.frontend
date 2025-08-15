@@ -20,12 +20,12 @@ const SponsorProfile = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media">("details");
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { currentProfile, viewedProfile, status, error } = useAppSelector(
+  const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
   );
 
   // Use the profile that's actively being viewed (could be currentProfile or viewedProfile)
-  const profileData = currentProfile || viewedProfile;
+  const profileData = currentProfile;
 
   // Fallback data for display when profile isn't loaded
   const fallbackData = {
@@ -120,7 +120,7 @@ const SponsorProfile = () => {
   }
 
   return (
-    <div className="w-full min-h-screen dark:bg-gray-900 p-10">
+    <div className="w-full min-h-screen dark:bg-gray-900 px-10">
       {renderProfileContent(profileData || fallbackData)}
     </div>
   );
@@ -134,11 +134,11 @@ const SponsorProfile = () => {
           <div>
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold dark:text-white">
-                {data?.company}
+                {data?.company || data?.firstName + " " + data?.lastName}
               </h1>
             </div>
 
-            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-30 text-sm text-gray-600">
+            <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-2 md:gap-24 text-sm text-gray-600">
               <div>
                 <label className="block text-sm text-gray-500 dark:text-white mb-1">
                   Sports Interest

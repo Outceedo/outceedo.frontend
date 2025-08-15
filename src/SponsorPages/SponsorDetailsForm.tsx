@@ -870,7 +870,7 @@ export default function SponsorDetailsForm() {
               </label>
               <Input
                 name="BudegetRange"
-                placeholder="$"
+                placeholder="£"
                 value={form.BudegetRange}
                 onChange={handleChange}
                 className="w-full md:w-60"
