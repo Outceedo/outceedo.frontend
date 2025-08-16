@@ -9,7 +9,7 @@ const playerSteps = [
 
 const expertSteps = [
   "Create a Profile",
-  "Receive assessment reports",
+  "Recevie Booking from Players",
   "Review Skills & Submit Assessment Reports",
   "Receive your payments",
 ];
