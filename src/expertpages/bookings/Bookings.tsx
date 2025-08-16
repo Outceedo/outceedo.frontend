@@ -1163,7 +1163,7 @@ const BookingExpertside: React.FC = () => {
           {error}
         </div>
       )}
-      <div className="w-xs md:w-full">
+      <div className="w-xs md:w-full mx-auto">
       <BookingTable
         bookings={filteredBookings}
         loading={loading}

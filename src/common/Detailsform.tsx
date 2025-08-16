@@ -967,55 +967,55 @@ const Detailsform: React.FC = () => {
       )}
 
       <div className="flex flex-col items-center mb-12">
-        <div className="flex w-full max-w-lg items-center relative">
-          {[1, 2, 3, 4].map((stepNum) => (
-            <React.Fragment key={stepNum}>
-              <div className="relative flex flex-col items-center w-1/4">
-                <div
-                  className={`w-8 h-8 ${
-                    step >= stepNum ? "bg-red-500" : "bg-gray-300"
-                  } rounded-full flex items-center justify-center text-white font-bold text-sm`}
-                >
-                  {stepNum}
-                </div>
-              </div>
-
-              {stepNum < 4 && (
-                <div
-                  className={`flex-1 h-1 bg-gray-300 rounded-full 
-  ${
-    step === 2
-      ? "-mx-7.5 md:-mx-[10px] lg:-mx-[50px]"
-      : "lg:-mx-[48.5px] -mx-[28px] md:-mx-[48.5px]"
-  } 
-  relative`}
-                >
-                  <div
-                    className={`absolute top-0 left-0 h-1 rounded-full ${
-                      step > stepNum ? "bg-red-500 w-full" : "w-0"
-                    } transition-all duration-500`}
-                  ></div>
-                </div>
-              )}
-            </React.Fragment>
-          ))}
-        </div>
-
-        <div className="flex w-full max-w-lg justify-between mt-2 min-w-0">
-          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
-            Personal Details
-          </div>
-          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
-            More Details
-          </div>
-          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
-            Certification/Awards
-          </div>
-          <div className="w-1/4 text-center text-xs sm:text-sm font-medium break-words whitespace-normal px-1">
-            Links
+  {/* Responsive Stepper */}
+  <div className="flex w-full max-w-xs sm:max-w-md md:max-w-lg items-center relative">
+    {[1, 2, 3, 4].map((stepNum) => (
+      <React.Fragment key={stepNum}>
+        <div className="relative flex flex-col items-center w-1/4">
+          <div
+            className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 ${
+              step >= stepNum ? "bg-red-500" : "bg-gray-300"
+            } rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base`}
+          >
+            {stepNum}
           </div>
         </div>
-      </div>
+        {stepNum < 4 && (
+          <div
+            className={
+              `flex-1 h-1 bg-gray-300 rounded-full relative ` +
+              (step === 2
+                ? "-mx-3 sm:-mx-5 md:-mx-7 lg:-mx-12"
+                : "lg:-mx-12 md:-mx-7 sm:-mx-5 -mx-3")
+            }
+          >
+            <div
+              className={`absolute top-0 left-0 h-1 rounded-full ${
+                step > stepNum ? "bg-red-500 w-full" : "w-0"
+              } transition-all duration-500`}
+            ></div>
+          </div>
+        )}
+      </React.Fragment>
+    ))}
+  </div>
+
+  {/* Responsive Labels */}
+  <div className="flex w-full max-w-xs sm:max-w-md md:max-w-lg justify-between mt-2 min-w-0">
+    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+      Personal Details
+    </div>
+    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+      More Details
+    </div>
+    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+      Certification/Awards
+    </div>
+    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+      Links
+    </div>
+  </div>
+</div>
 
       {step === 1 && (
         <div>
@@ -1034,7 +1034,7 @@ const Detailsform: React.FC = () => {
               </div>
             )}
             <span
-              className={`text-gray-500 ${
+              className={`text-gray-500 text-[11px] sm:text-[11px] md:text-[15px] ${
                 existingProfilePhoto && !profilePhoto ? "hidden" : ""
               }`}
             >
@@ -1272,8 +1272,8 @@ const Detailsform: React.FC = () => {
         <div className="max-w-full w-full md:w-5xl mx-auto px-2 md:text-xxl text-sm">
           <h2 className="text-xl font-semibold mb-2">More Details</h2>
           <label className="block text-grey mb-1">Professional Picture</label>
-          <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start text-sm">
-            <span className="text-gray-500 truncate md:text-[16px] text-[12px]">
+          <div className="relative border-4 border-dotted border-gray-400 p-3 w-full mb-2 rounded-md flex items-center justify-start text-sm">
+            <span className="text-gray-500 truncate md:text-[16px] text-[8px] ">
               {professionalPhoto
                 ? professionalPhoto.name
                 : "Upload a photo here, max size 2MB"}
@@ -1569,7 +1569,7 @@ const Detailsform: React.FC = () => {
 
               {!cert.uploadedDocId && (
                 <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start  md:text-xxl text-sm lg:justify-center">
-                  <span className="text-gray-500 mb-2 sm:mb-0 md:text-[16px] text-[12px]">
+                  <span className="text-gray-500 mb-2 sm:mb-0 md:text-[16px] text-[9px]">
                     {cert.file ? cert.file.name : "Upload certificate here"}
                   </span>
                   <input
@@ -1689,7 +1689,7 @@ const Detailsform: React.FC = () => {
 
               {!award.uploadedDocId && (
                 <div className=" relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start  md:text-xxl text-sm lg:justify-center">
-                  <span className="text-gray-500 mb-2 sm:mb-0 md:text-[16px] text-[13px]">
+                  <span className="text-gray-500 mb-2 sm:mb-0 md:text-[16px] text-[9px]">
                     {award.file ? award.file.name : "Upload award image here"}
                   </span>
                   <input
