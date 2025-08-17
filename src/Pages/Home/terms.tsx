@@ -505,23 +505,469 @@ function Terms() {
             </section>
 
             {/* User Accounts */}
-            <section className="mb-8">
+            <div className="mb-8">
               <h2 className="text-xl font-semibold text-red-600 mb-3">
-                User Accounts
+                USER ACCOUNTS:
               </h2>
-              <p>
-                <b>
+
+              {/* Sports Experts Section */}
+              <div className="mb-6">
+                <p className="font-bold mb-3">
                   i) Sports Experts (Experienced or Ex- Players/Team
                   Managers/Scouts/Coach)
-                </b>
-              </p>
-              {/* ...continue all content regarding user accounts as per your document... */}
-              <p>
-                {/* Full text for Sports Experts, Players, Teams, Sponsors, Fans/Followers, Promoters/Audience as in your document. 
-                For brevity, include here all the paragraphs and lists from your document. */}
-                {/* ... */}
-              </p>
-            </section>
+                </p>
+                <div className="text-gray-700 space-y-3">
+                  <p>
+                    You acknowledge and agree to create a profile/account with
+                    us and agree to complete the personal profile with accurate,
+                    true, current and complete information. Sports Experts must
+                    provide required information (full name, address, email id,
+                    phone number, city & country) to identify you as said
+                    category.
+                  </p>
+                  <p>
+                    The only people who are authorized to create Sports Expert
+                    account on this website/app are sophisticated or accredited
+                    Sports experts either Experienced or Ex-Players, Ex-Team
+                    Managers, Ex-Scouts, Ex-Coach, with professional experience
+                    in football.
+                  </p>
+                  <p>
+                    You agree to submit your Sports Registration or License
+                    certificates, PVG certificates, Disclose Certificate,
+                    Disclosure & Barring Service Certificate, Social Media
+                    Accounts to us. Failing to do so your account will be
+                    suspended or deleted.
+                  </p>
+                  <p>
+                    You agree that your account will be ceased if found you are
+                    not the owner of the content uploaded. Any improper material
+                    (pornography, illegal, harmful, abusing material, copy right
+                  </p>
+                  <p>
+                    materials, etc) uploaded will be deleted and account will be
+                    ceased immediately without notice.
+                  </p>
+                  <p>
+                    You acknowledge and agree with the information provided in
+                    our website/app (including how it works, services, options,
+                    our fees/pricing, faq, etc) and agree with General Terms and
+                    Conditions, Privacy Policy, Service Agreements.
+                  </p>
+                  <p>
+                    Using your account you agree to upload your information
+                    (Biography, Videos, Pictures, certificates, awards, social
+                    media details, etc) into outceedo.com (the "Website"). You
+                    agree to submit the required documentation to prove
+                    certification level in sports, you the owner of the content
+                    you are uploading, you are diligently providing the services
+                    which you are displayed in your profile.
+                  </p>
+                  <p>
+                    For services, you acknowledge and agree the following that
+                  </p>
+                  <ul className="list-disc pl-6 space-y-2">
+                    <li>
+                      you provide a reasonable rate for your service based on
+                      your experience.
+                    </li>
+                    <li>
+                      you provide your availability and non-availability with
+                      time slots (each day) in the calendar we provided.
+                    </li>
+                    <li>
+                      you attend and complete the bookings you accepted from
+                      players.
+                    </li>
+                    <li>
+                      you cancel or reschedule (if needed) the bookings if you
+                      cannot fulfil on the planned date
+                    </li>
+                    <li>
+                      you complete the assessment report and submit it to the
+                      player on time (within 3 workings days after task/service
+                      completion)
+                    </li>
+                  </ul>
+                  <p>
+                    You agree that once you completed your booking, you will
+                    press the "Mark as Complete" button to fully close the
+                    bookings.
+                  </p>
+                  <p>
+                    You agree that you give permission to record and download
+                    the videos of Trainings (Online or On Ground) to the
+                    players. You also give permission to the player to use these
+                    videos as a proof of trainings.
+                  </p>
+                  <p>
+                    You agree that Outceedo Ltd will deduct 10% from your
+                    earnings as a commission before we transfer the remaining
+                    (90%) earnings to you.
+                  </p>
+                  <p>
+                    You agree that you will pay all your taxes on your earnings
+                    by yourself.
+                  </p>
+                  <p>
+                    You agree that to claim your payments you will press the
+                    "Payment Claim" button, which notifies us about your claim.
+                    You also agree to provide your bank details in order to
+                    process your payments.
+                  </p>
+                  <p>
+                    You agree that your payment will be processed and deposited
+                    into your bank account within 7-10 working days after you
+                    press the "Payment Claim" button
+                  </p>
+                  <p>
+                    You agree and acknowledge that, we as a service provider
+                    with best of our knowledge and skill, scrutinise the
+                    registered users and their details. But we cannot, however,
+                    guarantee that users that see your content do not distribute
+                    that information. We also cannot guarantee that there will
+                    never be a software bug or a hacker attack that allows
+                    unauthorized viewing of material or that users actually fit
+                    within the categories they have identified themselves under.
+                  </p>
+                </div>
+              </div>
+
+              {/* Players Section */}
+              <div className="mb-6">
+                <p className="font-bold mb-3">ii) Players</p>
+                <div className="text-gray-700 space-y-3">
+                  <p>
+                    You acknowledge and agree to create a profile/account with
+                    us and agree to complete the personal profile with accurate,
+                    true, current and complete information. Sports Players must
+                    provide required information (full name, address, email id,
+                    phone number, city & country) to identify you as said
+                    category.
+                  </p>
+                  <p>
+                    You agree that the only people who are authorized to create
+                    Sports Player account on this website/app are users above 18
+                    years of age. Any minor player wishes to create an account;
+                    it must be created by their legal parents or legal guardian.
+                  </p>
+                  <p>
+                    You agree that for Minor Player accounts, their legal
+                    parents or guardians bear full responsibility for creating,
+                    updating, maintaining of minor player accounts.
+                  </p>
+                  <p>
+                    You agree that for Minor Player accounts their legal parents
+                    or guardians bear full responsibility for all transactions
+                    and interactions (online & on-ground) with the experts
+                    during training or any other services.
+                  </p>
+                  <p>
+                    You agree that for Minor Player their legal parents or
+                    guardians bear full responsibility whatsoever using this
+                    website/app.
+                  </p>
+                  <p>
+                    You agree that your account will be ceased if found you are
+                    not the owner of the content uploaded. Any improper material
+                    (pornography, illegal, harmful, abusing material, etc)
+                    uploaded will be deleted and account will be ceased
+                    immediately without notice.
+                  </p>
+                  <p>
+                    You acknowledge and agree with the information provided in
+                    our website/app (including how it works, services, options,
+                    our fees/pricing, faq, etc) and agree with General Terms and
+                    Conditions, Privacy Policy, Service Agreements.
+                  </p>
+                  <p>
+                    Using your account you agree to upload your information
+                    (Biography, Videos, Pictures, certificates, awards, social
+                    media details, etc) into outceedo.com (the "Website"). You
+                    agree to submit the required documentation to prove
+                    certification level in sports, you the ownership of the
+                    content you are uploading.
+                  </p>
+                  <p>
+                    For bookings, you acknowledge and agree the following that
+                  </p>
+                  <ul className="list-disc pl-6 space-y-2">
+                    <li>you pay for the services you booked.</li>
+                    <li>
+                      you provide enough details to the expert to attend your
+                      bookings
+                    </li>
+                    <li>you attend the bookings on time</li>
+                    <li>
+                      you cannot claim refund for the bookings you missed or for
+                      your delayed attendance
+                    </li>
+                    <li>
+                      you inform us at least 72 hrs before if you cannot attend
+                      the bookings and claiming refund.
+                    </li>
+                    <li>
+                      you will receive your assessment report from expert within
+                      7 workings after task/service is completed.
+                    </li>
+                    <li>
+                      you agree that once you completed your booking or received
+                      your assessment report, you will press the "Mark as
+                      Complete" button to fully close the bookings.
+                    </li>
+                  </ul>
+                  <p>
+                    You pay subscription fee of £10 each month to Outceedo Ltd
+                    to get access to additional features or functionalities in
+                    our website/app.
+                  </p>
+                  <p>
+                    You agree that once the subscription is expired your account
+                    will restore back to free account with limited use of
+                    features and functionalities.
+                  </p>
+                  <p>
+                    You agree that in case of minor player their legal parents
+                    and guardians will be with the minor player during Trainings
+                    – Online or On Ground and during on-Ground assessments.
+                  </p>
+                  <p>
+                    It is the responsibility of the legal parents and guardians
+                    to monitor their minor player when interacting (online or
+                    face to face) with the experts.
+                  </p>
+                  <p>
+                    You agree that you will not book the experts and interact
+                    with them outside of Outceedo Ltd and pay them directly. In
+                    the event it happens then Outceedo Ltd is not responsible
+                    for any issues it may cause to you and Outceedo won't take
+                    any liability.
+                  </p>
+                  <p>
+                    You agree that you will give reasonable rating and reviews
+                    to the experts for their services.
+                  </p>
+                  <p>
+                    You agree that you will not mention or use any illegal,
+                    offending, abusive, derogatory words.
+                  </p>
+                  <p>
+                    You agree that Outceedo Ltd is not responsible for not
+                    receiving sponsorships. You agree that we will not take any
+                    liability about your sponsorship applications
+                    acceptance/rejections/delays or not receiving funds from
+                    sponsors.
+                  </p>
+                </div>
+              </div>
+
+              {/* Teams Section */}
+              <div className="mb-6">
+                <p className="font-bold mb-3">iii) Teams</p>
+                <div className="text-gray-700 space-y-3">
+                  <p>
+                    You acknowledge and agree to create a profile/account with
+                    us and agree to complete the personal profile with accurate,
+                    true, current and complete information. Sports Teams must
+                    provide required information (full name, address, email id,
+                    phone number, city & country) to identify you as said
+                    category.
+                  </p>
+                  <p>
+                    You agree that the only people who are authorized to create
+                    Sports Team account on this website/app are users above 18
+                    years of age and must be by the teams coach only.
+                  </p>
+                  <p>
+                    You agree that your account will be ceased if found you are
+                    not the owner of the content uploaded. Any improper material
+                    (pornography, illegal, harmful, abusing material, etc)
+                    uploaded will be deleted and account will be ceased
+                    immediately without notice.
+                  </p>
+                  <p>
+                    You acknowledge and agree with the information provided in
+                    our website/app (including how it works, services, options,
+                    our fees/pricing, faq, etc) and agree with General Terms and
+                    Conditions, Privacy Policy, Service Agreements.
+                  </p>
+                  <p>
+                    Using your account you agree to upload your information
+                    (Biography, Videos, Pictures, certificates, awards, social
+                    media details, etc) into outceedo.com (the "Website"). You
+                    agree to submit the required documentation to prove
+                    certification level in sports, you the ownership of the
+                    content you are uploading.
+                  </p>
+                  <p>
+                    You agree that you will give reasonable rating and reviews
+                    to the experts for their services.
+                  </p>
+                  <p>
+                    You agree that you will not mention or use any illegal,
+                    offending, abusive, derogatory words.
+                  </p>
+                  <p>
+                    You agree that Outceedo Ltd is not responsible for not
+                    receiving sponsorships. You agree that we will not take any
+                    liability about your sponsorship applications
+                    acceptance/rejections/delays or not receiving funds from
+                    sponsors.
+                  </p>
+                </div>
+              </div>
+
+              {/* Sponsors Section */}
+              <div className="mb-6">
+                <p className="font-bold mb-3">iv) Sponsors</p>
+                <div className="text-gray-700 space-y-3">
+                  <p>
+                    You acknowledge and agree to create a profile/account with
+                    us and agree to complete the personal profile with accurate,
+                    true, current and complete information. Sports Sponsor must
+                    provide required information (full name, address, email id,
+                    phone number, city & country) to identify you as said
+                    category.
+                  </p>
+                  <p>
+                    You agree that the only people who are authorized to create
+                    Sports Sponsor account on this website/app are users above
+                    18 years of age and must be an accredited sponsor only.
+                  </p>
+                  <p>
+                    You agree that your account will be ceased if found you are
+                    not the owner of the content uploaded. Any improper material
+                    (pornography, illegal, harmful, abusing material, etc)
+                    uploaded will be deleted and account will be ceased
+                    immediately without notice.
+                  </p>
+                  <p>
+                    You acknowledge and agree with the information provided in
+                    our website/app (including how it works, services, options,
+                    our fees/pricing, faq, etc) and agree with General Terms and
+                    Conditions, Privacy Policy, Service Agreements.
+                  </p>
+                  <p>
+                    Using your account you agree to upload your information
+                    (Biography, Videos, Pictures, certificates, awards, social
+                    media details, etc) into outceedo.com (the "Website"). You
+                    agree to submit the required documentation to prove
+                    certification level in sports, you the ownership of the
+                    content you are uploading.
+                  </p>
+                  <p>
+                    You agree that the applications you accepted will be
+                    sponsored via Outceedo Ltd.
+                  </p>
+                  <p>
+                    You agree that you will give reasonable rating and reviews
+                    to the experts for their services.
+                  </p>
+                  <p>
+                    You agree that you will not mention or use any illegal,
+                    offending, abusive, derogatory words.
+                  </p>
+                  <p>
+                    You agree that Outceedo Ltd is not responsible for not
+                    receiving sponsorships. You agree that we will not take any
+                    liability about your sponsorship applications
+                    acceptance/rejections/delays or not receiving funds from
+                    sponsors.
+                  </p>
+                </div>
+              </div>
+
+              {/* Promoters/Audience Section (from your data) */}
+              <div className="mb-6">
+                <div className="text-gray-700 space-y-3">
+                  <p>
+                    You acknowledge and agree to create a profile/account with
+                    us and agree to complete the personal profile with accurate,
+                    true, current and complete information. Promoters/Audience
+                    must provide required information (full name, address, email
+                    id, phone number, etc) to identify you as said category. You
+                    acknowledge and agree to accept email marketing, movie
+                    information sent to you via sms/text/whatsapp. Individuals
+                    interested to promote, request, rate or review movies will
+                    register under this category. Audience can also request
+                    movies to be screened at their preferred locations.
+                    Registered individuals have an option to Rate, Like, Share
+                    movie details to family and friends and earn loyalty points.
+                    You acknowledge and agree to provide your bank details (bank
+                    name, account name, account number, IFSC code, bank address)
+                    to us in order for you to claim/redeem loyalty points.
+                    Individuals may opt out from email marketing and/or any kind
+                    of marketing by clicking unsubscribe link provided in
+                    emails. We protect your personal information as per our
+                    privacy policy.
+                  </p>
+                </div>
+              </div>
+
+              {/* Fans/Followers Section */}
+              <div className="mb-6">
+                <p className="font-bold mb-3">v) Fans/Followers</p>
+                <div className="text-gray-700 space-y-3">
+                  <p>
+                    You acknowledge and agree to create a profile/account with
+                    us and agree to complete the personal profile with accurate,
+                    true, current and complete information. Fans/Followers must
+                    provide required information (full name, address, email id,
+                    phone number, city & country) to identify you as said
+                    category.
+                  </p>
+                  <p>
+                    You agree that the only people who are authorized to create
+                    Fans/Followers account on this website/app are users above
+                    18 years of age.
+                  </p>
+                  <p>
+                    You agree that your account will be ceased if found you are
+                    not the owner of the content uploaded. Any improper material
+                    (pornography, illegal, harmful, abusing material, etc)
+                    uploaded will be deleted and account will be ceased
+                    immediately without notice.
+                  </p>
+                  <p>
+                    You acknowledge and agree with the information provided in
+                    our website/app (including how it works, faq, etc) and agree
+                    with General Terms and Conditions, Privacy Policy, Service
+                    Agreements.
+                  </p>
+                  <p>
+                    Using your account you agree to upload your information
+                    (Biography, Videos, Pictures, certificates, awards, social
+                    media details, etc) into outceedo.com (the "Website"). You
+                    agree to submit the required documentation to prove
+                    certification level in sports, you the ownership of the
+                    content you are uploading.
+                  </p>
+                  <p>
+                    You agree that you will give reasonable rating and reviews
+                    to the experts for their services.
+                  </p>
+                  <p>
+                    You agree that you will not mention or use any illegal,
+                    offending, abusive, derogatory words.
+                  </p>
+                </div>
+              </div>
+
+              {/* Change of Details Section */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-red-600 mb-3">
+                  CHANGE OF DETAILS:
+                </h3>
+                <div className="text-gray-700">
+                  <p>
+                    Users acknowledge and agree that First Name, Last Name,
+                    Email ID and Phone number cannot be changed once published.
+                    These details can only be changed by Outceedo.com on user's
+                    request.
+                  </p>
+                </div>
+              </div>
+            </div>
 
             {/* Change of Details */}
             <section className="mb-8">
@@ -549,7 +995,7 @@ function Terms() {
                 <p>
                   You acknowledge and agree to pay outceedo.com for the services
                   (Premium Account, Expert Bookings, Marketing) you have chosen
-                  in our website/mobile app by following payment methods:
+                  in our website/mobile app by following payment methods :
                 </p>
                 <ul className="list-disc pl-5">
                   <li>
@@ -559,30 +1005,30 @@ function Terms() {
                   <li>Paying in Great British Pounds (GBP £)</li>
                 </ul>
                 <p>
-                  Debit/credit cards (Visa, MasterCard, Credit/Debit Cards, and
-                  American Express), credit cards will incur an additional
-                  transaction fee of 3.5% including VAT of the total payable
-                  price. There is no transaction fee if payment is made by debit
-                  card. By agreeing to these conditions, you authorise us to use
-                  your debit/credit card details to process any payments.
+                  Debit/credit cards (Visa, MasterCard and Credit/Debit Cards),
+                  credit cards will incur an additional transaction fee of 3.5%
+                  including VAT of the total payable price. There is no
+                  transaction fee if payment is made by debit card. By agreeing
+                  to these conditions, you authorise us to use your debit/credit
+                  card details to process any payments.
                 </p>
                 <p>
-                  We accept American Express, Visa, MasterCard and Discover to
-                  pay us using our website. We use a third-party payment gateway
-                  (Stripe) to process payments made to outceedo.com. The
-                  third-party payment gateway service provider will require
-                  certain financial information including your credit card
-                  /debit card or other banking information. You agree and/or
-                  authorise us, or an authorized third party on our behalf, to
-                  supply information such as your full name, address and
-                  debit/credit card and/or other billing information. You agree
-                  to provide us or such third party with accurate, true,
-                  complete and current information. You shall be responsible for
-                  all charges made in your order, as well any applicable fees
-                  and taxes. All payments must be paid in part or full which
-                  includes VAT, fee for payment gateway. Payments made other
-                  than Great British Pounds (GBP £) will incur currency
-                  conversion fee by the respective purchaser’s bank.
+                  We accept Visa, MasterCard and Discover to pay us using our
+                  website. We use a third-party payment gateway (Stripe) to
+                  process payments made to outceedo.com. The third-party payment
+                  gateway service provider will require certain financial
+                  information including your credit card /debit card or other
+                  banking information. You agree and/or authorise us, or an
+                  authorized third party on our behalf, to supply information
+                  such as your full name, address and debit/credit card and/or
+                  other billing information. You agree to provide us or such
+                  third party with accurate, true, complete and current
+                  information. You shall be responsible for all charges made in
+                  your order, as well any applicable fees and taxes. All
+                  payments must be paid in part or full which includes VAT, fee
+                  for payment gateway. Payments made other than Great British
+                  Pounds (GBP £) will incur currency conversion fee by the
+                  respective purchaser’s bank.
                 </p>
                 <p>
                   You agree to provide our third-party payment gateway all your
@@ -605,22 +1051,6 @@ function Terms() {
                   website using the following purchase and payment methods and
                   payment schedule based on trading/distribution options.
                 </p>
-                <p className="font-bold mt-2">Payment methods:</p>
-                <ul className="list-disc pl-5">
-                  <li>
-                    Debit/Credit Cards using our third party (PayPal) payment
-                    gateway
-                  </li>
-                </ul>
-                <p>
-                  You as a Producer/Film Maker/Seller acknowledge, agree and
-                  authorise us to collect payments from buyers/distributors
-                  using above specified payment methods and transfer the
-                  payments to you via normal banking channels after deducting
-                  our fees. You agree that you read our Terms of Use (including
-                  Trading/Distribution options, Our Fees, License fee, License
-                  Terms, Box office collections share in %)
-                </p>
               </section>
 
               {/* Sports Expert Section */}
@@ -629,86 +1059,17 @@ function Terms() {
                   ii) Sports Expert
                 </h3>
                 <p>
-                  You acknowledge and agree to pay moovicart.com for
-                  buying/hiring movie content in our website by following
-                  payment methods based on trading/distribution options:
-                </p>
-                <ul className="list-disc pl-5">
-                  <li>
-                    Debit/Credit Cards using our third party (PayPal) payment
-                    gateway
-                  </li>
-                </ul>
-                <p>
-                  Debit/credit cards (Visa, MasterCard, Credit/Debit Cards,
-                  PayPal, and American Express), credit cards will incur an
-                  additional transaction fee of 3.5% including VAT of the total
-                  payable price. There is no transaction fee if payment is made
-                  by debit card. By agreeing to these conditions, you authorise
-                  us to use your debit/credit card details to process any
-                  payments.
+                  You acknowledge and agree to provide us with your bank details
+                  such as Bank Name & Location, Account Name, Account Number,
+                  IFSC Code and other required details to transfer your service
+                  payments. The payments will be in Great British Pounds (GBP
+                  £), if you require in other currencies then it will incur
+                  conversion fees which will be deducted before transfer.
                 </p>
                 <p>
-                  <b>Bank Transfer:</b> Great British Pounds (GBP £) (bank
-                  details are shown on the invoice and are also available on
-                  request). Clients making payments by debit card/credit card or
-                  bank transfer must ensure that they allow sufficient time for
-                  the payment to clear into the moovicart.com bank account.
-                </p>
-                <p>
-                  We accept PayPal, American Express, Visa, MasterCard and
-                  Discover to pay us using our website. We use a third-party
-                  payment gateway (PayPal) to process payments made to
-                  moovicart.com. The third-party payment gateway service
-                  provider will require certain financial information including
-                  your credit card /debit card or other banking information. You
-                  agree and/or authorise us, or an authorized third party on our
-                  behalf, to supply information such as your full name, address
-                  and debit/credit card and/or other billing information. You
-                  agree to provide us or such third party with accurate, true,
-                  complete and current information. You shall be responsible for
-                  all charges made in your order, as well any applicable fees
-                  and taxes. All payments must be paid in part or full which
-                  includes VAT, fee for payment gateway. Payments made other
-                  than Great British Pounds (GBP £) will incur currency
-                  conversion fee by the respective purchaser’s bank.
-                </p>
-                <p>
-                  You agree to provide our third-party payment gateway all your
-                  relevant information required to complete the transactions.
-                  moovicart.com disclaims any and all liabilities in relation to
-                  your payment processing by third party payment gateway service
-                  provider and the collection and processing of any information
-                  provided to third party payment gateway service provider.
-                  While using such payment gateways to make payments to
-                  moovicart.com, you will be required to accept the terms of use
-                  and privacy policies of such payment gateway service provider.
-                  We request you to please make yourself familiar with the terms
-                  of use and privacy policies of such payment gateway service
-                  provider before using their service.
-                </p>
-                <p>
-                  You as a buyer/distributor acknowledge, agree and authorise us
-                  to collect payments from you for your purchases, on
-                  seller/producer/film maker behalf via moovicart.com for movie
-                  content you are buying/hiring in our website using the
-                  following purchase and payment methods and payment schedule
-                  based on trading/distribution options.
-                </p>
-                <p className="font-bold mt-2">Payment methods:</p>
-                <ul className="list-disc pl-5">
-                  <li>
-                    Debit/Credit Cards using our third party (PayPal) payment
-                    gateway
-                  </li>
-                </ul>
-                <p>
-                  You as a buyer/distributor acknowledge and agree that you have
-                  read and understand our Terms of Use (including
-                  Trading/Distribution options, Our Fees, License fee, License
-                  Terms, Box office collections share in %), above specified
-                  payment methods, any other relevant terms, conditions or
-                  policies.
+                  You also acknowledge and agree that you will receive 90% of
+                  your service payments after deduction of 10% as our
+                  commission.
                 </p>
               </section>
             </section>
@@ -843,6 +1204,43 @@ function Terms() {
               </h2>
               <p>
                 {/* Full text from your document here */}
+                "Any dispute arising out of or in connection with this contract,
+                including any question regarding its existence, validity or
+                termination, shall be referred to and finally resolved by
+                arbitration under the London Court of International Arbitration
+                (LCIA) Rules, which Rules are deemed to be incorporated by
+                reference into this clause."
+              </p>
+              <h3 className="text-lg font-bold text-red-500 mb-2">
+                i) Mediation only
+              </h3>
+              <p>
+                "In the event of a dispute arising out of or relating to this
+                contract, including any question regarding its existence,
+                validity or termination, the parties shall seek settlement of
+                that dispute by mediation in accordance with the LCIA Mediation
+                Procedure, which Procedure is deemed to be incorporated by
+                reference into this clause."
+              </p>
+              <h3 className="text-lg font-bold text-red-500 mb-2">
+                ii) Arbitration only
+              </h3>
+              <p>
+                "Any dispute arising out of or in connection with this contract,
+                including any question regarding its existence, validity or
+                termination, shall be referred to and finally resolved by
+                arbitration under the Rules of the LCIA, which Rules are deemed
+                to be incorporated by reference into this clause. The number of
+                arbitrators shall be one or three. The seat, or legal place, of
+                arbitration shall be London, United Kingdom. The language to be
+                used in the arbitral proceedings shall be English. The governing
+                law of the contract shall be the substantive law of United
+                Kingdom."
+              </p>
+              <h3 className="text-lg font-bold text-red-500 mb-2">
+                iii) Mediation and Arbitration
+              </h3>
+              <p>
                 "In the event of a dispute arising out of or relating to this
                 contract, including any question regarding its existence,
                 validity or termination, the parties shall first seek settlement
@@ -853,37 +1251,21 @@ function Terms() {
                 the mediator, or such further period as the parties shall agree
                 in writing, the dispute shall be referred to and finally
                 resolved by arbitration under the LCIA Rules, which Rules are
-                deemed to be incorporated by reference into this clause. The
-                number of arbitrators shall be one or three. The seat, or legal
-                place, of arbitration shall be London, United Kingdom. The
+                deemed to be incorporated by reference into this clause.
+              </p>
+              <p>
+                The number of arbitrators shall be one or three. The seat, or
+                legal place, of arbitration shall be London, United Kingdom. The
                 language to be used in the arbitral proceedings shall be
                 English. The governing law of the contract shall be the
-                substantive law of United Kingdom." In the event if the dispute
-                is not resolved by mediation and/or arbitration, you and we both
-                agree that if you were able to bring a claim arising from or in
-                connection with this contract against us in court, an acceptable
-                court would be a court located in London, United Kingdom. "Any
-                dispute arising out of or in connection with this contract,
-                including any question regarding its existence, validity or
-                termination, shall be referred to and finally resolved by
-                arbitration under the London Court of International Arbitration
-                (LCIA) Rules, which Rules are deemed to be incorporated by
-                reference into this clause. i) Mediation only "In the event of a
-                dispute arising out of or relating to this contract, including
-                any question regarding its existence, validity or termination,
-                the parties shall seek settlement of that dispute by mediation
-                in accordance with the LCIA Mediation Procedure, which Procedure
-                is deemed to be incorporated by reference into this clause." ii)
-                Arbitration only "Any dispute arising out of or in connection
-                with this contract, including any question regarding its
-                existence, validity or termination, shall be referred to and
-                finally resolved by arbitration under the Rules of the LCIA,
-                which Rules are deemed to be incorporated by reference into this
-                clause. The number of arbitrators shall be one or three. The
-                seat, or legal place, of arbitration shall be London, United
-                Kingdom. The language to be used in the arbitral proceedings
-                shall be English. The governing law of the contract shall be the
                 substantive law of United Kingdom."
+              </p>
+              <p>
+                In the event if the dispute is not resolved by mediation and/or
+                arbitration, you and we both agree that if you were able to
+                bring a claim arising from or in connection with this contract
+                against us in court, an acceptable court would be a court
+                located in London, United Kingdom.
               </p>
             </section>
 
