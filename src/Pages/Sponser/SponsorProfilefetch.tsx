@@ -180,9 +180,6 @@ export default function SponsorProfiles() {
   const navigate = useNavigate();
 
   // Clear profiles when component mounts to avoid stale data
-  useEffect(() => {
-    dispatch(clearProfiles());
-  }, [dispatch]);
 
   // Store all sponsors when data is fetched
   useEffect(() => {
