@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -181,16 +181,18 @@ const Expertview = () => {
       setFollowersCount(viewedProfile.followersCount || 0); // Using your demo value as fallback
     }
   }, [viewedProfile]);
-  useEffect(() => {
-    if (isFollowersModalOpen) {
-      fetchFollowers(followersLimit, followersPage);
-    }
-  }, [followersLimit, followersPage, isFollowersModalOpen]);
 
   useEffect(() => {
-    getExpertServiceCount();
-    fetchFollowers(100, followersPage);
-  });
+    if (viewedProfile?.id) {
+      getExpertServiceCount();
+    }
+  }, [viewedProfile?.id]); // Only run when expert ID changes
+
+  useEffect(() => {
+    if (viewedProfile?.id) {
+      fetchFollowers(followersLimit, followersPage);
+    }
+  }, [viewedProfile?.id]);
 
   const checkFollowStatus = async () => {
     try {
@@ -233,37 +235,51 @@ const Expertview = () => {
   };
 
   // Fetch followers list
-  const fetchFollowers = async (
-    limit = followersLimit,
-    page = followersPage
-  ) => {
-    if (!viewedProfile?.id) return;
+  // Replace the problematic useEffect with these two separate ones:
 
-    setLoadingFollowers(true);
-    try {
-      const token = localStorage.getItem("token");
-      const response = await axios.get(
-        `${API_FOLLOW_URL}/${viewedProfile.id}/followers?limit=${limit}&page=${page}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      setFollowers(response.data?.users || []);
-      if (typeof response.data?.totalCount === "number") {
-        setFollowersCount(response.data.totalCount);
-      } else if (Array.isArray(response.data?.users)) {
-        // fallback if no totalCount, just use array length for this page
-        setFollowersCount(response.data.users.length);
-      }
-    } catch (error) {
-      console.error("Error fetching followers:", error);
-      setFollowers([]);
-    } finally {
-      setLoadingFollowers(false);
+  useEffect(() => {
+    if (viewedProfile?.id) {
+      getExpertServiceCount();
     }
-  };
+  }, [viewedProfile?.id]); // Only run when expert ID changes
+
+  useEffect(() => {
+    if (viewedProfile?.id) {
+      fetchFollowers(followersLimit, followersPage);
+    }
+  }, [viewedProfile?.id]); // Only run when expert ID changes initially
+
+  // Also update the fetchFollowers function to be more stable:
+  const fetchFollowers = useCallback(
+    async (limit = followersLimit, page = followersPage) => {
+      if (!viewedProfile?.id) return;
+
+      setLoadingFollowers(true);
+      try {
+        const token = localStorage.getItem("token");
+        const response = await axios.get(
+          `${API_FOLLOW_URL}/${viewedProfile.id}/followers?limit=${limit}&page=${page}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        setFollowers(response.data?.users || []);
+        if (typeof response.data?.totalCount === "number") {
+          setFollowersCount(response.data.totalCount);
+        } else if (Array.isArray(response.data?.users)) {
+          setFollowersCount(response.data.users.length);
+        }
+      } catch (error) {
+        console.error("Error fetching followers:", error);
+        setFollowers([]);
+      } finally {
+        setLoadingFollowers(false);
+      }
+    },
+    [viewedProfile?.id, API_FOLLOW_URL]
+  );
 
   // Handle followers count click
   const handleFollowersClick = () => {

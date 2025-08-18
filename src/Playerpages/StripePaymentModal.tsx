@@ -15,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
-  faCreditCard,
   faExclamationTriangle,
   faLock,
   faShieldAlt,
@@ -24,11 +23,12 @@ import {
   faClock,
   faCheckCircle,
   faInfoCircle,
-  faDollarSign,
   faBuilding,
   faSpinner,
   faRefresh,
 } from "@fortawesome/free-solid-svg-icons";
+import logo from "@/assets/images/outceedologo.png";
+import { FaStripe } from "react-icons/fa";
 
 const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
   const stripe = useStripe();
@@ -36,6 +36,12 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
   const [processing, setProcessing] = useState(false);
   const [validationError, setValidationError] = useState(null);
   const [retryCount, setRetryCount] = useState(0);
+  function printCurrentDateTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString();
+    const dateString = now.toLocaleDateString();
+    return `${dateString} ${timeString}`;
+  }
 
   useEffect(() => {
     // Validate payment intent on component mount
@@ -357,15 +363,22 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
     <div className="max-w-lg mx-auto">
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Header Section */}
-        <div className="text-center pb-6 border-b border-gray-100">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-            <FontAwesomeIcon icon={faLock} className="text-2xl text-white" />
-          </div>
+        <div className="text-center border-b border-gray-100">
+          <img className="text-2xl text-white" src={logo} />
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             Secure Payment
           </h2>
           <p className="text-gray-600">
             Your payment is protected by industry-leading security
+          </p>
+
+          <p className="text-blue-800">
+            <FaStripe
+              className="text-7xl mx-auto cursor-pointer"
+              onClick={() => {
+                window.open("https://stripe.com", "_blank");
+              }}
+            />
           </p>
         </div>
 
@@ -495,6 +508,12 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
                 )}
               </div>
             )}
+            <div className="text-sm text-gray-600 mb-1">Time and Date</div>
+            <p>
+              <Badge variant="secondary" className="mt-2">
+                {printCurrentDateTime()}{" "}
+              </Badge>
+            </p>
           </div>
         </div>
 
@@ -728,10 +747,7 @@ const StripePaymentModal = ({
       <DialogContent className="sm:max-w-[680px] max-h-[95vh] overflow-y-auto p-0 bg-gray-50">
         <div className="p-6 sm:p-8">
           <DialogHeader className="text-center mb-6">
-            <DialogTitle className="text-3xl font-bold text-gray-900 mb-2">
-              Complete Your Payment
-            </DialogTitle>
-            <p className="text-gray-600">Secure checkout powered by Stripe</p>
+            <DialogTitle className="text-3xl font-bold text-gray-900 mb-2"></DialogTitle>
           </DialogHeader>
           <Elements stripe={stripePromise}>
             <PaymentForm
