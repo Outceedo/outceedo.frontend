@@ -124,7 +124,7 @@ const ExpertProfile = () => {
   // Fetch followers count when profile loads
   useEffect(() => {
     if (currentProfile?.id) {
-      fetchFollowers(100, 1); // Fetch initial followers with a high limit
+      fetchFollowers();
     }
   }, [currentProfile]);
 
