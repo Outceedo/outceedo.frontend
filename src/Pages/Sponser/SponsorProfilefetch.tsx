@@ -318,20 +318,6 @@ export default function SponsorProfiles() {
     }
   };
 
-  useEffect(() => {
-    fetch("https://restcountries.com/v3.1/all")
-      .then((res) => res.json())
-      .then((data: Country[]) => {
-        const sorted = data.sort((a, b) =>
-          a.name.common.localeCompare(b.name.common)
-        );
-        setCountries(sorted);
-      })
-      .catch((error) => {
-        console.error("Failed to fetch countries:", error);
-      });
-  }, []);
-
   const handleFilterChange = (value: string, filterType: string) => {
     const normalizedKey = filterType.toLowerCase();
     let stateKey = "";
