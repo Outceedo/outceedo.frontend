@@ -5,7 +5,7 @@ import { X, Star, Search, ChevronRight, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
-import { getProfiles } from "@/store/profile-slice";
+import { clearProfiles, getProfiles } from "@/store/profile-slice";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -179,10 +179,18 @@ export default function SponsorProfiles() {
 
   const navigate = useNavigate();
 
+  // Clear profiles when component mounts to avoid stale data
+  useEffect(() => {
+    dispatch(clearProfiles());
+  }, [dispatch]);
+
   // Store all sponsors when data is fetched
   useEffect(() => {
     if (sponsorsArray.length > 0) {
       setAllSponsors(sponsorsArray);
+    } else {
+      // Clear allSponsors when no sponsors are returned from API
+      setAllSponsors([]);
     }
   }, [sponsorsArray]);
 

@@ -969,18 +969,6 @@ function Terms() {
               </div>
             </div>
 
-            {/* Change of Details */}
-            <section className="mb-8">
-              <h2 className="text-xl font-semibold text-red-600 mb-3">
-                Change of Details
-              </h2>
-              <p>
-                Users acknowledge and agree that First Name, Last Name, Email ID
-                and Phone number cannot be changed once published. These details
-                can only be changed by Outceedo.com on user’s request.
-              </p>
-            </section>
-
             {/* Bookings and Payment Methods */}
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-red-600 mb-3">
@@ -1043,13 +1031,6 @@ function Terms() {
                   We request you to please make yourself familiar with the terms
                   of use and privacy policies of such payment gateway service
                   provider before using their service.
-                </p>
-                <p>
-                  You as a Player acknowledge, agree and authorise us to collect
-                  payments from buyers/distributors on your behalf via
-                  moovicart.com for movie content you are selling/leasing in our
-                  website using the following purchase and payment methods and
-                  payment schedule based on trading/distribution options.
                 </p>
               </section>
 

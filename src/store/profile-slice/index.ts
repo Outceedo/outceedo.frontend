@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { userService } from "../apiConfig";
 
-type Role = "player" | "expert" | "admin";
+type Role = "player" | "expert" | "admin" | "sponsor";
 
 interface SocialLinks {
   linkedin?: string;
@@ -89,35 +89,35 @@ interface ProfileState {
   currentProfile: Profile | null;
   viewedProfile: Profile | null;
   profiles: {
-    data: Profile[];
+    users?: Profile[];
+    data?: Profile[];
     page: number;
     limit: number;
     total: number;
-  };
+    totalPages?: number;
+    totalCount?: number;
+  } | null;
   platformServices: Service[];
   expertServices: ExpertService[];
   status: "idle" | "loading" | "succeeded" | "failed";
   error: string | null;
+  lastFetchedUserType: Role | null;
 }
 
 const initialState: ProfileState = {
   currentProfile: null,
   viewedProfile: null,
-  profiles: {
-    data: [],
-    page: 1,
-    limit: 10,
-    total: 0,
-  },
+  profiles: null,
   platformServices: [],
   expertServices: [],
   status: "idle",
   error: null,
+  lastFetchedUserType: null,
 };
 
 const getRoleFromStorage = (): Role | null => {
   const role = localStorage.getItem("role") as Role;
-  if (role && ["player", "expert", "admin"].includes(role)) {
+  if (role && ["player", "expert", "admin", "sponsor"].includes(role)) {
     return role;
   }
   return null;
@@ -220,7 +220,7 @@ export const getProfiles = createAsyncThunk(
           Authorization: `Bearer ${token}`,
         },
       });
-      return response.data;
+      return { ...response.data, userType };
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.error || "Failed to get profiles"
@@ -398,6 +398,12 @@ const profileSlice = createSlice({
         state.currentProfile.role = role;
       }
     },
+    clearProfiles: (state) => {
+      state.profiles = null;
+      state.status = "idle";
+      state.error = null;
+      state.lastFetchedUserType = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -462,7 +468,15 @@ const profileSlice = createSlice({
       })
       .addCase(getProfiles.fulfilled, (state, action) => {
         state.status = "succeeded";
+        // Clear previous data if userType has changed
+        if (
+          state.lastFetchedUserType &&
+          state.lastFetchedUserType !== action.payload.userType
+        ) {
+          state.profiles = null;
+        }
         state.profiles = action.payload;
+        state.lastFetchedUserType = action.payload.userType;
       })
       .addCase(getProfiles.rejected, (state, action) => {
         state.status = "failed";
@@ -566,6 +580,7 @@ export const {
   resetProfileState,
   resetProfileStatus,
   setCurrentProfileFromStorage,
+  clearProfiles,
 } = profileSlice.actions;
 
 export default profileSlice.reducer;
