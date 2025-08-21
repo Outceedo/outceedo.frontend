@@ -92,8 +92,6 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
       Array.isArray(Data.uploads) &&
       Data.uploads.length > 0
     ) {
-      console.log("Using media from Data:", Data.uploads);
-
       // Transform uploads to match our UploadItem format
       const mediaItems: UploadItem[] = Data.uploads.map((item: any) => ({
         id: item.id || item._id,
@@ -109,6 +107,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
       // Fetch from API if no Data uploads
       fetchMediaFromAPI();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [Data]);
 
   // Separate function to fetch media from API
@@ -119,7 +118,6 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
       const username = localStorage.getItem("username");
 
       if (!token || !username) {
-        console.error("No auth token or username found");
         // Use local storage as fallback if API access not available
         const savedMedia = JSON.parse(
           localStorage.getItem("savedMedia") || "[]"
@@ -148,8 +146,6 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
         setMedia(mediaItems);
       }
     } catch (error) {
-      console.error("Error fetching media:", error);
-
       // Use local storage as fallback if API fails
       const savedMedia = JSON.parse(localStorage.getItem("savedMedia") || "[]");
       setMedia(savedMedia);
@@ -255,8 +251,6 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
 
           Swal.fire("Deleted!", "The media item has been removed.", "success");
         } catch (error) {
-          console.error("Error deleting media:", error);
-
           // Show error message
           Swal.fire({
             icon: "error",
@@ -277,7 +271,7 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
   }
 
   return (
-    <div className="p-4 w-full -ml-4 mt-3">
+    <div className="p-4 w-full -ml-4 mt-3 pb-24 sm:pb-4">
       {/* Plan Info Banner */}
       {!subscriptionLoading && role === "player" && (
         <div
@@ -372,7 +366,8 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
           </button>
         ))}
 
-        <div className="flex justify-end w-full">
+        {/* Desktop/Tablet Upload Button */}
+        <div className="flex justify-end w-full hidden sm:flex">
           <Button
             onClick={handleUploadClick}
             className={`font-semibold px-5 py-2 rounded-lg flex items-center gap-2 ${
@@ -527,6 +522,25 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
           </div>
         </div>
       )}
+
+      {/* Mobile Upload Button - fixed at bottom */}
+      <div className="fixed bottom-3 left-0 w-full flex justify-center z-50 sm:hidden pointer-events-none">
+        <div className="w-full px-5">
+          <Button
+            onClick={handleUploadClick}
+            className={`font-semibold px-5 py-3 rounded-lg flex items-center gap-2 w-full shadow-lg pointer-events-auto ${
+              !canUploadPhoto && !canUploadVideo
+                ? "bg-gray-400 hover:bg-gray-500 text-white cursor-pointer"
+                : "bg-[#FE221E] hover:bg-red-500 text-white"
+            }`}
+          >
+            <FontAwesomeIcon
+              icon={!canUploadPhoto && !canUploadVideo ? faLock : faUpload}
+            />
+            {!canUploadPhoto && !canUploadVideo ? "Limit Reached" : "Upload"}
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };
@@ -534,15 +548,6 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
 export default Mediaedit;
 
 //  Reusable MediaCard Component
-interface UploadItem {
-  id: string | number;
-  title: string;
-  file?: File | null;
-  preview?: string | null;
-  type: "photo" | "video";
-  url?: string;
-}
-
 interface MediaCardProps {
   item: UploadItem;
   selectedMedia: (string | number)[];
