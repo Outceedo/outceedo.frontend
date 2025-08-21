@@ -9,6 +9,7 @@ import Dinesh from "../../assets/team/Dinesh.jpg";
 import Sindhu from "../../assets/team/Sindhu.jpg";
 import Riktha from "../../assets/team/Riktha.jpg";
 import Deepthika from "../../assets/team/Deepthika.jpg";
+import Abhiram from "../../assets/team/Abhiram.jpg";
 
 // Example team data -- replace with your actual images and members!
 const managementTeam = [
@@ -36,6 +37,11 @@ const technicalTeam = [
     photo: Neekunj,
   },
   {
+    name: "Abhiram Mangipudi",
+    designation: "Backend and AI Engineer",
+    photo: Abhiram,
+  },
+  {
     name: "Sindhu",
     designation: "Frontend Developer",
     photo: Sindhu,
@@ -45,6 +51,7 @@ const technicalTeam = [
     designation: "Frontend Developer",
     photo: Nikitha,
   },
+  
   {
     name: "Rella Dinesh",
     designation: "Quality Assurance and Responsive Testing",

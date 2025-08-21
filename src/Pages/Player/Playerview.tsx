@@ -3,22 +3,16 @@ import { useNavigate } from "react-router-dom";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import axios from "axios";
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
-
 import profile from "../../assets/images/avatar.png";
 import Mediaview from "@/Pages/Media/MediaView";
 import PlayerProfileDetails from "./PlayerProfileDetails";
-import FollowersList from "../../components/follower/followerlist"; // Import the FollowersList component
-
+import FollowersList from "../../components/follower/followerlist";
 import Reviewview from "../Reviews/Reviewview";
 import Swal from "sweetalert2";
-
-// FontAwesome for stars and follow icons
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faStar as faStarSolid,
@@ -29,7 +23,6 @@ import {
   faLock,
   faUserMinus,
 } from "@fortawesome/free-solid-svg-icons";
-
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 
 interface Stat {
@@ -81,7 +74,6 @@ const calculateOVR = (stats: Stat[]) => {
   return (total / stats.length).toFixed(1);
 };
 
-// StarRating component for review stars
 const StarRating: React.FC<{
   avg: number;
   total?: number;
@@ -90,27 +82,26 @@ const StarRating: React.FC<{
   const fullStars = Math.floor(avg);
   const hasHalfStar = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
   const emptyStars = total - fullStars - (hasHalfStar ? 1 : 0);
-
   return (
     <span className={className}>
       {[...Array(fullStars)].map((_, i) => (
         <FontAwesomeIcon
           key={`full-${i}`}
           icon={faStarSolid}
-          className="text-yellow-400 text-xl"
+          className="text-yellow-400 text-base sm:text-xl"
         />
       ))}
       {hasHalfStar && (
         <FontAwesomeIcon
           icon={faStarHalfAlt}
-          className="text-yellow-400 text-xl"
+          className="text-yellow-400 text-base sm:text-xl"
         />
       )}
       {[...Array(emptyStars)].map((_, i) => (
         <FontAwesomeIcon
           key={`empty-${i}`}
           icon={farStar}
-          className="text-yellow-400 text-xl"
+          className="text-yellow-400 text-base sm:text-xl"
         />
       ))}
     </span>
@@ -124,25 +115,18 @@ const Playerview: React.FC = () => {
   const [profileData, setProfileData] = useState<Profile | null>(null);
   const [playerStats, setPlayerStats] = useState<Stat[]>(defaultStats);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Follow functionality state
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
-
-  // Followers modal state
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
-
-  // Followers pagination and limit state
   const [followersLimit, setFollowersLimit] = useState(10);
   const [followersPage, setFollowersPage] = useState(1);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  // Get profile data and subscription status from Redux store
   const { viewedProfile, status } = useAppSelector((state) => state.profile);
   const {
     isActive,
@@ -152,27 +136,22 @@ const Playerview: React.FC = () => {
 
   const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
 
-  // Determine if user is on a premium plan
   const isUserOnPremiumPlan =
     isActive && planName && planName.toLowerCase() !== "free";
 
-  // Check if follow is allowed for current plan
   const isFollowAllowed = () => {
     if (localStorage.getItem("role") === "player") {
       return isUserOnPremiumPlan;
     }
-    return true; // For other roles, allow following regardless of plan
+    return true;
   };
 
   useEffect(() => {
     const loadProfile = async () => {
       setIsLoading(true);
       try {
-        // First try to get username from localStorage
         const username = localStorage.getItem("viewplayerusername");
-
         if (username) {
-          // Dispatch action to fetch profile by username
           await dispatch(getProfile(username));
         } else {
           setIsLoading(false);
@@ -181,11 +160,9 @@ const Playerview: React.FC = () => {
         setIsLoading(false);
       }
     };
-
     loadProfile();
   }, [dispatch]);
 
-  // Update profile data when the Redux state changes
   useEffect(() => {
     if (status === "succeeded" && viewedProfile) {
       let processedProfile = viewedProfile;
@@ -197,85 +174,69 @@ const Playerview: React.FC = () => {
       setProfileData(processedProfile);
       setIsLoading(false);
       if (processedProfile.role === "player") {
-        generatePlayerStats(processedProfile);
+        setPlayerStats(defaultStats);
       }
     } else if (status === "failed") {
       setIsLoading(false);
     }
   }, [viewedProfile, status]);
 
-  // Check if current user is following this player and get followers count
   useEffect(() => {
     if (profileData?.id) {
       checkFollowStatus();
-      // Set initial followers count
       setFollowersCount(profileData.followersCount || 0);
       fetchFollowers(100, followersPage);
     }
+    // eslint-disable-next-line
   }, [profileData]);
 
   const checkFollowStatus = async () => {
     try {
       const token = localStorage.getItem("token");
       if (!token || !profileData?.id) return;
-
       const response = await axios.get(
         `${API_FOLLOW_URL}/${viewedProfile.id}/isfollowing`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       setIsFollowing(response.data?.isFollowing || false);
-    } catch (error) {
-      console.error("Error checking follow status:", error);
-      // If endpoint doesn't exist, default to false
+    } catch {
       setIsFollowing(false);
     }
   };
 
-  // Fetch followers list with limit and page
   const fetchFollowers = async (
     limit = followersLimit,
     page = followersPage
   ) => {
     if (!profileData?.id) return;
-
     setLoadingFollowers(true);
     try {
       const token = localStorage.getItem("token");
       const response = await axios.get(
         `${API_FOLLOW_URL}/${profileData.id}/followers?limit=${limit}&page=${page}`,
         {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
-
       setFollowers(response.data?.users || []);
-
       setFollowersCount(response.data?.users.length);
-    } catch (error) {
-      console.error("Error fetching followers:", error);
+    } catch {
       setFollowers([]);
     } finally {
       setLoadingFollowers(false);
     }
   };
 
-  // Handle followers count click
   const handleFollowersClick = () => {
     setIsFollowersModalOpen(true);
     fetchFollowers(followersLimit, followersPage);
   };
 
-  // Pagination and limit controls for followers modal
   const handleFollowersLimitChange = (newLimit: number) => {
     setFollowersLimit(newLimit);
-    setFollowersPage(1); // Reset to page 1 on limit change
+    setFollowersPage(1);
     fetchFollowers(newLimit, 1);
   };
 
@@ -287,7 +248,6 @@ const Playerview: React.FC = () => {
   const handleFollow = async () => {
     if (!isFollowAllowed()) {
       const currentPlanName = planName || "Free";
-
       Swal.fire({
         icon: "info",
         title: "Upgrade to Premium",
@@ -315,17 +275,12 @@ const Playerview: React.FC = () => {
         cancelButtonText: "Maybe Later",
         confirmButtonColor: "#3B82F6",
         cancelButtonColor: "#6B7280",
-        customClass: {
-          popup: "swal-wide",
-        },
+        customClass: { popup: "swal-wide" },
       }).then((result) => {
-        if (result.isConfirmed) {
-          navigate("/plans");
-        }
+        if (result.isConfirmed) navigate("/plans");
       });
       return;
     }
-
     if (!profileData?.id) {
       Swal.fire({
         icon: "error",
@@ -336,9 +291,7 @@ const Playerview: React.FC = () => {
       });
       return;
     }
-
     setIsFollowLoading(true);
-
     try {
       const token = localStorage.getItem("token");
       if (!token) {
@@ -351,48 +304,29 @@ const Playerview: React.FC = () => {
         });
         return;
       }
-
       const displayName =
         `${profileData.firstName || ""} ${profileData.lastName || ""}`.trim() ||
         profileData.username ||
         "this player";
-
       let response;
       let newFollowStatus;
-
       if (isFollowing) {
-        // Unfollow the player
         response = await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/unfollow`,
           {},
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
         );
         newFollowStatus = false;
       } else {
-        // Follow the player
         response = await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/follow`,
           {},
-          {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-          }
+          { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
         );
         newFollowStatus = true;
       }
-
       setIsFollowing(newFollowStatus);
-
-      // Update followers count
       setFollowersCount((prev) => (newFollowStatus ? prev + 1 : prev - 1));
-
       Swal.fire({
         icon: "success",
         title: newFollowStatus ? "Following!" : "Unfollowed",
@@ -403,12 +337,10 @@ const Playerview: React.FC = () => {
         showConfirmButton: false,
       });
     } catch (error: any) {
-      console.error("Follow/Unfollow error:", error);
       const errorMessage =
         error.response?.data?.message ||
         error.response?.data?.error ||
         "Failed to update follow status. Please try again.";
-
       Swal.fire({
         icon: "error",
         title: "Error",
@@ -421,15 +353,12 @@ const Playerview: React.FC = () => {
     }
   };
 
-  // Handle unfollow with confirmation
   const handleUnfollowWithConfirmation = async () => {
     if (!isFollowing) return;
-
     const displayName =
       `${profileData?.firstName || ""} ${profileData?.lastName || ""}`.trim() ||
       profileData?.username ||
       "this player";
-
     Swal.fire({
       title: "Unfollow Player?",
       text: `Are you sure you want to unfollow ${displayName}?`,
@@ -440,63 +369,11 @@ const Playerview: React.FC = () => {
       confirmButtonText: "Yes, unfollow",
       cancelButtonText: "Cancel",
     }).then((result) => {
-      if (result.isConfirmed) {
-        handleFollow(); // This will trigger unfollow since isFollowing is true
-      }
+      if (result.isConfirmed) handleFollow();
     });
   };
 
-  // Generate player stats based on profile attributes
-  const generatePlayerStats = (profile: Profile) => {
-    const height = profile.height || 0;
-    const weight = profile.weight || 0;
-    const age = profile.age || "N/A";
-
-    const stats: Stat[] = [
-      {
-        label: "Pace",
-        percentage: 0,
-        color: "#E63946",
-      },
-      {
-        label: "Shooting",
-        percentage: 0,
-        color: "#D62828",
-      },
-      {
-        label: "Passing",
-        percentage: 0,
-        color: "#4CAF50",
-      },
-      {
-        label: "Dribbling",
-        percentage: 0,
-        color: "#68A357",
-      },
-      {
-        label: "Defending",
-        percentage: 0,
-        color: "#2D6A4F",
-      },
-      {
-        label: "Physical",
-        percentage: 0,
-        color: "#F4A261",
-      },
-    ];
-
-    setPlayerStats(
-      stats.map((stat) => ({
-        ...stat,
-        percentage: Math.round(stat.percentage),
-      }))
-    );
-  };
-
-  // Calculate OVR rating
   const OVR = calculateOVR(playerStats);
-
-  // Calculate review stats
   const reviewsArray = profileData?.reviewsReceived || [];
   const totalReviews = reviewsArray.length;
   const avgRating =
@@ -543,27 +420,26 @@ const Playerview: React.FC = () => {
 
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
-      <div className="flex-1 p-4">
-        <div className="ml-8">
+      <div className="flex-1 p-2 sm:p-4">
+        <div className="max-w-6xl mx-auto">
           <div
             onClick={() => navigate(-1)}
-            className="flex flex-col text-4xl font-bold text-start cursor-pointer"
+            className="flex flex-col text-2xl sm:text-4xl font-bold text-start cursor-pointer"
           >
             ←
           </div>
-          <div className="flex flex-col lg:flex-row gap-6 items-center mt-4">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center mt-2 sm:mt-4">
             <img
               src={profileData.photo || profile}
               alt={`${displayName}'s profile`}
-              className="rounded-lg w-60 h-60 object-cover shadow-md sm:self-center"
+              className="rounded-lg w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 object-cover shadow-md"
             />
-
-            <div className="flex flex-col mt-5 w-full gap-4">
+            <div className="flex flex-col mt-3 sm:mt-5 w-full gap-2 sm:gap-4">
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
+                <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
                   {displayName}
                 </h2>
-                <div className="flex flex-wrap gap-x-8 gap-y-2 text-gray-600 font-Opensans mt-2 dark:text-gray-300">
+                <div className="flex flex-wrap gap-x-5 gap-y-2 text-gray-600 font-Opensans mt-2 dark:text-gray-300 text-xs sm:text-sm">
                   <span>
                     {profileData.age ? `Age: ${profileData.age}` : ""}
                   </span>
@@ -588,95 +464,83 @@ const Playerview: React.FC = () => {
                   </span>
                 </div>
               </div>
-
-              {/* Follow Button Section - For all roles except current player */}
-              {
-                // Only allow follow for premium players, or allow for other roles regardless of plan
-                ((localStorage.getItem("role") === "player" &&
-                  isUserOnPremiumPlan) ||
-                  localStorage.getItem("role") !== "player") && (
-                  <div className="mt-4">
-                    {/* Follow/Unfollow Buttons */}
-                    <div className="flex items-center gap-4">
-                      {isFollowAllowed() && isFollowing ? (
-                        // Show both Following button and Unfollow button when following
-                        <div className="flex items-center gap-2">
-                          <Button
-                            disabled
-                            className="px-6 py-2 rounded-lg font-semibold bg-green-600 text-white cursor-default"
-                          >
-                            <FontAwesomeIcon
-                              icon={faUserCheck}
-                              className="text-sm mr-2"
-                            />
-                            Following
-                          </Button>
-                          <Button
-                            onClick={handleUnfollowWithConfirmation}
-                            disabled={isFollowLoading}
-                            className="px-4 py-2 rounded-lg font-semibold bg-gray-500 hover:bg-red-600 text-white transition-colors"
-                          >
-                            {isFollowLoading ? (
-                              <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
-                            ) : (
-                              <>
-                                <FontAwesomeIcon
-                                  icon={faUserMinus}
-                                  className="text-sm mr-2"
-                                />
-                                Unfollow
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                      ) : (
-                        // Show single Follow button when not following
+              {((
+                localStorage.getItem("role") === "player" && isUserOnPremiumPlan
+              ) ||
+                localStorage.getItem("role") !== "player") && (
+                <div className="mt-3 sm:mt-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
+                    {isFollowAllowed() && isFollowing ? (
+                      <div className="flex flex-col sm:flex-row items-center gap-2">
                         <Button
-                          onClick={handleFollow}
+                          disabled
+                          className="px-4 py-2 rounded-lg font-semibold bg-green-600 text-white cursor-default w-full sm:w-auto"
+                        >
+                          <FontAwesomeIcon
+                            icon={faUserCheck}
+                            className="text-sm mr-2"
+                          />
+                          Following
+                        </Button>
+                        <Button
+                          onClick={handleUnfollowWithConfirmation}
                           disabled={isFollowLoading}
-                          className={`px-6 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white`}
+                          className="px-4 py-2 rounded-lg font-semibold bg-gray-500 hover:bg-red-600 text-white transition-colors w-full sm:w-auto"
                         >
                           {isFollowLoading ? (
                             <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
                           ) : (
                             <>
                               <FontAwesomeIcon
-                                icon={faUserPlus}
-                                className="text-sm"
+                                icon={faUserMinus}
+                                className="text-sm mr-2"
                               />
-                              Follow
+                              Unfollow
                             </>
                           )}
                         </Button>
-                      )}
-
-                      {/* Followers count display - Make it clickable */}
-                      <div
-                        className="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                        onClick={handleFollowersClick}
-                      >
-                        <span className="font-semibold">{followersCount}</span>{" "}
-                        followers
                       </div>
-                    </div>
-
-                    {isFollowing && isFollowAllowed() && (
-                      <p className="text-sm text-green-600 dark:text-green-400 mt-2">
-                        <FontAwesomeIcon icon={faHeart} className="mr-1" />
-                        You're following {displayName}
-                      </p>
+                    ) : (
+                      <Button
+                        onClick={handleFollow}
+                        disabled={isFollowLoading}
+                        className={`px-4 py-2 rounded-lg font-semibold transition-all flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto`}
+                      >
+                        {isFollowLoading ? (
+                          <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white"></div>
+                        ) : (
+                          <>
+                            <FontAwesomeIcon
+                              icon={faUserPlus}
+                              className="text-sm"
+                            />
+                            Follow
+                          </>
+                        )}
+                      </Button>
                     )}
+                    <div
+                      className="text-sm text-gray-600 dark:text-gray-300 cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      onClick={handleFollowersClick}
+                    >
+                      <span className="font-semibold">{followersCount}</span>{" "}
+                      followers
+                    </div>
                   </div>
-                )
-              }
-              {/* For player on free plan, show only upgrade banner */}
+                  {isFollowing && isFollowAllowed() && (
+                    <p className="text-xs sm:text-sm text-green-600 dark:text-green-400 mt-1 sm:mt-2">
+                      <FontAwesomeIcon icon={faHeart} className="mr-1" />
+                      You're following {displayName}
+                    </p>
+                  )}
+                </div>
+              )}
               {localStorage.getItem("role") === "player" &&
                 !isUserOnPremiumPlan && (
-                  <div className="mt-4">
-                    {/* Follow Plan Info Banner */}
+                  <div className="mt-3 sm:mt-4">
                     {!subscriptionLoading && (
-                      <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-2 sm:p-3 mb-2 sm:mb-4">
+                        <p className="text-xs sm:text-sm text-blue-700 dark:text-blue-300">
                           <FontAwesomeIcon icon={faLock} className="mr-2" />
                           Following players is a{" "}
                           <strong>Premium feature</strong>.
@@ -685,37 +549,36 @@ const Playerview: React.FC = () => {
                             className="ml-2 text-blue-600 dark:text-blue-400 hover:underline font-medium"
                           >
                             Upgrade to Premium
-                          </button>{" "}
+                          </button>
                           to follow your favorite players.
                         </p>
                       </div>
                     )}
                   </div>
                 )}
-
-              {/* OVR Section - Only show for players */}
               {profileData.role === "player" && (
-                <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit">
-                  <div className="flex flex-wrap gap-6 items-center">
+                <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit">
+                  <div className="flex flex-wrap gap-3 sm:gap-6 items-center">
                     <div>
-                      <h2 className="text-xl text-gray-800 dark:text-white">
-                        <span className="block font-bold font-opensans text-3xl">
+                      <h2 className="text-base sm:text-xl text-gray-800 dark:text-white">
+                        <span className="block font-bold font-opensans text-xl sm:text-3xl">
                           {OVR}
                         </span>
-                        <span className="text-xl font-opensans">OVR</span>
+                        <span className="text-base sm:text-xl font-opensans">
+                          OVR
+                        </span>
                       </h2>
                     </div>
-
                     {playerStats.map((stat, index) => (
                       <div key={index} className="flex flex-col items-center">
                         <div
-                          className="w-20 h-20 relative"
+                          className="w-12 h-12 sm:w-20 sm:h-20 relative"
                           style={{ transform: "rotate(-90deg)" }}
                         >
                           <CircularProgressbar
                             value={stat.percentage}
                             styles={buildStyles({
-                              textSize: "26px",
+                              textSize: "18px",
                               pathColor: stat.color,
                               trailColor: "#ddd",
                               strokeLinecap: "round",
@@ -723,13 +586,13 @@ const Playerview: React.FC = () => {
                             circleRatio={0.5}
                           />
                           <div
-                            className="absolute inset-0 flex items-center justify-center text-sm ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
+                            className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm ml-1 sm:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
                             style={{ transform: "rotate(90deg)" }}
                           >
                             {stat.percentage}%
                           </div>
                         </div>
-                        <p className="text-sm -mt-8 font-opensans text-gray-700 dark:text-white">
+                        <p className="text-xs sm:text-sm -mt-5 sm:-mt-8 font-opensans text-gray-700 dark:text-white">
                           {stat.label}
                         </p>
                       </div>
@@ -737,26 +600,22 @@ const Playerview: React.FC = () => {
                   </div>
                 </Card>
               )}
-
-              {/* Review stars and count */}
-              <div className="flex items-center gap-2 mt-4">
+              <div className="flex items-center gap-2 mt-3 sm:mt-4">
                 <StarRating avg={avgRating} className="mr-2" />
-                <span className="text-gray-500">
+                <span className="text-gray-500 text-xs sm:text-base">
                   {totalReviews} review{totalReviews !== 1 ? "s" : ""}
                 </span>
-                <span>({avgRating}/5)</span>
+                <span className="text-xs sm:text-base">({avgRating}/5)</span>
               </div>
             </div>
           </div>
-
-          {/* Tabs Section */}
-          <div className="mt-8">
-            <div className="flex gap-4 border-b">
+          <div className="mt-5 sm:mt-8">
+            <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
               {(["details", "media", "reviews"] as const).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+                  className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
                     activeTab === tab
                       ? "text-red-600 border-red-600"
                       : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
@@ -766,7 +625,7 @@ const Playerview: React.FC = () => {
                 </button>
               ))}
             </div>
-            <div className="mt-4">
+            <div className="mt-3 sm:mt-4">
               {activeTab === "details" && (
                 <PlayerProfileDetails playerData={profileData} />
               )}
@@ -776,30 +635,29 @@ const Playerview: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {/* Followers Modal with pagination and limit controls */}
       {isFollowersModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-          <div className="bg-white dark:bg-gray-800 rounded-lg w-[95vw] max-w-md p-6 relative max-h-[80vh] overflow-hidden">
+          <div className="bg-white dark:bg-gray-800 rounded-lg w-[98vw] max-w-md p-2 sm:p-6 relative max-h-[80vh] overflow-hidden">
             <button
               onClick={() => setIsFollowersModalOpen(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-xl z-10"
+              className="absolute top-2 right-2 text-gray-500 hover:text-red-500 text-lg sm:text-xl z-10"
             >
               ✕
             </button>
-            <h3 className="text-lg font-semibold mb-4 text-center dark:text-white">
+            <h3 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4 text-center dark:text-white">
               Followers ({followersCount})
             </h3>
-            {/* Pagination and limit controls */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2 sm:mb-4">
               <div>
-                <label className="mr-2 font-medium">Followers per page:</label>
+                <label className="mr-1 sm:mr-2 font-medium text-xs sm:text-sm">
+                  Followers per page:
+                </label>
                 <select
                   value={followersLimit}
                   onChange={(e) =>
                     handleFollowersLimitChange(Number(e.target.value))
                   }
-                  className="border rounded px-2 py-1"
+                  className="border rounded px-1 sm:px-2 py-1 text-xs sm:text-sm"
                 >
                   {[1, 5, 10, 20, 50].map((val) => (
                     <option key={val} value={val}>
@@ -812,33 +670,32 @@ const Playerview: React.FC = () => {
                 <button
                   disabled={followersPage === 1 || loadingFollowers}
                   onClick={() => handleFollowersPageChange(followersPage - 1)}
-                  className="px-2 py-1 border rounded mr-2"
+                  className="px-2 py-1 border rounded mr-1 sm:mr-2 text-xs sm:text-sm"
                 >
                   Prev
                 </button>
-                <span>Page {followersPage}</span>
+                <span className="text-xs sm:text-sm">Page {followersPage}</span>
                 <button
                   disabled={
                     followers.length < followersLimit || loadingFollowers
                   }
                   onClick={() => handleFollowersPageChange(followersPage + 1)}
-                  className="px-2 py-1 border rounded ml-2"
+                  className="px-2 py-1 border rounded ml-1 sm:ml-2 text-xs sm:text-sm"
                 >
                   Next
                 </button>
               </div>
             </div>
-            <div className="overflow-y-auto max-h-96">
+            <div className="overflow-y-auto max-h-64 sm:max-h-96">
               <FollowersList followers={followers} loading={loadingFollowers} />
             </div>
           </div>
         </div>
       )}
-
-      {/* Add CSS for wider SweetAlert modals */}
       <style jsx global>{`
         .swal-wide {
-          width: 600px !important;
+          width: 98vw !important;
+          max-width: 600px;
         }
       `}</style>
     </div>

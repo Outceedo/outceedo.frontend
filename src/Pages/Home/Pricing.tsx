@@ -206,7 +206,7 @@ export default function PricingPlans() {
               </button>
             )}
             <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center sm:text-left leading-tight px-3">
-              Choose a plan that's right for you
+               Players choose a plan that's right for you
             </h2>
           </div>
           {/* Right Section: Plan Cards */}
