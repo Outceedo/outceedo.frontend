@@ -285,16 +285,20 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
       if (response.status === 200 && response.data) {
         if (Array.isArray(response.data) && response.data.length > 0) {
           setReportData(response.data);
-          return true;
+          return { found: true };
         } else {
           setReportData([]);
-          return false;
+          return { found: false };
         }
       }
-      return false;
-    } catch (error) {
+      return { found: false };
+    } catch (error: any) {
+      // Handle 403 specifically for premium/plan restriction
+      if (error?.response?.status === 403) {
+        return { forbidden: true };
+      }
       setReportData([]);
-      return false;
+      return { found: false };
     } finally {
       setReportLoading(false);
     }
@@ -304,9 +308,27 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
     e.stopPropagation();
     setSelectedBookingId(bookingId);
 
-    const success = await fetchReportData(bookingId);
-    if (success) {
+    const result = await fetchReportData(bookingId);
+    if (result.found) {
       setIsReportOpen(true);
+    } else if (result.forbidden) {
+      Swal.fire({
+        icon: "info",
+        title: "Upgrade to Premium",
+        html:
+          "Blocked Access reports older than 7 Days<br /><br />" +
+          `<button id="plans-swal-btn" class="swal2-confirm swal2-styled" style="background-color: #EF4444; color: white; padding: 0.5em 2em; margin-top: 1em;">View Plans</button>`,
+        showConfirmButton: false,
+        didOpen: () => {
+          const btn = document.getElementById("plans-swal-btn");
+          if (btn) {
+            btn.onclick = () => {
+              Swal.close();
+              navigate("/plans");
+            };
+          }
+        },
+      });
     } else {
       Swal.fire({
         icon: "info",
