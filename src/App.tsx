@@ -374,14 +374,7 @@ const AppContent: React.FC = () => {
         </Route>
 
         {/* Admin routes */}
-        <Route
-          path="/admin"
-          element={
-            <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-              <AdminLayoutdefault />
-            </CheckAuth>
-          }
-        >
+        <Route path="/admin" element={<AdminLayoutdefault />}>
           <Route path="dashboard" element={<Dashboardadmin />} />
         </Route>
 

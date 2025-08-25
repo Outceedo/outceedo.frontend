@@ -61,12 +61,12 @@ interface Follower {
 }
 
 const defaultStats: Stat[] = [
-  { label: "Pace", percentage: 60, color: "#E63946" },
-  { label: "Shooting", percentage: 55, color: "#D62828" },
-  { label: "Passing", percentage: 80, color: "#4CAF50" },
-  { label: "Dribbling", percentage: 65, color: "#68A357" },
-  { label: "Defending", percentage: 90, color: "#2D6A4F" },
-  { label: "Physical", percentage: 60, color: "#F4A261" },
+  { label: "Pace", percentage: 0, color: "#E63946" },
+  { label: "Shooting", percentage: 0, color: "#D62828" },
+  { label: "Passing", percentage: 0, color: "#4CAF50" },
+  { label: "Dribbling", percentage: 0, color: "#68A357" },
+  { label: "Defending", percentage: 0, color: "#2D6A4F" },
+  { label: "Physical", percentage: 0, color: "#F4A261" },
 ];
 
 const calculateOVR = (stats: Stat[]) => {
@@ -314,14 +314,24 @@ const Playerview: React.FC = () => {
         response = await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/unfollow`,
           {},
-          { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         newFollowStatus = false;
       } else {
         response = await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/follow`,
           {},
-          { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } }
+          {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         newFollowStatus = true;
       }
@@ -420,21 +430,21 @@ const Playerview: React.FC = () => {
 
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
-      <div className="flex-1 p-2 sm:p-4">
+      <div className="flex px-2 sm:px-4">
         <div className="max-w-6xl mx-auto">
           <div
             onClick={() => navigate(-1)}
-            className="flex flex-col text-2xl sm:text-4xl font-bold text-start cursor-pointer"
+            className="flex flex-row text-2xl sm:text-4xl font-bold text-start cursor-pointer"
           >
             ←
           </div>
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center mt-2 sm:mt-4">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center mt-1 sm:mt-3">
             <img
               src={profileData.photo || profile}
               alt={`${displayName}'s profile`}
               className="rounded-lg w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 object-cover shadow-md"
             />
-            <div className="flex flex-col mt-3 sm:mt-5 w-full gap-2 sm:gap-4">
+            <div className="flex flex-col mt-1 sm:mt-5 w-full gap-2 sm:gap-4">
               <div>
                 <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
                   {displayName}
@@ -464,9 +474,8 @@ const Playerview: React.FC = () => {
                   </span>
                 </div>
               </div>
-              {((
-                localStorage.getItem("role") === "player" && isUserOnPremiumPlan
-              ) ||
+              {((localStorage.getItem("role") === "player" &&
+                isUserOnPremiumPlan) ||
                 localStorage.getItem("role") !== "player") && (
                 <div className="mt-3 sm:mt-4">
                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
