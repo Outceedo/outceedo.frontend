@@ -378,7 +378,14 @@ const AppContent: React.FC = () => {
           <Route path="dashboard" element={<Dashboardadmin />} />
         </Route>
 
-        <Route path="/admin" element={<AdminLayout />}>
+        <Route
+          path="/admin"
+          element={
+            <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+              <AdminLayout />
+            </CheckAuth>
+          }
+        >
           {/* Player */}
           <Route path="player" element={<Player />} />
           <Route path="player/booking" element={<Booking />} />

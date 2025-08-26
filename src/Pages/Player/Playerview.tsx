@@ -26,8 +26,8 @@ import {
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 
 interface Stat {
-  label: string;
-  percentage: number;
+  name: string;
+  averageScore: number;
   color: string;
 }
 
@@ -60,18 +60,47 @@ interface Follower {
   [key: string]: any;
 }
 
-const defaultStats: Stat[] = [
-  { label: "Pace", percentage: 0, color: "#E63946" },
-  { label: "Shooting", percentage: 0, color: "#D62828" },
-  { label: "Passing", percentage: 0, color: "#4CAF50" },
-  { label: "Dribbling", percentage: 0, color: "#68A357" },
-  { label: "Defending", percentage: 0, color: "#2D6A4F" },
-  { label: "Physical", percentage: 0, color: "#F4A261" },
-];
+// Function to map API stats to display stats with colors
+const mapStatsToDisplay = (apiStats: any[]): Stat[] => {
+  const statMapping: Record<string, { color: string }> = {
+    pace: { color: "#E63946" },
+    shooting: { color: "#D62828" },
+    passing: { color: "#4CAF50" },
+    dribbling: { color: "#68A357" },
+    defending: { color: "#2D6A4F" },
+    physical: { color: "#F4A261" },
+  };
+
+  // Default stats structure
+  const defaultStats = [
+    { name: "pace", averageScore: 0, color: "#E63946" },
+    { name: "shooting", averageScore: 0, color: "#D62828" },
+    { name: "passing", averageScore: 0, color: "#4CAF50" },
+    { name: "dribbling", averageScore: 0, color: "#68A357" },
+    { name: "defending", averageScore: 0, color: "#2D6A4F" },
+    { name: "physical", averageScore: 0, color: "#F4A261" },
+  ];
+
+  // Map API stats to display format
+  const mappedStats = defaultStats.map((defaultStat) => {
+    const apiStat = apiStats.find(
+      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase()
+    );
+
+    return {
+      name: defaultStat.name,
+      averageScore: apiStat ? apiStat.averageScore : 0,
+      color: defaultStat.color,
+    };
+  });
+
+  return mappedStats;
+};
 
 const calculateOVR = (stats: Stat[]) => {
-  const total = stats.reduce((sum, stat) => sum + stat.percentage, 0);
-  return (total / stats.length).toFixed(1);
+  if (!stats.length) return 0;
+  const total = stats.reduce((sum, stat) => sum + stat.averageScore, 0);
+  return Math.round(total / stats.length);
 };
 
 const StarRating: React.FC<{
@@ -113,8 +142,9 @@ const Playerview: React.FC = () => {
     "details"
   );
   const [profileData, setProfileData] = useState<Profile | null>(null);
-  const [playerStats, setPlayerStats] = useState<Stat[]>(defaultStats);
+  const [playerStats, setPlayerStats] = useState<Stat[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
@@ -135,6 +165,7 @@ const Playerview: React.FC = () => {
   } = useAppSelector((state) => state.subscription);
 
   const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
+  const API_STATS_URL = `${import.meta.env.VITE_PORT}/api/v1/user/reports`;
 
   const isUserOnPremiumPlan =
     isActive && planName && planName.toLowerCase() !== "free";
@@ -173,8 +204,10 @@ const Playerview: React.FC = () => {
       }
       setProfileData(processedProfile);
       setIsLoading(false);
-      if (processedProfile.role === "player") {
-        setPlayerStats(defaultStats);
+
+      // Fetch stats only if the profile is a player
+      if (processedProfile.role === "player" && processedProfile.id) {
+        fetchPlayerStats(processedProfile.id);
       }
     } else if (status === "failed") {
       setIsLoading(false);
@@ -189,6 +222,34 @@ const Playerview: React.FC = () => {
     }
     // eslint-disable-next-line
   }, [profileData]);
+
+  const fetchPlayerStats = async (playerId: string) => {
+    setStatsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_STATS_URL}/player/${playerId}/overall`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Map the API response to the correct format
+      const apiStats = response.data.data || [];
+      const mappedStats = mapStatsToDisplay(apiStats);
+
+      setPlayerStats(mappedStats);
+    } catch (error) {
+      console.error("Error fetching player stats:", error);
+      // Set default stats if API fails
+      const defaultStats = mapStatsToDisplay([]);
+      setPlayerStats(defaultStats);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
 
   const checkFollowStatus = async () => {
     try {
@@ -567,46 +628,55 @@ const Playerview: React.FC = () => {
                 )}
               {profileData.role === "player" && (
                 <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit">
-                  <div className="flex flex-wrap gap-3 sm:gap-6 items-center">
-                    <div>
-                      <h2 className="text-base sm:text-xl text-gray-800 dark:text-white">
-                        <span className="block font-bold font-opensans text-xl sm:text-3xl">
-                          {OVR}
-                        </span>
-                        <span className="text-base sm:text-xl font-opensans">
-                          OVR
-                        </span>
-                      </h2>
+                  {statsLoading ? (
+                    <div className="flex items-center justify-center p-4 sm:p-8">
+                      <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-t-2 border-b-2 border-red-600"></div>
+                      <span className="ml-2 text-xs sm:text-sm">
+                        Loading stats...
+                      </span>
                     </div>
-                    {playerStats.map((stat, index) => (
-                      <div key={index} className="flex flex-col items-center">
-                        <div
-                          className="w-12 h-12 sm:w-20 sm:h-20 relative"
-                          style={{ transform: "rotate(-90deg)" }}
-                        >
-                          <CircularProgressbar
-                            value={stat.percentage}
-                            styles={buildStyles({
-                              textSize: "18px",
-                              pathColor: stat.color,
-                              trailColor: "#ddd",
-                              strokeLinecap: "round",
-                            })}
-                            circleRatio={0.5}
-                          />
-                          <div
-                            className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm ml-1 sm:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
-                            style={{ transform: "rotate(90deg)" }}
-                          >
-                            {stat.percentage}%
-                          </div>
-                        </div>
-                        <p className="text-xs sm:text-sm -mt-5 sm:-mt-8 font-opensans text-gray-700 dark:text-white">
-                          {stat.label}
-                        </p>
+                  ) : (
+                    <div className="flex flex-wrap gap-3 sm:gap-6 items-center">
+                      <div>
+                        <h2 className="text-base sm:text-xl text-gray-800 dark:text-white">
+                          <span className="block font-bold font-opensans text-xl sm:text-3xl">
+                            {OVR}
+                          </span>
+                          <span className="text-base sm:text-xl font-opensans">
+                            OVR
+                          </span>
+                        </h2>
                       </div>
-                    ))}
-                  </div>
+                      {playerStats.map((stat, index) => (
+                        <div key={index} className="flex flex-col items-center">
+                          <div
+                            className="w-12 h-12 sm:w-20 sm:h-20 relative"
+                            style={{ transform: "rotate(-90deg)" }}
+                          >
+                            <CircularProgressbar
+                              value={stat.averageScore}
+                              styles={buildStyles({
+                                textSize: "18px",
+                                pathColor: stat.color,
+                                trailColor: "#ddd",
+                                strokeLinecap: "round",
+                              })}
+                              circleRatio={0.5}
+                            />
+                            <div
+                              className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm ml-1 sm:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
+                              style={{ transform: "rotate(90deg)" }}
+                            >
+                              {Math.round(stat.averageScore)}
+                            </div>
+                          </div>
+                          <p className="text-xs sm:text-sm -mt-5 sm:-mt-8 font-opensans text-gray-700 dark:text-white capitalize">
+                            {stat.name}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Card>
               )}
               <div className="flex items-center gap-2 mt-3 sm:mt-4">
@@ -614,7 +684,9 @@ const Playerview: React.FC = () => {
                 <span className="text-gray-500 text-xs sm:text-base">
                   {totalReviews} review{totalReviews !== 1 ? "s" : ""}
                 </span>
-                <span className="text-xs sm:text-base">({avgRating}/5)</span>
+                <span className="text-xs sm:text-base">
+                  ({avgRating.toFixed(1)}/5)
+                </span>
               </div>
             </div>
           </div>
