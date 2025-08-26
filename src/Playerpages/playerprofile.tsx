@@ -4,7 +4,6 @@ import "react-circular-progressbar/dist/styles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCamera,
-  faPen,
   faCheck,
   faTimes,
   faStar as faStarSolid,
@@ -27,18 +26,13 @@ import profile from "../assets/images/avatar.png";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
 import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
-import {
-  Dialog,
-  DialogTrigger,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+
 import FollowList from "../components/follower/followerlist";
+import axios from "axios";
 
 interface Stat {
-  label: string;
-  percentage: number;
+  name: string;
+  averageScore: number;
   color: string;
 }
 
@@ -52,19 +46,48 @@ interface EditableProfileData {
   languages: string[];
 }
 
-const initialStats: Stat[] = [
-  { label: "Pace", percentage: 0, color: "#E63946" },
-  { label: "Shooting", percentage: 0, color: "#D62828" },
-  { label: "Passing", percentage: 0, color: "#4CAF50" },
-  { label: "Dribbling", percentage: 0, color: "#68A357" },
-  { label: "Defending", percentage: 0, color: "#2D6A4F" },
-  { label: "Physical", percentage: 0, color: "#F4A261" },
-];
-
 const calculateOVR = (stats: Stat[]) => {
   if (!stats.length) return 0;
-  const total = stats.reduce((sum, stat) => sum + stat.percentage, 0);
+  const total = stats.reduce((sum, stat) => sum + stat.averageScore, 0);
   return Math.round(total / stats.length);
+};
+
+// Function to map API stats to display stats with colors and labels
+const mapStatsToDisplay = (apiStats: any[]): Stat[] => {
+  const statMapping: Record<string, { label: string; color: string }> = {
+    pace: { label: "Pace", color: "#E63946" },
+    shooting: { label: "Shooting", color: "#D62828" },
+    passing: { label: "Passing", color: "#4CAF50" },
+    dribbling: { label: "Dribbling", color: "#68A357" },
+    defending: { label: "Defending", color: "#2D6A4F" },
+    physical: { label: "Physical", color: "#F4A261" },
+  };
+
+  // Default stats structure
+  const defaultStats = [
+    { name: "pace", averageScore: 0, color: "#E63946" },
+    { name: "shooting", averageScore: 0, color: "#D62828" },
+    { name: "passing", averageScore: 0, color: "#4CAF50" },
+    { name: "dribbling", averageScore: 0, color: "#68A357" },
+    { name: "defending", averageScore: 0, color: "#2D6A4F" },
+    { name: "physical", averageScore: 0, color: "#F4A261" },
+  ];
+
+  // Map API stats to display format
+  const mappedStats = defaultStats.map((defaultStat) => {
+    const apiStat = apiStats.find(
+      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase()
+    );
+
+    return {
+      name: defaultStat.name,
+      averageScore: apiStat ? apiStat.averageScore : 0,
+      color: defaultStat.color,
+      label: statMapping[defaultStat.name]?.label || defaultStat.name,
+    };
+  });
+
+  return mappedStats;
 };
 
 const StarRating: React.FC<{
@@ -128,6 +151,7 @@ const Profile: React.FC = () => {
   const [followersLoading, setFollowersLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
+  const [statsLoading, setStatsLoading] = useState(false);
 
   const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile
@@ -140,8 +164,9 @@ const Profile: React.FC = () => {
   const navigate = useNavigate();
   const isUserOnPremiumPlan =
     isActive && planName && planName.toLowerCase() !== "free";
-  const [playerStats, setPlayerStats] = useState(initialStats);
+  const [playerStats, setPlayerStats] = useState<Stat[]>([]);
   const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
+  const API_STATS_URL = `${import.meta.env.VITE_PORT}/api/v1/user/reports`;
 
   useEffect(() => {
     const username = localStorage.getItem("username");
@@ -153,7 +178,9 @@ const Profile: React.FC = () => {
   useEffect(() => {
     const savedStats = localStorage.getItem("playerStats");
     if (savedStats) {
-      setPlayerStats(JSON.parse(savedStats));
+      const parsedStats = JSON.parse(savedStats);
+      const mappedStats = mapStatsToDisplay(parsedStats);
+      setPlayerStats(mappedStats);
     }
   }, []);
 
@@ -342,6 +369,7 @@ const Profile: React.FC = () => {
   useEffect(() => {
     if (currentProfile?.id) {
       fetchFollowers();
+      fetchStats();
     }
   }, [currentProfile?.id]);
 
@@ -491,23 +519,6 @@ const Profile: React.FC = () => {
     }
   };
 
-  const enterEditMode = () => {
-    setIsEditingBasicInfo(true);
-
-    if (currentProfile) {
-      setEditData({
-        age: currentProfile.age?.toString() || "",
-        height: currentProfile.height?.toString() || "",
-        weight: currentProfile.weight?.toString() || "",
-        city: currentProfile.city || "",
-        country: currentProfile.country || "",
-        club: currentProfile.club || "",
-        languages: Array.isArray(currentProfile.language)
-          ? [...currentProfile.language]
-          : [],
-      });
-    }
-  };
   const fetchFollowers = async (
     limit = followersLimit,
     page = followersPage
@@ -526,7 +537,7 @@ const Profile: React.FC = () => {
       );
       const data = await response.json();
       setFollowers(data?.users || []);
-      setFollowersCount(data?.users.length || 0); // If API provides total count
+      setFollowersCount(data?.users.length || 0);
     } catch (error) {
       setFollowers([]);
       setFollowersCount(0);
@@ -534,12 +545,44 @@ const Profile: React.FC = () => {
       setFollowersLoading(false);
     }
   };
+
+  const fetchStats = async () => {
+    if (!currentProfile?.id) return;
+    setStatsLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_STATS_URL}/player/${currentProfile.id}/overall`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Map the API response to the correct format
+      const apiStats = response.data.data || [];
+      const mappedStats = mapStatsToDisplay(apiStats);
+
+      setPlayerStats(mappedStats);
+
+      // Save to localStorage for persistence
+      localStorage.setItem("playerStats", JSON.stringify(apiStats));
+    } catch (error) {
+      console.error("Error fetching stats:", error);
+      // Set default stats if API fails
+      const defaultStats = mapStatsToDisplay([]);
+      setPlayerStats(defaultStats);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   const handleFollowersOpen = () => {
     setIsFollowersDialogOpen(true);
     fetchFollowers(followersLimit, followersPage);
   };
 
-  // Pagination controls for followers modal
   const handleFollowersLimitChange = (newLimit: number) => {
     setFollowersLimit(newLimit);
     setFollowersPage(1);
@@ -651,7 +694,7 @@ const Profile: React.FC = () => {
                 <div className="mt-5">
                   <div className="flex justify-between items-start flex-wrap gap-2">
                     {!isEditingBasicInfo ? null : (
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 ml-auto">
                         <Button
                           onClick={handleCancelEdit}
                           variant="outline"
@@ -876,44 +919,51 @@ const Profile: React.FC = () => {
               </div>
               {/* OVR Section */}
               <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit mt-8 relative overflow-x-auto">
-                <div className="flex flex-wrap gap-4 md:gap-6 items-center">
-                  <div>
-                    <h2 className="text-xl ml-1 md:ml-5 text-gray-800 dark:text-white">
-                      <span className="block font-bold font-opensans text-2xl md:text-3xl">
-                        {ovrScore}
-                      </span>
-                      <span className="text-lg font-opensans">OVR</span>
-                    </h2>
+                {statsLoading ? (
+                  <div className="flex items-center justify-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
+                    <span className="ml-2">Loading stats...</span>
                   </div>
-                  {playerData.stats.map((stat, index) => (
-                    <div key={index} className="flex flex-col items-center">
-                      <div
-                        className="w-16 h-16 md:w-20 md:h-20 relative"
-                        style={{ transform: "rotate(-90deg)" }}
-                      >
-                        <CircularProgressbar
-                          value={stat.percentage}
-                          styles={buildStyles({
-                            textSize: "26px",
-                            pathColor: stat.color,
-                            trailColor: "#ddd",
-                            strokeLinecap: "round",
-                          })}
-                          circleRatio={0.5}
-                        />
-                        <div
-                          className="absolute inset-0 flex items-center justify-center text-xs md:text-sm ml-2 md:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
-                          style={{ transform: "rotate(90deg)" }}
-                        >
-                          {stat.percentage}%
-                        </div>
-                      </div>
-                      <p className="text-xs md:text-sm -mt-6 md:-mt-8 font-opensans text-gray-700 dark:text-white">
-                        {stat.label}
-                      </p>
+                ) : (
+                  <div className="flex flex-wrap gap-4 md:gap-6 items-center">
+                    <div>
+                      <h2 className="text-xl ml-1 md:ml-5 text-gray-800 dark:text-white">
+                        <span className="block font-bold font-opensans text-2xl md:text-3xl">
+                          {ovrScore}
+                        </span>
+                        <span className="text-lg font-opensans">OVR</span>
+                      </h2>
                     </div>
-                  ))}
-                </div>
+                    {playerData.stats.map((stat, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                        <div
+                          className="w-16 h-16 md:w-20 md:h-20 relative"
+                          style={{ transform: "rotate(-90deg)" }}
+                        >
+                          <CircularProgressbar
+                            value={stat.averageScore}
+                            styles={buildStyles({
+                              textSize: "26px",
+                              pathColor: stat.color,
+                              trailColor: "#ddd",
+                              strokeLinecap: "round",
+                            })}
+                            circleRatio={0.5}
+                          />
+                          <div
+                            className="absolute inset-0 flex items-center justify-center text-xs md:text-sm ml-2 md:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
+                            style={{ transform: "rotate(90deg)" }}
+                          >
+                            {Math.round(stat.averageScore)}
+                          </div>
+                        </div>
+                        <p className="text-xs md:text-sm -mt-6 md:-mt-8 font-opensans text-gray-700 dark:text-white capitalize">
+                          {stat.name}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </Card>
               {/* Review stars and count, Followers */}
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6 mt-4">
