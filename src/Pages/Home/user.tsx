@@ -29,9 +29,16 @@ const User: React.FC = () => {
 
   return (
     <Card className="bg-white p-8 rounded-lg shadow-lg max-w-4xl w-full h-full">
-      <h2 className="text-3xl font-semibold font-Raleway text-black mb-6 text-center">
-        Select Your Profile
-      </h2>
+      <div className="text-center">
+  <h2 className="text-3xl font-semibold font-Raleway text-black text-center mb-2">
+    Sign Up to <span className="text-red-500">Outceedo</span>
+  </h2>
+  <span className="text-center font-semibold">
+    <span className="align-middle text-2xl mr-1">(</span>
+    <span className="align-middle text-base">Select Your Profile</span>
+    <span className="align-middle text-2xl ml-1">)</span>
+  </span>
+</div>
       <div className="grid grid-cols-2  md:grid-cols-5 gap-4">
         {options.map((option, index) => (
           <div
