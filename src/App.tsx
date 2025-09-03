@@ -108,8 +108,7 @@ const DashboardRedirect: React.FC = () => {
       currentPath.match(/\/(player|expert|sponsor|team|fan|admin)\/dashboard$/)
     ) {
       const role = currentPath.split("/")[1];
-      const profilePath =
-        role === "admin" ? "/admin/dashboard" : `/${role}/profile`;
+      const profilePath = `/${role}/profile`;
       navigate(profilePath, { replace: true });
     }
   }, [location.pathname, navigate]);
@@ -171,8 +170,6 @@ const AppContent: React.FC = () => {
       case "fan":
       case "user":
         return "/fan/profile";
-      case "admin":
-        return "/admin/dashboard";
       default:
         return "/";
     }
@@ -190,8 +187,6 @@ const AppContent: React.FC = () => {
       navigate("/team/profile");
     } else if (role === "fan") {
       navigate("/fan/profile");
-    } else if (role === "admin") {
-      navigate("/admin/dashboard");
     } else {
       navigate("/");
     }

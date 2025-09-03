@@ -69,9 +69,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
           return <Navigate to="/team/profile" replace />;
         case "user":
         case "fan":
-          return <Navigate to="/fan/profile" replace />;
-        case "admin":
-          return <Navigate to="/admin/dashboard" replace />; // Changed to dashboard since that's what you have for admin
+          return <Navigate to="/fan/profile" replace />; // Changed to dashboard since that's what you have for admin
         default:
           return <Navigate to="/" replace />;
       }
@@ -91,8 +89,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
         case "user":
         case "fan":
           return <Navigate to="/fan/profile" replace />;
-        case "admin":
-          return <Navigate to="/admin/dashboard" replace />;
+
         default:
           return <Navigate to="/" replace />;
       }
@@ -109,7 +106,6 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       team: ["/team", "/", "/public"],
       user: ["/fan", "/", "/public"],
       fan: ["/fan", "/", "/public"],
-      admin: ["/admin", "/", "/public"],
     };
 
     // Check if current path is allowed for the user's role
