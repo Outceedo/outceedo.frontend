@@ -122,6 +122,17 @@ interface VideoQuality {
   bitrateMax: number;
 }
 
+interface Participant {
+  uid: UID;
+  isLocal: boolean;
+  username: string;
+  hasVideo: boolean;
+  hasAudio: boolean;
+  photo: string;
+  videoTrack?: IRemoteVideoTrack;
+  audioTrack?: IRemoteAudioTrack;
+}
+
 // Video quality presets
 const VIDEO_PROFILES: Record<string, VideoQuality> = {
   "1080p": {
@@ -268,6 +279,7 @@ const useAgoraConnection = (agora?: Agora) => {
   ]);
 
   const cleanup = useCallback(async () => {
+    console.log("Agora connection cleanup starting...");
     isInitializingRef.current = false;
     setIsConnecting(false);
     setIsJoined(false);
@@ -284,6 +296,7 @@ const useAgoraConnection = (agora?: Agora) => {
     if (client) {
       try {
         await client.leave();
+        console.log("Agora client left successfully");
       } catch (error) {
         console.warn("Error leaving client:", error);
       }
@@ -291,6 +304,7 @@ const useAgoraConnection = (agora?: Agora) => {
     }
 
     myUIDRef.current = null;
+    console.log("Agora connection cleanup completed");
   }, [client, stopStatsMonitoring]);
 
   return {
@@ -437,20 +451,36 @@ const useLocalTracks = () => {
   );
 
   const cleanup = useCallback(async () => {
+    console.log("Local tracks cleanup starting...");
+
     if (localAudioTrack) {
-      localAudioTrack.stop();
-      localAudioTrack.close();
+      try {
+        await localAudioTrack.setEnabled(false);
+        localAudioTrack.stop();
+        localAudioTrack.close();
+        console.log("Audio track stopped and closed");
+      } catch (error) {
+        console.warn("Error cleaning up audio track:", error);
+      }
       setLocalAudioTrack(null);
     }
 
     if (localVideoTrack) {
-      localVideoTrack.stop();
-      localVideoTrack.close();
+      try {
+        await localVideoTrack.setEnabled(false);
+        localVideoTrack.stop();
+        localVideoTrack.close();
+        console.log("Video track stopped and closed");
+      } catch (error) {
+        console.warn("Error cleaning up video track:", error);
+      }
       setLocalVideoTrack(null);
     }
 
     setIsAudioMuted(false);
     setIsVideoMuted(false);
+    setHasPermissions(false);
+    console.log("Local tracks cleanup completed");
   }, [localAudioTrack, localVideoTrack]);
 
   return {
@@ -571,6 +601,7 @@ const useRemoteUsers = () => {
   );
 
   const cleanup = useCallback(() => {
+    console.log("Remote users cleanup starting...");
     remoteUsers.forEach((user) => {
       if (user.audioTrack) {
         try {
@@ -590,6 +621,7 @@ const useRemoteUsers = () => {
 
     setRemoteUsers([]);
     remoteVideoRefs.current = {};
+    console.log("Remote users cleanup completed");
   }, [remoteUsers]);
 
   return {
@@ -804,16 +836,19 @@ const useScreenShare = () => {
   );
 
   const cleanup = useCallback(async () => {
+    console.log("Screen share cleanup starting...");
     if (currentScreenTrackRef.current) {
       try {
         currentScreenTrackRef.current.stop();
         currentScreenTrackRef.current.close();
+        console.log("Screen track stopped and closed");
       } catch (error) {
         console.error("Error stopping screen track:", error);
       }
       currentScreenTrackRef.current = null;
     }
     setIsScreenSharing(false);
+    console.log("Screen share cleanup completed");
   }, []);
 
   return {
@@ -855,104 +890,57 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   const waitingLocalVideoRef = useRef<HTMLDivElement>(null);
   const callStartTime = useRef<number>(0);
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
+  const isCleaningUp = useRef(false);
 
-  // Initialize Agora
-  const initializeAgora = useCallback(async () => {
-    if (!agora || agoraConnection.isInitializingRef.current) {
-      return;
-    }
-
-    agoraConnection.isInitializingRef.current = true;
-    agoraConnection.setIsConnecting(true);
-    agoraConnection.setConnectionError(null);
-
-    try {
-      chat.addChatMessage(
-        "System",
-        "Connecting to expert session...",
-        false,
-        "system"
-      );
-
-      const hasPermission = await localTracks.requestPermissions();
-      if (!hasPermission) {
-        throw new Error("Camera and microphone permissions are required");
+  // Helper functions
+  const getUsername = useCallback(
+    (uid: UID): string => {
+      if (uid === agoraConnection.myUIDRef.current) {
+        return "You";
       }
+      return booking.player.username || "Student";
+    },
+    [agoraConnection.myUIDRef, booking]
+  );
 
-      const agoraClient = agoraConnection.createAgoraClient();
-      setupAgoraEventHandlers(agoraClient);
+  // Fixed: getAllParticipants as useMemo (not a function)
+  const allParticipants = useMemo<Participant[]>(() => {
+    const participants: Participant[] = [];
 
-      let joinSuccess = false;
-      let currentUID = agora.uid;
+    participants.push({
+      uid: agoraConnection.myUIDRef.current || 0,
+      isLocal: true,
+      username: "Expert",
+      hasVideo: !localTracks.isVideoMuted && !!localTracks.localVideoTrack,
+      hasAudio: !localTracks.isAudioMuted && !!localTracks.localAudioTrack,
+      photo: booking.expert.photo,
+    });
 
-      for (let attempt = 0; attempt < 3 && !joinSuccess; attempt++) {
-        try {
-          const uid = await agoraClient.join(
-            import.meta.env.VITE_AGORA_APP_ID,
-            agora.channel,
-            agora.token || null,
-            currentUID
-          );
+    remoteUsers.remoteUsers.forEach((user) => {
+      participants.push({
+        uid: user.uid,
+        isLocal: false,
+        username: getUsername(user.uid),
+        hasVideo: user.hasVideo,
+        hasAudio: user.hasAudio,
+        videoTrack: user.videoTrack,
+        audioTrack: user.audioTrack,
+        photo: booking.player.photo,
+      });
+    });
 
-          agoraConnection.myUIDRef.current = uid as number;
-          joinSuccess = true;
-        } catch (joinError: any) {
-          if (
-            joinError.code === "INVALID_TOKEN" ||
-            joinError.code === "TOKEN_EXPIRED"
-          ) {
-            agoraConnection.setConnectionError(
-              "Session token is invalid or expired. Please refresh the page and rejoin."
-            );
-            return;
-          } else if (joinError.code === "UID_CONFLICT") {
-            currentUID = Math.floor(Math.random() * 1000000);
-          } else if (attempt === 2) {
-            throw joinError;
-          }
-        }
-      }
-
-      const tracks = await localTracks.createLocalTracks();
-      if (tracks.length > 0) {
-        await agoraClient.publish(tracks);
-      }
-
-      agoraConnection.setClient(agoraClient);
-      agoraConnection.setIsJoined(true);
-      agoraConnection.setIsConnecting(false);
-      agoraConnection.startStatsMonitoring(agoraClient);
-
-      chat.addChatMessage(
-        "System",
-        "Expert session successfully established! Ready to teach.",
-        false,
-        "system"
-      );
-
-      setTimeout(() => {
-        chat.addChatMessage(
-          "You",
-          `Hello ${booking.player.username}! Welcome to our ${booking.service.service.name} session. I'm here to provide expert guidance.`,
-          true
-        );
-      }, 2000);
-    } catch (error: any) {
-      console.error("Failed to initialize Agora:", error);
-      agoraConnection.setConnectionError(
-        error.message || "Failed to connect. Please try again."
-      );
-      agoraConnection.setIsConnecting(false);
-      chat.addChatMessage(
-        "System",
-        "Expert connection failed. Please try again.",
-        false,
-        "system"
-      );
-    } finally {
-      agoraConnection.isInitializingRef.current = false;
-    }
-  }, [agora, agoraConnection, localTracks, chat, booking]);
+    return participants;
+  }, [
+    agoraConnection.myUIDRef,
+    localTracks.isVideoMuted,
+    localTracks.localVideoTrack,
+    localTracks.isAudioMuted,
+    localTracks.localAudioTrack,
+    booking.expert.photo,
+    booking.player.photo,
+    remoteUsers.remoteUsers,
+    getUsername,
+  ]);
 
   // Setup Agora event handlers
   const setupAgoraEventHandlers = useCallback(
@@ -1112,7 +1100,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         }
       });
 
-      // Note: Removed stream-message handler due to compatibility issues
       client.on("exception", (evt) => {
         console.warn("Agora exception:", evt);
         if (evt.code === "NETWORK_ERROR") {
@@ -1126,8 +1113,185 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         }
       });
     },
-    [agoraConnection, remoteUsers, chat, localTracks, booking]
+    [agoraConnection, remoteUsers, chat, localTracks, booking, getUsername]
   );
+
+  // Initialize Agora
+  const initializeAgora = useCallback(async () => {
+    if (!agora || agoraConnection.isInitializingRef.current) {
+      return;
+    }
+
+    agoraConnection.isInitializingRef.current = true;
+    agoraConnection.setIsConnecting(true);
+    agoraConnection.setConnectionError(null);
+
+    try {
+      chat.addChatMessage(
+        "System",
+        "Connecting to expert session...",
+        false,
+        "system"
+      );
+
+      const hasPermission = await localTracks.requestPermissions();
+      if (!hasPermission) {
+        throw new Error("Camera and microphone permissions are required");
+      }
+
+      const agoraClient = agoraConnection.createAgoraClient();
+      setupAgoraEventHandlers(agoraClient);
+
+      let joinSuccess = false;
+      let currentUID = agora.uid;
+
+      for (let attempt = 0; attempt < 3 && !joinSuccess; attempt++) {
+        try {
+          const uid = await agoraClient.join(
+            import.meta.env.VITE_AGORA_APP_ID,
+            agora.channel,
+            agora.token || null,
+            currentUID
+          );
+
+          agoraConnection.myUIDRef.current = uid as number;
+          joinSuccess = true;
+        } catch (joinError: any) {
+          if (
+            joinError.code === "INVALID_TOKEN" ||
+            joinError.code === "TOKEN_EXPIRED"
+          ) {
+            agoraConnection.setConnectionError(
+              "Session token is invalid or expired. Please refresh the page and rejoin."
+            );
+            return;
+          } else if (joinError.code === "UID_CONFLICT") {
+            currentUID = Math.floor(Math.random() * 1000000);
+          } else if (attempt === 2) {
+            throw joinError;
+          }
+        }
+      }
+
+      const tracks = await localTracks.createLocalTracks();
+      if (tracks.length > 0) {
+        await agoraClient.publish(tracks);
+      }
+
+      agoraConnection.setClient(agoraClient);
+      agoraConnection.setIsJoined(true);
+      agoraConnection.setIsConnecting(false);
+      agoraConnection.startStatsMonitoring(agoraClient);
+
+      chat.addChatMessage(
+        "System",
+        "Expert session successfully established! Ready to teach.",
+        false,
+        "system"
+      );
+
+      setTimeout(() => {
+        chat.addChatMessage(
+          "You",
+          `Hello ${booking.player.username}! Welcome to our ${booking.service.service.name} session. I'm here to provide expert guidance.`,
+          true
+        );
+      }, 2000);
+    } catch (error: any) {
+      console.error("Failed to initialize Agora:", error);
+      agoraConnection.setConnectionError(
+        error.message || "Failed to connect. Please try again."
+      );
+      agoraConnection.setIsConnecting(false);
+      chat.addChatMessage(
+        "System",
+        "Expert connection failed. Please try again.",
+        false,
+        "system"
+      );
+    } finally {
+      agoraConnection.isInitializingRef.current = false;
+    }
+  }, [
+    agora,
+    agoraConnection,
+    localTracks,
+    chat,
+    booking,
+    setupAgoraEventHandlers,
+  ]);
+
+  // Cleanup function - CORRECTED
+  const cleanup = useCallback(async () => {
+    if (isCleaningUp.current) {
+      console.log("Cleanup already in progress, skipping...");
+      return;
+    }
+
+    isCleaningUp.current = true;
+    console.log("Starting comprehensive cleanup...");
+
+    // Clear duration interval
+    if (durationInterval.current) {
+      clearInterval(durationInterval.current);
+      durationInterval.current = null;
+    }
+
+    // Stop local tracks first before other cleanups
+    if (localTracks.localVideoTrack) {
+      try {
+        await localTracks.localVideoTrack.setEnabled(false);
+        localTracks.localVideoTrack.stop();
+        localTracks.localVideoTrack.close();
+        console.log("Local video track forcefully stopped");
+      } catch (error) {
+        console.warn("Error stopping local video track:", error);
+      }
+    }
+
+    if (localTracks.localAudioTrack) {
+      try {
+        await localTracks.localAudioTrack.setEnabled(false);
+        localTracks.localAudioTrack.stop();
+        localTracks.localAudioTrack.close();
+        console.log("Local audio track forcefully stopped");
+      } catch (error) {
+        console.warn("Error stopping local audio track:", error);
+      }
+    }
+
+    // Unpublish all tracks if client exists
+    if (agoraConnection.client) {
+      try {
+        const localTracks = agoraConnection.client.localTracks;
+        if (localTracks && localTracks.length > 0) {
+          await agoraConnection.client.unpublish(localTracks);
+          console.log("All local tracks unpublished");
+        }
+      } catch (error) {
+        console.warn("Error unpublishing tracks:", error);
+      }
+    }
+
+    // Then cleanup all hooks
+    try {
+      await Promise.all([
+        screenShare.cleanup(),
+        remoteUsers.cleanup(),
+        localTracks.cleanup(),
+        agoraConnection.cleanup(),
+      ]);
+    } catch (error) {
+      console.error("Error during cleanup:", error);
+    }
+
+    setLocalVideoContainer(null);
+    setCallDuration(0);
+    setIsRecording(false);
+
+    console.log("Comprehensive cleanup completed");
+    isCleaningUp.current = false;
+  }, [agoraConnection, localTracks, remoteUsers, screenShare]);
 
   // Play local video to correct container
   useEffect(() => {
@@ -1179,18 +1343,32 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     };
   }, [agoraConnection.isJoined]);
 
-  // Initialize on open
+  // Initialize on open and cleanup on close
   useEffect(() => {
     if (isOpen && agora && !agoraConnection.isInitializingRef.current) {
       initializeAgora();
     }
 
+    // Cleanup when modal closes or component unmounts
     return () => {
-      if (!isOpen) {
-        cleanup();
+      if (!isOpen || !isOpen) {
+        console.log("Modal closed or component unmounting, running cleanup...");
+        cleanup().catch(console.error);
       }
     };
-  }, [isOpen, agora, initializeAgora]);
+  }, [isOpen, agora]);
+
+  // Cleanup on page unload
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      cleanup().catch(console.error);
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [cleanup]);
 
   // Network status monitoring
   useEffect(() => {
@@ -1226,70 +1404,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     };
   }, [agora, agoraConnection, chat, initializeAgora]);
 
-  // Cleanup function
-  const cleanup = useCallback(async () => {
-    if (durationInterval.current) {
-      clearInterval(durationInterval.current);
-      durationInterval.current = null;
-    }
-
-    await Promise.all([
-      agoraConnection.cleanup(),
-      localTracks.cleanup(),
-      remoteUsers.cleanup(),
-      screenShare.cleanup(),
-    ]);
-
-    setLocalVideoContainer(null);
-    setCallDuration(0);
-    setIsRecording(false);
-  }, [agoraConnection, localTracks, remoteUsers, screenShare]);
-
   // Helper functions
-  const getUsername = useCallback(
-    (uid: UID): string => {
-      if (uid === agoraConnection.myUIDRef.current) {
-        return "You";
-      }
-      return booking.player.username || "Student";
-    },
-    [agoraConnection.myUIDRef, booking]
-  );
-
-  const getAllParticipants = useMemo(() => {
-    const participants = [];
-
-    participants.push({
-      uid: agoraConnection.myUIDRef.current || 0,
-      isLocal: true,
-      username: "Expert",
-      hasVideo: !localTracks.isVideoMuted && !!localTracks.localVideoTrack,
-      hasAudio: !localTracks.isAudioMuted && !!localTracks.localAudioTrack,
-      photo: booking.expert.photo,
-    });
-
-    remoteUsers.remoteUsers.forEach((user) => {
-      participants.push({
-        uid: user.uid,
-        isLocal: false,
-        username: getUsername(user.uid),
-        hasVideo: user.hasVideo,
-        hasAudio: user.hasAudio,
-        videoTrack: user.videoTrack,
-        audioTrack: user.audioTrack,
-        photo: booking.player.photo,
-      });
-    });
-
-    return participants;
-  }, [
-    agoraConnection.myUIDRef,
-    localTracks,
-    remoteUsers.remoteUsers,
-    booking,
-    getUsername,
-  ]);
-
   const getGridCols = (participantCount: number) => {
     if (participantCount === 1) return "grid-cols-1";
     return "grid-cols-2";
@@ -1378,15 +1493,19 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   };
 
   const retryConnection = () => {
-    cleanup();
-    setTimeout(() => {
-      if (agora) {
-        initializeAgora();
-      }
-    }, 1000);
+    cleanup().then(() => {
+      setTimeout(() => {
+        if (agora) {
+          initializeAgora();
+        }
+      }, 1000);
+    });
   };
 
+  // Handle End Call - CORRECTED
   const handleEndCall = async () => {
+    console.log("Ending call...");
+
     if (sessionNotes.trim()) {
       chat.addChatMessage(
         "System",
@@ -1403,15 +1522,19 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       "system"
     );
 
-    setTimeout(async () => {
+    // Immediate cleanup without delay
+    try {
       await cleanup();
+      console.log("Call ended and cleaned up successfully");
+    } catch (error) {
+      console.error("Error during cleanup:", error);
+    } finally {
       onClose();
-    }, 1000);
+    }
   };
 
   if (!isOpen) return null;
 
-  const allParticipants = getAllParticipants();
   const sessionProgress = getSessionProgress();
 
   return (
@@ -1544,7 +1667,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               </button>
 
               <button
-                onClick={onClose}
+                onClick={handleEndCall}
                 className="p-2 rounded-xl bg-white text-gray-500 hover:bg-gray-50 transition-colors shadow-sm border border-gray-200 text-sm"
               >
                 <FontAwesomeIcon icon={faTimes} />
