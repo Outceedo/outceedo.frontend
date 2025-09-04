@@ -111,6 +111,7 @@ const StarRating: React.FC<{
   const fullStars = Math.floor(avg);
   const hasHalfStar = avg - fullStars >= 0.25 && avg - fullStars < 0.75;
   const emptyStars = total - fullStars - (hasHalfStar ? 1 : 0);
+
   return (
     <span className={className}>
       {[...Array(fullStars)].map((_, i) => (
@@ -183,7 +184,9 @@ const Playerview: React.FC = () => {
       try {
         const username = localStorage.getItem("viewplayerusername");
         if (username) {
-          await dispatch(getProfile(username));
+          setTimeout(() => {
+            dispatch(getProfile(username));
+          }, 200);
         } else {
           setIsLoading(false);
         }
@@ -196,21 +199,32 @@ const Playerview: React.FC = () => {
 
   useEffect(() => {
     if (status === "succeeded" && viewedProfile) {
+      // Process the profile data but don't set loading to false immediately
       let processedProfile = viewedProfile;
       if (viewedProfile.user) {
         processedProfile = viewedProfile.user;
       } else if (viewedProfile.data) {
         processedProfile = viewedProfile.data;
       }
+
+      // Set profile data
       setProfileData(processedProfile);
-      setIsLoading(false);
+
+      // Only set loading to false after the timeout has completed
+      // We'll use a minimum timeout to ensure loading state is maintained
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
 
       // Fetch stats only if the profile is a player
       if (processedProfile.role === "player" && processedProfile.id) {
         fetchPlayerStats(processedProfile.id);
       }
     } else if (status === "failed") {
-      setIsLoading(false);
+      // Even on failure, respect the minimum loading time
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 1000);
     }
   }, [viewedProfile, status]);
 

@@ -16,12 +16,6 @@ interface MenuItem {
 }
 
 const adminSidebarMenuItems: MenuItem[] = [
-  // {
-  //   id: 1,
-  //   name: "Dashboard",
-  //   icon: "fas fa-table-columns",
-  //   path: "/player/dashboard",
-  // },
   {
     id: 2,
     name: "Experts",
@@ -47,7 +41,6 @@ const adminSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-file",
     path: "/player/applications",
   },
-
   { id: 7, name: "Profile", icon: "fas fa-user", path: "/player/profile" },
   {
     id: 8,
@@ -65,7 +58,6 @@ interface MenuItemsProps {
 function MenuItems({ setOpen }: MenuItemsProps) {
   const navigate = useNavigate();
   const location = useLocation();
-  const dispatch = useAppDispatch();
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
 
   // Fetch profile data from Redux store
@@ -79,27 +71,19 @@ function MenuItems({ setOpen }: MenuItemsProps) {
     : "Loading...";
 
   // Get age and profession from profile data
-  const playerAge = currentProfile?.age ? `Age ${currentProfile.age}` : "";
   const playerProfession = currentProfile?.profession || "";
   const playerSubProfession = currentProfile?.subProfession || "";
 
   // Function to handle logout
   function handleLogout() {
-    // Close dialog
     setShowLogoutDialog(false);
 
-    // Clear the token from localStorage
     localStorage.removeItem("token");
-
-    // Also clear any other user-related data that might be stored
     localStorage.removeItem("role");
     localStorage.removeItem("username");
     localStorage.removeItem("userid");
 
-    // Navigate to login page
     navigate("/login");
-
-    // Refresh the page to ensure all state is reset
     window.location.reload();
   }
 
@@ -113,28 +97,15 @@ function MenuItems({ setOpen }: MenuItemsProps) {
     }
   };
 
-  // Fetch profile data when component mounts
-  useEffect(() => {
-    const username = localStorage.getItem("username");
-    if (username) {
-      dispatch(getProfile(username));
-    } else {
-      console.error("No player username found in localStorage");
-    }
-  }, [dispatch]);
-
   return (
     <nav className="flex flex-col gap-6 p-4 w-full h-full overflow-y-auto">
       {/* Logout Confirmation Dialog */}
       {showLogoutDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop with blur effect */}
           <div
             className="fixed inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setShowLogoutDialog(false)}
           ></div>
-
-          {/* Dialog */}
           <div className="relative bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl w-80 z-10">
             <h3 className="text-lg font-semibold mb-3 text-gray-900 dark:text-white">
               Confirm Logout
@@ -142,7 +113,6 @@ function MenuItems({ setOpen }: MenuItemsProps) {
             <p className="text-gray-600 dark:text-gray-300 mb-6">
               Are you sure you want to log out of your account?
             </p>
-
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowLogoutDialog(false)}
@@ -173,7 +143,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           onClick={() => navigate("/player/details-form")}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = profile; // Fallback to default profile image
+            target.src = profile;
           }}
         />
         <h2 className="text-lg font-semibold font-Raleway text-gray-800 dark:text-white">
@@ -201,13 +171,9 @@ function MenuItems({ setOpen }: MenuItemsProps) {
               currentProfile?.gender.slice(1)
             : null}
         </p>
-
-        {/* Show loading indicator if profile is still loading */}
         {status === "loading" && (
           <div className="text-sm text-gray-500">Loading profile...</div>
         )}
-
-        {/* Edit Profile Button */}
         <button
           onClick={() => navigate("/player/details-form")}
           className="bg-red-500 hover:bg-red-600 text-white rounded-md px-4 py-2 text-sm font-medium mt-1 transition-colors"
@@ -221,7 +187,6 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         {adminSidebarMenuItems.map((menuItem) => {
           const isActive =
             !menuItem.isLogout && location.pathname === menuItem.path;
-
           return (
             <div
               key={menuItem.id}
@@ -262,6 +227,21 @@ interface PlayerSideBarProps {
 }
 
 function PlayerSideBar({ open, setOpen }: PlayerSideBarProps) {
+  const dispatch = useAppDispatch();
+  const { currentProfile } = useAppSelector((state) => state.profile);
+  const [profileFetched, setProfileFetched] = useState(false);
+
+  useEffect(() => {
+    // Only fetch if not fetched before and not present in redux state
+    if (!currentProfile && !profileFetched) {
+      const username = localStorage.getItem("username");
+      if (username) {
+        dispatch(getProfile(username));
+        setProfileFetched(true);
+      }
+    }
+  }, [dispatch, currentProfile, profileFetched]);
+
   return (
     <Fragment>
       {/* Mobile sidebar */}
