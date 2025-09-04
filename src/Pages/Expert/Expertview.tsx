@@ -28,12 +28,11 @@ import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
-// import { fetchSubscriptionStatus } from "../../store/subscriptionSlice";
 import { MoveLeft } from "lucide-react";
 import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
 import ExpertProfiledetails from "./ExpertProfiledetails";
-import FollowersList from "../../components/follower/followerlist"; // Import the FollowersList component
+import FollowersList from "../../components/follower/followerlist";
 import Swal from "sweetalert2";
 
 const icons = [
@@ -109,15 +108,14 @@ const Expertview = () => {
   const [currentService, setCurrentService] = useState<Service | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Follow functionality state
   const [isFollowing, setIsFollowing] = useState(false);
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
-  const [followersLimit, setFollowersLimit] = useState(10); // default limit
+  const [followersLimit, setFollowersLimit] = useState(10);
   const [followersPage, setFollowersPage] = useState(1);
 
-  // Followers modal state
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
   const [followers, setFollowers] = useState<Follower[]>([]);
   const [loadingFollowers, setLoadingFollowers] = useState(false);
@@ -138,21 +136,16 @@ const Expertview = () => {
   const API_BOOKING_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
 
-  // Determine if user is on a premium plan
   const isUserOnPremiumPlan =
     isActive && planName && planName.toLowerCase() !== "free";
 
-  // Check if service/follow is allowed for current plan
   const isServiceAllowed = (serviceId: string) => {
-    // For free plan, only allow "Recorded Video Assessment" (serviceId "1")
     if (!isUserOnPremiumPlan) {
       return serviceId === "1";
     }
-    // For premium plans, allow all services
     return true;
   };
 
-  // Check if follow is allowed for current plan
   const isFollowAllowed = () => {
     if (localStorage.getItem("role") === "player") {
       return isUserOnPremiumPlan;
@@ -162,23 +155,42 @@ const Expertview = () => {
   };
 
   useEffect(() => {
-    // // Fetch subscription status on component mount
-    // dispatch(fetchSubscriptionStatus());
+    const loadProfile = async () => {
+      setIsLoading(true);
+      try {
+        const expertUsername = localStorage.getItem("viewexpertusername");
+        if (expertUsername) {
+          setTimeout(() => {
+            dispatch(getProfile(expertUsername));
+          }, 200);
+        } else {
+          setIsLoading(false);
+          console.error("No expert username found in localStorage");
+        }
+      } catch (error) {
+        setIsLoading(false);
+      }
+    };
 
-    const expertUsername = localStorage.getItem("viewexpertusername");
-    if (expertUsername) {
-      dispatch(getProfile(expertUsername));
-    } else {
-      console.error("No expert username found in localStorage");
-    }
+    loadProfile();
   }, [dispatch]);
 
-  // Check if current user is following this expert and get followers count
+  useEffect(() => {
+    if (status === "succeeded" && viewedProfile) {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 3000);
+    } else if (status === "failed") {
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 3000);
+    }
+  }, [viewedProfile, status]);
+
   useEffect(() => {
     if (viewedProfile?.id) {
       checkFollowStatus();
-      // Set initial followers count (you might want to get this from the API)
-      setFollowersCount(viewedProfile.followersCount || 0); // Using your demo value as fallback
+      setFollowersCount(viewedProfile.followersCount || 0);
     }
   }, [viewedProfile]);
 
@@ -186,7 +198,7 @@ const Expertview = () => {
     if (viewedProfile?.id) {
       getExpertServiceCount();
     }
-  }, [viewedProfile?.id]); // Only run when expert ID changes
+  }, [viewedProfile?.id]);
 
   useEffect(() => {
     if (viewedProfile?.id) {
@@ -211,7 +223,6 @@ const Expertview = () => {
       setIsFollowing(response.data?.isFollowing || false);
     } catch (error) {
       console.error("Error checking follow status:", error);
-      // If endpoint doesn't exist, default to false
       setIsFollowing(false);
     }
   };
@@ -234,22 +245,6 @@ const Expertview = () => {
     }
   };
 
-  // Fetch followers list
-  // Replace the problematic useEffect with these two separate ones:
-
-  useEffect(() => {
-    if (viewedProfile?.id) {
-      getExpertServiceCount();
-    }
-  }, [viewedProfile?.id]); // Only run when expert ID changes
-
-  useEffect(() => {
-    if (viewedProfile?.id) {
-      fetchFollowers(followersLimit, followersPage);
-    }
-  }, [viewedProfile?.id]); // Only run when expert ID changes initially
-
-  // Also update the fetchFollowers function to be more stable:
   const fetchFollowers = useCallback(
     async (limit = followersLimit, page = followersPage) => {
       if (!viewedProfile?.id) return;
@@ -281,7 +276,6 @@ const Expertview = () => {
     [viewedProfile?.id, API_FOLLOW_URL]
   );
 
-  // Handle followers count click
   const handleFollowersClick = () => {
     setIsFollowersModalOpen(true);
     fetchFollowers();
@@ -359,7 +353,6 @@ const Expertview = () => {
       let newFollowStatus;
 
       if (isFollowing) {
-        // Unfollow the expert
         response = await axios.patch(
           `${API_FOLLOW_URL}/${viewedProfile.id}/unfollow`,
           {},
@@ -372,7 +365,6 @@ const Expertview = () => {
         );
         newFollowStatus = false;
       } else {
-        // Follow the expert
         response = await axios.patch(
           `${API_FOLLOW_URL}/${viewedProfile.id}/follow`,
           {},
@@ -388,7 +380,6 @@ const Expertview = () => {
 
       setIsFollowing(newFollowStatus);
 
-      // Update followers count
       setFollowersCount((prev) => (newFollowStatus ? prev + 1 : prev - 1));
 
       Swal.fire({
@@ -419,7 +410,6 @@ const Expertview = () => {
     }
   };
 
-  // Handle unfollow with confirmation
   const handleUnfollowWithConfirmation = async () => {
     if (!isFollowing) return;
 
@@ -434,7 +424,7 @@ const Expertview = () => {
       cancelButtonText: "Cancel",
     }).then((result) => {
       if (result.isConfirmed) {
-        handleFollow(); // This will trigger unfollow since isFollowing is true
+        handleFollow();
       }
     });
   };
@@ -486,8 +476,8 @@ const Expertview = () => {
         responseTime: viewedProfile.responseTime || "40 mins",
         travelLimit: viewedProfile.travelLimit || "30 kms",
         certificationLevel: viewedProfile.certificationLevel || "3rd highest",
-        followers: followersCount, // Use dynamic followers count
-        assessments: 0, // Demo
+        followers: followersCount,
+        assessments: 0,
         profileImage: viewedProfile.photo || null,
         socialLinks: viewedProfile.socialLinks || {},
         about:
@@ -524,8 +514,6 @@ const Expertview = () => {
       };
 
   localStorage.setItem("expertid", expertData?.id);
-
-  // ... (keep all the existing SERVICE_NAME_MAP, getServiceNameById, formatServiceDescription, services logic)
 
   const SERVICE_NAME_MAP: Record<string, string> = {
     "1": "RECORDED VIDEO ASSESSMENT",
@@ -594,7 +582,6 @@ const Expertview = () => {
       };
     }) || [];
 
-  // --- Star rating calculation using real reviewsReceived ---
   const reviewsArray = viewedProfile?.reviewsReceived || [];
   const totalReviews = reviewsArray.length;
   const avgRating =
@@ -603,7 +590,7 @@ const Expertview = () => {
       : reviewsArray.reduce((sum, r) => sum + (r.rating || 0), 0) /
         totalReviews;
 
-  if (status === "loading") {
+  if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen dark:bg-gray-900">
         <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
@@ -636,12 +623,9 @@ const Expertview = () => {
     return `${year}-${month}-${day}`;
   }
 
-  // ... (keep all the existing handlebook, handleVideoChange, handleVideoUploadSubmit logic)
-
   const handlebook = (service: Service) => {
     const serviceId = String(service.serviceId);
 
-    // Check if service is allowed for current plan
     if (!isServiceAllowed(serviceId)) {
       const currentPlanName = planName || "Free";
 
@@ -682,7 +666,6 @@ const Expertview = () => {
       return;
     }
 
-    // If service is allowed, proceed with booking
     setCurrentService(service);
     const serviceData = {
       expertId: expertData.id,
@@ -761,7 +744,6 @@ const Expertview = () => {
         }
 
         if (typeof priceString === "string") {
-          // Remove all non-numeric characters except decimal point
           const numericString = priceString.replace(/[^\d.]/g, "");
           const parsedPrice = parseFloat(numericString);
           return isNaN(parsedPrice) ? 0 : parsedPrice;
@@ -827,7 +809,6 @@ const Expertview = () => {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 max-w-6xl">
-      {/* Back button */}
       <div className="mb-4 sm:mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -836,9 +817,7 @@ const Expertview = () => {
           <MoveLeft />
         </button>
       </div>
-      {/* Header section with profile info and image */}
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 sm:gap-6 mb-6 sm:mb-10">
-        {/* Left side - Expert info */}
         <div className="flex-1 md:pr-6 w-full">
           <div className="flex flex-col sm:flex-row items-start sm:items-center mb-5 sm:mb-6">
             <h1 className="text-2xl sm:text-4xl font-bold dark:text-white mb-2 sm:mb-0">
@@ -871,7 +850,6 @@ const Expertview = () => {
             </div>
           </div>
 
-          {/* All Expert Info in a single responsive grid */}
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 mb-4 sm:mb-6">
             <div>
               <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
@@ -933,7 +911,6 @@ const Expertview = () => {
             </div>
           </div>
         </div>
-        {/* Right side - Profile image */}
         <div className="w-32 h-32 sm:w-1/3 sm:h-auto md:w-1/3 lg:w-1/4 rounded-lg overflow-hidden mx-auto md:mx-auto flex md:justify-center">
           <img
             src={expertData.profileImage || profile}
@@ -942,7 +919,6 @@ const Expertview = () => {
           />
         </div>
       </div>
-      {/* Stats row */}
       <div className="border-t border-b py-4 sm:py-6 mb-6 sm:mb-8">
         <div className="flex flex-wrap justify-around items-center gap-4">
           <div className="flex items-center gap-2">
@@ -972,14 +948,11 @@ const Expertview = () => {
         </div>
       </div>
 
-      {/* Follow Button Section - For all roles except current expert */}
       {(localStorage.getItem("role") !== "player" ||
         (localStorage.getItem("role") === "player" && isUserOnPremiumPlan)) && (
         <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
           <div className="flex flex-col items-center justify-center">
-            {/* Follow/Unfollow Buttons */}
             {isFollowAllowed() && isFollowing ? (
-              // Show both Following button and Unfollow button when following
               <div className="flex items-center gap-2">
                 <Button
                   disabled
@@ -1010,7 +983,6 @@ const Expertview = () => {
                 </Button>
               </div>
             ) : (
-              // Show single Follow button when not following
               <Button
                 onClick={handleFollow}
                 disabled={isFollowLoading}
@@ -1036,7 +1008,6 @@ const Expertview = () => {
           </div>
         </div>
       )}
-      {/* Player on free plan sees upgrade banner */}
       {localStorage.getItem("role") === "player" && !isUserOnPremiumPlan && (
         <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
           <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">
@@ -1055,14 +1026,11 @@ const Expertview = () => {
         </div>
       )}
 
-      {/* ... (keep all existing services, tabs, and other content) */}
-
       {localStorage.getItem("role") === "player" ? (
         <>
           <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-bold">Services Offered</h2>
 
-            {/* Plan Info Banner */}
             {!subscriptionLoading && (
               <div
                 className={`rounded-lg p-3 mb-4 mt-2 ${
@@ -1181,7 +1149,6 @@ const Expertview = () => {
         </>
       ) : null}
 
-      {/* Tabs navigation */}
       <div className="mb-6 sm:mb-8 border-b">
         <div className="flex space-x-4 sm:space-x-6 overflow-x-auto">
           {tabs.map((tab) => (
@@ -1200,21 +1167,18 @@ const Expertview = () => {
           ))}
         </div>
       </div>
-      {/* Tab content */}
       <div className="mt-4 sm:mt-6">
         {activeTab === "details" && (
           <ExpertProfiledetails expertData={expertData} />
         )}
         {activeTab === "media" && <Mediaview Data={viewedProfile} />}
         {activeTab === "reviews" && (
-          // Center the review button in mobile and md
           <div className="flex flex-col items-center">
             <Reviewview Data={expertData} />
           </div>
         )}
       </div>
 
-      {/* Followers Modal */}
       {isFollowersModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-lg w-[95vw] max-w-md p-6 relative max-h-[80vh] overflow-hidden">
@@ -1227,7 +1191,6 @@ const Expertview = () => {
             <h3 className="text-lg font-semibold mb-4 text-center dark:text-white">
               Followers ({followersCount})
             </h3>
-            {/* Pagination and limit controls */}
             <div className="flex items-center justify-between mb-4">
               <div>
                 <label className="mr-2 font-medium">Followers per page:</label>
@@ -1280,7 +1243,6 @@ const Expertview = () => {
         </div>
       )}
 
-      {/* Video Upload Modal (for RECORDED VIDEO ASSESSMENT) */}
       {isVideoUploadModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="bg-white dark:bg-gray-800 rounded-lg w-[96vw] max-w-lg p-3 sm:p-6 relative">
@@ -1394,7 +1356,6 @@ const Expertview = () => {
         </div>
       )}
 
-      {/* Add CSS for wider SweetAlert modals */}
       <style jsx global>{`
         .swal-wide {
           width: 600px !important;
