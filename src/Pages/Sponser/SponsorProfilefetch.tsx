@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import sponsor2 from "../../assets/images/avatar.png";
 import { Card, CardContent } from "@/components/ui/card";
 import { X, Star, Search, ChevronRight, ChevronLeft } from "lucide-react";
@@ -51,6 +57,7 @@ interface Country {
   cca2: string;
 }
 
+
 interface PaginationProps {
   totalPages: number;
   currentPage: number;
@@ -77,6 +84,7 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
       onPageChange(currentPage + 1);
     }
   }, [currentPage, totalPages, onPageChange]);
+
 
   const getVisiblePages = useCallback(() => {
     const delta = window.innerWidth < 768 ? 1 : 2;
@@ -112,6 +120,7 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
 
   const visiblePages = useMemo(() => getVisiblePages(), [getVisiblePages]);
 
+
   const handlePageClick = useCallback(
     (page) => {
       if (typeof page === "number") {
@@ -120,6 +129,7 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
     },
     [onPageChange]
   );
+
 
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
@@ -173,6 +183,10 @@ export default function SponsorProfiles() {
     loading: subscriptionLoading,
   } = useAppSelector((state) => state.subscription);
 
+  // Create stable refs for handlers to prevent infinite loops
+  const navigateRef = useRef(useNavigate());
+  const dispatchRef = useRef(dispatch);
+
   // Restriction check for player & premium
   const role = localStorage.getItem("role");
   const isUserOnPremiumPlan =
@@ -219,6 +233,7 @@ export default function SponsorProfiles() {
     return Array.from(options);
   }, []);
 
+
   // Fetch sponsors with backend paging - Fixed to prevent infinite loops
   const fetchSponsors = useCallback(() => {
     const params = {
@@ -226,13 +241,13 @@ export default function SponsorProfiles() {
       limit,
       userType: "sponsor",
     };
-    dispatch(getProfiles(params));
-  }, [currentPage, limit, dispatch]);
+    dispatchRef.current(getProfiles(params));
+  }, [currentPage, limit]);
 
   // Fixed useEffect to prevent infinite loops
   useEffect(() => {
     fetchSponsors();
-  }, [fetchSponsors]);
+  }, [currentPage, limit]); // Removed dispatch from dependencies
 
   // Client-side filtering and searching (only on current page) - Memoized
   const filteredAndSearchedSponsors = useMemo(() => {
@@ -282,7 +297,9 @@ export default function SponsorProfiles() {
 
   // Stable handlers to prevent infinite re-renders
   const openReportModal = useCallback(
-    (sponsor) => {
+
+    (sponsor: SponsorProfile) => {
+
       if (isPlayer && !isUserOnPremiumPlan) {
         Swal.fire({
           icon: "info",
@@ -322,7 +339,9 @@ export default function SponsorProfiles() {
   }, []);
 
   const handleViewProfile = useCallback(
-    (sponsorId, username) => {
+
+    (sponsorId: string, username: string) => {
+
       localStorage.setItem("viewsponsorusername", username);
 
       const role = localStorage.getItem("role");
@@ -340,32 +359,37 @@ export default function SponsorProfiles() {
     [navigate]
   );
 
-  const handleFilterChange = useCallback((value, filterType) => {
-    const normalizedKey = filterType.toLowerCase();
-    let stateKey = "";
-    switch (normalizedKey) {
-      case "country":
-        stateKey = "country";
-        break;
-      case "sponsortype":
-        stateKey = "sponsorType";
-        break;
-      case "sponsorship type":
-      case "sponsorshiptype":
-        stateKey = "sponsorshipType";
-        break;
-      case "budget range":
-      case "budgetrange":
-        stateKey = "budgetRange";
-        break;
-      default:
-        stateKey = normalizedKey;
-    }
-    setFilters((prevFilters) => ({
-      ...prevFilters,
-      [stateKey]: value,
-    }));
-  }, []);
+
+  const handleFilterChange = useCallback(
+    (value: string, filterType: string) => {
+      const normalizedKey = filterType.toLowerCase();
+      let stateKey = "";
+      switch (normalizedKey) {
+        case "country":
+          stateKey = "country";
+          break;
+        case "sponsortype":
+          stateKey = "sponsorType";
+          break;
+        case "sponsorship type":
+        case "sponsorshiptype":
+          stateKey = "sponsorshipType";
+          break;
+        case "budget range":
+        case "budgetrange":
+          stateKey = "budgetRange";
+          break;
+        default:
+          stateKey = normalizedKey;
+      }
+      setFilters((prevFilters) => ({
+        ...prevFilters,
+        [stateKey]: value,
+      }));
+    },
+    []
+  );
+
 
   const clearAllFilters = useCallback(() => {
     setSearchTerm("");
@@ -406,19 +430,22 @@ export default function SponsorProfiles() {
   const defaultSponsorshipTypes = ["Cash", "Card", "Gift", "Professional Fee"];
   const defaultBudgetRanges = ["10K-50K", "50K-100K", "100K-500K", "500K+"];
 
-  const calculateRating = useCallback((reviews = []) => {
+
+  const calculateRating = useCallback((reviews: any[] = []) => {
+
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
     return (sum / reviews.length).toFixed(1);
   }, []);
 
-  // Handle page change (backend paging)
-  const handlePageChange = useCallback((page) => {
+
+  const handlePageChange = useCallback((page: number) => {
+
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Handle limit change (backend paging)
+
   const handleLimitChange = useCallback((e) => {
     const newLimit = parseInt(e.target.value);
     setLimit(newLimit);
@@ -429,6 +456,7 @@ export default function SponsorProfiles() {
   const handleSearchChange = useCallback((e) => {
     setSearchTerm(e.target.value);
   }, []);
+
 
   return (
     <div className="px-3 sm:px-6 py-2 w-full mx-auto dark:bg-gray-900">
