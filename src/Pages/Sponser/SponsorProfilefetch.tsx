@@ -51,21 +51,34 @@ interface Country {
   cca2: string;
 }
 
-// Enhanced Pagination Component (always show controls)
-const Pagination: React.FC<{
+interface PaginationProps {
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
-}> = ({ totalPages, currentPage, onPageChange }) => {
-  const handlePrev = () => {
-    if (currentPage > 1) onPageChange(currentPage - 1);
-  };
+}
 
-  const handleNext = () => {
-    if (currentPage < totalPages) onPageChange(currentPage + 1);
-  };
+interface FiltersState {
+  country: string;
+  sponsorType: string;
+  sponsorshipType: string;
+  budgetRange: string;
+}
 
-  const getVisiblePages = () => {
+// Enhanced Pagination Component - Fixed ref composition issue
+const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
+  const handlePrev = useCallback(() => {
+    if (currentPage > 1) {
+      onPageChange(currentPage - 1);
+    }
+  }, [currentPage, onPageChange]);
+
+  const handleNext = useCallback(() => {
+    if (currentPage < totalPages) {
+      onPageChange(currentPage + 1);
+    }
+  }, [currentPage, totalPages, onPageChange]);
+
+  const getVisiblePages = useCallback(() => {
     const delta = window.innerWidth < 768 ? 1 : 2;
     const range = [];
     const rangeWithDots = [];
@@ -95,24 +108,34 @@ const Pagination: React.FC<{
     }
 
     return [...new Set(rangeWithDots)];
-  };
+  }, [totalPages, currentPage]);
 
-  // Always show pagination even if only 1 page
+  const visiblePages = useMemo(() => getVisiblePages(), [getVisiblePages]);
+
+  const handlePageClick = useCallback(
+    (page) => {
+      if (typeof page === "number") {
+        onPageChange(page);
+      }
+    },
+    [onPageChange]
+  );
+
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
-      <Button
-        variant="outline"
-        size="sm"
+      <button
         onClick={handlePrev}
         disabled={currentPage === 1}
-        className="px-2 sm:px-3"
+        className="px-2 sm:px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
       >
         <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-      </Button>
+      </button>
       <div className="flex space-x-1 sm:space-x-2">
-        {getVisiblePages().map((page, index) => (
-          <span
-            key={`page-${index}-${page}`}
+        {visiblePages.map((page, index) => (
+          <button
+            key={
+              typeof page === "number" ? `page-${page}` : `ellipsis-${index}`
+            }
             className={`px-2 py-1 sm:px-3 sm:py-1 rounded-md cursor-pointer text-sm ${
               typeof page === "number" && currentPage === page
                 ? "bg-red-500 text-white"
@@ -120,27 +143,29 @@ const Pagination: React.FC<{
                 ? "bg-gray-200 dark:bg-slate-600 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-500"
                 : "bg-transparent cursor-default"
             }`}
-            onClick={() => typeof page === "number" && onPageChange(page)}
+            onClick={() => handlePageClick(page)}
+            disabled={typeof page !== "number"}
           >
             {page}
-          </span>
+          </button>
         ))}
       </div>
-      <Button
-        variant="outline"
-        size="sm"
+      <button
         onClick={handleNext}
         disabled={currentPage === totalPages}
-        className="px-2 sm:px-3"
+        className="px-2 sm:px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100"
       >
         <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-      </Button>
+      </button>
     </div>
   );
-};
+});
+
+Pagination.displayName = "Pagination";
 
 export default function SponsorProfiles() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { profiles, status, error } = useAppSelector((state) => state.profile);
   const {
     isActive,
@@ -161,14 +186,12 @@ export default function SponsorProfiles() {
   const totalSponsorCount = profiles?.totalCount || sponsorsArray.length;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [countries, setCountries] = useState([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(
-    null
-  );
-  const [allSponsors, setAllSponsors] = useState<SponsorProfile[]>([]);
+  const [activeSponsor, setActiveSponsor] = useState(null);
+  const [allSponsors, setAllSponsors] = useState([]);
 
   const [filters, setFilters] = useState({
     country: "",
@@ -177,35 +200,28 @@ export default function SponsorProfiles() {
     budgetRange: "",
   });
 
-  const navigate = useNavigate();
-
-  // Clear profiles when component mounts to avoid stale data
-
   // Store all sponsors when data is fetched
   useEffect(() => {
     if (sponsorsArray.length > 0) {
       setAllSponsors(sponsorsArray);
-    } else {
-      // Clear allSponsors when no sponsors are returned from API
+    } else if (sponsorsArray.length === 0 && status === "succeeded") {
       setAllSponsors([]);
     }
-  }, [sponsorsArray]);
+  }, [sponsorsArray, status]);
 
-  const extractFilterOptions = useCallback(
-    (key: keyof SponsorProfile, dataArray: SponsorProfile[]): string[] => {
-      const options = new Set<string>();
-      dataArray.forEach((sponsor: SponsorProfile) => {
-        const value = sponsor[key];
-        if (value && typeof value === "string") options.add(value);
-      });
-      return Array.from(options);
-    },
-    []
-  );
+  // Memoized function to extract filter options
+  const extractFilterOptions = useCallback((key, dataArray) => {
+    const options = new Set();
+    dataArray.forEach((sponsor) => {
+      const value = sponsor[key];
+      if (value && typeof value === "string") options.add(value);
+    });
+    return Array.from(options);
+  }, []);
 
-  // Fetch sponsors with backend paging
+  // Fetch sponsors with backend paging - Fixed to prevent infinite loops
   const fetchSponsors = useCallback(() => {
-    const params: any = {
+    const params = {
       page: currentPage,
       limit,
       userType: "sponsor",
@@ -213,11 +229,12 @@ export default function SponsorProfiles() {
     dispatch(getProfiles(params));
   }, [currentPage, limit, dispatch]);
 
+  // Fixed useEffect to prevent infinite loops
   useEffect(() => {
     fetchSponsors();
   }, [fetchSponsors]);
 
-  // Client-side filtering and searching (only on current page)
+  // Client-side filtering and searching (only on current page) - Memoized
   const filteredAndSearchedSponsors = useMemo(() => {
     let filtered = [...allSponsors];
 
@@ -258,16 +275,19 @@ export default function SponsorProfiles() {
   const startIndex = (backendPage - 1) * limit;
   const endIndex = startIndex + displayedSponsors.length;
 
+  // Reset page when search or filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, filters]);
 
-  const openReportModal = (sponsor: SponsorProfile) => {
-    if (isPlayer && !isUserOnPremiumPlan) {
-      Swal.fire({
-        icon: "info",
-        title: "Premium Required",
-        html: `
+  // Stable handlers to prevent infinite re-renders
+  const openReportModal = useCallback(
+    (sponsor) => {
+      if (isPlayer && !isUserOnPremiumPlan) {
+        Swal.fire({
+          icon: "info",
+          title: "Premium Required",
+          html: `
           <p class="mb-3">Only players with a <strong>Premium Plan</strong> can apply for sponsorships.</p>
           <div class="bg-blue-50 p-3 rounded-lg mb-3 text-left">
             <h4 class="font-semibold text-blue-800 mb-2">Premium Plan Benefits:</h4>
@@ -278,44 +298,49 @@ export default function SponsorProfiles() {
             </ul>
           </div>
         `,
-        showCancelButton: true,
-        confirmButtonText: "Upgrade Now",
-        cancelButtonText: "Maybe Later",
-        confirmButtonColor: "#3B82F6",
-        cancelButtonColor: "#6B7280",
-      }).then((result) => {
-        if (result.isConfirmed) {
-          navigate("/plans");
-        }
-      });
-      return;
-    }
-    setActiveSponsor(sponsor);
-    localStorage.setItem("sponsorid", sponsor.id);
-    setIsReportOpen(true);
-  };
+          showCancelButton: true,
+          confirmButtonText: "Upgrade Now",
+          cancelButtonText: "Maybe Later",
+          confirmButtonColor: "#3B82F6",
+          cancelButtonColor: "#6B7280",
+        }).then((result) => {
+          if (result.isConfirmed) {
+            navigate("/plans");
+          }
+        });
+        return;
+      }
+      setActiveSponsor(sponsor);
+      localStorage.setItem("sponsorid", sponsor.id);
+      setIsReportOpen(true);
+    },
+    [isPlayer, isUserOnPremiumPlan, navigate]
+  );
 
-  const closeReportModal = () => {
+  const closeReportModal = useCallback(() => {
     setIsReportOpen(false);
-  };
+  }, []);
 
-  const handleViewProfile = (sponsorId: string, username: string) => {
-    localStorage.setItem("viewsponsorusername", username);
+  const handleViewProfile = useCallback(
+    (sponsorId, username) => {
+      localStorage.setItem("viewsponsorusername", username);
 
-    const role = localStorage.getItem("role");
+      const role = localStorage.getItem("role");
 
-    if (role === "player") {
-      navigate("/player/sponsorinfo");
-    } else if (role === "sponsor") {
-      navigate("/sponsor/sponsorinfo");
-    } else if (role === "team") {
-      navigate("/team/sponsorinfo");
-    } else {
-      navigate("/expert/sponsorinfo");
-    }
-  };
+      if (role === "player") {
+        navigate("/player/sponsorinfo");
+      } else if (role === "sponsor") {
+        navigate("/sponsor/sponsorinfo");
+      } else if (role === "team") {
+        navigate("/team/sponsorinfo");
+      } else {
+        navigate("/expert/sponsorinfo");
+      }
+    },
+    [navigate]
+  );
 
-  const handleFilterChange = (value: string, filterType: string) => {
+  const handleFilterChange = useCallback((value, filterType) => {
     const normalizedKey = filterType.toLowerCase();
     let stateKey = "";
     switch (normalizedKey) {
@@ -340,9 +365,9 @@ export default function SponsorProfiles() {
       ...prevFilters,
       [stateKey]: value,
     }));
-  };
+  }, []);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     setSearchTerm("");
     setFilters({
       country: "",
@@ -351,44 +376,59 @@ export default function SponsorProfiles() {
       budgetRange: "",
     });
     setCurrentPage(1);
-  };
+  }, []);
 
-  const hasActiveFilters = () => {
+  const hasActiveFilters = useMemo(() => {
     return (
       searchTerm !== "" || Object.values(filters).some((value) => value !== "")
     );
-  };
+  }, [searchTerm, filters]);
 
-  // Get filter options from all sponsors (not just current page)
-  const countryOptions = extractFilterOptions("country", allSponsors);
-  const sponsorTypeOptions = extractFilterOptions("sponsorType", allSponsors);
-  const sponsorshipTypeOptions = extractFilterOptions(
-    "sponsorshipType",
-    allSponsors
+  // Memoized filter options to prevent unnecessary re-calculations
+  const countryOptions = useMemo(
+    () => extractFilterOptions("country", allSponsors),
+    [allSponsors, extractFilterOptions]
   );
-  const budgetRangeOptions = extractFilterOptions("budgetRange", allSponsors);
+  const sponsorTypeOptions = useMemo(
+    () => extractFilterOptions("sponsorType", allSponsors),
+    [allSponsors, extractFilterOptions]
+  );
+  const sponsorshipTypeOptions = useMemo(
+    () => extractFilterOptions("sponsorshipType", allSponsors),
+    [allSponsors, extractFilterOptions]
+  );
+  const budgetRangeOptions = useMemo(
+    () => extractFilterOptions("budgetRange", allSponsors),
+    [allSponsors, extractFilterOptions]
+  );
 
   const defaultSponsorTypes = ["Individual", "Corporate", "Institution"];
   const defaultSponsorshipTypes = ["Cash", "Card", "Gift", "Professional Fee"];
   const defaultBudgetRanges = ["10K-50K", "50K-100K", "100K-500K", "500K+"];
 
-  const calculateRating = (reviews: any[] = []) => {
+  const calculateRating = useCallback((reviews = []) => {
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
     return (sum / reviews.length).toFixed(1);
-  };
+  }, []);
 
   // Handle page change (backend paging)
-  const handlePageChange = (page: number) => {
+  const handlePageChange = useCallback((page) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  };
+  }, []);
 
   // Handle limit change (backend paging)
-  const handleLimitChange = (newLimit: number) => {
+  const handleLimitChange = useCallback((e) => {
+    const newLimit = parseInt(e.target.value);
     setLimit(newLimit);
     setCurrentPage(1);
-  };
+  }, []);
+
+  // Memoized search handler
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
 
   return (
     <div className="px-3 sm:px-6 py-2 w-full mx-auto dark:bg-gray-900">
@@ -401,7 +441,7 @@ export default function SponsorProfiles() {
             placeholder="Search sponsors by name, company or description..."
             className="pl-9 w-full bg-white dark:bg-slate-700 text-sm sm:text-base rounded-xl"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={handleSearchChange}
           />
         </div>
       </div>
@@ -421,13 +461,16 @@ export default function SponsorProfiles() {
               <SelectContent>
                 {countryOptions.length > 0
                   ? countryOptions.map((country, index) => (
-                      <SelectItem key={`country-${index}`} value={country}>
+                      <SelectItem
+                        key={`country-${country}-${index}`}
+                        value={country}
+                      >
                         {country}
                       </SelectItem>
                     ))
                   : countries.map((c) => (
                       <SelectItem
-                        key={`country-${c.cca2}`}
+                        key={`country-default-${c.cca2}`}
                         value={c.name.common}
                       >
                         {c.name.common}
@@ -451,12 +494,18 @@ export default function SponsorProfiles() {
               <SelectContent>
                 {sponsorTypeOptions.length > 0
                   ? sponsorTypeOptions.map((type, index) => (
-                      <SelectItem key={`sponsorType-${index}`} value={type}>
+                      <SelectItem
+                        key={`sponsorType-${type}-${index}`}
+                        value={type}
+                      >
                         {type}
                       </SelectItem>
                     ))
                   : defaultSponsorTypes.map((type) => (
-                      <SelectItem key={`sponsorType-${type}`} value={type}>
+                      <SelectItem
+                        key={`sponsorType-default-${type}`}
+                        value={type}
+                      >
                         {type}
                       </SelectItem>
                     ))}
@@ -478,12 +527,18 @@ export default function SponsorProfiles() {
               <SelectContent>
                 {sponsorshipTypeOptions.length > 0
                   ? sponsorshipTypeOptions.map((type, index) => (
-                      <SelectItem key={`sponsorshipType-${index}`} value={type}>
+                      <SelectItem
+                        key={`sponsorshipType-${type}-${index}`}
+                        value={type}
+                      >
                         {type}
                       </SelectItem>
                     ))
                   : defaultSponsorshipTypes.map((type) => (
-                      <SelectItem key={`sponsorshipType-${type}`} value={type}>
+                      <SelectItem
+                        key={`sponsorshipType-default-${type}`}
+                        value={type}
+                      >
                         {type}
                       </SelectItem>
                     ))}
@@ -505,12 +560,18 @@ export default function SponsorProfiles() {
               <SelectContent>
                 {budgetRangeOptions.length > 0
                   ? budgetRangeOptions.map((range, index) => (
-                      <SelectItem key={`budgetRange-${index}`} value={range}>
+                      <SelectItem
+                        key={`budgetRange-${range}-${index}`}
+                        value={range}
+                      >
                         {range}
                       </SelectItem>
                     ))
                   : defaultBudgetRanges.map((range) => (
-                      <SelectItem key={`budgetRange-${range}`} value={range}>
+                      <SelectItem
+                        key={`budgetRange-default-${range}`}
+                        value={range}
+                      >
                         {range}
                       </SelectItem>
                     ))}
@@ -519,15 +580,14 @@ export default function SponsorProfiles() {
           </div>
 
           {/* Clear Filters Button */}
-          {hasActiveFilters() && (
+          {hasActiveFilters && (
             <div className="w-full flex items-center">
-              <Button
-                variant="outline"
+              <button
                 onClick={clearAllFilters}
-                className="w-full flex items-center justify-center gap-1 bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-600 rounded-xl min-h-[48px] text-base"
+                className="w-full flex items-center justify-center gap-1 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-600 rounded-xl min-h-[48px] text-base px-4 py-2"
               >
                 <X size={18} /> Clear Filters
-              </Button>
+              </button>
             </div>
           )}
         </div>
@@ -547,12 +607,12 @@ export default function SponsorProfiles() {
             Failed to load sponsors
           </p>
           <p className="text-sm sm:text-base">{error}</p>
-          <Button
-            className="mt-4 bg-red-600 hover:bg-red-700"
+          <button
+            className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
             onClick={fetchSponsors}
           >
             Try Again
-          </Button>
+          </button>
         </div>
       )}
 
@@ -580,7 +640,7 @@ export default function SponsorProfiles() {
       <div className="space-y-3 sm:space-y-4">
         {status === "succeeded" &&
           displayedSponsors.length > 0 &&
-          displayedSponsors.map((sponsor: SponsorProfile) => {
+          displayedSponsors.map((sponsor) => {
             const rating = calculateRating(sponsor.reviewsReceived);
             const sponsoredCount = sponsor.reviewsReceived?.length || 0;
             const displayName =
@@ -590,7 +650,7 @@ export default function SponsorProfiles() {
 
             return (
               <Card
-                key={sponsor.id}
+                key={`sponsor-${sponsor.id}`}
                 className="flex flex-col sm:flex-row items-start sm:items-center p-3 sm:p-4 gap-3 sm:gap-4 dark:bg-gray-800"
               >
                 <div className="w-full sm:w-auto flex justify-center sm:block">
@@ -625,7 +685,7 @@ export default function SponsorProfiles() {
                         length: Math.floor(Number(rating) || 0),
                       }).map((_, i) => (
                         <Star
-                          key={i}
+                          key={`star-${sponsor.id}-${i}`}
                           className="w-3 h-3 sm:w-4 sm:h-4 fill-yellow-400"
                         />
                       ))}
@@ -656,21 +716,20 @@ export default function SponsorProfiles() {
                   </div>
                 </CardContent>
                 <div className="flex flex-col sm:flex-row w-full sm:w-auto justify-center items-center gap-2 sm:gap-3">
-                  <Button
-                    className="bg-red-500 hover:bg-red-600 text-white cursor-pointer w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2"
+                  <button
+                    className="bg-red-500 hover:bg-red-600 text-white cursor-pointer w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 rounded"
                     onClick={() =>
                       handleViewProfile(sponsor.id, sponsor.username)
                     }
                   >
                     View Profile
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    className="bg-yellow-300 hover:bg-yellow-400 text-gray-800 flex items-center justify-center dark:bg-gray-700 dark:text-white w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2"
+                  </button>
+                  <button
+                    className="bg-yellow-300 hover:bg-yellow-400 text-gray-800 flex items-center justify-center dark:bg-gray-700 dark:text-white w-full sm:w-auto text-xs sm:text-sm px-3 sm:px-4 py-2 rounded"
                     onClick={() => openReportModal(sponsor)}
                   >
                     Apply
-                  </Button>
+                  </button>
                 </div>
               </Card>
             );
@@ -695,24 +754,22 @@ export default function SponsorProfiles() {
             <ApplicationForm />
           </div>
           <div className="sticky bottom-0 w-full p-3 sm:p-4 border-t dark:border-gray-700 bg-white dark:bg-gray-800 flex flex-col sm:flex-row justify-end gap-2">
-            <Button
-              variant="outline"
-              className="w-full sm:w-auto order-2 sm:order-1 sm:mr-2"
+            <button
+              className="w-full sm:w-auto order-2 sm:order-1 sm:mr-2 border border-gray-300 px-4 py-2 rounded"
               onClick={closeReportModal}
             >
               Cancel
-            </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto order-1 sm:order-2"
+            </button>
+            <button
+              className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto order-1 sm:order-2 px-4 py-2 rounded"
               onClick={closeReportModal}
             >
               Close
-            </Button>
+            </button>
           </div>
         </div>
       )}
 
-      {/* Enhanced Pagination Section */}
       {status === "succeeded" && backendTotalPages >= 1 && (
         <div className="flex flex-col items-center mt-8 space-y-4 pb-6">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
@@ -721,7 +778,7 @@ export default function SponsorProfiles() {
             </span>
             <select
               value={limit}
-              onChange={(e) => handleLimitChange(parseInt(e.target.value))}
+              onChange={handleLimitChange}
               className="border rounded-lg px-3 py-2 text-xs sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 min-w-[80px] focus:outline-none focus:ring-2 focus:ring-red-500"
             >
               <option value="4">4</option>
