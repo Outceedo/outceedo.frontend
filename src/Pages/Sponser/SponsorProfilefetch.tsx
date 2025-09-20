@@ -57,27 +57,34 @@ interface Country {
   cca2: string;
 }
 
-// Enhanced Pagination Component - Fixed ref composition issue
-const Pagination: React.FC<{
+
+interface PaginationProps {
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
-}> = React.memo(({ totalPages, currentPage, onPageChange }) => {
-  // Use refs to prevent infinite loops in button handlers
-  const onPageChangeRef = useRef(onPageChange);
-  onPageChangeRef.current = onPageChange;
+}
 
+interface FiltersState {
+  country: string;
+  sponsorType: string;
+  sponsorshipType: string;
+  budgetRange: string;
+}
+
+// Enhanced Pagination Component - Fixed ref composition issue
+const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
   const handlePrev = useCallback(() => {
     if (currentPage > 1) {
-      onPageChangeRef.current(currentPage - 1);
+      onPageChange(currentPage - 1);
     }
-  }, [currentPage]);
+  }, [currentPage, onPageChange]);
 
   const handleNext = useCallback(() => {
     if (currentPage < totalPages) {
-      onPageChangeRef.current(currentPage + 1);
+      onPageChange(currentPage + 1);
     }
-  }, [currentPage, totalPages]);
+  }, [currentPage, totalPages, onPageChange]);
+
 
   const getVisiblePages = useCallback(() => {
     const delta = window.innerWidth < 768 ? 1 : 2;
@@ -113,13 +120,17 @@ const Pagination: React.FC<{
 
   const visiblePages = useMemo(() => getVisiblePages(), [getVisiblePages]);
 
-  const handlePageClick = useCallback((page: number | string) => {
-    if (typeof page === "number") {
-      onPageChangeRef.current(page);
-    }
-  }, []);
 
-  // Always show pagination even if only 1 page
+  const handlePageClick = useCallback(
+    (page) => {
+      if (typeof page === "number") {
+        onPageChange(page);
+      }
+    },
+    [onPageChange]
+  );
+
+
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
       <button
@@ -164,6 +175,7 @@ Pagination.displayName = "Pagination";
 
 export default function SponsorProfiles() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { profiles, status, error } = useAppSelector((state) => state.profile);
   const {
     isActive,
@@ -188,14 +200,12 @@ export default function SponsorProfiles() {
   const totalSponsorCount = profiles?.totalCount || sponsorsArray.length;
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [countries, setCountries] = useState<Country[]>([]);
+  const [countries, setCountries] = useState([]);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [activeSponsor, setActiveSponsor] = useState<SponsorProfile | null>(
-    null
-  );
-  const [allSponsors, setAllSponsors] = useState<SponsorProfile[]>([]);
+  const [activeSponsor, setActiveSponsor] = useState(null);
+  const [allSponsors, setAllSponsors] = useState([]);
 
   const [filters, setFilters] = useState({
     country: "",
@@ -204,33 +214,29 @@ export default function SponsorProfiles() {
     budgetRange: "",
   });
 
-  const navigate = navigateRef.current;
-
   // Store all sponsors when data is fetched
   useEffect(() => {
     if (sponsorsArray.length > 0) {
       setAllSponsors(sponsorsArray);
-    } else {
+    } else if (sponsorsArray.length === 0 && status === "succeeded") {
       setAllSponsors([]);
     }
-  }, [sponsorsArray]);
+  }, [sponsorsArray, status]);
 
   // Memoized function to extract filter options
-  const extractFilterOptions = useCallback(
-    (key: keyof SponsorProfile, dataArray: SponsorProfile[]): string[] => {
-      const options = new Set<string>();
-      dataArray.forEach((sponsor: SponsorProfile) => {
-        const value = sponsor[key];
-        if (value && typeof value === "string") options.add(value);
-      });
-      return Array.from(options);
-    },
-    []
-  );
+  const extractFilterOptions = useCallback((key, dataArray) => {
+    const options = new Set();
+    dataArray.forEach((sponsor) => {
+      const value = sponsor[key];
+      if (value && typeof value === "string") options.add(value);
+    });
+    return Array.from(options);
+  }, []);
+
 
   // Fetch sponsors with backend paging - Fixed to prevent infinite loops
   const fetchSponsors = useCallback(() => {
-    const params: any = {
+    const params = {
       page: currentPage,
       limit,
       userType: "sponsor",
@@ -291,7 +297,9 @@ export default function SponsorProfiles() {
 
   // Stable handlers to prevent infinite re-renders
   const openReportModal = useCallback(
+
     (sponsor: SponsorProfile) => {
+
       if (isPlayer && !isUserOnPremiumPlan) {
         Swal.fire({
           icon: "info",
@@ -331,7 +339,9 @@ export default function SponsorProfiles() {
   }, []);
 
   const handleViewProfile = useCallback(
+
     (sponsorId: string, username: string) => {
+
       localStorage.setItem("viewsponsorusername", username);
 
       const role = localStorage.getItem("role");
@@ -348,6 +358,7 @@ export default function SponsorProfiles() {
     },
     [navigate]
   );
+
 
   const handleFilterChange = useCallback(
     (value: string, filterType: string) => {
@@ -378,6 +389,7 @@ export default function SponsorProfiles() {
     },
     []
   );
+
 
   const clearAllFilters = useCallback(() => {
     setSearchTerm("");
@@ -418,35 +430,33 @@ export default function SponsorProfiles() {
   const defaultSponsorshipTypes = ["Cash", "Card", "Gift", "Professional Fee"];
   const defaultBudgetRanges = ["10K-50K", "50K-100K", "100K-500K", "500K+"];
 
+
   const calculateRating = useCallback((reviews: any[] = []) => {
+
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
     return (sum / reviews.length).toFixed(1);
   }, []);
 
-  // Handle page change (backend paging)
+
   const handlePageChange = useCallback((page: number) => {
+
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
 
-  // Handle limit change (backend paging)
-  const handleLimitChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => {
-      const newLimit = parseInt(e.target.value);
-      setLimit(newLimit);
-      setCurrentPage(1);
-    },
-    []
-  );
+
+  const handleLimitChange = useCallback((e) => {
+    const newLimit = parseInt(e.target.value);
+    setLimit(newLimit);
+    setCurrentPage(1);
+  }, []);
 
   // Memoized search handler
-  const handleSearchChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSearchTerm(e.target.value);
-    },
-    []
-  );
+  const handleSearchChange = useCallback((e) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
 
   return (
     <div className="px-3 sm:px-6 py-2 w-full mx-auto dark:bg-gray-900">
@@ -658,7 +668,7 @@ export default function SponsorProfiles() {
       <div className="space-y-3 sm:space-y-4">
         {status === "succeeded" &&
           displayedSponsors.length > 0 &&
-          displayedSponsors.map((sponsor: SponsorProfile) => {
+          displayedSponsors.map((sponsor) => {
             const rating = calculateRating(sponsor.reviewsReceived);
             const sponsoredCount = sponsor.reviewsReceived?.length || 0;
             const displayName =
@@ -788,7 +798,6 @@ export default function SponsorProfiles() {
         </div>
       )}
 
-      {/* Enhanced Pagination Section */}
       {status === "succeeded" && backendTotalPages >= 1 && (
         <div className="flex flex-col items-center mt-8 space-y-4 pb-6">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
