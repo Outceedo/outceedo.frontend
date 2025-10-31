@@ -513,8 +513,6 @@ const Signup: React.FC = () => {
                     ? "border-red-500 ring-red-500"
                     : "border-gray-300 focus:ring-blue-500"
                 }`}
-                maxLength={10}
-                pattern="[0-9]{10}"
               />
               {fieldErrors.mobileNumber && (
                 <p className="text-red-500 text-sm">
