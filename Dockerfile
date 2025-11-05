@@ -1,44 +1,57 @@
-# Use Node.js LTS version as base image
-FROM node:20-alpine AS base
+# -----------------------------
+# 🏗️ BUILDER STAGE
+# -----------------------------
+FROM node:18.20.0-slim AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy dependency files first for better caching
+COPY package*.json ./
 
-# Install dependencies with --force flag to resolve conflicts
-RUN npm install --force
+# Install dependencies (force optional, prefer ci for reproducibility)
+RUN npm ci || npm install --force
 
-# Copy source code
+# Copy the rest of your project files
 COPY . .
 
-# Build stage
-FROM base AS build
-
-# Build the application
+# Build the Vite app
 RUN npx vite build
 
-# Production stage
-FROM nginx:alpine AS production
 
-# Copy built assets from build stage
-COPY --from=build /app/dist /usr/share/nginx/html
 
-# Copy custom nginx configuration (optional)
-# COPY nginx.conf /etc/nginx/nginx.conf
+# -----------------------------
+# 🧩 DEVELOPMENT STAGE
+# -----------------------------
+FROM node:18.20.0-slim AS development
 
-# Expose port 80
+WORKDIR /app
+COPY package*.json ./
+RUN npm install --force
+COPY . .
+
+EXPOSE 5173
+CMD ["npm", "run", "dev", "--", "--host"]
+
+
+
+
+# -----------------------------
+# 🚀 RUNNER STAGE (Nginx)
+# -----------------------------
+FROM nginx:alpine AS runner
+
+# Remove the default nginx static assets
+RUN rm -rf /usr/share/nginx/html/*
+
+# Copy built assets from builder
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copy custom nginx configuration
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Expose HTTP port
 EXPOSE 80
 
-# Start nginx
+# Start nginx in foreground
 CMD ["nginx", "-g", "daemon off;"]
-
-# Development stage (optional - for development use)
-FROM base AS development
-
-# Expose Vite dev server port
-EXPOSE 5173
-
-# Start development server
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

@@ -1,7 +1,4 @@
-version: "3.8"
-
 services:
-  # Development service
   frontend-dev:
     build:
       context: .
@@ -13,17 +10,3 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
-    profiles:
-      - dev
-
-  # Production service
-  frontend-prod:
-    build:
-      context: .
-      target: production
-    ports:
-      - "80:80"
-    environment:
-      - NODE_ENV=production
-    profiles:
-      - prod
