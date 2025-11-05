@@ -462,7 +462,7 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
               {booking.date && (
                 <div className="flex items-center space-x-3">
                   <div className="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <FontAwesomeIcon
+                    <FontAwesomeIco
                       icon={faCalendar}
                       className="text-purple-600 text-sm"
                     />
@@ -664,8 +664,8 @@ const PaymentForm = ({ booking, onSuccess, onError, onCancel }) => {
           <div className="flex items-center justify-center space-x-2 text-xs text-gray-500 mb-3">
             <FontAwesomeIcon icon={faInfoCircle} />
             <span>
-              Transaction ID: {booking.id} | Current Time: 2025-08-05 15:15:00
-              UTC
+              Transaction ID: {booking.id} | Current Time:{" "}
+              {printCurrentDateTime()}
             </span>
           </div>
 
