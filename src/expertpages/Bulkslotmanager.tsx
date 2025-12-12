@@ -40,6 +40,7 @@ interface AvailabilityPattern {
   dayOfWeek: number;
   startTime: string;
   endTime: string;
+  timezone?: string | null;
 }
 
 interface DayAvailability {
@@ -57,6 +58,7 @@ interface TimeSlot {
 }
 
 const GUIDE_CARDS_KEY = "bulk_availability_guide_dismissed";
+const TIMEZONE_STORAGE_KEY = "bulk_availability_timezone";
 
 const BulkAvailabilityManager = () => {
   const dayNames = [
@@ -103,6 +105,45 @@ const BulkAvailabilityManager = () => {
     "21:00",
     "21:30",
   ];
+
+  // Base TZ list (from Intl if available, otherwise a small curated list)
+  const baseTimeZoneOptions: string[] = (typeof Intl !== "undefined" &&
+    // @ts-ignore - supportedValuesOf may not exist in lib dom types
+    Intl.supportedValuesOf?.("timeZone")) || [
+    "UTC",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "Europe/London",
+    "Europe/Paris",
+    "Europe/Berlin",
+    "Asia/Singapore",
+    "Asia/Tokyo",
+    "Australia/Sydney",
+  ];
+
+  // Use browser timezone as default, fallback to UTC
+  const [timeZone, setTimeZone] = useState<string>(
+    () =>
+      localStorage.getItem(TIMEZONE_STORAGE_KEY) ||
+      Intl.DateTimeFormat().resolvedOptions().timeZone ||
+      "UTC"
+  );
+  const [availableTimeZones, setAvailableTimeZones] = useState<string[]>(() => {
+    const initial = new Set(baseTimeZoneOptions);
+    initial.add(
+      localStorage.getItem(TIMEZONE_STORAGE_KEY) ||
+        Intl.DateTimeFormat().resolvedOptions().timeZone ||
+        "UTC"
+    );
+    return Array.from(initial);
+  });
+
+  const upsertTimeZoneOption = (tz?: string | null) => {
+    if (!tz) return;
+    setAvailableTimeZones((prev) => (prev.includes(tz) ? prev : [tz, ...prev]));
+  };
 
   const [weeklyAvailability, setWeeklyAvailability] = useState<
     DayAvailability[]
@@ -171,6 +212,11 @@ const BulkAvailabilityManager = () => {
     updateWeeklyAvailabilityFromPatterns();
     // eslint-disable-next-line
   }, [availabilityPatterns]);
+
+  useEffect(() => {
+    localStorage.setItem(TIMEZONE_STORAGE_KEY, timeZone);
+    upsertTimeZoneOption(timeZone);
+  }, [timeZone]);
 
   const handleNextStep = () => {
     if (guideStep < guideSteps.length - 1) {
@@ -357,7 +403,22 @@ const BulkAvailabilityManager = () => {
     setError(null);
     try {
       const response = await axiosInstance.get(`${API_BASE_URL}/${userId}`);
-      setAvailabilityPatterns(response.data || []);
+      const data: AvailabilityPattern[] = response.data || [];
+      setAvailabilityPatterns(data || []);
+
+      // If backend returns timezone with the slots, reflect it in the dropdown
+      if (Array.isArray(data)) {
+        const tzFromServer =
+          data.find((p) => p.timezone)?.timezone || data[0]?.timezone || null;
+        if (tzFromServer) {
+          upsertTimeZoneOption(tzFromServer);
+          if (tzFromServer !== timeZone) {
+            setTimeZone(tzFromServer);
+            localStorage.setItem(TIMEZONE_STORAGE_KEY, tzFromServer);
+          }
+        }
+      }
+
       setDeletedSlots([]);
     } catch (error) {
       console.error("Error fetching availability patterns:", error);
@@ -434,6 +495,7 @@ const BulkAvailabilityManager = () => {
         startTime,
         endTime,
         reason: "Manually removed from schedule",
+        timeZone,
       };
 
       await axiosInstance.patch(BLOCK_API_URL, blockPayload);
@@ -453,6 +515,7 @@ const BulkAvailabilityManager = () => {
         dayOfWeek: number;
         startTime: string;
         endTime: string;
+        timeZone: string;
       }[] = [];
       let availabilitiesToDelete: string[] = [];
 
@@ -467,6 +530,7 @@ const BulkAvailabilityManager = () => {
                   dayOfWeek: day.dayOfWeek,
                   startTime: slot.startTime,
                   endTime: slot.endTime,
+                  timeZone,
                 });
               }
             } else if (slot.id) {
@@ -502,6 +566,7 @@ const BulkAvailabilityManager = () => {
       if (availabilitiesToAdd.length > 0) {
         await axiosInstance.post(API_BASE_URL, {
           availabilities: availabilitiesToAdd,
+          timeZone,
         });
       }
 
@@ -521,7 +586,7 @@ const BulkAvailabilityManager = () => {
       }
 
       toast.success("Availability schedule saved successfully");
-      await fetchAvailabilityPatterns(); // Refresh data
+      await fetchAvailabilityPatterns(); // Refresh data (also syncs timezone)
     } catch (error: any) {
       console.error("Error saving availability patterns:", error);
       const errorMessage =
@@ -725,24 +790,41 @@ const BulkAvailabilityManager = () => {
               <HelpCircle className="h-5 w-5 text-blue-500" />
             </Button>
           </div>
-          <Button
-            ref={saveBtnRef}
-            onClick={saveAvailabilityPatterns}
-            className="bg-red-600 hover:bg-red-700 text-white"
-            disabled={saving}
-          >
-            {saving ? (
-              <>
-                <span className="mr-2">Saving...</span>
-                <span className="animate-spin">⏳</span>
-              </>
-            ) : (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Save Changes
-              </>
-            )}
-          </Button>
+          <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-2">
+              <Label className="text-sm text-gray-600">Timezone</Label>
+              <Select value={timeZone} onValueChange={setTimeZone}>
+                <SelectTrigger className="w-56">
+                  <SelectValue placeholder="Select timezone" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {availableTimeZones.map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Button
+              ref={saveBtnRef}
+              onClick={saveAvailabilityPatterns}
+              className="bg-red-600 hover:bg-red-700 text-white"
+              disabled={saving}
+            >
+              {saving ? (
+                <>
+                  <span className="mr-2">Saving...</span>
+                  <span className="animate-spin">⏳</span>
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Changes
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {error && (

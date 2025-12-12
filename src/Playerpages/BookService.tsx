@@ -43,66 +43,77 @@ interface SlotApiResponse {
   slots: Array<{
     displayStartTime: string;
     date: string;
-    startTime: string;
+    startTime: string; // expert local HH:mm
     isAvailable: boolean;
   }>;
 }
+
+interface DisplaySlot {
+  // What player sees in their selected timezone
+  displayStartTime: string;
+  // Expert's local start time (HH:mm)
+  expertStartTime: string;
+  date: string;
+  isAvailable: boolean;
+}
+
 const TIMEZONES = [
   "UTC",
-  "America/New_York", // Eastern Time (US & Canada)
-  "America/Chicago", // Central Time (US & Canada)
-  "America/Denver", // Mountain Time (US & Canada)
-  "America/Los_Angeles", // Pacific Time (US & Canada)
-  "America/Toronto", // Canada/Eastern
-  "America/Vancouver", // Canada/Pacific
-  "America/Sao_Paulo", // Brazil/Sao Paulo
-  "Europe/London", // UK
-  "Europe/Berlin", // Germany
-  "Europe/Paris", // France
-  "Europe/Madrid", // Spain
-  "Europe/Rome", // Italy
-  "Europe/Amsterdam", // Netherlands
-  "Europe/Zurich", // Switzerland
-  "Europe/Istanbul", // Turkey
-  "Europe/Moscow", // Russia
-  "Asia/Dubai", // UAE
-  "Asia/Jerusalem", // Israel
-  "Asia/Riyadh", // Saudi Arabia
-  "Asia/Kolkata", // India
-  "Asia/Bangkok", // Thailand
-  "Asia/Hong_Kong", // Hong Kong
-  "Asia/Shanghai", // China
-  "Asia/Singapore", // Singapore
-  "Asia/Tokyo", // Japan
-  "Asia/Seoul", // South Korea
-  "Asia/Kuala_Lumpur", // Malaysia
-  "Asia/Jakarta", // Indonesia
-  "Asia/Manila", // Philippines
-  "Asia/Karachi", // Pakistan
-  "Asia/Kathmandu", // Nepal
-  "Asia/Colombo", // Sri Lanka
-  "Australia/Sydney", // Australia (East)
-  "Australia/Melbourne", // Australia (South-East)
-  "Australia/Perth", // Australia (West)
-  "Pacific/Auckland", // New Zealand
-  "Africa/Johannesburg", // South Africa
-  "Africa/Cairo", // Egypt
-  "Africa/Nairobi", // Kenya
-  "America/Mexico_City", // Mexico
-  "America/Bogota", // Colombia
-  "America/Lima", // Peru
-  "America/Argentina/Buenos_Aires", // Argentina
-  "America/Santiago", // Chile
-  "America/Anchorage", // Alaska
-  "Pacific/Honolulu", // Hawaii
-  "Pacific/Fiji", // Fiji
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Berlin",
+  "Europe/Paris",
+  "Europe/Madrid",
+  "Europe/Rome",
+  "Europe/Amsterdam",
+  "Europe/Zurich",
+  "Europe/Istanbul",
+  "Europe/Moscow",
+  "Asia/Dubai",
+  "Asia/Jerusalem",
+  "Asia/Riyadh",
+  "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Asia/Kuala_Lumpur",
+  "Asia/Jakarta",
+  "Asia/Manila",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Colombo",
+  "Australia/Sydney",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Pacific/Auckland",
+  "Africa/Johannesburg",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "America/Mexico_City",
+  "America/Bogota",
+  "America/Lima",
+  "America/Argentina/Buenos_Aires",
+  "America/Santiago",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Pacific/Fiji",
   "Pacific/Guam",
 ];
 
 const BookingCalendar: React.FC = () => {
-  const [userTimeZone, setUserTimeZone] = useState(
-    Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Kolkata"
-  );
+  // Player must pick timezone first; start empty to force selection
+  const [userTimeZone, setUserTimeZone] = useState<string>("");
+  const [expertTimeZone, setExpertTimeZone] = useState<string | null>(null);
+
   const navigate = useNavigate();
   const today = new Date();
   const currentYear = today.getFullYear();
@@ -130,8 +141,8 @@ const BookingCalendar: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(
     null
-  );
-  const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null);
+  ); // player-view time
+  const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null); // player-view time
   const [finalPrice, setFinalPrice] = useState<number>(0);
   const [bookingDescription, setBookingDescription] = useState<string>("");
   const [bookingLocation, setBookingLocation] = useState<string>("");
@@ -149,15 +160,7 @@ const BookingCalendar: React.FC = () => {
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>(
     {}
   );
-  // For new API, we store slots as array of slot objects
-  const [availableSlots, setAvailableSlots] = useState<
-    Array<{
-      displayStartTime: string;
-      date: string;
-      startTime: string;
-      isAvailable: boolean;
-    }>
-  >([]);
+  const [availableSlots, setAvailableSlots] = useState<DisplaySlot[]>([]);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const BLOCK_API_URL = `${
@@ -166,8 +169,72 @@ const BookingCalendar: React.FC = () => {
   const daysOfWeek = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"];
 
   const isOnGroundAssessment = service?.name?.includes("ON GROUND ASSESSMENT");
+  const hasSelectedTimeZone = Boolean(userTimeZone);
 
-  // Enhanced price parsing with comprehensive test case handling
+  // ---------- Timezone helpers ----------
+  const parseOffsetMinutes = (label: string): number => {
+    // Handles "GMT-5", "UTC+05:30", "GMT+0530", "GMT+5"
+    const match = label.match(/([+-])(\d{1,2})(?::?(\d{2}))?/);
+    if (!match) return 0;
+    const sign = match[1] === "-" ? -1 : 1;
+    const hours = parseInt(match[2], 10) || 0;
+    const minutes = parseInt(match[3] || "0", 10) || 0;
+    return sign * (hours * 60 + minutes);
+  };
+
+  const getOffsetMinutes = (utcMs: number, timeZone: string): number => {
+    const parts = new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      timeZoneName: "short",
+      hour12: false,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).formatToParts(new Date(utcMs));
+    const tzName =
+      parts.find((p) => p.type === "timeZoneName")?.value || "GMT+00";
+    return parseOffsetMinutes(tzName);
+  };
+
+  // Convert an expert-local time to player-local time
+  const convertExpertSlotToUser = (
+    dateStr: string,
+    startTime: string,
+    expertTZ: string,
+    userTZ: string
+  ): string => {
+    const [y, m, d] = dateStr.split("-").map(Number);
+    const [hh, mm] = startTime.split(":").map(Number);
+
+    // First guess: treat the provided wall time as if it were UTC
+    const wallUtcGuess = Date.UTC(y, m - 1, d, hh, mm);
+
+    // Get offset for that instant in expert TZ
+    let offset = getOffsetMinutes(wallUtcGuess, expertTZ);
+    let utcMs = wallUtcGuess - offset * 60 * 1000;
+
+    // Recompute offset at the computed UTC (handles DST)
+    const adjustedOffset = getOffsetMinutes(utcMs, expertTZ);
+    if (adjustedOffset !== offset) {
+      offset = adjustedOffset;
+      utcMs = wallUtcGuess - offset * 60 * 1000;
+    }
+
+    // Format in user's TZ
+    const userParts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: userTZ,
+      hour12: false,
+      hour: "2-digit",
+      minute: "2-digit",
+    }).formatToParts(new Date(utcMs));
+    const uh = userParts.find((p) => p.type === "hour")?.value ?? "00";
+    const um = userParts.find((p) => p.type === "minute")?.value ?? "00";
+    return `${uh}:${um}`;
+  };
+
+  // ---------- Pricing ----------
   const parsePrice = (priceString: string | undefined | null): number => {
     if (!priceString || priceString.trim() === "") {
       return 25.0;
@@ -195,7 +262,6 @@ const BookingCalendar: React.FC = () => {
     return Math.round(parsed * 100) / 100;
   };
 
-  // Calculate price based on duration between start and end time
   const calculatePriceForTimeRange = (
     startTime: string,
     endTime: string
@@ -206,7 +272,6 @@ const BookingCalendar: React.FC = () => {
     return Math.round(basePrice * hours * 100) / 100;
   };
 
-  // Calculate duration in minutes between two times
   const calculateDurationInMinutes = (
     startTime: string,
     endTime: string
@@ -217,7 +282,6 @@ const BookingCalendar: React.FC = () => {
     const startTotalMinutes = startHour * 60 + startMinute;
     let endTotalMinutes = endHour * 60 + endMinute;
 
-    // Handle overnight sessions
     if (endTotalMinutes <= startTotalMinutes) {
       endTotalMinutes += 24 * 60;
     }
@@ -225,7 +289,6 @@ const BookingCalendar: React.FC = () => {
     return endTotalMinutes - startTotalMinutes;
   };
 
-  // Format price as string with dollar sign
   const formatPrice = (price: number): string => {
     if (isNaN(price) || price < 0) {
       return "£00.00";
@@ -233,30 +296,27 @@ const BookingCalendar: React.FC = () => {
     return `£${price.toFixed(2)}`;
   };
 
-  // Get all unique time slots for selection (from API: all available start times)
+  // ---------- Slots helpers ----------
   const getAllTimeSlots = (): string[] => {
     const times = availableSlots
       .filter((slot) => slot.isAvailable)
-      .map((slot) => slot.startTime);
-    // Ensure sorted
+      .map((slot) => slot.displayStartTime);
     return [...new Set(times)].sort();
   };
 
-  // Check if a time slot is selectable for end time
   const isValidEndTime = (time: string): boolean => {
     if (!selectedStartTime) return false;
     const duration = calculateDurationInMinutes(selectedStartTime, time);
-    return duration >= 60 && duration <= 120; // 1-2 hours
+    return duration >= 60 && duration <= 120;
   };
 
-  // Check if a time slot is available
   const isTimeSlotAvailable = (time: string): boolean => {
     return availableSlots.some(
-      (slot) => slot.startTime === time && slot.isAvailable
+      (slot) => slot.displayStartTime === time && slot.isAvailable
     );
   };
 
-  // Update price when start or end time changes
+  // ---------- Effects ----------
   useEffect(() => {
     if (selectedStartTime && selectedEndTime) {
       const price = calculatePriceForTimeRange(
@@ -270,7 +330,6 @@ const BookingCalendar: React.FC = () => {
     }
   }, [selectedStartTime, selectedEndTime, service]);
 
-  // 1. Load service from localStorage on mount
   useEffect(() => {
     const storedService = localStorage.getItem("selectedService");
     if (storedService) {
@@ -281,9 +340,9 @@ const BookingCalendar: React.FC = () => {
     }
   }, []);
 
-  // 2. Fetch monthly availability after service loads or month/year change
+  // Monthly availability — only after timezone chosen
   useEffect(() => {
-    if (!service || !service.expertId) return;
+    if (!service || !service.expertId || !hasSelectedTimeZone) return;
 
     const fetchExpertAvailability = async () => {
       setLoadingAvailability(true);
@@ -337,11 +396,22 @@ const BookingCalendar: React.FC = () => {
 
     fetchExpertAvailability();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [service, selectedMonthIndex, selectedYear]);
+  }, [
+    service,
+    selectedMonthIndex,
+    selectedYear,
+    hasSelectedTimeZone,
+    userTimeZone,
+  ]);
 
-  // 3. Fetch time slots after service loads and a date is selected
+  // Daily slots — only after timezone chosen and date selected
   useEffect(() => {
-    if (!service || !service.expertId || !selectedDate) {
+    if (
+      !service ||
+      !service.expertId ||
+      !selectedDate ||
+      !hasSelectedTimeZone
+    ) {
       setAvailableSlots([]);
       return;
     }
@@ -369,14 +439,31 @@ const BookingCalendar: React.FC = () => {
         if (!response.ok) throw new Error("Failed to fetch time slots");
 
         const data: SlotApiResponse = await response.json();
-        // Only keep available slots
-        const available = (data.slots || []).filter((slot) => slot.isAvailable);
+        setExpertTimeZone(data.expertTimeZone || null);
+
+        const available: DisplaySlot[] = (data.slots || [])
+          .filter((slot) => slot.isAvailable)
+          .map((slot) => ({
+            displayStartTime: convertExpertSlotToUser(
+              slot.date,
+              slot.startTime,
+              data.expertTimeZone || "UTC",
+              userTimeZone
+            ),
+            expertStartTime: slot.startTime,
+            date: slot.date,
+            isAvailable: slot.isAvailable,
+          }));
+
+        available.sort((a, b) =>
+          a.displayStartTime.localeCompare(b.displayStartTime)
+        );
+
         setAvailableSlots(available);
 
-        // Reset selections if they're no longer valid
         if (
           selectedStartTime &&
-          !available.some((slot) => slot.startTime === selectedStartTime)
+          !available.some((slot) => slot.displayStartTime === selectedStartTime)
         ) {
           setSelectedStartTime(null);
           setSelectedEndTime(null);
@@ -397,7 +484,14 @@ const BookingCalendar: React.FC = () => {
 
     fetchTimeSlots();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [service, selectedDate, selectedMonthIndex, selectedYear]);
+  }, [
+    service,
+    selectedDate,
+    selectedMonthIndex,
+    selectedYear,
+    userTimeZone,
+    hasSelectedTimeZone,
+  ]);
 
   useEffect(() => {
     const numberOfDays = new Date(
@@ -416,6 +510,7 @@ const BookingCalendar: React.FC = () => {
     });
   }, [selectedMonthIndex, selectedYear]);
 
+  // ---------- Utils ----------
   const formatDateString = (
     year: number,
     month: number,
@@ -470,6 +565,7 @@ const BookingCalendar: React.FC = () => {
   };
 
   const handleDateSelect = (day: number) => {
+    if (!hasSelectedTimeZone) return;
     if (isDateAvailable(day) && !isDateInPast(day)) {
       setSelectedDate(day);
       setSelectedStartTime(null);
@@ -479,7 +575,7 @@ const BookingCalendar: React.FC = () => {
 
   const handleStartTimeSelect = (time: string) => {
     setSelectedStartTime(time);
-    setSelectedEndTime(null); // Reset end time when start time changes
+    setSelectedEndTime(null);
   };
 
   const handleEndTimeSelect = (time: string) => {
@@ -534,6 +630,16 @@ const BookingCalendar: React.FC = () => {
   };
 
   const handleConfirm = async () => {
+    if (!hasSelectedTimeZone) {
+      Swal.fire({
+        icon: "error",
+        title: "Please Select a Timezone",
+        text: "Choose your timezone to proceed.",
+        timer: 2500,
+        showConfirmButton: false,
+      });
+      return;
+    }
     if (!selectedDate) {
       Swal.fire({
         icon: "error",
@@ -626,8 +732,6 @@ const BookingCalendar: React.FC = () => {
         timezone: userTimeZone,
       };
 
-      console.log("Booking data being sent:", bookingData);
-
       const token = localStorage.getItem("token");
 
       const response = await fetch(API_BASE_URL, {
@@ -642,9 +746,6 @@ const BookingCalendar: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error("Booking failed:", data);
-
-        // Check if the error is about expert being already booked
         if (data.error && data.error.includes("already booked")) {
           Swal.fire({
             icon: "info",
@@ -659,7 +760,6 @@ const BookingCalendar: React.FC = () => {
             confirmButtonColor: "#3085d6",
             allowOutsideClick: false,
           }).then(() => {
-            // Reset time selections to allow user to pick different times
             setSelectedStartTime(null);
             setSelectedEndTime(null);
           });
@@ -762,10 +862,8 @@ const BookingCalendar: React.FC = () => {
     }
   };
 
-  // Get time slots for start time selection (all available slots)
   const startTimeSlotRows = organizeTimeSlotsIntoRows(getAllTimeSlots());
 
-  // Get time slots for end time selection (must be after start time, duration 1-2h, and available)
   const getValidEndTimes = () => {
     if (!selectedStartTime) return [];
     const allTimes = getAllTimeSlots();
@@ -779,13 +877,29 @@ const BookingCalendar: React.FC = () => {
 
   const endTimeSlotRows = organizeTimeSlotsIntoRows(getValidEndTimes());
 
+  const renderSlotLabel = (displayTime: string) => {
+    const slotMeta = availableSlots.find(
+      (s) => s.displayStartTime === displayTime
+    );
+    const expertLabel =
+      slotMeta && expertTimeZone
+        ? `${formatTime(slotMeta.expertStartTime)} (${expertTimeZone})`
+        : "Expert time unavailable";
+    return (
+      <>
+        <div className="font-medium">{formatTime(displayTime)}</div>
+        <div className="text-[11px] text-gray-500">Expert: {expertLabel}</div>
+      </>
+    );
+  };
+
   return (
     <div className="flex flex-col justify-center items-center">
       <Card className="w-full max-w-4xl shadow-lg">
         <CardContent className="p-0">
           <div className="flex flex-col md:flex-row">
             {/* Left sidebar */}
-            <div className="p-6 border-r border-gray-100 w-full md:w-1/3 bg-white">
+            <div className="p-6 border-r border-gray-100 w/full md:w-1/3 bg-white">
               <Button
                 variant="ghost"
                 size="icon"
@@ -886,6 +1000,7 @@ const BookingCalendar: React.FC = () => {
                   <ChevronRight className="h-5 w-5" />
                 </button>
               </div>
+
               {/* Calendar with loading state */}
               <div className="mb-6">
                 {loadingAvailability ? (
@@ -914,11 +1029,17 @@ const BookingCalendar: React.FC = () => {
                             <button
                               onClick={() => handleDateSelect(day)}
                               disabled={
-                                isDateInPast(day) || !isDateAvailable(day)
+                                !hasSelectedTimeZone ||
+                                isDateInPast(day) ||
+                                !isDateAvailable(day)
                               }
                               className={`
                                 h-10 w-10 rounded-full flex items-center justify-center text-sm
-                                ${getDayClassName(day)}
+                                ${
+                                  hasSelectedTimeZone
+                                    ? getDayClassName(day)
+                                    : "text-gray-300 cursor-not-allowed bg-gray-50"
+                                }
                               `}
                             >
                               {day}
@@ -930,6 +1051,8 @@ const BookingCalendar: React.FC = () => {
                   </>
                 )}
               </div>
+
+              {/* Timezone selector */}
               <div className="mb-4 flex items-center">
                 <Label
                   htmlFor="timezone-select"
@@ -941,8 +1064,17 @@ const BookingCalendar: React.FC = () => {
                   id="timezone-select"
                   className="border border-gray-200 rounded-md px-3 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-red-200"
                   value={userTimeZone}
-                  onChange={(e) => setUserTimeZone(e.target.value)}
+                  onChange={(e) => {
+                    setUserTimeZone(e.target.value);
+                    setSelectedDate(null);
+                    setSelectedStartTime(null);
+                    setSelectedEndTime(null);
+                    setAvailableSlots([]);
+                  }}
                 >
+                  <option value="" disabled>
+                    Select your timezone
+                  </option>
                   {TIMEZONES.map((tz) => (
                     <option value={tz} key={tz}>
                       {tz}
@@ -953,6 +1085,13 @@ const BookingCalendar: React.FC = () => {
                   (Affects available slots display)
                 </span>
               </div>
+              <div className="mb-2 text-xs text-gray-600">
+                Expert timezone:{" "}
+                <span className="font-semibold">
+                  {expertTimeZone || "Not fetched"}
+                </span>
+              </div>
+
               {/* Selected date and time */}
               <div className="mb-6">
                 <p className="text-gray-700 font-medium mb-3">
@@ -962,7 +1101,7 @@ const BookingCalendar: React.FC = () => {
                   <div className="space-y-2">
                     <span className="bg-red-500 p-2 rounded-lg text-white inline-block">
                       {formatTime(selectedStartTime)} -{" "}
-                      {formatTime(selectedEndTime)}
+                      {formatTime(selectedEndTime)} ({userTimeZone})
                     </span>
                     <p className="text-sm text-gray-600">
                       Duration: {getDurationLabel()}
@@ -971,7 +1110,7 @@ const BookingCalendar: React.FC = () => {
                 ) : selectedStartTime ? (
                   <div className="space-y-2">
                     <span className="bg-red-500 p-2 rounded-lg text-white inline-block">
-                      Start: {formatTime(selectedStartTime)}
+                      Start: {formatTime(selectedStartTime)} ({userTimeZone})
                     </span>
                     <p className="text-sm text-gray-600">
                       Please select an end time
@@ -985,7 +1124,12 @@ const BookingCalendar: React.FC = () => {
                 <h3 className="text-sm font-medium text-gray-700 mb-2">
                   Available Start Times
                 </h3>
-                {!selectedDate ? (
+                {!hasSelectedTimeZone ? (
+                  <p className="text-gray-500 text-sm italic">
+                    Select your timezone, then pick a date to view available
+                    time slots.
+                  </p>
+                ) : !selectedDate ? (
                   <p className="text-gray-500 text-sm italic">
                     Select a date to view available time slots
                   </p>
@@ -1006,15 +1150,15 @@ const BookingCalendar: React.FC = () => {
                             key={time}
                             onClick={() => handleStartTimeSelect(time)}
                             className={`
-                              py-2 px-3 border rounded-md text-sm
+                              py-2 px-3 border rounded-md text-sm text-left
                               ${
                                 selectedStartTime === time
-                                  ? "border-blue-500 bg-blue-50 text-blue-500"
+                                  ? "border-blue-500 bg-blue-50 text-blue-600"
                                   : "border-gray-200 hover:border-gray-300 text-gray-800"
                               }
                             `}
                           >
-                            {formatTime(time)}
+                            {renderSlotLabel(time)}
                           </button>
                         ))}
                       </div>
@@ -1023,8 +1167,8 @@ const BookingCalendar: React.FC = () => {
                 )}
               </div>
 
-              {/* End Time Slots - Only show after start time is selected */}
-              {selectedStartTime && (
+              {/* End Time Slots */}
+              {selectedStartTime && hasSelectedTimeZone && (
                 <div className="mb-6">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">
                     Select End Time
@@ -1053,7 +1197,7 @@ const BookingCalendar: React.FC = () => {
                                 ) <= 0
                               }
                               className={`
-                                py-2 px-3 border rounded-md text-sm
+                                py-2 px-3 border rounded-md text-sm text-left
                                 ${
                                   selectedEndTime === time
                                     ? "border-red-500 bg-red-50 text-red-500"
@@ -1068,7 +1212,7 @@ const BookingCalendar: React.FC = () => {
                                 }
                               `}
                             >
-                              {formatTime(time)}
+                              {renderSlotLabel(time)}
                             </button>
                           ))}
                         </div>
@@ -1078,7 +1222,7 @@ const BookingCalendar: React.FC = () => {
                 </div>
               )}
 
-              {/* Simple Location field - Only for ON GROUND ASSESSMENT */}
+              {/* Location field */}
               {isOnGroundAssessment && (
                 <div className="mt-6 mb-4">
                   <Label
@@ -1102,6 +1246,7 @@ const BookingCalendar: React.FC = () => {
                   </p>
                 </div>
               )}
+
               {/* Description field */}
               <div className="mt-6">
                 <Label
@@ -1122,13 +1267,18 @@ const BookingCalendar: React.FC = () => {
           </div>
         </CardContent>
       </Card>
+
       {/* Confirm button */}
       <div className="flex justify-end items-end mt-6 w-4xl mb-4">
         <Button
           className="bg-red-500 hover:bg-red-600 text-white px-8"
           onClick={handleConfirm}
           disabled={
-            loading || !selectedDate || !selectedStartTime || !selectedEndTime
+            loading ||
+            !hasSelectedTimeZone ||
+            !selectedDate ||
+            !selectedStartTime ||
+            !selectedEndTime
           }
         >
           {loading ? "Processing..." : "Confirm Booking"}
