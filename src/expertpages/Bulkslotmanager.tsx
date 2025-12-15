@@ -4,7 +4,6 @@ import {
   Calendar,
   Clock,
   Plus,
-  X,
   Trash2,
   Save,
   Copy,
@@ -106,9 +105,8 @@ const BulkAvailabilityManager = () => {
     "21:30",
   ];
 
-  // Base TZ list (from Intl if available, otherwise a small curated list)
   const baseTimeZoneOptions: string[] = (typeof Intl !== "undefined" &&
-    // @ts-ignore - supportedValuesOf may not exist in lib dom types
+    // @ts-ignore
     Intl.supportedValuesOf?.("timeZone")) || [
     "UTC",
     "America/New_York",
@@ -123,7 +121,6 @@ const BulkAvailabilityManager = () => {
     "Australia/Sydney",
   ];
 
-  // Use browser timezone as default, fallback to UTC
   const [timeZone, setTimeZone] = useState<string>(
     () =>
       localStorage.getItem(TIMEZONE_STORAGE_KEY) ||
@@ -307,19 +304,16 @@ const BulkAvailabilityManager = () => {
         let top = rect.bottom + 12;
         let left = rect.left + rect.width / 2 - popperWidth / 2;
 
-        // Adjust if popper would go off-screen horizontally
         if (left < 10) {
           left = 10;
         } else if (left + popperWidth > viewportWidth - 10) {
           left = viewportWidth - popperWidth - 10;
         }
 
-        // Adjust if popper would go off-screen vertically
         if (top + popperHeight > viewportHeight - 10) {
           top = rect.top - popperHeight - 12;
         }
 
-        // Special positioning for Copy Schedule button
         if (stepCard.focusRef === copyBtnRef) {
           left = rect.left - popperWidth - 12;
           top = rect.top - 60;
@@ -347,12 +341,10 @@ const BulkAvailabilityManager = () => {
           behavior: "smooth",
           block: "center",
         });
-        // Add a highlight effect
         stepCard.focusRef.current.style.boxShadow =
           "0 0 0 3px rgba(59, 130, 246, 0.5)";
         stepCard.focusRef.current.style.borderRadius = "6px";
 
-        // Remove highlight after 3 seconds
         setTimeout(() => {
           if (stepCard.focusRef?.current) {
             stepCard.focusRef.current.style.boxShadow = "";
@@ -392,7 +384,7 @@ const BulkAvailabilityManager = () => {
       initial.push({
         dayOfWeek: day,
         slots: [],
-        active: day > 0 && day < 6, // Monday to Friday are active by default
+        active: day > 0 && day < 6,
       });
     }
     setWeeklyAvailability(initial);
@@ -406,7 +398,6 @@ const BulkAvailabilityManager = () => {
       const data: AvailabilityPattern[] = response.data || [];
       setAvailabilityPatterns(data || []);
 
-      // If backend returns timezone with the slots, reflect it in the dropdown
       if (Array.isArray(data)) {
         const tzFromServer =
           data.find((p) => p.timezone)?.timezone || data[0]?.timezone || null;
@@ -435,14 +426,11 @@ const BulkAvailabilityManager = () => {
     if (!availabilityPatterns || availabilityPatterns.length === 0) return;
 
     const updated = [...weeklyAvailability];
-
-    // Reset all days first
     for (let day = 0; day < 7; day++) {
       updated[day].slots = [];
       updated[day].active = false;
     }
 
-    // Update with patterns
     for (let day = 0; day < 7; day++) {
       const dayPatterns = availabilityPatterns.filter(
         (pattern) => pattern.dayOfWeek === day
@@ -455,7 +443,6 @@ const BulkAvailabilityManager = () => {
           endTime: pattern.endTime,
           active: true,
         }));
-        // Sort slots by start time
         updated[day].slots.sort((a, b) =>
           a.startTime.localeCompare(b.startTime)
         );
@@ -519,13 +506,11 @@ const BulkAvailabilityManager = () => {
       }[] = [];
       let availabilitiesToDelete: string[] = [];
 
-      // Process each day
       weeklyAvailability.forEach((day) => {
         if (day.active) {
           day.slots.forEach((slot) => {
             if (slot.active !== false && !slot.deleted) {
               if (!slot.id) {
-                // New slot to add
                 availabilitiesToAdd.push({
                   dayOfWeek: day.dayOfWeek,
                   startTime: slot.startTime,
@@ -534,19 +519,16 @@ const BulkAvailabilityManager = () => {
                 });
               }
             } else if (slot.id) {
-              // Existing slot to delete
               availabilitiesToDelete.push(slot.id);
             }
           });
         } else {
-          // Day is inactive, delete all its slots
           day.slots.forEach((slot) => {
             if (slot.id) availabilitiesToDelete.push(slot.id);
           });
         }
       });
 
-      // Add deleted slots to deletion list
       deletedSlots.forEach((slot) => {
         const pattern = availabilityPatterns.find(
           (p) =>
@@ -559,10 +541,8 @@ const BulkAvailabilityManager = () => {
         }
       });
 
-      // Remove duplicates
       availabilitiesToDelete = Array.from(new Set(availabilitiesToDelete));
 
-      // Add new availabilities
       if (availabilitiesToAdd.length > 0) {
         await axiosInstance.post(API_BASE_URL, {
           availabilities: availabilitiesToAdd,
@@ -570,14 +550,12 @@ const BulkAvailabilityManager = () => {
         });
       }
 
-      // Delete removed availabilities
       if (availabilitiesToDelete.length > 0) {
         await axiosInstance.delete(API_BASE_URL, {
           data: { ids: availabilitiesToDelete },
         });
       }
 
-      // Block deleted time slots
       if (deletedSlots.length > 0) {
         for (const slot of deletedSlots) {
           await blockTimeSlot(slot.dayOfWeek, slot.startTime, slot.endTime);
@@ -586,7 +564,7 @@ const BulkAvailabilityManager = () => {
       }
 
       toast.success("Availability schedule saved successfully");
-      await fetchAvailabilityPatterns(); // Refresh data (also syncs timezone)
+      await fetchAvailabilityPatterns();
     } catch (error: any) {
       console.error("Error saving availability patterns:", error);
       const errorMessage =
@@ -606,7 +584,6 @@ const BulkAvailabilityManager = () => {
     updated[dayIndex].active = !previouslyActive;
 
     if (previouslyActive) {
-      // Day is being deactivated, mark all slots for deletion
       updated[dayIndex].slots.forEach((slot) => {
         if (slot.id) {
           setDeletedSlots((prev) => [
@@ -634,7 +611,6 @@ const BulkAvailabilityManager = () => {
     const updated = [...weeklyAvailability];
     const dayAvailability = updated[selectedDayForNewSlot];
 
-    // Check for overlapping slots
     const isOverlapping = dayAvailability.slots.some(
       (slot) =>
         !slot.deleted &&
@@ -652,14 +628,12 @@ const BulkAvailabilityManager = () => {
       return;
     }
 
-    // Add new slot
     dayAvailability.slots.push({
       startTime: newSlotStartTime,
       endTime: newSlotEndTime,
       active: true,
     });
 
-    // Sort slots by start time
     dayAvailability.slots.sort((a, b) =>
       a.startTime.localeCompare(b.startTime)
     );
@@ -679,7 +653,6 @@ const BulkAvailabilityManager = () => {
     const slotToDelete = updated[dayIndex].slots[slotIndex];
 
     if (slotToDelete.id) {
-      // Mark existing slot for deletion
       setDeletedSlots((prev) => [
         ...prev,
         { ...slotToDelete, dayOfWeek: dayIndex },
@@ -687,7 +660,6 @@ const BulkAvailabilityManager = () => {
       slotToDelete.deleted = true;
     }
 
-    // Remove slot from UI
     updated[dayIndex].slots.splice(slotIndex, 1);
     setWeeklyAvailability(updated);
 
@@ -697,7 +669,6 @@ const BulkAvailabilityManager = () => {
   const clearAllSlots = (dayIndex: number) => {
     const updated = [...weeklyAvailability];
 
-    // Mark all existing slots for deletion
     updated[dayIndex].slots.forEach((slot) => {
       if (slot.id) {
         setDeletedSlots((prev) => [...prev, { ...slot, dayOfWeek: dayIndex }]);
@@ -705,7 +676,6 @@ const BulkAvailabilityManager = () => {
       }
     });
 
-    // Clear all slots
     updated[dayIndex].slots = [];
     setWeeklyAvailability(updated);
 
@@ -721,7 +691,6 @@ const BulkAvailabilityManager = () => {
     );
 
     copyTargetDays.forEach((targetDay) => {
-      // Mark existing slots for deletion
       updated[targetDay].slots.forEach((slot) => {
         if (slot.id) {
           setDeletedSlots((prev) => [
@@ -731,14 +700,12 @@ const BulkAvailabilityManager = () => {
         }
       });
 
-      // Copy source slots (without IDs so they'll be created as new)
       updated[targetDay].slots = sourceSlots.map((slot) => ({
         startTime: slot.startTime,
         endTime: slot.endTime,
         active: true,
       }));
 
-      // Activate target day
       updated[targetDay].active = true;
     });
 
@@ -791,21 +758,6 @@ const BulkAvailabilityManager = () => {
             </Button>
           </div>
           <div className="flex items-center space-x-3">
-            <div className="flex items-center space-x-2">
-              <Label className="text-sm text-gray-600">Timezone</Label>
-              <Select value={timeZone} onValueChange={setTimeZone}>
-                <SelectTrigger className="w-56">
-                  <SelectValue placeholder="Select timezone" />
-                </SelectTrigger>
-                <SelectContent className="max-h-64">
-                  {availableTimeZones.map((tz) => (
-                    <SelectItem key={tz} value={tz}>
-                      {tz}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
             <Button
               ref={saveBtnRef}
               onClick={saveAvailabilityPatterns}
@@ -988,7 +940,26 @@ const BulkAvailabilityManager = () => {
                           </Badge>
                         )}
                       </div>
-                      <div className="flex space-x-2">
+                      <div className="flex space-x-2 items-center">
+                        {/* Timezone selector moved next to Add/Clear for quick access */}
+                        <div className="hidden lg:flex items-center space-x-2">
+                          <Label className="text-sm text-gray-600">
+                            Timezone
+                          </Label>
+                          <Select value={timeZone} onValueChange={setTimeZone}>
+                            <SelectTrigger className="w-44">
+                              <SelectValue placeholder="Select timezone" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-64">
+                              {availableTimeZones.map((tz) => (
+                                <SelectItem key={tz} value={tz}>
+                                  {tz}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
                         <Button
                           variant="outline"
                           size="sm"
@@ -1018,6 +989,24 @@ const BulkAvailabilityManager = () => {
                         )}
                       </div>
                     </div>
+
+                    {/* Fallback timezone selector for small screens */}
+                    <div className="flex lg:hidden items-center space-x-2 mb-3">
+                      <Label className="text-sm text-gray-600">Timezone</Label>
+                      <Select value={timeZone} onValueChange={setTimeZone}>
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-64">
+                          {availableTimeZones.map((tz) => (
+                            <SelectItem key={tz} value={tz}>
+                              {tz}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
                     {day.active && (
                       <div className="space-y-2">
                         {day.slots.length === 0 ? (
@@ -1065,7 +1054,6 @@ const BulkAvailabilityManager = () => {
         </Card>
       </div>
 
-      {/* Add Slot Dialog */}
       <Dialog open={addSlotDialogOpen} onOpenChange={setAddSlotDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -1114,6 +1102,22 @@ const BulkAvailabilityManager = () => {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+            {/* Timezone selector inside dialog for clarity */}
+            <div className="space-y-2">
+              <Label>Timezone for this schedule</Label>
+              <Select value={timeZone} onValueChange={setTimeZone}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select timezone" />
+                </SelectTrigger>
+                <SelectContent className="max-h-64">
+                  {availableTimeZones.map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <DialogFooter>
