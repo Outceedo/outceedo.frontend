@@ -170,6 +170,10 @@ const ExpertAvailabilityManager = () => {
   const [guideStep, setGuideStep] = useState<number>(0);
   const [showGuide, setShowGuide] = useState<boolean>(false);
 
+  // Store available timezones (to add fetched ones if not in list)
+  const [availableTimeZones, setAvailableTimeZones] =
+    useState<string[]>(TIMEZONES);
+
   const prevMonthBtnRef = useRef<HTMLButtonElement>(null);
   const nextMonthBtnRef = useRef<HTMLButtonElement>(null);
   const helpBtnRef = useRef<HTMLButtonElement>(null);
@@ -246,6 +250,12 @@ const ExpertAvailabilityManager = () => {
     "00:00",
   ];
 
+  // Helper to add timezone to available list if not present
+  const upsertTimeZoneOption = (tz?: string | null) => {
+    if (!tz) return;
+    setAvailableTimeZones((prev) => (prev.includes(tz) ? prev : [tz, ...prev]));
+  };
+
   // Helper function to add 30 minutes to a time string
   const addThirtyMinutes = (time: string): string => {
     if (!time || typeof time !== "string" || !time.includes(":")) return time;
@@ -258,7 +268,7 @@ const ExpertAvailabilityManager = () => {
       newMinute -= 60;
     }
 
-    if (newHour > 23) newHour = 0; // Handle midnight rollover
+    if (newHour > 23) newHour = 0;
 
     return `${newHour.toString().padStart(2, "0")}:${newMinute
       .toString()
@@ -304,7 +314,7 @@ const ExpertAvailabilityManager = () => {
     if (selectedDate) {
       fetchTimeSlotsForSelectedDate();
     }
-  }, [selectedDate, userTimeZone]); // Added userTimeZone as dependency
+  }, [selectedDate, userTimeZone]);
 
   useEffect(() => {
     if (selectedDate) {
@@ -357,7 +367,7 @@ const ExpertAvailabilityManager = () => {
       title: "Mark Day as Available",
       icon: <SwitchComponent className="h-7 w-7 text-green-600" />,
       description:
-        "Use this switch to mark a day as available or unavailable. Unavailable days cannot have slots.",
+        "Use this switch to mark a day as available or unavailable.  Unavailable days cannot have slots.",
       focusRef: switchWrapperRef,
       buttonLabel: "Next",
     },
@@ -365,7 +375,7 @@ const ExpertAvailabilityManager = () => {
       title: "Add/Update/Delete Time Slots",
       icon: <Plus className="h-7 w-7 text-red-600" />,
       description:
-        "Click here to add time slots by specifying a range. Once slots are added, use the update button to modify the range or delete button to remove all slots.",
+        "Click here to add time slots by specifying a range.  Once slots are added, use the update button to modify the range or delete button to remove all slots.",
       focusRef: addSlotBtnRef,
       buttonLabel: "Finish",
     },
@@ -502,8 +512,18 @@ const ExpertAvailabilityManager = () => {
       const formattedDate = formatDateString(dateObj);
       try {
         const response = await axiosInstance.get(
-          `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}&timezone=${userTimeZone}`
+          `${API_BASE_URL}/${expertId}/slots? date=${formattedDate}&timezone=${userTimeZone}`
         );
+
+        // Update timezone from response if available
+        if (response.data?.expertTimeZone) {
+          const fetchedTz = response.data.expertTimeZone;
+          upsertTimeZoneOption(fetchedTz);
+          if (fetchedTz !== userTimeZone) {
+            setUserTimeZone(fetchedTz);
+          }
+        }
+
         if (
           response.data &&
           Array.isArray(response.data.slots) &&
@@ -525,6 +545,19 @@ const ExpertAvailabilityManager = () => {
     try {
       const response = await axiosInstance.get(`${API_BASE_URL}/${expertId}`);
       setAvailabilityPatterns(response.data);
+
+      // Check if any pattern has timezone and update dropdown
+      if (Array.isArray(response.data) && response.data.length > 0) {
+        const tzFromServer = response.data.find(
+          (p: any) => p.timezone
+        )?.timezone;
+        if (tzFromServer) {
+          upsertTimeZoneOption(tzFromServer);
+          if (tzFromServer !== userTimeZone) {
+            setUserTimeZone(tzFromServer);
+          }
+        }
+      }
     } catch (error) {
       Swal.fire("Error", "Failed to load availability patterns", "error");
     } finally {
@@ -535,7 +568,7 @@ const ExpertAvailabilityManager = () => {
   const fetchMonthlyAvailability = async () => {
     try {
       const response = await axiosInstance.get(
-        `${API_BASE_URL}/${expertId}/monthly?month=${
+        `${API_BASE_URL}/${expertId}/monthly? month=${
           currentMonth + 1
         }&year=${currentYear}`
       );
@@ -555,12 +588,23 @@ const ExpertAvailabilityManager = () => {
         `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}&timezone=${userTimeZone}`
       );
 
+      // Update timezone from response - this is the key fix
+      if (response.data?.expertTimeZone) {
+        const fetchedTz = response.data.expertTimeZone;
+        // Add to available options if not present
+        upsertTimeZoneOption(fetchedTz);
+        // Update the dropdown value
+        if (fetchedTz !== userTimeZone) {
+          setUserTimeZone(fetchedTz);
+        }
+      }
+
       const transformedSlots: TimeSlot[] = response.data.slots.map(
         (slot: any) => ({
           id: slot.id || generateId(),
           date: formattedDate,
-          startTime: slot.startTime, // Use startTime instead of displayStartTime
-          endTime: slot.endTime || addThirtyMinutes(slot.startTime), // If no endTime, add 30 minutes
+          startTime: slot.startTime,
+          endTime: slot.endTime || addThirtyMinutes(slot.startTime),
           available: slot.isAvailable,
           reason: slot.reason,
           blockid: slot.blockId || "",
@@ -630,7 +674,7 @@ const ExpertAvailabilityManager = () => {
         fetchCalendarSlotsForMonth();
         Swal.fire(
           "Success",
-          `Time slot from ${timeSlot.startTime} to ${timeSlot.endTime} has been blocked.`,
+          `Time slot from ${timeSlot.startTime} to ${timeSlot.endTime} has been blocked. `,
           "success"
         );
       }
@@ -675,7 +719,7 @@ const ExpertAvailabilityManager = () => {
           "Success",
           `${formatDateForDisplay(
             date
-          )} has been unblocked and is now available.`,
+          )} has been unblocked and is now available. `,
           "success"
         );
         return;
@@ -828,12 +872,12 @@ const ExpertAvailabilityManager = () => {
       await axiosInstance.post(`${API_BASE_URL}`, payload);
 
       fetchTimeSlotsForSelectedDate();
-      fetchAvailabilityPattern();
+      fetchAvailabilityPatterns();
       fetchCalendarSlotsForMonth();
 
       Swal.fire(
         "Success",
-        `Time slots updated! ${generatedSlots.length} slots now available from ${newSlotStartTime} to ${newSlotEndTime}.`,
+        `Time slots updated!  ${generatedSlots.length} slots now available from ${newSlotStartTime} to ${newSlotEndTime}.`,
         "success"
       );
       return true;
@@ -841,8 +885,6 @@ const ExpertAvailabilityManager = () => {
       setUpdateSlotDialogOpen(false);
       return true;
     }
-    // Swal.fire("Error", "Failed to update time slots", "error");
-    // return false;
   };
 
   const deleteAllTimeSlots = async () => {
@@ -862,8 +904,8 @@ const ExpertAvailabilityManager = () => {
       }
 
       const result = await Swal.fire({
-        title: "Delete All Time Slots?",
-        text: `This will delete all time slots for ${dayOfWeekReverseMap[dayOfWeek]}s. This action cannot be undone.`,
+        title: "Delete All Time Slots? ",
+        text: `This will delete all time slots for ${dayOfWeekReverseMap[dayOfWeek]}s.  This action cannot be undone.`,
         icon: "warning",
         showCancelButton: true,
         confirmButtonColor: "#dc2626",
@@ -1170,655 +1212,673 @@ const ExpertAvailabilityManager = () => {
   const hasTimeSlots = timeSlots.length > 0;
 
   return (
-  <div className="container mx-auto py-6 px-2 sm:px-4 md:px-6 lg:px-8">
-    {showGuide && (
-      <GuidePopper
-        stepCard={guideSteps[guideStep]}
-        onNext={handleNextStep}
-        onClose={handleCloseGuide}
-      />
-    )}
-    <div className="flex flex-col space-y-6">
-      <h1 className="text-2xl font-bold text-center sm:text-left">
-        Manage Your Availability
-      </h1>
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="calendar">Calendar View</TabsTrigger>
-          <TabsTrigger value="list">List View</TabsTrigger>
-        </TabsList>
-        <TabsContent value="calendar" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-                <div className="flex items-center space-y-2 sm:gap-2">
-                  <Calendar className="h-5 w-5 text-gray-500" />
-                  <CardTitle>Monthly Availability</CardTitle>
-                  <Button
-                    ref={helpBtnRef}
-                    variant="ghost"
-                    className="px-1"
-                    onClick={() => {
-                      setShowGuide(true);
-                      setGuideStep(0);
-                      localStorage.removeItem(GUIDE_CARDS_KEY);
-                    }}
-                    aria-label="Show Help Guide"
-                  >
-                    <HelpCircle className="h-5 w-5 text-blue-500" />
-                  </Button>
-                </div>
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                  <div className="flex items-center">
-                    <Label
-                      htmlFor="timezone-select"
-                      className="mr-2 text-sm font-medium"
-                    >
-                      Timezone:
-                    </Label>
-                    <Select
-                      value={userTimeZone}
-                      onValueChange={(v) => setUserTimeZone(v)}
-                    >
-                      <SelectTrigger id="timezone-select" className="w-[160px] sm:w-[180px]">
-                        <SelectValue placeholder="Select timezone" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TIMEZONES.map((tz) => (
-                          <SelectItem key={tz} value={tz}>
-                            {tz}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="flex items-center mt-2 sm:mt-0">
-                  <Button
-                    ref={prevMonthBtnRef}
-                    variant="outline"
-                    size="icon"
-                    onClick={handlePrevMonth}
-                    className="mr-2"
-                  >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-md font-medium">
-                    {monthNames[currentMonth]} {currentYear}
-                  </span>
-                  <Button
-                    ref={nextMonthBtnRef}
-                    variant="outline"
-                    size="icon"
-                    onClick={handleNextMonth}
-                    className="ml-2"
-                  >
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-7 gap-1 mb-2">
-                {dayNames.map((day, index) => (
-                  <div
-                    key={index}
-                    className="text-center text-xs sm:text-sm font-medium text-gray-500"
-                  >
-                    {day}
-                  </div>
-                ))}
-              </div>
-              <div className="grid grid-cols-7 gap-1">
-                {calendarDays.map((day, index) => {
-                  if (day === null) {
-                    return (
-                      <div key={`empty-${index}`} className="h-10 sm:h-14 p-1"></div>
-                    );
-                  }
-                  const formattedDate = formatDateString(day);
-                  const isAvailable = monthlyAvailability[formattedDate];
-                  const isSelected = isSameDay(day, selectedDate);
-                  const slotsForDay = calendarTimeSlots[formattedDate] || [];
-                  const hasSlots = slotsForDay.length > 0;
-                  const isPast = isPastDay(day);
-                  return (
-                    <div
-                      key={formattedDate}
+    <div className="container mx-auto py-6 px-2 sm:px-4 md:px-6 lg:px-8">
+      {showGuide && (
+        <GuidePopper
+          stepCard={guideSteps[guideStep]}
+          onNext={handleNextStep}
+          onClose={handleCloseGuide}
+        />
+      )}
+      <div className="flex flex-col space-y-6">
+        <h1 className="text-2xl font-bold text-center sm:text-left">
+          Manage Your Availability
+        </h1>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="calendar">Calendar View</TabsTrigger>
+            <TabsTrigger value="list">List View</TabsTrigger>
+          </TabsList>
+          <TabsContent value="calendar" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                  <div className="flex items-center space-y-2 sm:gap-2">
+                    <Calendar className="h-5 w-5 text-gray-500" />
+                    <CardTitle>Monthly Availability</CardTitle>
+                    <Button
+                      ref={helpBtnRef}
+                      variant="ghost"
+                      className="px-1"
                       onClick={() => {
-                        if (!isPast) handleDateSelect(day);
+                        setShowGuide(true);
+                        setGuideStep(0);
+                        localStorage.removeItem(GUIDE_CARDS_KEY);
                       }}
-                      className={`
-                        h-10 sm:h-14 p-1 border rounded-md flex flex-col justify-between cursor-pointer relative
-                        ${
-                          isSelected
-                            ? "border-red-500 bg-red-50"
-                            : "border-gray-200 hover:border-gray-300"
-                        }
-                        ${isPast ? "opacity-50 cursor-not-allowed" : ""}
-                      `}
-                      style={{
-                        pointerEvents: isPast ? "none" : undefined,
-                        background: isSelected
-                          ? "#fef2f2"
-                          : isPast
-                          ? "#f9fafb"
-                          : undefined,
-                      }}
-                      aria-disabled={isPast}
+                      aria-label="Show Help Guide"
                     >
-                      <div className="absolute top-1 left-1">
-                        {isAvailable === true && !isPast ? (
-                          hasSlots ? (
-                            <ClockIcon
-                              className="h-4 w-4 text-green-500"
-                              title="Time slots added"
-                            />
-                          ) : (
-                            <ClockIcon
-                              className="h-4 w-4 text-red-500"
-                              title="No time slots for available day"
-                            />
-                          )
-                        ) : null}
-                      </div>
-                      <div className="text-right text-xs sm:text-sm font-medium">
-                        {day.getDate()}
-                      </div>
-                      <div className="flex justify-center">
-                        {isAvailable === false && !isPast ? (
-                          <Badge
-                            variant="outline"
-                            className="bg-gray-100 text-gray-500 text-[10px] sm:text-xs"
-                          >
-                            Unavailable
-                          </Badge>
-                        ) : isAvailable === true && !isPast ? (
-                          <Badge
-                            variant="outline"
-                            className="bg-green-50 text-green-600 text-[10px] sm:text-xs"
-                          >
-                            Available
-                          </Badge>
-                        ) : null}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-            <div className="h-12 flex flex-col justify-between items-end px-2 sm:px-8">
-              <div className="flex w-36 justify-between items-center">
-                <ClockIcon
-                  className="h-4 w-4 text-green-500"
-                  title="Time slots added"
-                />
-                <p className="text-xs sm:text-sm">Added time slots</p>
-              </div>
-              <div className="flex w-36 gap-2 items-center">
-                <ClockIcon
-                  className="h-4 w-4 text-red-500"
-                  title="No time slots for available day"
-                />
-                <p className="text-xs sm:text-sm">No time slots</p>
-              </div>
-            </div>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
-                <div className="flex items-center space-x-4">
-                  <Clock className="h-5 w-5 text-gray-500" />
-                  <CardTitle>Daily Slots</CardTitle>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-xs sm:text-sm font-medium">
-                    {selectedDate.toLocaleDateString("en-US", {
-                      weekday: "long",
-                      year: "numeric",
-                      month: "long",
-                      day: "numeric",
-                    })}
-                  </span>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="mb-4 flex  items-center justify-between gap-3">
-                <div
-                  className="flex items-center space-x-2"
-                  ref={switchWrapperRef}
-                >
-                  <Label
-                    htmlFor="day-availability"
-                    className="text-xs sm:text-sm font-medium"
-                  >
-                    Mark day as available
-                  </Label>
-                  <SwitchComponent
-                    id="day-availability"
-                    checked={selectedDayAvailability}
-                    onCheckedChange={handleDayAvailabilityToggle}
-                  />
-                </div>
-
-                <div className="flex  items-center gap-3">
-                  {hasTimeSlots ? (
-                    <>
-                      <Button
-                        ref={updateSlotBtnRef}
-                        variant="outline"
-                        size="sm"
-                        className="flex items-center"
-                        disabled={!selectedDayAvailability}
-                        onClick={handleOpenUpdateDialog}
+                      <HelpCircle className="h-5 w-5 text-blue-500" />
+                    </Button>
+                  </div>
+                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                    <div className="flex items-center">
+                      <Label
+                        htmlFor="timezone-select"
+                        className="mr-2 text-sm font-medium"
                       >
-                        <Edit className="h-4 w-4 mr-1" />
-                        <span className="hidden xs:inline">Update Slots</span>
-                      </Button>
-                      <Button
-                        ref={addSlotBtnRef}
-                        variant="destructive"
-                        size="sm"
-                        className="flex items-center"
-                        disabled={!selectedDayAvailability}
-                        onClick={handleDeleteAllTimeSlots}
+                        Timezone:
+                      </Label>
+                      <Select
+                        value={userTimeZone}
+                        onValueChange={(v) => setUserTimeZone(v)}
                       >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        <span className="hidden xs:inline">Delete All Slots</span>
-                      </Button>
-                    </>
-                  ) : (
-                    <Dialog
-                      open={addSlotDialogOpen}
-                      onOpenChange={setAddSlotDialogOpen}
-                    >
-                      <DialogTrigger asChild>
-                        <Button
-                          ref={addSlotBtnRef}
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center"
-                          disabled={!selectedDayAvailability}
+                        <SelectTrigger
+                          id="timezone-select"
+                          className="w-[160px] sm:w-[180px]"
                         >
-                          <Plus className="h-4 w-4 mr-1" />
-                          <span className="hidden xs:inline">Add Time Slots</span>
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Add Time Slots</DialogTitle>
-                          <DialogDescription>
-                            Create time slots by specifying a range for{" "}
-                            {selectedDate.toLocaleDateString("en-US", {
-                              weekday: "long",
-                              year: "numeric",
-                              month: "long",
-                              day: "numeric",
-                            })}
-                          </DialogDescription>
-                        </DialogHeader>
-                        <div className="grid gap-4 py-4">
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                              <Label htmlFor="start-time">Start Time</Label>
-                              <Select
-                                value={newSlotStartTime}
-                                onValueChange={setNewSlotStartTime}
-                              >
-                                <SelectTrigger id="start-time">
-                                  <SelectValue placeholder="Select start time" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {timeOptions.map((time) => (
-                                    <SelectItem
-                                      key={`start-${time}`}
-                                      value={time}
-                                    >
-                                      {time}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                            <div className="space-y-2">
-                              <Label htmlFor="end-time">End Time</Label>
-                              <Select
-                                value={newSlotEndTime}
-                                onValueChange={setNewSlotEndTime}
-                              >
-                                <SelectTrigger id="end-time">
-                                  <SelectValue placeholder="Select end time" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  {timeOptions.map((time) => (
-                                    <SelectItem
-                                      key={`end-${time}`}
-                                      value={time}
-                                    >
-                                      {time}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                            </div>
-                          </div>
-                          <div className="text-xs sm:text-sm text-gray-600">
-                            This will create time slots between{" "}
-                            {newSlotStartTime} and {newSlotEndTime}.
-                          </div>
-                        </div>
-                        <DialogFooter>
-                          <Button
-                            variant="outline"
-                            onClick={() => setAddSlotDialogOpen(false)}
-                          >
-                            Cancel
-                          </Button>
-                          <Button onClick={handleAddTimeSlots}>
-                            Add Slots
-                          </Button>
-                        </DialogFooter>
-                      </DialogContent>
-                    </Dialog>
-                  )}
+                          <SelectValue placeholder="Select timezone" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableTimeZones.map((tz) => (
+                            <SelectItem key={tz} value={tz}>
+                              {tz}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="flex items-center mt-2 sm:mt-0">
+                    <Button
+                      ref={prevMonthBtnRef}
+                      variant="outline"
+                      size="icon"
+                      onClick={handlePrevMonth}
+                      className="mr-2"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-md font-medium">
+                      {monthNames[currentMonth]} {currentYear}
+                    </span>
+                    <Button
+                      ref={nextMonthBtnRef}
+                      variant="outline"
+                      size="icon"
+                      onClick={handleNextMonth}
+                      className="ml-2"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-              </div>
-
-              {loading ? (
-                <div className="flex justify-center items-center h-40">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
-                </div>
-              ) : !selectedDayAvailability ? (
-                <div className="flex flex-col items-center justify-center h-40 text-gray-500">
-                  <AlertCircle className="h-10 w-10 mb-2" />
-                  <p>This day is marked as unavailable</p>
-                  <p className="text-xs sm:text-sm">
-                    Toggle the switch above to make it available.
-                  </p>
-                </div>
-              ) : timeSlots.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-40 text-gray-500">
-                  <Clock className="h-10 w-10 mb-2" />
-                  <p>No time slots available</p>
-                  <p className="text-xs sm:text-sm">
-                    Click the "Add Time Slots" button to create slots.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {Object.entries(groupedTimeSlots).map(([hour, slots]) => (
-                    <div key={hour} className="space-y-2">
-                      <h3 className="text-xs sm:text-sm font-medium text-gray-700">
-                        {hour}:00 -{" "}
-                        {String(parseInt(hour) + 1).padStart(2, "0")}:00
-                      </h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-                        {slots.map((slot) => (
-                          <div
-                            key={slot.id}
-                            className={`
-                              p-3 border rounded-md
-                              ${
-                                !slot.available
-                                  ? "bg-gray-50 border-gray-300"
-                                  : "border-gray-200"
-                              }
-                            `}
-                          >
-                            <div className="flex justify-between items-center">
-                              <div>
-                                <span className="text-xs sm:text-sm font-medium">
-                                  {slot.startTime} - {slot.endTime}
-                                </span>
-                                {!slot.available && slot.blockid && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 text-red-600 hover:bg-green-50 ml-2"
-                                          onClick={() =>
-                                            unblockTimeSlot(slot.blockid)
-                                          }
-                                        >
-                                          <Unlock className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Unblock time slot</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                                {slot.reason && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <div className="inline-block ml-1">
-                                          <Info className="h-4 w-4 text-gray-400 inline-block" />
-                                        </div>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Reason: {slot.reason}</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                              </div>
-                              {slot.available && (
-                                <div className="flex space-x-1">
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Button
-                                          variant="ghost"
-                                          size="icon"
-                                          className="h-7 w-7 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
-                                          onClick={() =>
-                                            handleBlockTimeSlot(slot)
-                                          }
-                                        >
-                                          <AlertCircle className="h-4 w-4" />
-                                        </Button>
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Block time slot</p>
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-7 gap-1 mb-2">
+                  {dayNames.map((day, index) => (
+                    <div
+                      key={index}
+                      className="text-center text-xs sm:text-sm font-medium text-gray-500"
+                    >
+                      {day}
                     </div>
                   ))}
                 </div>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="list" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <div className="flex   items-center gap-2">
-                <Clock className="h-5 w-5 text-gray-500" />
-                <CardTitle>All Available Time Slots</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {Object.entries(monthlyAvailability)
-                  .filter(([_, isAvailable]) => isAvailable)
-                  .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
-                  .map(([date]) => {
-                    const dateObj = new Date(date);
-                    const formattedDate = dateObj.toLocaleDateString(
-                      "en-US",
-                      {
-                        weekday: "short",
-                        month: "short",
-                        day: "numeric",
-                      }
-                    );
-
+                <div className="grid grid-cols-7 gap-1">
+                  {calendarDays.map((day, index) => {
+                    if (day === null) {
+                      return (
+                        <div
+                          key={`empty-${index}`}
+                          className="h-10 sm:h-14 p-1"
+                        ></div>
+                      );
+                    }
+                    const formattedDate = formatDateString(day);
+                    const isAvailable = monthlyAvailability[formattedDate];
+                    const isSelected = isSameDay(day, selectedDate);
+                    const slotsForDay = calendarTimeSlots[formattedDate] || [];
+                    const hasSlots = slotsForDay.length > 0;
+                    const isPast = isPastDay(day);
                     return (
-                      <div key={date} className="border rounded-md p-2 sm:p-4">
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
-                          <h3 className="text-sm sm:text-md font-medium">
-                            {formattedDate}
-                          </h3>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              const dateObj = new Date(date);
-                              setSelectedDate(dateObj);
-                              setCurrentMonth(dateObj.getMonth());
-                              setCurrentYear(dateObj.getFullYear());
-                              setActiveTab("calendar");
-                            }}
-                          >
-                            View Day
-                          </Button>
+                      <div
+                        key={formattedDate}
+                        onClick={() => {
+                          if (!isPast) handleDateSelect(day);
+                        }}
+                        className={`
+                          h-10 sm: h-14 p-1 border rounded-md flex flex-col justify-between cursor-pointer relative
+                          ${
+                            isSelected
+                              ? "border-red-500 bg-red-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }
+                          ${isPast ? "opacity-50 cursor-not-allowed" : ""}
+                        `}
+                        style={{
+                          pointerEvents: isPast ? "none" : undefined,
+                          background: isSelected
+                            ? "#fef2f2"
+                            : isPast
+                            ? "#f9fafb"
+                            : undefined,
+                        }}
+                        aria-disabled={isPast}
+                      >
+                        <div className="absolute top-1 left-1">
+                          {isAvailable === true && !isPast ? (
+                            hasSlots ? (
+                              <ClockIcon
+                                className="h-4 w-4 text-green-500"
+                                title="Time slots added"
+                              />
+                            ) : (
+                              <ClockIcon
+                                className="h-4 w-4 text-red-500"
+                                title="No time slots for available day"
+                              />
+                            )
+                          ) : null}
+                        </div>
+                        <div className="text-right text-xs sm:text-sm font-medium">
+                          {day.getDate()}
+                        </div>
+                        <div className="flex justify-center">
+                          {isAvailable === false && !isPast ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-gray-100 text-gray-500 text-[10px] sm:text-xs"
+                            >
+                              Unavailable
+                            </Badge>
+                          ) : isAvailable === true && !isPast ? (
+                            <Badge
+                              variant="outline"
+                              className="bg-green-50 text-green-600 text-[10px] sm:text-xs"
+                            >
+                              Available
+                            </Badge>
+                          ) : null}
                         </div>
                       </div>
                     );
                   })}
+                </div>
+              </CardContent>
+              <div className="h-12 flex flex-col justify-between items-end px-2 sm:px-8">
+                <div className="flex w-36 justify-between items-center">
+                  <ClockIcon
+                    className="h-4 w-4 text-green-500"
+                    title="Time slots added"
+                  />
+                  <p className="text-xs sm:text-sm">Added time slots</p>
+                </div>
+                <div className="flex w-36 gap-2 items-center">
+                  <ClockIcon
+                    className="h-4 w-4 text-red-500"
+                    title="No time slots for available day"
+                  />
+                  <p className="text-xs sm:text-sm">No time slots</p>
+                </div>
               </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col gap-2 sm:flex-row sm:justify-between sm:items-center">
+                  <div className="flex items-center space-x-4">
+                    <Clock className="h-5 w-5 text-gray-500" />
+                    <CardTitle>Daily Slots</CardTitle>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs sm:text-sm font-medium">
+                      {selectedDate.toLocaleDateString("en-US", {
+                        weekday: "long",
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </span>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="mb-4 flex items-center justify-between gap-3">
+                  <div
+                    className="flex items-center space-x-2"
+                    ref={switchWrapperRef}
+                  >
+                    <Label
+                      htmlFor="day-availability"
+                      className="text-xs sm:text-sm font-medium"
+                    >
+                      Mark day as available
+                    </Label>
+                    <SwitchComponent
+                      id="day-availability"
+                      checked={selectedDayAvailability}
+                      onCheckedChange={handleDayAvailabilityToggle}
+                    />
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {hasTimeSlots ? (
+                      <>
+                        <Button
+                          ref={updateSlotBtnRef}
+                          variant="outline"
+                          size="sm"
+                          className="flex items-center"
+                          disabled={!selectedDayAvailability}
+                          onClick={handleOpenUpdateDialog}
+                        >
+                          <Edit className="h-4 w-4 mr-1" />
+                          <span className="hidden xs:inline">Update Slots</span>
+                        </Button>
+                        <Button
+                          ref={addSlotBtnRef}
+                          variant="destructive"
+                          size="sm"
+                          className="flex items-center"
+                          disabled={!selectedDayAvailability}
+                          onClick={handleDeleteAllTimeSlots}
+                        >
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          <span className="hidden xs:inline">
+                            Delete All Slots
+                          </span>
+                        </Button>
+                      </>
+                    ) : (
+                      <Dialog
+                        open={addSlotDialogOpen}
+                        onOpenChange={setAddSlotDialogOpen}
+                      >
+                        <DialogTrigger asChild>
+                          <Button
+                            ref={addSlotBtnRef}
+                            variant="outline"
+                            size="sm"
+                            className="flex items-center"
+                            disabled={!selectedDayAvailability}
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            <span className="hidden xs:inline">
+                              Add Time Slots
+                            </span>
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                          <DialogHeader>
+                            <DialogTitle>Add Time Slots</DialogTitle>
+                            <DialogDescription>
+                              Create time slots by specifying a range for{" "}
+                              {selectedDate.toLocaleDateString("en-US", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </DialogDescription>
+                          </DialogHeader>
+                          <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="start-time">Start Time</Label>
+                                <Select
+                                  value={newSlotStartTime}
+                                  onValueChange={setNewSlotStartTime}
+                                >
+                                  <SelectTrigger id="start-time">
+                                    <SelectValue placeholder="Select start time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem
+                                        key={`start-${time}`}
+                                        value={time}
+                                      >
+                                        {time}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="end-time">End Time</Label>
+                                <Select
+                                  value={newSlotEndTime}
+                                  onValueChange={setNewSlotEndTime}
+                                >
+                                  <SelectTrigger id="end-time">
+                                    <SelectValue placeholder="Select end time" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {timeOptions.map((time) => (
+                                      <SelectItem
+                                        key={`end-${time}`}
+                                        value={time}
+                                      >
+                                        {time}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            </div>
+                            <div className="text-xs sm:text-sm text-gray-600">
+                              This will create time slots between{" "}
+                              {newSlotStartTime} and {newSlotEndTime} in{" "}
+                              <span className="font-medium">
+                                {userTimeZone}
+                              </span>
+                              .
+                            </div>
+                          </div>
+                          <DialogFooter>
+                            <Button
+                              variant="outline"
+                              onClick={() => setAddSlotDialogOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button onClick={handleAddTimeSlots}>
+                              Add Slots
+                            </Button>
+                          </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                    )}
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="flex justify-center items-center h-40">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                  </div>
+                ) : !selectedDayAvailability ? (
+                  <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                    <AlertCircle className="h-10 w-10 mb-2" />
+                    <p>This day is marked as unavailable</p>
+                    <p className="text-xs sm:text-sm">
+                      Toggle the switch above to make it available.
+                    </p>
+                  </div>
+                ) : timeSlots.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-40 text-gray-500">
+                    <Clock className="h-10 w-10 mb-2" />
+                    <p>No time slots available</p>
+                    <p className="text-xs sm:text-sm">
+                      Click the "Add Time Slots" button to create slots.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {Object.entries(groupedTimeSlots).map(([hour, slots]) => (
+                      <div key={hour} className="space-y-2">
+                        <h3 className="text-xs sm:text-sm font-medium text-gray-700">
+                          {hour}: 00 -{" "}
+                          {String(parseInt(hour) + 1).padStart(2, "0")}:00
+                        </h3>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                          {slots.map((slot) => (
+                            <div
+                              key={slot.id}
+                              className={`
+                                p-3 border rounded-md
+                                ${
+                                  !slot.available
+                                    ? "bg-gray-50 border-gray-300"
+                                    : "border-gray-200"
+                                }
+                              `}
+                            >
+                              <div className="flex justify-between items-center">
+                                <div>
+                                  <span className="text-xs sm:text-sm font-medium">
+                                    {slot.startTime} - {slot.endTime}
+                                  </span>
+                                  {!slot.available && slot.blockid && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-red-600 hover:bg-green-50 ml-2"
+                                            onClick={() =>
+                                              unblockTimeSlot(slot.blockid)
+                                            }
+                                          >
+                                            <Unlock className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Unblock time slot</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                  {slot.reason && (
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <div className="inline-block ml-1">
+                                            <Info className="h-4 w-4 text-gray-400 inline-block" />
+                                          </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Reason: {slot.reason}</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  )}
+                                </div>
+                                {slot.available && (
+                                  <div className="flex space-x-1">
+                                    <TooltipProvider>
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-7 w-7 text-yellow-500 hover:text-yellow-600 hover:bg-yellow-50"
+                                            onClick={() =>
+                                              handleBlockTimeSlot(slot)
+                                            }
+                                          >
+                                            <AlertCircle className="h-4 w-4" />
+                                          </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                          <p>Block time slot</p>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    </TooltipProvider>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="list" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <div className="flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-gray-500" />
+                  <CardTitle>All Available Time Slots</CardTitle>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {Object.entries(monthlyAvailability)
+                    .filter(([_, isAvailable]) => isAvailable)
+                    .sort(([dateA], [dateB]) => dateA.localeCompare(dateB))
+                    .map(([date]) => {
+                      const dateObj = new Date(date);
+                      const formattedDate = dateObj.toLocaleDateString(
+                        "en-US",
+                        {
+                          weekday: "short",
+                          month: "short",
+                          day: "numeric",
+                        }
+                      );
+
+                      return (
+                        <div
+                          key={date}
+                          className="border rounded-md p-2 sm:p-4"
+                        >
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3 gap-2">
+                            <h3 className="text-sm sm:text-md font-medium">
+                              {formattedDate}
+                            </h3>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const dateObj = new Date(date);
+                                setSelectedDate(dateObj);
+                                setCurrentMonth(dateObj.getMonth());
+                                setCurrentYear(dateObj.getFullYear());
+                                setActiveTab("calendar");
+                              }}
+                            >
+                              View Day
+                            </Button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+
+      <Dialog
+        open={updateSlotDialogOpen}
+        onOpenChange={setUpdateSlotDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Update Time Slots</DialogTitle>
+            <DialogDescription>
+              Update the time range for slots on{" "}
+              {selectedDate.toLocaleDateString("en-US", {
+                weekday: "long",
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-1 sm: grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="update-start-time">Start Time</Label>
+                <Select
+                  value={newSlotStartTime}
+                  onValueChange={setNewSlotStartTime}
+                >
+                  <SelectTrigger id="update-start-time">
+                    <SelectValue placeholder="Select start time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((time) => (
+                      <SelectItem key={`update-start-${time}`} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="update-end-time">End Time</Label>
+                <Select
+                  value={newSlotEndTime}
+                  onValueChange={setNewSlotEndTime}
+                >
+                  <SelectTrigger id="update-end-time">
+                    <SelectValue placeholder="Select end time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {timeOptions.map((time) => (
+                      <SelectItem key={`update-end-${time}`} value={time}>
+                        {time}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="text-xs sm:text-sm text-gray-600">
+              This will replace all existing slots with new slots between{" "}
+              {newSlotStartTime} and {newSlotEndTime} in{" "}
+              <span className="font-medium">{userTimeZone}</span>.
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setUpdateSlotDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateTimeSlots}>Update Slots</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={blockReasonDialogOpen}
+        onOpenChange={setBlockReasonDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {blockingTimeSlot ? "Block Time Slot" : "Block Entire Day"}
+            </DialogTitle>
+            <DialogDescription>
+              {blockingTimeSlot
+                ? `Block the time slot from ${blockingTimeSlot.startTime} to ${blockingTimeSlot.endTime}`
+                : `Mark ${blockingDate?.toLocaleDateString("en-US", {
+                    weekday: "long",
+                    month: "long",
+                    day: "numeric",
+                  })} as unavailable`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="block-reason">Reason for blocking</Label>
+              <Input
+                id="block-reason"
+                placeholder="e.g., Personal appointment, Out of town, etc."
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBlockReasonDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleConfirmBlock}
+              disabled={blockReason.trim() === ""}
+            >
+              Block {blockingTimeSlot ? "Time Slot" : "Day"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-
-    <Dialog
-      open={updateSlotDialogOpen}
-      onOpenChange={setUpdateSlotDialogOpen}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Update Time Slots</DialogTitle>
-          <DialogDescription>
-            Update the time range for slots on{" "}
-            {selectedDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="update-start-time">Start Time</Label>
-              <Select
-                value={newSlotStartTime}
-                onValueChange={setNewSlotStartTime}
-              >
-                <SelectTrigger id="update-start-time">
-                  <SelectValue placeholder="Select start time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeOptions.map((time) => (
-                    <SelectItem key={`update-start-${time}`} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="update-end-time">End Time</Label>
-              <Select
-                value={newSlotEndTime}
-                onValueChange={setNewSlotEndTime}
-              >
-                <SelectTrigger id="update-end-time">
-                  <SelectValue placeholder="Select end time" />
-                </SelectTrigger>
-                <SelectContent>
-                  {timeOptions.map((time) => (
-                    <SelectItem key={`update-end-${time}`} value={time}>
-                      {time}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="text-xs sm:text-sm text-gray-600">
-            This will replace all existing slots with new slots between{" "}
-            {newSlotStartTime} and {newSlotEndTime}.
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setUpdateSlotDialogOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleUpdateTimeSlots}>Update Slots</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    <Dialog
-      open={blockReasonDialogOpen}
-      onOpenChange={setBlockReasonDialogOpen}
-    >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {blockingTimeSlot ? "Block Time Slot" : "Block Entire Day"}
-          </DialogTitle>
-          <DialogDescription>
-            {blockingTimeSlot
-              ? `Block the time slot from ${blockingTimeSlot.startTime} to ${blockingTimeSlot.endTime}`
-              : `Mark ${blockingDate?.toLocaleDateString("en-US", {
-                  weekday: "long",
-                  month: "long",
-                  day: "numeric",
-                })} as unavailable`}
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="block-reason">Reason for blocking</Label>
-            <Input
-              id="block-reason"
-              placeholder="e.g., Personal appointment, Out of town, etc."
-              value={blockReason}
-              onChange={(e) => setBlockReason(e.target.value)}
-            />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setBlockReasonDialogOpen(false)}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={handleConfirmBlock}
-            disabled={blockReason.trim() === ""}
-          >
-            Block {blockingTimeSlot ? "Time Slot" : "Day"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  </div>
-);
+  );
 };
 
 export default ExpertAvailabilityManager;
