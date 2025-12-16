@@ -512,7 +512,7 @@ const ExpertAvailabilityManager = () => {
       const formattedDate = formatDateString(dateObj);
       try {
         const response = await axiosInstance.get(
-          `${API_BASE_URL}/${expertId}/slots? date=${formattedDate}&timezone=${userTimeZone}`
+          `${API_BASE_URL}/${expertId}/slots?date=${formattedDate}&timezone=${userTimeZone}`
         );
 
         // Update timezone from response if available
@@ -568,7 +568,7 @@ const ExpertAvailabilityManager = () => {
   const fetchMonthlyAvailability = async () => {
     try {
       const response = await axiosInstance.get(
-        `${API_BASE_URL}/${expertId}/monthly? month=${
+        `${API_BASE_URL}/${expertId}/monthly?month=${
           currentMonth + 1
         }&year=${currentYear}`
       );
