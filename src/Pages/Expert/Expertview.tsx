@@ -137,7 +137,7 @@ const Expertview = () => {
   const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
 
   const isUserOnPremiumPlan =
-    isActive && planName && planName.toLowerCase() !== "free" || true;
+    isActive && planName && planName.toLowerCase() !== "free";
 
   const isServiceAllowed = (serviceId: string) => {
     if (!isUserOnPremiumPlan) {
