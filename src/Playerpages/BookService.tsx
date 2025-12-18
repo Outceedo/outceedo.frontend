@@ -730,6 +730,7 @@ const BookingCalendar: React.FC = () => {
         description: bookingDescription,
         price: finalPrice,
         timezone: userTimeZone,
+        expertTimeZone: expertTimeZone,
       };
 
       const token = localStorage.getItem("token");
@@ -1085,9 +1086,9 @@ const BookingCalendar: React.FC = () => {
                   (Affects available slots display)
                 </span>
               </div>
-              <div className="mb-2 text-xs text-gray-600">
+              <div className="mb-2 text-lg text-gray-600">
                 Expert timezone:{" "}
-                <span className="font-semibold">
+                <span className="font-semibold text-red-500">
                   {expertTimeZone || "Not fetched"}
                 </span>
               </div>

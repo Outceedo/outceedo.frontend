@@ -92,6 +92,7 @@ interface Booking {
   startAt: string;
   endAt: string;
   timezone: string;
+  expertTimeZone: string;
   location: string | null;
   meetLink: string | null;
   recordedVideo: string | null;
@@ -111,174 +112,58 @@ interface Booking {
   price?: number;
   agora?: any;
 }
-const getTimezoneOffset = (timezone: string): number => {
-  try {
-    const now = new Date();
-    const utc = new Date(now.getTime() + now.getTimezoneOffset() * 60000);
-    const targetTime = new Date(
-      utc.toLocaleString("en-US", { timeZone: timezone })
-    );
-    const targetOffset =
-      (utc.getTime() - targetTime.getTime()) / (1000 * 60 * 60);
-    return -targetOffset;
-  } catch (error) {
-    console.warn("Error getting timezone offset:", error);
-    return 0;
-  }
-};
 
-const getZonedDate = (iso: string, timezone?: string) => {
-  if (!timezone) return new Date(iso);
-
-  try {
-    // Create a date object in the specified timezone
-    const date = new Date(iso);
-
-    // Get the offset difference between UTC and the target timezone
-    const utcTime = date.getTime() + date.getTimezoneOffset() * 60000;
-
-    // Create a temporary date to get the timezone offset
-    const tempDate = new Date(utcTime + getTimezoneOffset(timezone) * 3600000);
-
-    return tempDate;
-  } catch (error) {
-    console.warn("Error handling timezone:", error);
-    return new Date(iso);
-  }
-};
-const getZonedDateIntl = (iso: string, timezone?: string) => {
-  if (!timezone) return new Date(iso);
-
-  try {
-    const date = new Date(iso);
-
-    // Use Intl.DateTimeFormat to format in the target timezone
-    const formatter = new Intl.DateTimeFormat("en-CA", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      timeZone: timezone,
-      hour12: false,
-    });
-
-    const parts = formatter.formatToParts(date);
-    const values: any = {};
-    parts.forEach((p) => (values[p.type] = p.value));
-
-    // Create a new date object using the timezone-adjusted values
-    return new Date(
-      `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`
-    );
-  } catch (error) {
-    console.warn("Error handling timezone with Intl:", error);
-    return new Date(iso);
-  }
-};
-
-const getLocalDateString = (iso: string, timezone?: string) => {
-  const d = getZonedDateIntl(iso, timezone);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-${String(d.getDate()).padStart(2, "0")}`;
-};
-
-const getLocalTimeString = (iso: string, timezone?: string) => {
-  const d = getZonedDateIntl(iso, timezone);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(
-    d.getMinutes()
-  ).padStart(2, "0")}`;
-};
-
-const formatDate = (iso: string, timezone?: string) => {
-  try {
-    const date = new Date(iso);
-
-    if (timezone) {
-      // Use the timezone when formatting
-      const formattedDate = date.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-        timeZone: timezone,
-      });
-
-      const timeOptions: Intl.DateTimeFormatOptions = {
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-        timeZone: timezone,
-      };
-
-      const formattedTime = date.toLocaleTimeString("en-US", timeOptions);
-
-      return `${formattedDate} at ${formattedTime}`;
-    } else {
-      // Fallback to local timezone
-      const formattedDate = date.toLocaleDateString("en-US", {
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      });
-
-      let hour = date.getHours();
-      const minutes = date.getMinutes().toString().padStart(2, "0");
-      const ampm = hour >= 12 ? "pm" : "am";
-      hour = hour % 12;
-      hour = hour ? hour : 12;
-
-      return `${formattedDate} at ${hour}:${minutes}${ampm}`;
-    }
-  } catch (error) {
-    console.warn("Error formatting date:", error);
-    return new Date(iso).toLocaleString();
-  }
-};
-
-const formatShortDate = (iso: string, timezone?: string) => {
-  try {
-    const date = new Date(iso);
-    const options: Intl.DateTimeFormatOptions = {
-      month: "short",
-      day: "numeric",
-      ...(timezone && { timeZone: timezone }),
-    };
-
-    return date.toLocaleDateString("en-US", options);
-  } catch (error) {
-    console.warn("Error formatting short date:", error);
-    const d = getZonedDateIntl(iso, timezone);
-    return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  }
-};
-const formatTime = (iso: string, timezone?: string) => {
-  try {
-    const date = new Date(iso);
-    const options: Intl.DateTimeFormatOptions = {
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      ...(timezone && { timeZone: timezone }),
-    };
-
-    return date.toLocaleTimeString("en-US", options);
-  } catch (error) {
-    console.warn("Error formatting time:", error);
-    const d = getZonedDateIntl(iso, timezone);
-    let hour = d.getHours();
-    const min = String(d.getMinutes()).padStart(2, "0");
-    const ampm = hour >= 12 ? "pm" : "am";
-    hour = hour % 12;
-    hour = hour ? hour : 12;
-    return `${hour}:${min}${ampm}`;
-  }
-};
-const formatTimeRange = (startAt: string, endAt: string, timezone?: string) => {
-  return `${formatTime(startAt, timezone)} - ${formatTime(endAt, timezone)}`;
-};
+const TIMEZONES = [
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Berlin",
+  "Europe/Paris",
+  "Europe/Madrid",
+  "Europe/Rome",
+  "Europe/Amsterdam",
+  "Europe/Zurich",
+  "Europe/Istanbul",
+  "Europe/Moscow",
+  "Asia/Dubai",
+  "Asia/Jerusalem",
+  "Asia/Riyadh",
+  "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Asia/Kuala_Lumpur",
+  "Asia/Jakarta",
+  "Asia/Manila",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Colombo",
+  "Australia/Sydney",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Pacific/Auckland",
+  "Africa/Johannesburg",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "America/Mexico_City",
+  "America/Bogota",
+  "America/Lima",
+  "America/Argentina/Buenos_Aires",
+  "America/Santiago",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Pacific/Fiji",
+  "Pacific/Guam",
+];
 
 const MyBooking: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -324,6 +209,218 @@ const MyBooking: React.FC = () => {
   const API_BASE_URL2 = `${import.meta.env.VITE_PORT}/api/v1`;
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
 
+  // ==================== TIMEZONE CONVERSION HELPERS ====================
+
+  /**
+   * Convert a time from one timezone to another and format it
+   * @param isoString - ISO date string
+   * @param timezone - Target timezone
+   * @returns Formatted time string
+   */
+  const convertTimeToTimezone = (
+    isoString: string,
+    timezone: string
+  ): string => {
+    if (!isoString) return "Invalid Time";
+
+    try {
+      const date = new Date(isoString);
+      const options: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: timezone,
+      };
+      return date.toLocaleTimeString("en-US", options);
+    } catch (error) {
+      console.warn("Error converting time to timezone:", error);
+      return "Invalid Time";
+    }
+  };
+
+  /**
+   * Format time range in a specific timezone
+   */
+  const formatTimeRangeInTimezone = (
+    startAt: string,
+    endAt: string,
+    timezone: string
+  ): string => {
+    const startTime = convertTimeToTimezone(startAt, timezone);
+    const endTime = convertTimeToTimezone(endAt, timezone);
+    return `${startTime} - ${endTime}`;
+  };
+
+  /**
+   * Format full date and time in a specific timezone
+   */
+  const formatDateTimeInTimezone = (
+    isoString: string,
+    timezone: string
+  ): string => {
+    if (!isoString) return "Invalid Date";
+
+    try {
+      const date = new Date(isoString);
+
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: timezone,
+      };
+
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: timezone,
+      };
+
+      const formattedDate = date.toLocaleDateString("en-US", dateOptions);
+      const formattedTime = date.toLocaleTimeString("en-US", timeOptions);
+
+      return `${formattedDate} at ${formattedTime}`;
+    } catch (error) {
+      console.warn("Error formatting date time in timezone:", error);
+      return "Invalid Date";
+    }
+  };
+
+  /**
+   * Format short date in a specific timezone
+   */
+  const formatShortDateInTimezone = (
+    isoString: string,
+    timezone: string
+  ): string => {
+    if (!isoString) return "Invalid Date";
+
+    try {
+      const date = new Date(isoString);
+      const options: Intl.DateTimeFormatOptions = {
+        month: "short",
+        day: "numeric",
+        timeZone: timezone,
+      };
+      return date.toLocaleDateString("en-US", options);
+    } catch (error) {
+      console.warn("Error formatting short date:", error);
+      return "Invalid Date";
+    }
+  };
+
+  /**
+   * Get both player and expert times for display
+   */
+  const getTimesForBothParties = (
+    booking: Booking
+  ): {
+    playerTime: string;
+    expertTime: string;
+    playerTimeRange: string;
+    expertTimeRange: string;
+    playerDateTime: string;
+    expertDateTime: string;
+  } => {
+    const playerTimezone = booking.timezone || "UTC";
+    const expertTimezone = booking.expertTimeZone || "UTC";
+
+    return {
+      playerTime: convertTimeToTimezone(booking.startAt, playerTimezone),
+      expertTime: convertTimeToTimezone(booking.startAt, expertTimezone),
+      playerTimeRange: formatTimeRangeInTimezone(
+        booking.startAt,
+        booking.endAt,
+        playerTimezone
+      ),
+      expertTimeRange: formatTimeRangeInTimezone(
+        booking.startAt,
+        booking.endAt,
+        expertTimezone
+      ),
+      playerDateTime: formatDateTimeInTimezone(booking.startAt, playerTimezone),
+      expertDateTime: formatDateTimeInTimezone(booking.startAt, expertTimezone),
+    };
+  };
+
+  /**
+   * Calculate duration in minutes between two times
+   */
+  const calculateDurationMinutes = (startAt: string, endAt: string): number => {
+    try {
+      const start = new Date(startAt);
+      const end = new Date(endAt);
+      return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+    } catch {
+      return 0;
+    }
+  };
+
+  /**
+   * Format duration as human readable string
+   */
+  const formatDuration = (startAt: string, endAt: string): string => {
+    const minutes = calculateDurationMinutes(startAt, endAt);
+    if (minutes <= 0) return "N/A";
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours === 0) return `${remainingMinutes} min`;
+    if (remainingMinutes === 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
+    return `${hours}h ${remainingMinutes}m`;
+  };
+
+  /**
+   * Get date string in YYYY-MM-DD format for a specific timezone
+   */
+  const getLocalDateString = (iso: string, timezone?: string): string => {
+    if (!iso) return "";
+
+    try {
+      const date = new Date(iso);
+      const tz = timezone || "UTC";
+
+      return date.toLocaleDateString("en-CA", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    } catch (error) {
+      console.warn("Error getting local date string:", error);
+      return "";
+    }
+  };
+
+  // ==================== END TIMEZONE HELPERS ====================
+
+  // Legacy format functions (kept for backward compatibility)
+  const formatDate = (iso: string, timezone?: string): string => {
+    const tz = timezone || "UTC";
+    return formatDateTimeInTimezone(iso, tz);
+  };
+
+  const formatShortDate = (iso: string, timezone?: string): string => {
+    const tz = timezone || "UTC";
+    return formatShortDateInTimezone(iso, tz);
+  };
+
+  const formatTime = (iso: string, timezone?: string): string => {
+    const tz = timezone || "UTC";
+    return convertTimeToTimezone(iso, tz);
+  };
+
+  const formatTimeRange = (
+    startAt: string,
+    endAt: string,
+    timezone?: string
+  ): string => {
+    const tz = timezone || "UTC";
+    return formatTimeRangeInTimezone(startAt, endAt, tz);
+  };
+
   useEffect(() => {
     setFiltersApplied(
       bookingStatus !== "all" ||
@@ -366,65 +463,30 @@ const MyBooking: React.FC = () => {
   const isSessionOver = (booking: Booking) => {
     try {
       const now = new Date();
-      let sessionEnd: Date;
-
-      if (booking.timezone) {
-        // Convert the session end time to the booking's timezone, then compare with current time
-        sessionEnd = new Date(booking.endAt);
-
-        // Get current time in the booking's timezone for proper comparison
-        const nowInBookingTz = new Date(
-          now.toLocaleString("en-US", { timeZone: booking.timezone })
-        );
-        const sessionEndInBookingTz = new Date(
-          sessionEnd.toLocaleString("en-US", { timeZone: booking.timezone })
-        );
-
-        // Compare using UTC timestamps to avoid timezone confusion
-        return now.getTime() > sessionEnd.getTime();
-      } else {
-        sessionEnd = new Date(booking.endAt);
-        return now > sessionEnd;
-      }
+      const sessionEnd = new Date(booking.endAt);
+      return now.getTime() > sessionEnd.getTime();
     } catch (error) {
       console.warn("Error checking if session is over:", error);
-      const sessionEnd = new Date(booking.endAt);
-      return new Date() > sessionEnd;
+      return false;
     }
   };
 
   const canGoLive = (booking: Booking) => {
     if (booking.service?.serviceId !== "2") return false;
-    if (!(booking.status === "SCHEDULED")) return false;
+    if (booking.status !== "SCHEDULED") return false;
 
     try {
       const now = new Date();
-      let sessionStart: Date;
-      let sessionEnd: Date;
+      const sessionStart = new Date(booking.startAt);
+      const sessionEnd = new Date(booking.endAt);
 
-      if (booking.timezone) {
-        sessionStart = new Date(booking.startAt);
-        sessionEnd = new Date(booking.endAt);
+      // Calculate go-live time (10 minutes before session start)
+      const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
 
-        // Calculate go-live time (10 minutes before session start)
-        const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
+      const isOver = now.getTime() > sessionEnd.getTime();
+      const isTooEarly = now.getTime() < goLiveTime.getTime();
 
-        // Check if session is over
-        const isOver = now.getTime() > sessionEnd.getTime();
-
-        // Check if it's too early (more than 10 minutes before start)
-        const isTooEarly = now.getTime() < goLiveTime.getTime();
-
-        return !isTooEarly && !isOver;
-      } else {
-        sessionStart = new Date(booking.startAt);
-        sessionEnd = new Date(booking.endAt);
-        const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
-        const isOver = now > sessionEnd;
-        const isTooEarly = now < goLiveTime;
-
-        return !isTooEarly && !isOver;
-      }
+      return !isTooEarly && !isOver;
     } catch (error) {
       console.warn("Error checking if can go live:", error);
       return false;
@@ -436,17 +498,14 @@ const MyBooking: React.FC = () => {
 
     try {
       const now = new Date();
-      let start: Date;
-
-      if (booking.timezone) {
-        start = new Date(booking.startAt);
-      } else {
-        start = getZonedDateIntl(booking.startAt, booking.timezone);
-      }
-
+      const start = new Date(booking.startAt);
       const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-      return start >= now && start <= next7Days && !isSessionOver(booking);
+      return (
+        start.getTime() >= now.getTime() &&
+        start.getTime() <= next7Days.getTime() &&
+        !isSessionOver(booking)
+      );
     } catch (error) {
       console.warn("Error checking if upcoming session:", error);
       return false;
@@ -485,7 +544,7 @@ const MyBooking: React.FC = () => {
 
       await Swal.fire({
         icon: "success",
-        title: "Session Marked Complete!",
+        title: "Session Marked Complete! ",
         text: "Thank you for confirming the session completion.",
         confirmButtonColor: "#10B981",
         timer: 2500,
@@ -494,7 +553,7 @@ const MyBooking: React.FC = () => {
       await Swal.fire({
         icon: "error",
         title: "Error",
-        text: "Failed to mark session as complete. Please try again.",
+        text: "Failed to mark session as complete.  Please try again.",
         confirmButtonColor: "#EF4444",
       });
     } finally {
@@ -504,7 +563,6 @@ const MyBooking: React.FC = () => {
 
   const sessionsToComplete = bookings.filter((booking) => {
     const isOverAndPaid = isPaid(booking) && isSessionOver(booking);
-
     const isScheduled = booking.status === "SCHEDULED";
 
     return (
@@ -518,33 +576,24 @@ const MyBooking: React.FC = () => {
 
   const isSessionToday = (booking: Booking) => {
     try {
-      const today = new Date();
-      let session: Date;
+      const now = new Date();
+      const playerTimezone = booking.timezone || "UTC";
 
-      if (booking.timezone) {
-        // Get today's date in the booking's timezone
-        const todayInTz = new Date(
-          today.toLocaleString("en-US", { timeZone: booking.timezone })
-        );
-        session = new Date(
-          new Date(booking.startAt).toLocaleString("en-US", {
-            timeZone: booking.timezone,
-          })
-        );
+      // Get today's date in the player's timezone
+      const todayInTz = new Date(
+        now.toLocaleString("en-US", { timeZone: playerTimezone })
+      );
+      const sessionInTz = new Date(
+        new Date(booking.startAt).toLocaleString("en-US", {
+          timeZone: playerTimezone,
+        })
+      );
 
-        return (
-          todayInTz.getFullYear() === session.getFullYear() &&
-          todayInTz.getMonth() === session.getMonth() &&
-          todayInTz.getDate() === session.getDate()
-        );
-      } else {
-        session = getZonedDateIntl(booking.startAt, booking.timezone);
-        return (
-          today.getFullYear() === session.getFullYear() &&
-          today.getMonth() === session.getMonth() &&
-          today.getDate() === session.getDate()
-        );
-      }
+      return (
+        todayInTz.getFullYear() === sessionInTz.getFullYear() &&
+        todayInTz.getMonth() === sessionInTz.getMonth() &&
+        todayInTz.getDate() === sessionInTz.getDate()
+      );
     } catch (error) {
       console.warn("Error checking if session is today:", error);
       return false;
@@ -554,14 +603,7 @@ const MyBooking: React.FC = () => {
   const getTimeUntilGoLive = (booking: Booking) => {
     try {
       const now = new Date();
-      let start: Date;
-
-      if (booking.timezone) {
-        start = new Date(booking.startAt);
-      } else {
-        start = getZonedDateIntl(booking.startAt, booking.timezone);
-      }
-
+      const start = new Date(booking.startAt);
       const goLiveTime = new Date(start.getTime() - 10 * 60 * 1000);
       const timeDiff = goLiveTime.getTime() - now.getTime();
 
@@ -614,6 +656,19 @@ const MyBooking: React.FC = () => {
       case "other":
       default:
         return "ON GROUND TRAINING";
+    }
+  };
+
+  const getServiceTypeIcon = (type: string) => {
+    switch (type) {
+      case "recorded-video":
+        return faVideoCamera;
+      case "online":
+        return faLaptop;
+      case "in-person":
+        return faChalkboardTeacher;
+      default:
+        return faInfoCircle;
     }
   };
 
@@ -700,18 +755,12 @@ const MyBooking: React.FC = () => {
 
     await Swal.fire({
       icon: "success",
-      title: "Payment Successful!",
+      title: "Payment Successful! ",
       text: "Your booking has been confirmed. You will receive a confirmation email shortly.",
       confirmButtonText: "Great!",
       confirmButtonColor: "#10B981",
       timer: 3000,
       timerProgressBar: true,
-      showClass: {
-        popup: "animate__animated animate__fadeInDown",
-      },
-      hideClass: {
-        popup: "animate__animated animate__fadeOutUp",
-      },
     });
   };
 
@@ -774,19 +823,17 @@ const MyBooking: React.FC = () => {
           icon: "info",
           title: "Meeting Not Available Yet",
           text: timeUntil
-            ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts.`
+            ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts. `
             : "This meeting is no longer available.",
           confirmButtonColor: "#3B82F6",
         });
         return;
       }
 
-      const playerUID = agoraCredentials.uid;
-
       const agoraConfig: Agora = {
         channel: agoraCredentials.channel,
         token: agoraCredentials.token,
-        uid: playerUID,
+        uid: agoraCredentials.uid,
       };
       setAgora(agoraConfig);
       setBooking(booking);
@@ -848,6 +895,7 @@ const MyBooking: React.FC = () => {
       setReportLoading(false);
     }
   };
+
   const handleReportClick = async (bookingId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setSelectedBookingId(bookingId);
@@ -864,6 +912,7 @@ const MyBooking: React.FC = () => {
       });
     }
   };
+
   const openReportModal = (id: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setSelectedBookingId(id);
@@ -990,7 +1039,7 @@ const MyBooking: React.FC = () => {
       case "CANCELLED":
         return "bg-red-100 text-red-800 hover:bg-red-100";
       case "WAITING_EXPERT_APPROVAL":
-        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+        return "bg-blue-100 text-blue-800 hover: bg-blue-100";
       case "ACCEPTED":
         return needsPayment(booking)
           ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
@@ -1018,19 +1067,6 @@ const MyBooking: React.FC = () => {
     }
   };
 
-  const getServiceTypeIcon = (type: string) => {
-    switch (type) {
-      case "recorded-video":
-        return faVideoCamera;
-      case "online":
-        return faLaptop;
-      case "in-person":
-        return faChalkboardTeacher;
-      default:
-        return faInfoCircle;
-    }
-  };
-
   const formatStatus = (status: string) => {
     return status
       .replace(/_/g, " ")
@@ -1042,23 +1078,12 @@ const MyBooking: React.FC = () => {
     if (!dateFilter) return true;
 
     try {
-      let bookingDate: string;
-
-      if (booking.timezone) {
-        const date = new Date(booking.startAt);
-        bookingDate = date.toLocaleDateString("en-CA", {
-          timeZone: booking.timezone,
-        }); // Returns YYYY-MM-DD format
-      } else {
-        bookingDate = getLocalDateString(booking.startAt, booking.timezone);
-      }
-
+      const playerTimezone = booking.timezone || "UTC";
+      const bookingDate = getLocalDateString(booking.startAt, playerTimezone);
       return bookingDate === dateFilter;
     } catch (error) {
       console.warn("Error matching date filter:", error);
-      return (
-        getLocalDateString(booking.startAt, booking.timezone) === dateFilter
-      );
+      return false;
     }
   };
 
@@ -1106,7 +1131,7 @@ const MyBooking: React.FC = () => {
     return (
       matchesSearch &&
       matchesStatus &&
-      matchesDateFilter(booking) &&
+      matchesDateFilter(booking, dateFilter) &&
       matchesActionFilter(booking) &&
       matchesServiceTypeFilter(booking)
     );
@@ -1123,8 +1148,8 @@ const MyBooking: React.FC = () => {
       );
     })
     .sort((a, b) => {
-      const dateA = getZonedDate(a.startAt, a.timezone);
-      const dateB = getZonedDate(b.startAt, b.timezone);
+      const dateA = new Date(a.startAt);
+      const dateB = new Date(b.startAt);
       return dateA.getTime() - dateB.getTime();
     });
 
@@ -1138,28 +1163,6 @@ const MyBooking: React.FC = () => {
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
       <>
         <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
-
-        {/* Helper function to check if service is recorded video assessment */}
-        {(() => {
-          const isRecordedVideoAssessment = (booking) => {
-            const serviceType =
-              booking?.service?.serviceType ||
-              booking?.service?.service?.type ||
-              booking?.service?.type ||
-              booking?.serviceType;
-            const serviceName =
-              booking?.service?.service?.name?.toLowerCase() || "";
-            const serviceId = booking?.service?.serviceId;
-
-            return (
-              serviceId === "1" || // Assuming serviceId "1" is recorded video
-              (serviceType && serviceType.toLowerCase() === "recorded-video") ||
-              serviceName.includes("recorded video assessment")
-            );
-          };
-
-          return null; // This is just for the helper function
-        })()}
 
         {/* FILTERS */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
@@ -1202,7 +1205,7 @@ const MyBooking: React.FC = () => {
             </SelectContent>
           </Select>
           <Select value={actionFilter} onValueChange={setActionFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectTrigger className="w-full sm: w-[180px]">
               <SelectValue placeholder="Booking Status" />
             </SelectTrigger>
             <SelectContent>
@@ -1270,28 +1273,13 @@ const MyBooking: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4">Upcoming Paid Sessions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {upcomingPaidSessions.slice(0, 6).map((booking) => {
-              const isRecorded = (() => {
-                const serviceType =
-                  booking?.service?.serviceType ||
-                  booking?.service?.service?.type ||
-                  booking?.service?.type ||
-                  booking?.serviceType;
-                const serviceName =
-                  booking?.service?.service?.name?.toLowerCase() || "";
-                const serviceId = booking?.service?.serviceId;
-
-                return (
-                  serviceId === "1" || // Assuming serviceId "1" is recorded video
-                  (serviceType &&
-                    serviceType.toLowerCase() === "recorded-video") ||
-                  serviceName.includes("recorded video assessment")
-                );
-              })();
+              const isRecorded = booking.service?.serviceId === "1";
+              const times = getTimesForBothParties(booking);
 
               return (
                 <div
                   key={`upcoming-${booking.id}`}
-                  className="bg-white border rounded-lg p-4 shadow-sm hover:shadow-md cursor-pointer transition-shadow"
+                  className="bg-white border rounded-lg p-4 shadow-sm hover: shadow-md cursor-pointer transition-shadow"
                   onClick={() => openBookingDetails(booking)}
                 >
                   <div className="flex justify-between items-start mb-3">
@@ -1319,12 +1307,15 @@ const MyBooking: React.FC = () => {
                           }}
                         />
                         <p
-                          className="text-sm text-gray-500 truncate"
+                          className="text-sm text-gray-500 truncate cursor-pointer hover:text-blue-600"
                           title={`with ${booking.expert?.username || "Expert"}`}
                           onClick={(e) => {
                             e.stopPropagation();
                             const expert = booking.expert?.username;
-                            localStorage.setItem("viewexpertusername", expert);
+                            localStorage.setItem(
+                              "viewexpertusername",
+                              expert || ""
+                            );
                             navigate("/player/exdetails");
                           }}
                         >
@@ -1340,25 +1331,22 @@ const MyBooking: React.FC = () => {
                       <Badge className="bg-green-100 text-green-800 text-xs mb-1">
                         Paid ✓
                       </Badge>
-                      {/* Don't show date for recorded video */}
                       {!isRecorded && (
                         <div className="text-xs text-gray-500">
-                          {formatShortDate(booking.startAt, booking.timezone)}
+                          {formatShortDateInTimezone(
+                            booking.startAt,
+                            booking.timezone
+                          )}
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Don't show time/session info for recorded video */}
                   {!isRecorded && (
                     <div className="mb-3">
                       <div className="text-sm text-gray-600 flex items-center gap-1 mb-1">
                         <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
-                        {formatTimeRange(
-                          booking.startAt,
-                          booking.endAt,
-                          booking.timezone
-                        )}
+                        {times.playerTimeRange}
                       </div>
                       <div className="flex items-center gap-2">
                         {isSessionToday(booking) && (
@@ -1385,7 +1373,6 @@ const MyBooking: React.FC = () => {
                       £{booking.price || "N/A"}
                     </span>
 
-                    {/* Different buttons based on service type */}
                     {isRecorded ? (
                       <span className="text-xs text-gray-500 italic bg-gray-100 px-2 py-1 rounded">
                         Available anytime
@@ -1439,7 +1426,6 @@ const MyBooking: React.FC = () => {
                     )}
                   </div>
 
-                  {/* Don't show session timing info for recorded video */}
                   {!isRecorded &&
                     isSessionToday(booking) &&
                     !canGoLive(booking) &&
@@ -1474,23 +1460,8 @@ const MyBooking: React.FC = () => {
           <h2 className="text-xl font-semibold mb-4">Sessions to Complete</h2>
           <div className="space-y-2">
             {sessionsToComplete.map((booking) => {
-              const isRecorded = (() => {
-                const serviceType =
-                  booking?.service?.serviceType ||
-                  booking?.service?.service?.type ||
-                  booking?.service?.type ||
-                  booking?.serviceType;
-                const serviceName =
-                  booking?.service?.service?.name?.toLowerCase() || "";
-                const serviceId = booking?.service?.serviceId;
-
-                return (
-                  serviceId === "1" || // Assuming serviceId "1" is recorded video
-                  (serviceType &&
-                    serviceType.toLowerCase() === "recorded-video") ||
-                  serviceName.includes("recorded video assessment")
-                );
-              })();
+              const isRecorded = booking.service?.serviceId === "1";
+              const times = getTimesForBothParties(booking);
 
               return (
                 <div
@@ -1528,7 +1499,7 @@ const MyBooking: React.FC = () => {
                         {!isRecorded && (
                           <>
                             {" - "}
-                            {formatDate(booking.startAt, booking.timezone)}
+                            {times.playerDateTime}
                             {isSessionOver(booking) && (
                               <span className="ml-2 text-red-600 font-medium">
                                 (Session Ended)
@@ -1566,7 +1537,7 @@ const MyBooking: React.FC = () => {
           </div>
         </div>
 
-        {/* MODALS AND DIALOGS */}
+        {/* BOOKING DETAILS MODAL */}
         {selectedBooking && (
           <Dialog
             open={isBookingDetailsOpen}
@@ -1579,24 +1550,12 @@ const MyBooking: React.FC = () => {
 
               <div className="py-4">
                 {(() => {
-                  const isRecorded = (() => {
-                    const serviceType =
-                      selectedBooking?.service?.serviceType ||
-                      selectedBooking?.service?.service?.type ||
-                      selectedBooking?.service?.type ||
-                      selectedBooking?.serviceType;
-                    const serviceName =
-                      selectedBooking?.service?.service?.name?.toLowerCase() ||
-                      "";
-                    const serviceId = selectedBooking?.service?.serviceId;
-
-                    return (
-                      serviceId === "1" || // Assuming serviceId "1" is recorded video
-                      (serviceType &&
-                        serviceType.toLowerCase() === "recorded-video") ||
-                      serviceName.includes("recorded video assessment")
-                    );
-                  })();
+                  const isRecorded = selectedBooking.service?.serviceId === "1";
+                  const times = getTimesForBothParties(selectedBooking);
+                  const duration = formatDuration(
+                    selectedBooking.startAt,
+                    selectedBooking.endAt
+                  );
 
                   return (
                     <>
@@ -1697,17 +1656,10 @@ const MyBooking: React.FC = () => {
                                   }`}
                                 >
                                   {canGoLive(selectedBooking)
-                                    ? "Your session is currently live. You can join the video call now."
+                                    ? "Your session is currently live.  You can join the video call now."
                                     : isSessionToday(selectedBooking)
-                                    ? `Your session starts at ${formatTimeRange(
-                                        selectedBooking.startAt,
-                                        selectedBooking.endAt,
-                                        selectedBooking.timezone
-                                      )}. Video call will be available 10 minutes before the session.`
-                                    : `Session scheduled for ${formatDate(
-                                        selectedBooking.startAt,
-                                        selectedBooking.timezone
-                                      )}`}
+                                    ? `Your session starts at ${times.playerTimeRange}. Video call will be available 10 minutes before the session. `
+                                    : `Session scheduled for ${times.playerDateTime}`}
                                 </p>
                                 <div className="mt-3">
                                   {canGoLive(selectedBooking) ? (
@@ -1860,66 +1812,77 @@ const MyBooking: React.FC = () => {
                       {/* Session info - only for non-recorded video */}
                       {!isRecorded && (
                         <div className="mb-5 bg-gray-50 p-4 rounded-lg">
-                          <h3 className="text-lg font-semibold mb-2 flex items-center">
+                          <h3 className="text-lg font-semibold mb-3 flex items-center">
                             <FontAwesomeIcon
                               icon={faCalendarAlt}
                               className="mr-2 text-gray-600"
                             />
                             Session Information
                           </h3>
-                          <div className="flex items-start mb-2">
-                            <FontAwesomeIcon
-                              icon={faClock}
-                              className="mr-2 mt-1 text-gray-600 flex-shrink-0"
-                            />
-                            <div>
-                              <p className="font-medium">Date & Time:</p>
-                              <p className="text-gray-600">
-                                {formatDate(
-                                  selectedBooking.startAt,
-                                  selectedBooking.timezone
-                                )}
-                              </p>
-                              {isSessionToday(selectedBooking) && (
-                                <Badge className="bg-blue-100 text-blue-800 text-xs mt-1">
-                                  Today
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                          <div className="flex items-start mb-2">
-                            <FontAwesomeIcon
-                              icon={faClock}
-                              className="mr-2 mt-1 text-gray-600 flex-shrink-0"
-                            />
-                            <div className="flex-1">
-                              <p className="font-medium">Duration:</p>
-                              <p className="text-gray-600">
-                                {formatTimeRange(
-                                  selectedBooking.startAt,
-                                  selectedBooking.endAt,
-                                  selectedBooking.timezone
-                                )}
-                              </p>
-                              <p className="font-medium mt-2">Time Zone:</p>
-                              <p className="text-gray-600">
-                                {selectedBooking.timezone}
-                              </p>
 
-                              {selectedBooking.description && (
-                                <>
-                                  <p className="font-medium mt-2">
-                                    Description:
-                                  </p>
-                                  <p className="text-gray-600 mb-4 break-words">
-                                    {selectedBooking.description}
-                                  </p>
-                                </>
-                              )}
+                          {/* Duration */}
+                          <div className="mb-3 p-3 bg-white rounded border">
+                            <p className="text-sm text-gray-500 mb-1">
+                              Duration
+                            </p>
+                            <p className="font-semibold text-lg">{duration}</p>
+                          </div>
+
+                          {/* Player Time (Your Time) */}
+                          <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
+                            <p className="text-sm text-green-600 mb-1 font-medium">
+                              Your Time ({selectedBooking.timezone || "UTC"})
+                            </p>
+                            <p className="font-semibold text-green-800">
+                              {times.playerDateTime}
+                            </p>
+                            <p className="text-sm text-green-700 mt-1">
+                              {times.playerTimeRange}
+                            </p>
+                          </div>
+
+                          {/* Expert Time */}
+                          <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
+                            <p className="text-sm text-blue-600 mb-1 font-medium">
+                              Expert's Time (
+                              {selectedBooking.expertTimeZone || "UTC"})
+                            </p>
+                            <p className="font-semibold text-blue-800">
+                              {times.expertDateTime}
+                            </p>
+                            <p className="text-sm text-blue-700 mt-1">
+                              {times.expertTimeRange}
+                            </p>
+                          </div>
+
+                          {/* Timezone Info */}
+                          <div className="grid grid-cols-2 gap-3 mt-3">
+                            <div className="p-2 bg-gray-100 rounded">
+                              <p className="text-xs text-gray-500">
+                                Your Timezone
+                              </p>
+                              <p className="text-sm font-medium text-gray-800">
+                                {selectedBooking.timezone || "UTC"}
+                              </p>
+                            </div>
+                            <div className="p-2 bg-gray-100 rounded">
+                              <p className="text-xs text-gray-500">
+                                Expert's Timezone
+                              </p>
+                              <p className="text-sm font-medium text-gray-800">
+                                {selectedBooking.expertTimeZone || "UTC"}
+                              </p>
                             </div>
                           </div>
+
+                          {isSessionToday(selectedBooking) && (
+                            <Badge className="bg-blue-100 text-blue-800 text-xs mt-3">
+                              Today
+                            </Badge>
+                          )}
+
                           {selectedBooking.location && (
-                            <div className="flex items-start mb-2">
+                            <div className="flex items-start mt-3">
                               <FontAwesomeIcon
                                 icon={faMapMarkerAlt}
                                 className="mr-2 mt-1 text-gray-600 flex-shrink-0"
@@ -1957,6 +1920,18 @@ const MyBooking: React.FC = () => {
                               </p>
                             </>
                           )}
+                        </div>
+                      )}
+
+                      {/* Description */}
+                      {!isRecorded && selectedBooking.description && (
+                        <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-2">
+                            Description
+                          </h3>
+                          <p className="text-gray-600 break-words">
+                            {selectedBooking.description}
+                          </p>
                         </div>
                       )}
 
@@ -2126,24 +2101,8 @@ const MyBooking: React.FC = () => {
               {/* Footer actions */}
               <DialogFooter className="flex flex-wrap gap-3 justify-end">
                 {(() => {
-                  const isRecorded = (() => {
-                    const serviceType =
-                      selectedBooking?.service?.serviceType ||
-                      selectedBooking?.service?.service?.type ||
-                      selectedBooking?.service?.type ||
-                      selectedBooking?.serviceType;
-                    const serviceName =
-                      selectedBooking?.service?.service?.name?.toLowerCase() ||
-                      "";
-                    const serviceId = selectedBooking?.service?.serviceId;
-
-                    return (
-                      serviceId === "1" || // Assuming serviceId "1" is recorded video
-                      (serviceType &&
-                        serviceType.toLowerCase() === "recorded-video") ||
-                      serviceName.includes("recorded video assessment")
-                    );
-                  })();
+                  const isRecorded =
+                    selectedBooking?.service?.serviceId === "1";
 
                   return (
                     <>
@@ -2347,7 +2306,7 @@ const MyBooking: React.FC = () => {
             stripePromise={stripePromise}
           />
         )}
-        {console.log(selectedBookingForPayment)}
+
         {/* AGORA VIDEO MODAL */}
         {booking && (
           <AgoraVideoModal
@@ -2381,22 +2340,18 @@ const MyBooking: React.FC = () => {
                       ?.service?.name || "Service"}{" "}
                     with{" "}
                     {bookings.find((b) => b.id === selectedBookingId)?.expert
-                      ?.username ||
-                      bookings.find((b) => b.id === selectedBookingId)?.expert
-                        ?.firstName +
-                        " " +
-                        bookings.find((b) => b.id === selectedBookingId)?.expert
-                          ?.lastName ||
-                      "Expert"}{" "}
+                      ?.username || "Expert"}{" "}
                     on{" "}
-                    {bookings.find((b) => b.id === selectedBookingId)
-                      ? formatDate(
-                          bookings.find((b) => b.id === selectedBookingId)
-                            ?.startAt || "",
-                          bookings.find((b) => b.id === selectedBookingId)
-                            ?.timezone || ""
-                        )
-                      : ""}
+                    {(() => {
+                      const booking = bookings.find(
+                        (b) => b.id === selectedBookingId
+                      );
+                      if (booking) {
+                        const times = getTimesForBothParties(booking);
+                        return times.playerDateTime;
+                      }
+                      return "";
+                    })()}
                   </p>
                 )}
               </div>
