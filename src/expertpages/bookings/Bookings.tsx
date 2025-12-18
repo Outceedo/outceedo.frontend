@@ -90,6 +90,7 @@ interface Booking {
   startAt: string;
   endAt: string;
   timezone: string;
+  expertTimeZone?: string;
   location: string | null;
   meetLink: string | null;
   recordedVideo: string | null;
@@ -110,6 +111,58 @@ interface Booking {
 }
 
 const BookingExpertside: React.FC = () => {
+  const TIMEZONES = [
+    "UTC",
+    "America/New_York",
+    "America/Chicago",
+    "America/Denver",
+    "America/Los_Angeles",
+    "America/Toronto",
+    "America/Vancouver",
+    "America/Sao_Paulo",
+    "Europe/London",
+    "Europe/Berlin",
+    "Europe/Paris",
+    "Europe/Madrid",
+    "Europe/Rome",
+    "Europe/Amsterdam",
+    "Europe/Zurich",
+    "Europe/Istanbul",
+    "Europe/Moscow",
+    "Asia/Dubai",
+    "Asia/Jerusalem",
+    "Asia/Riyadh",
+    "Asia/Kolkata",
+    "Asia/Bangkok",
+    "Asia/Hong_Kong",
+    "Asia/Shanghai",
+    "Asia/Singapore",
+    "Asia/Tokyo",
+    "Asia/Seoul",
+    "Asia/Kuala_Lumpur",
+    "Asia/Jakarta",
+    "Asia/Manila",
+    "Asia/Karachi",
+    "Asia/Kathmandu",
+    "Asia/Colombo",
+    "Australia/Sydney",
+    "Australia/Melbourne",
+    "Australia/Perth",
+    "Pacific/Auckland",
+    "Africa/Johannesburg",
+    "Africa/Cairo",
+    "Africa/Nairobi",
+    "America/Mexico_City",
+    "America/Bogota",
+    "America/Lima",
+    "America/Argentina/Buenos_Aires",
+    "America/Santiago",
+    "America/Anchorage",
+    "Pacific/Honolulu",
+    "Pacific/Fiji",
+    "Pacific/Guam",
+  ];
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [bookingStatus, setBookingStatus] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
@@ -156,6 +209,160 @@ const BookingExpertside: React.FC = () => {
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
   const navigate = useNavigate();
 
+  // ==================== TIMEZONE CONVERSION HELPERS ====================
+
+  /**
+   * Convert a time from one timezone to another
+   * @param isoString - ISO date string (e.g., "2025-12-20T09:00:00.000Z")
+   * @param fromTimezone - Source timezone (e.g., "America/New_York")
+   * @param toTimezone - Target timezone (e.g., "Europe/London")
+   * @returns Formatted time string in target timezone
+   */
+  const convertTimeBetweenTimezones = (
+    isoString: string,
+    fromTimezone: string,
+    toTimezone: string
+  ): string => {
+    if (!isoString) return "Invalid Time";
+
+    try {
+      const date = new Date(isoString);
+
+      const options: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: toTimezone,
+      };
+
+      return date.toLocaleTimeString("en-US", options);
+    } catch (error) {
+      console.warn("Error converting time between timezones:", error);
+      return "Invalid Time";
+    }
+  };
+
+  /**
+   * Format time range in a specific timezone
+   */
+  const formatTimeRangeInTimezone = (
+    startAt: string,
+    endAt: string,
+    timezone: string
+  ): string => {
+    const startTime = convertTimeBetweenTimezones(startAt, "UTC", timezone);
+    const endTime = convertTimeBetweenTimezones(endAt, "UTC", timezone);
+    return `${startTime} - ${endTime}`;
+  };
+
+  /**
+   * Format full date and time in a specific timezone
+   */
+  const formatDateTimeInTimezone = (
+    isoString: string,
+    timezone: string
+  ): string => {
+    if (!isoString) return "Invalid Date";
+
+    try {
+      const date = new Date(isoString);
+
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: timezone,
+      };
+
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: timezone,
+      };
+
+      const formattedDate = date.toLocaleDateString("en-US", dateOptions);
+      const formattedTime = date.toLocaleTimeString("en-US", timeOptions);
+
+      return `${formattedDate} at ${formattedTime}`;
+    } catch (error) {
+      console.warn("Error formatting date time in timezone:", error);
+      return "Invalid Date";
+    }
+  };
+
+  /**
+   * Get both expert and player times for display
+   */
+  const getTimesForBothParties = (
+    booking: Booking
+  ): {
+    expertTime: string;
+    playerTime: string;
+    expertTimeRange: string;
+    playerTimeRange: string;
+    expertDateTime: string;
+    playerDateTime: string;
+  } => {
+    const playerTimezone = booking.timezone || "UTC";
+    const expertTimezone = booking.expertTimeZone || "UTC";
+
+    return {
+      expertTime: convertTimeBetweenTimezones(
+        booking.startAt,
+        "UTC",
+        expertTimezone
+      ),
+      playerTime: convertTimeBetweenTimezones(
+        booking.startAt,
+        "UTC",
+        playerTimezone
+      ),
+      expertTimeRange: formatTimeRangeInTimezone(
+        booking.startAt,
+        booking.endAt,
+        expertTimezone
+      ),
+      playerTimeRange: formatTimeRangeInTimezone(
+        booking.startAt,
+        booking.endAt,
+        playerTimezone
+      ),
+      expertDateTime: formatDateTimeInTimezone(booking.startAt, expertTimezone),
+      playerDateTime: formatDateTimeInTimezone(booking.startAt, playerTimezone),
+    };
+  };
+
+  /**
+   * Calculate duration in minutes between two times
+   */
+  const calculateDurationMinutes = (startAt: string, endAt: string): number => {
+    try {
+      const start = new Date(startAt);
+      const end = new Date(endAt);
+      return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+    } catch {
+      return 0;
+    }
+  };
+
+  /**
+   * Format duration as human readable string
+   */
+  const formatDuration = (startAt: string, endAt: string): string => {
+    const minutes = calculateDurationMinutes(startAt, endAt);
+    if (minutes <= 0) return "N/A";
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours === 0) return `${remainingMinutes} min`;
+    if (remainingMinutes === 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
+    return `${hours}h ${remainingMinutes}m`;
+  };
+
+  // ==================== END TIMEZONE HELPERS ====================
+
   useEffect(() => {
     setFiltersApplied(
       bookingStatus !== "all" ||
@@ -171,6 +378,7 @@ const BookingExpertside: React.FC = () => {
   };
 
   const isPaid = (booking: Booking) => booking.status === "SCHEDULED";
+
   const canGoLive = (booking: Booking): boolean => {
     if (!booking) return false;
     if (booking.service?.serviceId !== "2") return false;
@@ -181,10 +389,8 @@ const BookingExpertside: React.FC = () => {
       const sessionStart = new Date(booking.startAt);
       const sessionEnd = new Date(booking.endAt);
 
-      // Calculate go-live time (10 minutes before session start)
       const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
 
-      // Use UTC timestamps for accurate comparison
       const nowTime = now.getTime();
       const goLiveTimestamp = goLiveTime.getTime();
       const sessionEndTimestamp = sessionEnd.getTime();
@@ -227,31 +433,22 @@ const BookingExpertside: React.FC = () => {
 
     try {
       const now = new Date();
+      const expertTimezone = booking.expertTimeZone || "UTC";
 
-      if (booking.timezone) {
-        // Get today's date in the booking's timezone
-        const todayInTz = new Date(
-          now.toLocaleString("en-US", { timeZone: booking.timezone })
-        );
-        const sessionInTz = new Date(
-          new Date(booking.startAt).toLocaleString("en-US", {
-            timeZone: booking.timezone,
-          })
-        );
+      const todayInTz = new Date(
+        now.toLocaleString("en-US", { timeZone: expertTimezone })
+      );
+      const sessionInTz = new Date(
+        new Date(booking.startAt).toLocaleString("en-US", {
+          timeZone: expertTimezone,
+        })
+      );
 
-        return (
-          todayInTz.getFullYear() === sessionInTz.getFullYear() &&
-          todayInTz.getMonth() === sessionInTz.getMonth() &&
-          todayInTz.getDate() === sessionInTz.getDate()
-        );
-      } else {
-        const sessionDate = new Date(booking.startAt);
-        return (
-          now.getFullYear() === sessionDate.getFullYear() &&
-          now.getMonth() === sessionDate.getMonth() &&
-          now.getDate() === sessionDate.getDate()
-        );
-      }
+      return (
+        todayInTz.getFullYear() === sessionInTz.getFullYear() &&
+        todayInTz.getMonth() === sessionInTz.getMonth() &&
+        todayInTz.getDate() === sessionInTz.getDate()
+      );
     } catch (error) {
       console.warn("Error checking if session is today:", error);
       return false;
@@ -290,7 +487,6 @@ const BookingExpertside: React.FC = () => {
       const now = new Date();
       const sessionEnd = new Date(booking.endAt);
 
-      // Use UTC timestamps for accurate comparison regardless of timezone
       return now.getTime() > sessionEnd.getTime();
     } catch (error) {
       console.warn("Error checking if session is over:", error);
@@ -376,35 +572,8 @@ const BookingExpertside: React.FC = () => {
     endAt: string,
     timezone?: string
   ): string => {
-    const formatTime = (iso: string): string => {
-      if (!iso) return "Invalid Time";
-
-      try {
-        const date = new Date(iso);
-
-        if (timezone) {
-          const options: Intl.DateTimeFormatOptions = {
-            hour: "numeric",
-            minute: "2-digit",
-            hour12: true,
-            timeZone: timezone,
-          };
-          return date.toLocaleTimeString("en-US", options);
-        } else {
-          let hour = date.getHours();
-          const minutes = date.getMinutes().toString().padStart(2, "0");
-          const ampm = hour >= 12 ? "PM" : "AM";
-          hour = hour % 12;
-          hour = hour ? hour : 12;
-          return `${hour}:${minutes} ${ampm}`;
-        }
-      } catch (error) {
-        console.warn("Error formatting time in formatTimeRange:", error);
-        return "Invalid Time";
-      }
-    };
-
-    return `${formatTime(startAt)} - ${formatTime(endAt)}`;
+    const tz = timezone || "UTC";
+    return formatTimeRangeInTimezone(startAt, endAt, tz);
   };
 
   const formatShortDate = (iso: string, timezone?: string): string => {
@@ -544,6 +713,11 @@ const BookingExpertside: React.FC = () => {
 
   const handleReviewClick = (bookingId: string) => {};
 
+  const handleEvaluation = (e: React.MouseEvent, booking: Booking) => {
+    e.stopPropagation();
+    // Add evaluation logic here
+  };
+
   const openBookingDetails = (booking: Booking) => {
     setSelectedBooking(booking);
     setVideoError(null);
@@ -634,8 +808,8 @@ const BookingExpertside: React.FC = () => {
       }
       await Swal.fire({
         icon: "success",
-        title: "Booking Accepted!",
-        text: "The booking has been successfully accepted. The player has been notified.",
+        title: "Booking Accepted! ",
+        text: "The booking has been successfully accepted.  The player has been notified.",
         confirmButtonColor: "#10B981",
         timer: 2500,
       });
@@ -715,7 +889,7 @@ const BookingExpertside: React.FC = () => {
     try {
       setRescheduling(true);
       const token = localStorage.getItem("token");
-      const startAt = `${rescheduleDate}T${rescheduleStartAt}:00.000Z`;
+      const startAt = `${rescheduleDate}T${rescheduleStartAt}: 00.000Z`;
       const endAt = `${rescheduleDate}T${rescheduleEndAt}:00.000Z`;
       const rescheduleData = {
         startAt,
@@ -765,7 +939,7 @@ const BookingExpertside: React.FC = () => {
       await Swal.fire({
         icon: "error",
         title: "Reschedule Failed",
-        text: "Failed to reschedule booking. Please try again or contact support if the problem persists.",
+        text: "Failed to reschedule booking.  Please try again or contact support if the problem persists.",
         confirmButtonColor: "#EF4444",
       });
     } finally {
@@ -879,85 +1053,11 @@ const BookingExpertside: React.FC = () => {
         return "Pending";
     }
   };
-  const getZonedDate = (iso: string, timezone?: string): Date => {
-    if (!iso) return new Date();
-
-    try {
-      const date = new Date(iso);
-
-      // If no timezone specified, return the original date
-      if (!timezone) return date;
-
-      // Use Intl.DateTimeFormat for accurate timezone conversion
-      const formatter = new Intl.DateTimeFormat("en-CA", {
-        year: "numeric",
-        month: "2-digit",
-        day: "2-digit",
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-        timeZone: timezone,
-        hour12: false,
-      });
-
-      const parts = formatter.formatToParts(date);
-      const values: Record<string, string> = {};
-      parts.forEach((p) => (values[p.type] = p.value));
-
-      return new Date(
-        `${values.year}-${values.month}-${values.day}T${values.hour}:${values.minute}:${values.second}`
-      );
-    } catch (error) {
-      console.warn("Error handling timezone in getZonedDate:", error);
-      return new Date(iso);
-    }
-  };
 
   const formatDate = (iso: string, timezone?: string): string => {
     if (!iso) return "Invalid Date";
-
-    try {
-      const date = new Date(iso);
-
-      if (timezone) {
-        const dateOptions: Intl.DateTimeFormatOptions = {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-          timeZone: timezone,
-        };
-
-        const timeOptions: Intl.DateTimeFormatOptions = {
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-          timeZone: timezone,
-        };
-
-        const formattedDate = date.toLocaleDateString("en-US", dateOptions);
-        const formattedTime = date.toLocaleTimeString("en-US", timeOptions);
-
-        return `${formattedDate} at ${formattedTime}`;
-      } else {
-        // Fallback to local timezone
-        const formattedDate = date.toLocaleDateString("en-US", {
-          month: "long",
-          day: "numeric",
-          year: "numeric",
-        });
-
-        let hour = date.getHours();
-        const minutes = date.getMinutes().toString().padStart(2, "0");
-        const ampm = hour >= 12 ? "pm" : "am";
-        hour = hour % 12;
-        hour = hour ? hour : 12;
-
-        return `${formattedDate} at ${hour}:${minutes}${ampm}`;
-      }
-    } catch (error) {
-      console.warn("Error formatting date:", error);
-      return "Invalid Date";
-    }
+    const tz = timezone || "UTC";
+    return formatDateTimeInTimezone(iso, tz);
   };
 
   const truncateUsername = (
@@ -973,19 +1073,12 @@ const BookingExpertside: React.FC = () => {
     if (!dateFilter || !booking?.startAt) return true;
 
     try {
-      if (booking.timezone) {
-        const date = new Date(booking.startAt);
-        const bookingDate = date.toLocaleDateString("en-CA", {
-          timeZone: booking.timezone,
-        }); // Returns YYYY-MM-DD format
-        return bookingDate === dateFilter;
-      } else {
-        const bookingDate = new Date(booking.startAt);
-        bookingDate.setHours(0, 0, 0, 0);
-        const filterDate = new Date(dateFilter);
-        filterDate.setHours(0, 0, 0, 0);
-        return bookingDate.getTime() === filterDate.getTime();
-      }
+      const expertTimezone = booking.expertTimeZone || "UTC";
+      const date = new Date(booking.startAt);
+      const bookingDate = date.toLocaleDateString("en-CA", {
+        timeZone: expertTimezone,
+      });
+      return bookingDate === dateFilter;
     } catch (error) {
       console.warn("Error matching date filter:", error);
       return false;
@@ -1019,7 +1112,7 @@ const BookingExpertside: React.FC = () => {
       matchesSearch &&
       matchesStatus &&
       matchesAction &&
-      matchesDateFilter(booking) &&
+      matchesDateFilter(booking, dateFilter) &&
       matchesServiceTypeFilter(booking)
     );
   });
@@ -1058,28 +1151,6 @@ const BookingExpertside: React.FC = () => {
   return (
     <div className="p-6 bg-white dark:bg-gray-800 rounded-md shadow-md w-full">
       <h1 className="text-2xl font-bold mb-6">Your Bookings</h1>
-
-      {/* Helper function to check if service is recorded video assessment */}
-      {(() => {
-        const isRecordedVideoAssessment = (booking) => {
-          const serviceType =
-            booking?.service?.serviceType ||
-            booking?.service?.service?.type ||
-            booking?.service?.type ||
-            booking?.serviceType;
-          const serviceName =
-            booking?.service?.service?.name?.toLowerCase() || "";
-          const serviceId = booking?.service?.serviceId;
-
-          return (
-            serviceId === "1" || // Assuming serviceId "1" is recorded video
-            (serviceType && serviceType.toLowerCase() === "recorded-video") ||
-            serviceName.includes("recorded video assessment")
-          );
-        };
-
-        return null; // This is just for the helper function
-      })()}
 
       <div className="flex flex-wrap items-center gap-4 mb-4">
         <div className="relative w-full sm:w-1/5">
@@ -1121,7 +1192,7 @@ const BookingExpertside: React.FC = () => {
           </SelectContent>
         </Select>
         <Select value={actionFilter} onValueChange={setActionFilter}>
-          <SelectTrigger className="w-full sm:w-[180px]">
+          <SelectTrigger className="w-full sm: w-[180px]">
             <SelectValue placeholder="Booking Status" />
           </SelectTrigger>
           <SelectContent>
@@ -1164,40 +1235,25 @@ const BookingExpertside: React.FC = () => {
         </div>
       )}
       <div className="w-xs md:w-full mx-auto">
-      <BookingTable
-        bookings={filteredBookings}
-        loading={loading}
-        onBookingClick={handleBookingClick}
-        onAcceptBooking={handleAcceptBookingClick}
-        onRejectBooking={handleRejectBookingClick}
-        onRescheduleBooking={handleRescheduleBookingClick}
-        onPlayerClick={handlePlayerClick}
-        onVideoClick={handleVideoClick}
-        onReviewClick={handleReviewClick}
-      />
+        <BookingTable
+          bookings={filteredBookings}
+          loading={loading}
+          onBookingClick={handleBookingClick}
+          onAcceptBooking={handleAcceptBookingClick}
+          onRejectBooking={handleRejectBookingClick}
+          onRescheduleBooking={handleRescheduleBookingClick}
+          onPlayerClick={handlePlayerClick}
+          onVideoClick={handleVideoClick}
+          onReviewClick={handleReviewClick}
+        />
       </div>
-    
+
       <div className="mt-6">
         <h2 className="text-xl font-semibold mb-4">Upcoming Live Sessions</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {upcomingPaidSessions.slice(0, 6).map((booking) => {
-            const isRecorded = (() => {
-              const serviceType =
-                booking?.service?.serviceType ||
-                booking?.service?.service?.type ||
-                booking?.service?.type ||
-                booking?.serviceType;
-              const serviceName =
-                booking?.service?.service?.name?.toLowerCase() || "";
-              const serviceId = booking?.service?.serviceId;
-
-              return (
-                serviceId === "1" || // Assuming serviceId "1" is recorded video
-                (serviceType &&
-                  serviceType.toLowerCase() === "recorded-video") ||
-                serviceName.includes("recorded video assessment")
-              );
-            })();
+            const isRecorded = booking.service?.serviceId === "1";
+            const times = getTimesForBothParties(booking);
 
             return (
               <div
@@ -1254,21 +1310,22 @@ const BookingExpertside: React.FC = () => {
                     <Badge className="bg-green-100 text-green-800 text-xs mb-1">
                       Paid ✓
                     </Badge>
-                    {/* Don't show date for recorded video */}
                     {!isRecorded && (
                       <div className="text-xs text-gray-500">
-                        {formatShortDate(booking.startAt)}
+                        {formatShortDate(
+                          booking.startAt,
+                          booking.expertTimeZone
+                        )}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Don't show time/session info for recorded video */}
                 {!isRecorded && (
                   <div className="mb-3">
                     <div className="text-sm text-gray-600 flex items-center gap-1 mb-1">
                       <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
-                      {formatTimeRange(booking.startAt, booking.endAt)}
+                      {times.expertTimeRange}
                     </div>
                     <div className="flex items-center gap-2">
                       {isSessionToday(booking) && (
@@ -1290,7 +1347,6 @@ const BookingExpertside: React.FC = () => {
                     £{booking.price || "N/A"}
                   </span>
 
-                  {/* Different buttons based on service type */}
                   {isRecorded ? (
                     <span className="text-xs text-gray-500 italic bg-gray-100 px-2 py-1 rounded">
                       Assessment ready
@@ -1334,7 +1390,6 @@ const BookingExpertside: React.FC = () => {
                   )}
                 </div>
 
-                {/* Don't show session timing info for recorded video */}
                 {!isRecorded &&
                   isSessionToday(booking) &&
                   !canGoLive(booking) &&
@@ -1361,27 +1416,13 @@ const BookingExpertside: React.FC = () => {
           )}
         </div>
       </div>
+
       <div className="mt-4">
         <h3 className="font-medium mb-2">Active Sessions</h3>
         <div className="space-y-2">
           {activeSessionsForCompletion.map((booking) => {
-            const isRecorded = (() => {
-              const serviceType =
-                booking?.service?.serviceType ||
-                booking?.service?.service?.type ||
-                booking?.service?.type ||
-                booking?.serviceType;
-              const serviceName =
-                booking?.service?.service?.name?.toLowerCase() || "";
-              const serviceId = booking?.service?.serviceId;
-
-              return (
-                serviceId === "1" || // Assuming serviceId "1" is recorded video
-                (serviceType &&
-                  serviceType.toLowerCase() === "recorded-video") ||
-                serviceName.includes("recorded video assessment")
-              );
-            })();
+            const isRecorded = booking.service?.serviceId === "1";
+            const times = getTimesForBothParties(booking);
 
             return (
               <div
@@ -1419,7 +1460,7 @@ const BookingExpertside: React.FC = () => {
                       {!isRecorded && (
                         <>
                           {" - "}
-                          {formatDate(booking.startAt)}
+                          {times.expertDateTime}
                           {isSessionOver(booking) && (
                             <span className="ml-2 text-red-600 font-medium">
                               (Session Ended)
@@ -1456,6 +1497,7 @@ const BookingExpertside: React.FC = () => {
           )}
         </div>
       </div>
+
       <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <h3 className="font-medium text-blue-800">Total Bookings</h3>
@@ -1480,6 +1522,8 @@ const BookingExpertside: React.FC = () => {
           </p>
         </div>
       </div>
+
+      {/* Booking Details Modal */}
       {selectedBooking && (
         <Dialog
           open={isBookingDetailsOpen}
@@ -1491,24 +1535,12 @@ const BookingExpertside: React.FC = () => {
             </DialogHeader>
             <div className="py-4">
               {(() => {
-                const isRecorded = (() => {
-                  const serviceType =
-                    selectedBooking?.service?.serviceType ||
-                    selectedBooking?.service?.service?.type ||
-                    selectedBooking?.service?.type ||
-                    selectedBooking?.serviceType;
-                  const serviceName =
-                    selectedBooking?.service?.service?.name?.toLowerCase() ||
-                    "";
-                  const serviceId = selectedBooking?.service?.serviceId;
-
-                  return (
-                    serviceId === "1" || // Assuming serviceId "1" is recorded video
-                    (serviceType &&
-                      serviceType.toLowerCase() === "recorded-video") ||
-                    serviceName.includes("recorded video assessment")
-                  );
-                })();
+                const isRecorded = selectedBooking.service?.serviceId === "1";
+                const times = getTimesForBothParties(selectedBooking);
+                const duration = formatDuration(
+                  selectedBooking.startAt,
+                  selectedBooking.endAt
+                );
 
                 return (
                   <>
@@ -1573,7 +1605,7 @@ const BookingExpertside: React.FC = () => {
                                   ? "Session Today"
                                   : isSessionOver(selectedBooking)
                                   ? "Session Over"
-                                  : null}
+                                  : "Upcoming Session"}
                               </p>
                               <p
                                 className={`text-sm mt-1 ${
@@ -1585,15 +1617,10 @@ const BookingExpertside: React.FC = () => {
                                 }`}
                               >
                                 {canGoLive(selectedBooking)
-                                  ? "Your session is currently live. You can start the video call now."
+                                  ? "Your session is currently live.  You can start the video call now."
                                   : isSessionToday(selectedBooking)
-                                  ? `Your session starts at ${formatTimeRange(
-                                      selectedBooking.startAt,
-                                      selectedBooking.endAt
-                                    )}. Video call will be available 10 minutes before the session.`
-                                  : `Session scheduled for ${formatDate(
-                                      selectedBooking.startAt
-                                    )}`}
+                                  ? `Your session starts at ${times.expertTimeRange}. Video call will be available 10 minutes before the session.`
+                                  : `Session scheduled for ${times.expertDateTime}`}
                               </p>
                               <div className="mt-3">
                                 {canGoLive(selectedBooking) ? (
@@ -1686,6 +1713,7 @@ const BookingExpertside: React.FC = () => {
                         </div>
                       </div>
                     </div>
+
                     <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                       <div className="flex justify-between items-start mb-2">
                         <h3 className="text-lg font-semibold flex items-center">
@@ -1722,30 +1750,69 @@ const BookingExpertside: React.FC = () => {
                     {/* Session info - only for non-recorded video */}
                     {!isRecorded && (
                       <div className="mb-5 bg-gray-50 p-4 rounded-lg">
-                        <h3 className="text-lg font-semibold mb-2 flex items-center">
+                        <h3 className="text-lg font-semibold mb-3 flex items-center">
                           <FontAwesomeIcon
                             icon={faClock}
                             className="mr-2 text-gray-600"
                           />
                           Session Information
                         </h3>
-                        <p className="mb-1">
-                          <span className="font-medium">Date & Time:</span>{" "}
-                          {formatDate(selectedBooking.startAt)}
-                        </p>
-                        <p className="mb-1">
-                          <span className="font-medium">Duration:</span>{" "}
-                          {formatTimeRange(
-                            selectedBooking.startAt,
-                            selectedBooking.endAt
-                          )}
-                        </p>
-                        <p className="mb-1">
-                          <span className="font-medium">Time Zone:</span>{" "}
-                          {selectedBooking.timezone}
-                        </p>
+
+                        {/* Duration */}
+                        <div className="mb-3 p-3 bg-white rounded border">
+                          <p className="text-sm text-gray-500 mb-1">Duration</p>
+                          <p className="font-semibold text-lg">{duration}</p>
+                        </div>
+
+                        {/* Expert Time (Your Time) */}
+                        <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
+                          <p className="text-sm text-blue-600 mb-1 font-medium">
+                            Your Time ({selectedBooking.expertTimeZone || "UTC"}
+                            )
+                          </p>
+                          <p className="font-semibold text-blue-800">
+                            {times.expertDateTime}
+                          </p>
+                          <p className="text-sm text-blue-700 mt-1">
+                            {times.expertTimeRange}
+                          </p>
+                        </div>
+
+                        {/* Player Time */}
+                        <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
+                          <p className="text-sm text-green-600 mb-1 font-medium">
+                            Player's Time ({selectedBooking.timezone || "UTC"})
+                          </p>
+                          <p className="font-semibold text-green-800">
+                            {times.playerDateTime}
+                          </p>
+                          <p className="text-sm text-green-700 mt-1">
+                            {times.playerTimeRange}
+                          </p>
+                        </div>
+
+                        {/* Timezone Info */}
+                        <div className="grid grid-cols-2 gap-3 mt-3">
+                          <div className="p-2 bg-gray-100 rounded">
+                            <p className="text-xs text-gray-500">
+                              Your Timezone
+                            </p>
+                            <p className="text-sm font-medium text-gray-800">
+                              {selectedBooking.expertTimeZone || "UTC"}
+                            </p>
+                          </div>
+                          <div className="p-2 bg-gray-100 rounded">
+                            <p className="text-xs text-gray-500">
+                              Player's Timezone
+                            </p>
+                            <p className="text-sm font-medium text-gray-800">
+                              {selectedBooking.timezone || "UTC"}
+                            </p>
+                          </div>
+                        </div>
+
                         {selectedBooking.location && (
-                          <p className="mb-1 flex items-start">
+                          <p className="mt-3 flex items-start">
                             <FontAwesomeIcon
                               icon={faMapMarkerAlt}
                               className="mr-2 mt-1 text-gray-600"
@@ -1803,7 +1870,7 @@ const BookingExpertside: React.FC = () => {
 
                         {selectedBooking.recordedVideo && (
                           <div className="mb-2">
-                            <p className="font-medium mb-2">Recorded Video:</p>
+                            <p className="font-medium mb-2">Recorded Video: </p>
 
                             {selectedBooking.service?.serviceId === "1" ? (
                               <div className="w-full rounded-lg overflow-hidden border border-gray-200">
@@ -1912,24 +1979,7 @@ const BookingExpertside: React.FC = () => {
 
             <DialogFooter className="flex flex-wrap gap-2 justify-end">
               {(() => {
-                const isRecorded = (() => {
-                  const serviceType =
-                    selectedBooking?.service?.serviceType ||
-                    selectedBooking?.service?.service?.type ||
-                    selectedBooking?.service?.type ||
-                    selectedBooking?.serviceType;
-                  const serviceName =
-                    selectedBooking?.service?.service?.name?.toLowerCase() ||
-                    "";
-                  const serviceId = selectedBooking?.service?.serviceId;
-
-                  return (
-                    serviceId === "1" || // Assuming serviceId "1" is recorded video
-                    (serviceType &&
-                      serviceType.toLowerCase() === "recorded-video") ||
-                    serviceName.includes("recorded video assessment")
-                  );
-                })();
+                const isRecorded = selectedBooking?.service?.serviceId === "1";
 
                 return (
                   <>
@@ -2012,7 +2062,7 @@ const BookingExpertside: React.FC = () => {
                           </Button>
                         )}
                         <Button
-                          className="bg-purple-500 text-white hover:bg-purple-600"
+                          className="bg-purple-500 text-white hover: bg-purple-600"
                           onClick={() =>
                             handleCompleteBooking(selectedBooking.id)
                           }
@@ -2030,7 +2080,7 @@ const BookingExpertside: React.FC = () => {
                       !selectedBooking.review && (
                         <>
                           <Button
-                            className="bg-green-500 text-white hover:bg-green-600"
+                            className="bg-green-500 text-white hover: bg-green-600"
                             onClick={(e) => {
                               handleEvaluation(e, selectedBooking);
                             }}
@@ -2055,6 +2105,7 @@ const BookingExpertside: React.FC = () => {
         </Dialog>
       )}
 
+      {/* Reject Confirmation Dialog */}
       <Dialog open={isRejectConfirmOpen} onOpenChange={setIsRejectConfirmOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -2070,50 +2121,32 @@ const BookingExpertside: React.FC = () => {
           <div className="py-4">
             {bookingToReject && (
               <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-sm">
-                  <span className="font-semibold">Player:</span>{" "}
-                  {
-                    bookings.find((b) => b.id === bookingToReject)?.player
-                      ?.username
-                  }
-                </p>
-                <p className="text-sm">
-                  <span className="font-semibold">Service:</span>{" "}
-                  {
-                    bookings.find((b) => b.id === bookingToReject)?.service
-                      ?.service?.name
-                  }
-                </p>
-                {/* Only show date for non-recorded video */}
                 {(() => {
                   const booking = bookings.find(
                     (b) => b.id === bookingToReject
                   );
-                  const isRecorded = (() => {
-                    const serviceType =
-                      booking?.service?.serviceType ||
-                      booking?.service?.service?.type ||
-                      booking?.service?.type ||
-                      booking?.serviceType;
-                    const serviceName =
-                      booking?.service?.service?.name?.toLowerCase() || "";
-                    const serviceId = booking?.service?.serviceId;
-
-                    return (
-                      serviceId === "1" || // Assuming serviceId "1" is recorded video
-                      (serviceType &&
-                        serviceType.toLowerCase() === "recorded-video") ||
-                      serviceName.includes("recorded video assessment")
-                    );
-                  })();
+                  const isRecorded = booking?.service?.serviceId === "1";
+                  const times = booking
+                    ? getTimesForBothParties(booking)
+                    : null;
 
                   return (
-                    !isRecorded && (
+                    <>
                       <p className="text-sm">
-                        <span className="font-semibold">Date:</span>{" "}
-                        {formatDate(booking?.startAt || "")}
+                        <span className="font-semibold">Player:</span>{" "}
+                        {booking?.player?.username}
                       </p>
-                    )
+                      <p className="text-sm">
+                        <span className="font-semibold">Service:</span>{" "}
+                        {booking?.service?.service?.name}
+                      </p>
+                      {!isRecorded && times && (
+                        <p className="text-sm">
+                          <span className="font-semibold">Date:</span>{" "}
+                          {times.expertDateTime}
+                        </p>
+                      )}
+                    </>
                   );
                 })()}
               </div>
@@ -2137,6 +2170,7 @@ const BookingExpertside: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Accept Confirmation Dialog */}
       <Dialog open={isAcceptConfirmOpen} onOpenChange={setIsAcceptConfirmOpen}>
         <DialogContent className="sm:max-w-[400px]">
           <DialogHeader>
@@ -2152,57 +2186,38 @@ const BookingExpertside: React.FC = () => {
           <div className="py-4">
             {bookingToAccept && (
               <div className="bg-gray-50 p-3 rounded-md">
-                <p className="text-sm">
-                  <span className="font-semibold">Player:</span>{" "}
-                  {
-                    bookings.find((b) => b.id === bookingToAccept)?.player
-                      ?.username
-                  }
-                </p>
-                <p className="text-sm">
-                  <span className="font-semibold">Service:</span>{" "}
-                  {
-                    bookings.find((b) => b.id === bookingToAccept)?.service
-                      ?.service?.name
-                  }
-                </p>
-                {/* Only show date for non-recorded video */}
                 {(() => {
                   const booking = bookings.find(
                     (b) => b.id === bookingToAccept
                   );
-                  const isRecorded = (() => {
-                    const serviceType =
-                      booking?.service?.serviceType ||
-                      booking?.service?.service?.type ||
-                      booking?.service?.type ||
-                      booking?.serviceType;
-                    const serviceName =
-                      booking?.service?.service?.name?.toLowerCase() || "";
-                    const serviceId = booking?.service?.serviceId;
-
-                    return (
-                      serviceId === "1" || // Assuming serviceId "1" is recorded video
-                      (serviceType &&
-                        serviceType.toLowerCase() === "recorded-video") ||
-                      serviceName.includes("recorded video assessment")
-                    );
-                  })();
+                  const isRecorded = booking?.service?.serviceId === "1";
+                  const times = booking
+                    ? getTimesForBothParties(booking)
+                    : null;
 
                   return (
-                    !isRecorded && (
+                    <>
                       <p className="text-sm">
-                        <span className="font-semibold">Date:</span>{" "}
-                        {formatDate(booking?.startAt || "")}
+                        <span className="font-semibold">Player: </span>{" "}
+                        {booking?.player?.username}
                       </p>
-                    )
+                      <p className="text-sm">
+                        <span className="font-semibold">Service:</span>{" "}
+                        {booking?.service?.service?.name}
+                      </p>
+                      {!isRecorded && times && (
+                        <p className="text-sm">
+                          <span className="font-semibold">Date:</span>{" "}
+                          {times.expertDateTime}
+                        </p>
+                      )}
+                      <p className="text-sm">
+                        <span className="font-semibold">Price:</span> £
+                        {booking?.price || "N/A"}
+                      </p>
+                    </>
                   );
                 })()}
-                <p className="text-sm">
-                  <span className="font-semibold">Price:</span> £
-                  {bookings.find((b) => b.id === bookingToAccept)?.price ||
-                    "N/A"}
-                </p>
               </div>
             )}
           </div>
@@ -2223,6 +2238,7 @@ const BookingExpertside: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Reschedule Modal */}
       <Dialog
         open={isRescheduleModalOpen}
         onOpenChange={setIsRescheduleModalOpen}
@@ -2240,50 +2256,32 @@ const BookingExpertside: React.FC = () => {
           <div className="space-y-4">
             {bookingToReschedule && (
               <div className="bg-gray-50 p-3 rounded-md mb-4">
-                <p className="text-sm">
-                  <span className="font-semibold">Player:</span>{" "}
-                  {
-                    bookings.find((b) => b.id === bookingToReschedule)?.player
-                      ?.username
-                  }
-                </p>
-                <p className="text-sm">
-                  <span className="font-semibold">Service:</span>{" "}
-                  {
-                    bookings.find((b) => b.id === bookingToReschedule)?.service
-                      ?.service?.name
-                  }
-                </p>
-                {/* Only show current date for non-recorded video */}
                 {(() => {
                   const booking = bookings.find(
                     (b) => b.id === bookingToReschedule
                   );
-                  const isRecorded = (() => {
-                    const serviceType =
-                      booking?.service?.serviceType ||
-                      booking?.service?.service?.type ||
-                      booking?.service?.type ||
-                      booking?.serviceType;
-                    const serviceName =
-                      booking?.service?.service?.name?.toLowerCase() || "";
-                    const serviceId = booking?.service?.serviceId;
-
-                    return (
-                      serviceId === "1" || // Assuming serviceId "1" is recorded video
-                      (serviceType &&
-                        serviceType.toLowerCase() === "recorded-video") ||
-                      serviceName.includes("recorded video assessment")
-                    );
-                  })();
+                  const isRecorded = booking?.service?.serviceId === "1";
+                  const times = booking
+                    ? getTimesForBothParties(booking)
+                    : null;
 
                   return (
-                    !isRecorded && (
+                    <>
                       <p className="text-sm">
-                        <span className="font-semibold">Current Date:</span>{" "}
-                        {booking && formatDate(booking?.startAt || "")}
+                        <span className="font-semibold">Player:</span>{" "}
+                        {booking?.player?.username}
                       </p>
-                    )
+                      <p className="text-sm">
+                        <span className="font-semibold">Service:</span>{" "}
+                        {booking?.service?.service?.name}
+                      </p>
+                      {!isRecorded && times && (
+                        <p className="text-sm">
+                          <span className="font-semibold">Current Date:</span>{" "}
+                          {times.expertDateTime}
+                        </p>
+                      )}
+                    </>
                   );
                 })()}
               </div>
@@ -2383,6 +2381,7 @@ const BookingExpertside: React.FC = () => {
         </DialogContent>
       </Dialog>
 
+      {/* Fullscreen Video Portal */}
       {isFullscreenVideoOpen &&
         currentVideoUrl &&
         createPortal(
@@ -2450,6 +2449,7 @@ const BookingExpertside: React.FC = () => {
           document.body
         )}
 
+      {/* Agora Video Modal */}
       {agora && booking && (
         <AgoraVideoModal
           isOpen={isAgoraModalOpen}
