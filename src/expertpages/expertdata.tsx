@@ -131,11 +131,7 @@ const ExpertProfile = () => {
   useEffect(() => {
     const navigationTimer = setTimeout(async () => {
       const userRole = localStorage.getItem("role");
-      const isProfileIncomplete =
-        !currentProfile?.age ||
-        !currentProfile?.gender ||
-        !currentProfile?.height ||
-        !currentProfile?.weight;
+      const isProfileIncomplete = false;
 
       if (isProfileIncomplete) {
         try {

@@ -336,11 +336,7 @@ const Profile: React.FC = () => {
     const navigationTimer = setTimeout(async () => {
       const userRole = localStorage.getItem("role");
 
-      const isProfileIncomplete =
-        !currentProfile?.age ||
-        !currentProfile?.gender ||
-        !currentProfile?.height ||
-        !currentProfile?.weight;
+      const isProfileIncomplete = false;
 
       if (isProfileIncomplete) {
         await Swal.fire({
