@@ -29,6 +29,7 @@ import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
 
 import FollowList from "../components/follower/followerlist";
 import axios from "axios";
+import Settings from "./settings";
 
 interface Stat {
   name: string;
@@ -44,6 +45,10 @@ interface EditableProfileData {
   country: string;
   club: string;
   languages: string[];
+  firstName: string;
+  lastName: string;
+  bio: string[];
+  socialLinks: string[];
 }
 
 const calculateOVR = (stats: Stat[]) => {
@@ -126,15 +131,19 @@ const StarRating: React.FC<{
 };
 
 const Profile: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
-    "details"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "details" | "media" | "reviews" | "settings"
+  >("details");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
   const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false);
   const [editData, setEditData] = useState<EditableProfileData>({
     age: "",
+    firstName: "",
+    lastName: "",
+    bio: [],
+    socialLinks: [],
     height: "",
     weight: "",
     city: "",
@@ -183,22 +192,6 @@ const Profile: React.FC = () => {
       setPlayerStats(mappedStats);
     }
   }, []);
-
-  useEffect(() => {
-    if (currentProfile) {
-      setEditData({
-        age: currentProfile.age?.toString() || "",
-        height: currentProfile.height?.toString() || "",
-        weight: currentProfile.weight?.toString() || "",
-        city: currentProfile.city || "",
-        country: currentProfile.country || "",
-        club: currentProfile.club || "",
-        languages: Array.isArray(currentProfile.language)
-          ? [...currentProfile.language]
-          : [],
-      });
-    }
-  }, [currentProfile]);
 
   const handlePhotoClick = () => {
     fileInputRef.current?.click();
@@ -455,20 +448,6 @@ const Profile: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const updateData = {
-        firstName: playerData.rawProfile.firstName || "",
-        lastName: playerData.rawProfile.lastName || "",
-        bio: playerData.rawProfile.bio || "",
-        age: parseInt(editData.age),
-        height: parseInt(editData.height),
-        weight: parseInt(editData.weight),
-        city: editData.city,
-        country: editData.country,
-        club: editData.club,
-        language: editData.languages,
-        socialLinks: playerData.rawProfile.socialLinks || {},
-      };
-
       await dispatch(updateProfile(updateData)).unwrap();
 
       Swal.fire({
@@ -499,20 +478,6 @@ const Profile: React.FC = () => {
   const handleCancelEdit = () => {
     setIsEditingBasicInfo(false);
     setErrors({});
-
-    if (currentProfile) {
-      setEditData({
-        age: currentProfile.age?.toString() || "",
-        height: currentProfile.height?.toString() || "",
-        weight: currentProfile.weight?.toString() || "",
-        city: currentProfile.city || "",
-        country: currentProfile.country || "",
-        club: currentProfile.club || "",
-        languages: Array.isArray(currentProfile.language)
-          ? [...currentProfile.language]
-          : [],
-      });
-    }
   };
 
   const fetchFollowers = async (
@@ -1027,19 +992,21 @@ const Profile: React.FC = () => {
           {/* Tabs Section */}
           <div className="mt-8">
             <div className="flex gap-5 sm:gap-4 border-b overflow-x-auto">
-              {(["details", "media", "reviews"] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
-                    activeTab === tab
-                      ? "text-red-600 border-red-600"
-                      : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
-                  }`}
-                >
-                  {tab}
-                </button>
-              ))}
+              {(["details", "media", "reviews", "settings"] as const).map(
+                (tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setActiveTab(tab)}
+                    className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+                      activeTab === tab
+                        ? "text-red-600 border-red-600"
+                        : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
+                    }`}
+                  >
+                    {tab}
+                  </button>
+                )
+              )}
             </div>
             <div className="mt-4">
               {playerData && (
@@ -1070,6 +1037,7 @@ const Profile: React.FC = () => {
                   {activeTab === "reviews" && (
                     <Reviewnoedit Data={playerData} />
                   )}
+                  {activeTab === "settings" && <Settings />}
                 </>
               )}
             </div>

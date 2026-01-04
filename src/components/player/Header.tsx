@@ -1,4 +1,10 @@
-import { AlignJustify, ChevronDown, CreditCard, Settings } from "lucide-react"; // Added Icons
+import {
+  AlignJustify,
+  ChevronDown,
+  CreditCard,
+  Settings,
+  Loader2,
+} from "lucide-react"; // Added Loader2
 import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,7 +14,7 @@ import {
   faSun,
   faCrown,
 } from "@fortawesome/free-solid-svg-icons";
-import { useEffect, useState, useRef } from "react"; // Added useRef
+import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
@@ -24,10 +30,6 @@ interface Plan {
   price: number;
   interval: "month" | "year" | "day";
   description: string;
-  stripePriceId: string;
-  stripeProductId: string;
-  createdAt: string;
-  updatedAt: string;
   features: any[];
 }
 
@@ -46,7 +48,6 @@ const menuItems = [
 
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
-  const { currentProfile } = useAppSelector((state) => state.profile);
 
   const location = useLocation();
   const currentTitle =
@@ -67,9 +68,12 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useAppDispatch();
+
+  // Redux Selectors
   const {
     isActive,
     planName,
+    planId: currentPlanId,
     loading: subscriptionLoading,
   } = useAppSelector((state) => state.subscription);
 
@@ -80,7 +84,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
     dispatch(fetchSubscriptionStatus());
   }, [dispatch]);
 
-  // Handle clicking outside dropdown to close it
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -139,7 +142,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
 
   const handleSubscribe = async (planId: string) => {
     if (!planId) {
-      alert("Selected plan is not available. Please contact support.");
+      alert("Selected plan is not available.");
       return;
     }
     try {
@@ -159,7 +162,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
         }
       );
       if (response.data?.url) {
-        window.open(response.data.url, "_self"); // Changed to _self for smoother redirect
+        window.open(response.data.url, "_self");
       } else {
         alert("No payment URL returned.");
       }
@@ -168,15 +171,13 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
     }
   };
 
-  // --- NEW: Handle Stripe Portal Redirect (For Cancellation/Update) ---
   const handleManageBilling = async () => {
     try {
       const token = localStorage.getItem("token");
-      // You need to ensure this endpoint exists in your backend (Code provided below)
       const api = `${
         import.meta.env.VITE_PORT
       }/api/v1/subscription/create-portal-session`;
-      
+
       const response = await axios.post(
         api,
         {},
@@ -200,15 +201,13 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
 
   const handleUpgradeClick = () => {
     if (isPremiumUser) {
-      // Toggle dropdown if premium
       setIsDropdownOpen(!isDropdownOpen);
     } else {
-      // Open modal if free
       setShowModal(true);
     }
   };
 
-  // --- Modal Logic & UI ---
+  // --- Plan Helpers ---
   const basicPlan = {
     name: "Basic",
     description: "Your current free plan.",
@@ -218,6 +217,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const dailyPlan = plans.find((p) => p.interval === "day");
   const monthlyPlan = plans.find((p) => p.interval === "month");
   const yearlyPlan = plans.find((p) => p.interval === "year");
+
   const selectedPremiumPlan =
     selectedInterval === "month"
       ? monthlyPlan
@@ -225,108 +225,129 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
       ? yearlyPlan
       : dailyPlan;
 
+  // Check if the selected card matches the user's actual plan
+  const isCurrentPlanSelected =
+    isPremiumUser && currentPlanId === selectedPremiumPlan?.id;
+
+  // --- NEW MODAL UI (Matches Settings.tsx) ---
   const modal = showModal && (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{
-        backdropFilter: "blur(5px)",
-        backgroundColor: "rgba(0,0,0,0.2)",
-      }}
-    >
-      <div className="absolute inset-0" onClick={() => setShowModal(false)} />
-      <div className="relative z-10 bg-[#f7fafb] rounded-2xl p-8 shadow-xl w-[95vw] max-w-3xl flex flex-col items-center">
-        {loadingPlans ? (
-          <div className="text-center">Loading plans...</div>
-        ) : (
-          <div className="flex flex-col md:flex-row gap-8 w-full justify-center">
-            {/* Basic Card */}
-            <div
-              className={`relative border border-gray-300 bg-white rounded-xl p-8 flex-1 max-w-md min-w-[260px] flex flex-col items-center ${
-                basicPlan.isCurrent ? "ring-2 ring-green-400" : ""
-              }`}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="relative w-full max-w-4xl bg-white dark:bg-slate-950 rounded-xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+        <div className="p-6">
+          <div className="flex justify-between items-center mb-6">
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Select a Plan
+            </h3>
+            <button
+              onClick={() => setShowModal(false)}
+              className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-4xl"
             >
-              <div className="font-bold text-2xl mb-2">{basicPlan.name}</div>
-              <div className="text-gray-500 mb-4 text-center">
-                {basicPlan.description}
-              </div>
-              <button className="w-full bg-gray-200 text-black text-lg font-bold rounded-lg py-2 mt-2 cursor-not-allowed opacity-70">
-                Current Plan
-              </button>
-              <div className="text-2xl font-extrabold mt-6 mb-2 text-gray-800">
-                {basicPlan.price}
-              </div>
-            </div>
-            {/* Premium Card */}
-            <div
-              className={`relative border-4 ${
-                isPremiumUser ? "border-red-500" : "border-gray-300"
-              } bg-white rounded-xl p-8 flex-1 max-w-md min-w-[260px] flex flex-col items-center`}
-            >
-              <div className="absolute -top-5 left-0 right-0 flex justify-center">
-                <span className="bg-red-500 text-white text-xs font-bold py-1 px-5 rounded-full shadow">
-                  Popular
-                </span>
-              </div>
-              <div className="font-bold text-2xl mb-2">Premium</div>
-              {/* --- Interval Toggle --- */}
-              <div className="bg-gray-200 rounded-full p-1 flex w-full max-w-xs mb-4">
-                <button
-                  onClick={() => setSelectedInterval("day")}
-                  className={`flex-1 py-1 rounded-full font-semibold transition-colors ${
-                    selectedInterval === "day"
-                      ? "bg-white shadow"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Daily
-                </button>
-                <button
-                  onClick={() => setSelectedInterval("month")}
-                  className={`flex-1 py-1 rounded-full font-semibold transition-colors ${
-                    selectedInterval === "month"
-                      ? "bg-white shadow"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Monthly
-                </button>
-                <button
-                  onClick={() => setSelectedInterval("year")}
-                  className={`flex-1 py-1 rounded-full font-semibold transition-colors ${
-                    selectedInterval === "year"
-                      ? "bg-white shadow"
-                      : "text-gray-600"
-                  }`}
-                >
-                  Yearly
-                </button>
-              </div>
-              <button
-                className={`w-full bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black text-lg font-bold rounded-lg py-2 mt-2 shadow-none ${
-                  isPremiumUser ? "cursor-not-allowed opacity-70" : ""
-                }`}
-                disabled={isPremiumUser}
-                onClick={() =>
-                  selectedPremiumPlan && handleSubscribe(selectedPremiumPlan.id)
-                }
-              >
-                {isPremiumUser ? "Current Plan" : "Get Started"}
-              </button>
-              <div className="text-2xl font-extrabold mt-6 mb-2 text-gray-800">
-                {selectedPremiumPlan
-                  ? `£${selectedPremiumPlan.price}/${selectedPremiumPlan.interval}`
-                  : "N/A"}
-              </div>
-            </div>
+              &times;
+            </button>
           </div>
-        )}
-        <button
-          className="absolute top-2 right-2 bg-white w-8 h-8 flex items-center justify-center text-gray-500 shadow hover:bg-gray-100 z-20 cursor-pointer rounded-full"
-          onClick={() => setShowModal(false)}
-          aria-label="Close"
-        >
-          ×
-        </button>
+
+          {loadingPlans ? (
+            <div className="py-12 flex justify-center">
+              <Loader2 className="animate-spin h-8 w-8 text-red-500" />
+            </div>
+          ) : (
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Basic Card */}
+              <div
+                className={`border rounded-xl p-6 flex flex-col items-center justify-between h-full ${
+                  basicPlan.isCurrent
+                    ? "ring-2 ring-green-500 bg-green-50/10 dark:bg-green-900/10"
+                    : "bg-gray-50 dark:bg-slate-900"
+                }`}
+              >
+                <div className="text-center">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Basic
+                  </h4>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">
+                    {basicPlan.description}
+                  </p>
+                  <div className="text-3xl font-bold mt-4 text-gray-900 dark:text-white">
+                    Free
+                  </div>
+                </div>
+                <Button
+                  onClick={() => isPremiumUser && handleManageBilling()}
+                  disabled={!isPremiumUser}
+                  variant={isPremiumUser ? "outline" : "secondary"}
+                  className="w-full mt-6"
+                >
+                  {isPremiumUser ? "Downgrade to Free" : "Current Plan"}
+                </Button>
+              </div>
+
+              {/* Premium Card */}
+              <div
+                className={`border-2 rounded-xl p-6 flex flex-col items-center justify-between h-full relative ${
+                  isPremiumUser
+                    ? "border-red-400 dark:border-blue-800"
+                    : "border-blue-600 shadow-lg bg-white dark:bg-slate-900"
+                }`}
+              >
+                {!isPremiumUser && (
+                  <div className="absolute top-0 right-0 bg-red-500 hover:bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                    RECOMMENDED
+                  </div>
+                )}
+                <div className="text-center w-full">
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Premium
+                  </h4>
+
+                  {/* Interval Toggle */}
+                  <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-lg mt-4 w-full">
+                    {["day", "month", "year"].map((int) => (
+                      <button
+                        key={int}
+                        onClick={() => setSelectedInterval(int as any)}
+                        className={`flex-1 py-1 text-sm font-medium rounded-md capitalize transition-all ${
+                          selectedInterval === int
+                            ? "bg-white dark:bg-slate-700 shadow text-black dark:text-white"
+                            : "text-gray-500 dark:text-gray-400"
+                        }`}
+                      >
+                        {int}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="text-3xl font-bold mt-6 text-gray-900 dark:text-white">
+                    {selectedPremiumPlan
+                      ? `£${selectedPremiumPlan.price}`
+                      : "N/A"}
+                    <span className="text-base font-normal text-gray-500 dark:text-gray-400">
+                      /{selectedInterval}
+                    </span>
+                  </div>
+                </div>
+
+                <Button
+                  className={`w-full mt-6 ${
+                    isCurrentPlanSelected
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                      : "bg-red-500 hover:bg-red-600 text-white"
+                  }`}
+                  disabled={isCurrentPlanSelected}
+                  onClick={() =>
+                    selectedPremiumPlan &&
+                    handleSubscribe(selectedPremiumPlan.id)
+                  }
+                >
+                  {isCurrentPlanSelected
+                    ? "Current Plan"
+                    : isPremiumUser
+                    ? "Switch Plan"
+                    : "Select Premium"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -348,8 +369,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
           </h2>
         </div>
         <div className="flex flex-nowrap justify-end gap-2 items-center flex-shrink-0">
-          
-          {/* --- Subscription Button / Dropdown Container --- */}
           <div className="relative" ref={dropdownRef}>
             <Button
               className={`h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors ${
@@ -384,11 +403,9 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
               )}
             </Button>
 
-            {/* --- The Dropdown Menu --- */}
             {isDropdownOpen && isPremiumUser && (
-              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 focus:outline-none z-50">
                 <div className="py-1">
-                  {/* Option 1: View Plans / Change Plan */}
                   <button
                     onClick={() => {
                       setIsDropdownOpen(false);
@@ -400,7 +417,6 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
                     Change Plan
                   </button>
 
-                  {/* Option 2: Manage Billing (Cancellation/Invoices) */}
                   <button
                     onClick={() => {
                       setIsDropdownOpen(false);
