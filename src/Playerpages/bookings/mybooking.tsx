@@ -25,7 +25,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import "react-circular-progressbar/dist/styles.css";
 import AssessmentReport from "../../Pages/common/AssessmentReport";
-import { Star, X } from "lucide-react";
+import { Loader2, Star, X } from "lucide-react";
 import profile from "../../assets/images/avatar.png";
 import axios from "axios";
 import Swal from "sweetalert2";
@@ -208,6 +208,11 @@ const MyBooking: React.FC = () => {
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
   const API_BASE_URL2 = `${import.meta.env.VITE_PORT}/api/v1`;
   const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const ITEMS_PER_PAGE = 10;
 
   // ==================== TIMEZONE CONVERSION HELPERS ====================
 
@@ -672,30 +677,62 @@ const MyBooking: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchBookings = async () => {
+  // Define the fetch function
+  const fetchBookingsData = async (
+    pageNumber: number,
+    isLoadMore: boolean = false
+  ) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(API_BASE_URL, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
+    }
 
-        setBookings(response.data.bookings);
-      } catch (err) {
-        setError(
-          "Could not connect to server. Please try refreshing the page."
-        );
-      } finally {
-        setLoading(false);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(API_BASE_URL, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        // Pass pagination and current filters to the API
+        params: {
+          page: pageNumber,
+          limit: ITEMS_PER_PAGE,
+        },
+      });
+
+      // Assuming API response structure: { bookings: [], totalPages: 5, currentPage: 1 }
+      // Adjust 'response.data.totalPages' based on your actual API response
+      const newBookings = response.data.bookings || [];
+      const total = response.data.totalPages || 1;
+
+      setTotalPages(total);
+
+      if (isLoadMore) {
+        // Append new bookings to existing list
+        setBookings((prev) => [...prev, ...newBookings]);
+      } else {
+        // Replace list (initial load or filter change)
+        setBookings(newBookings);
       }
-    };
+    } catch (err) {
+      setError("Could not connect to server. Please try refreshing the page.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
 
-    fetchBookings();
+  useEffect(() => {
+    fetchBookingsData(1, false);
   }, []);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchBookingsData(nextPage, true);
+  };
 
   const openBookingDetails = (booking: Booking) => {
     setSelectedBooking(booking);
@@ -1266,6 +1303,28 @@ const MyBooking: React.FC = () => {
             onToggleVisibility={toggleVisibility}
             onReviewClick={handleReviewClick}
           />
+        )}
+        {!loading && page < totalPages && (
+          <div className="flex justify-center mt-6 mb-4">
+            <Button
+              variant="outline"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="min-w-[200px] border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading older bookings...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                  Load Older Bookings
+                </>
+              )}
+            </Button>
+          </div>
         )}
 
         {/* UPCOMING PAID SESSIONS */}

@@ -41,6 +41,7 @@ import {
   faInfoCircle,
   faPlay,
 } from "@fortawesome/free-solid-svg-icons";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { createPortal } from "react-dom";
 import Swal from "sweetalert2";
@@ -205,6 +206,11 @@ const BookingExpertside: React.FC = () => {
   const [isAgoraModalOpen, setIsAgoraModalOpen] = useState(false);
   const [agora, setAgora] = useState<AgoraCredentials | null>(null);
   const [booking, setBooking] = useState<Booking | null>(null);
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const ITEMS_PER_PAGE = 10;
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
   const navigate = useNavigate();
@@ -652,27 +658,63 @@ const BookingExpertside: React.FC = () => {
     setCurrentVideoUrl(null);
   };
 
-  useEffect(() => {
-    const fetchBookings = async () => {
+  // Define the fetch function
+  const fetchBookingsData = async (
+    pageNumber: number,
+    isLoadMore: boolean = false
+  ) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
       setLoading(true);
-      try {
-        const token = localStorage.getItem("token");
-        const response = await axios.get(`${API_BASE_URL}/booking`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-        setBookings(response.data.bookings);
-      } catch (err) {
-        setError("Could not load bookings. Please try refreshing the page.");
-        setBookings([]);
-      } finally {
-        setLoading(false);
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(`${API_BASE_URL}/booking`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          page: pageNumber,
+          limit: ITEMS_PER_PAGE,
+        },
+      });
+
+      // Adjust based on your actual API response structure
+      // Example: { bookings: [...], totalPages: 5, currentPage: 1 }
+      const newBookings = response.data.bookings || [];
+      const total = response.data.totalPages || 1;
+
+      setTotalPages(total);
+
+      if (isLoadMore) {
+        // Append new bookings to existing list
+        setBookings((prev) => [...prev, ...newBookings]);
+      } else {
+        // Replace list (initial load)
+        setBookings(newBookings);
       }
-    };
-    fetchBookings();
+    } catch (err) {
+      setError("Could not load bookings. Please try refreshing the page.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  // Initial Load Effect
+  useEffect(() => {
+    fetchBookingsData(1, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchBookingsData(nextPage, true);
+  };
 
   const handleVideoError = () => {
     setVideoError(
@@ -1246,6 +1288,28 @@ const BookingExpertside: React.FC = () => {
           onVideoClick={handleVideoClick}
           onReviewClick={handleReviewClick}
         />
+        {!loading && page < totalPages && (
+          <div className="flex justify-center mt-6 mb-4">
+            <Button
+              variant="outline"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="min-w-[200px] border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading older bookings...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                  Load Older Bookings
+                </>
+              )}
+            </Button>
+          </div>
+        )}
       </div>
 
       <div className="mt-6">
