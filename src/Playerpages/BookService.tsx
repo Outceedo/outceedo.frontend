@@ -1089,7 +1089,7 @@ const BookingCalendar: React.FC = () => {
               <div className="mb-2 text-lg text-gray-600">
                 Expert timezone:{" "}
                 <span className="font-semibold text-red-500">
-                  {expertTimeZone || "Not fetched"}
+                  {expertTimeZone || "Not fetched, Select your Timezone"}
                 </span>
               </div>
 

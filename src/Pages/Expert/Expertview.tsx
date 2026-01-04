@@ -765,6 +765,7 @@ const Expertview = () => {
         description: videoDescription || "",
         status: "WAITING_EXPERT_APPROVAL",
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        expertTimeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       };
       Object.entries(bookingData).forEach(([key, value]) => {
         if (value !== undefined && value !== null) {

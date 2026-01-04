@@ -1,4 +1,4 @@
-import { AlignJustify } from "lucide-react";
+import { AlignJustify, ChevronDown, CreditCard, Settings } from "lucide-react"; // Added Icons
 import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -8,7 +8,7 @@ import {
   faSun,
   faCrown,
 } from "@fortawesome/free-solid-svg-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react"; // Added useRef
 import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
@@ -22,7 +22,7 @@ interface Plan {
   id: string;
   name: string;
   price: number;
-  interval: "month" | "year";
+  interval: "month" | "year" | "day";
   description: string;
   stripePriceId: string;
   stripeProductId: string;
@@ -52,7 +52,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const currentTitle =
     menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??
     "Dashboard";
-  const API = `${import.meta.env.VITE_PORT}/api/v1/subscription/plans`;
+  const API_PLANS = `${import.meta.env.VITE_PORT}/api/v1/subscription/plans`;
 
   // Modal and Plans state
   const [showModal, setShowModal] = useState(false);
@@ -61,6 +61,10 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [selectedInterval, setSelectedInterval] = useState<
     "month" | "year" | "day"
   >("month");
+
+  // Dropdown State
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useAppDispatch();
   const {
@@ -75,6 +79,22 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   useEffect(() => {
     dispatch(fetchSubscriptionStatus());
   }, [dispatch]);
+
+  // Handle clicking outside dropdown to close it
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     const savedMode = localStorage.getItem("darkMode");
@@ -103,7 +123,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
       setLoadingPlans(true);
       const token = localStorage.getItem("token");
       axios
-        .get(API, {
+        .get(API_PLANS, {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
@@ -139,7 +159,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
         }
       );
       if (response.data?.url) {
-        window.open(response.data.url, "_blank");
+        window.open(response.data.url, "_self"); // Changed to _self for smoother redirect
       } else {
         alert("No payment URL returned.");
       }
@@ -148,7 +168,45 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
     }
   };
 
-  const handleUpgrade = () => setShowModal(true);
+  // --- NEW: Handle Stripe Portal Redirect (For Cancellation/Update) ---
+  const handleManageBilling = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      // You need to ensure this endpoint exists in your backend (Code provided below)
+      const api = `${
+        import.meta.env.VITE_PORT
+      }/api/v1/subscription/create-portal-session`;
+      
+      const response = await axios.post(
+        api,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response.data?.url) {
+        window.location.href = response.data.url;
+      } else {
+        alert("Could not retrieve billing portal.");
+      }
+    } catch (error) {
+      console.error("Portal error:", error);
+      alert("Failed to access billing settings.");
+    }
+  };
+
+  const handleUpgradeClick = () => {
+    if (isPremiumUser) {
+      // Toggle dropdown if premium
+      setIsDropdownOpen(!isDropdownOpen);
+    } else {
+      // Open modal if free
+      setShowModal(true);
+    }
+  };
 
   // --- Modal Logic & UI ---
   const basicPlan = {
@@ -220,7 +278,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
                       : "text-gray-600"
                   }`}
                 >
-                  Daily(test)
+                  Daily
                 </button>
                 <button
                   onClick={() => setSelectedInterval("month")}
@@ -275,7 +333,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
 
   return (
     <>
-      <header className="flex flex-nowrap items-center justify-between gap-2 px-3 py-3 bg-background dark:bg-slate-950 w-full">
+      <header className="flex flex-nowrap items-center justify-between gap-2 px-3 py-3 bg-background dark:bg-slate-950 w-full relative">
         <div className="flex items-center gap-2 min-w-0">
           <Button
             onClick={() => setOpen(true)}
@@ -290,35 +348,74 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
           </h2>
         </div>
         <div className="flex flex-nowrap justify-end gap-2 items-center flex-shrink-0">
-          <Button
-            className={`h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors ${
-              isPremiumUser
-                ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
-                : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600"
-            }`}
-            onClick={handleUpgrade}
-            disabled={subscriptionLoading}
-          >
-            <FontAwesomeIcon
-              icon={isPremiumUser ? faCrown : faGem}
-              className={`text-lg sm:text-xl ${
+          
+          {/* --- Subscription Button / Dropdown Container --- */}
+          <div className="relative" ref={dropdownRef}>
+            <Button
+              className={`h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors ${
                 isPremiumUser
-                  ? "text-yellow-300"
-                  : "text-blue-700 dark:text-blue-400"
+                  ? "bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+                  : "bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-700 dark:border-slate-600"
               }`}
-            />
-            <p
-              className={`font-Opensans text-lg md:block hidden xs:inline ${
-                isPremiumUser ? "text-white" : "text-gray-800 dark:text-white"
-              }`}
+              onClick={handleUpgradeClick}
+              disabled={subscriptionLoading}
             >
-              {subscriptionLoading
-                ? "Loading..."
-                : isPremiumUser
-                ? "Premium Plan"
-                : "Upgrade to Premium"}
-            </p>
-          </Button>
+              <FontAwesomeIcon
+                icon={isPremiumUser ? faCrown : faGem}
+                className={`text-lg sm:text-xl ${
+                  isPremiumUser
+                    ? "text-yellow-300"
+                    : "text-blue-700 dark:text-blue-400"
+                }`}
+              />
+              <p
+                className={`font-Opensans text-lg md:block hidden xs:inline ${
+                  isPremiumUser ? "text-white" : "text-gray-800 dark:text-white"
+                }`}
+              >
+                {subscriptionLoading
+                  ? "Loading..."
+                  : isPremiumUser
+                  ? "Premium Plan"
+                  : "Upgrade to Premium"}
+              </p>
+              {isPremiumUser && (
+                <ChevronDown className="h-4 w-4 ml-1 text-white opacity-80" />
+              )}
+            </Button>
+
+            {/* --- The Dropdown Menu --- */}
+            {isDropdownOpen && isPremiumUser && (
+              <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 ring-1 ring-black ring-opacity-5 focus:outline-none z-50">
+                <div className="py-1">
+                  {/* Option 1: View Plans / Change Plan */}
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      setShowModal(true);
+                    }}
+                    className="flex w-full items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
+                  >
+                    <CreditCard className="mr-3 h-4 w-4" />
+                    Change Plan
+                  </button>
+
+                  {/* Option 2: Manage Billing (Cancellation/Invoices) */}
+                  <button
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      handleManageBilling();
+                    }}
+                    className="flex w-full items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
+                  >
+                    <Settings className="mr-3 h-4 w-4" />
+                    Manage Billing & Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
           <Button
             className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-2 sm:p-3 h-10 w-10"
             size="sm"
