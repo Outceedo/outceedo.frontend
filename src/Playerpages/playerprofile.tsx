@@ -132,7 +132,7 @@ const StarRating: React.FC<{
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "settings"
+    "details" | "media" | "reviews" | "account"
   >("details");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
@@ -992,7 +992,7 @@ const Profile: React.FC = () => {
           {/* Tabs Section */}
           <div className="mt-8">
             <div className="flex gap-5 sm:gap-4 border-b overflow-x-auto">
-              {(["details", "media", "reviews", "settings"] as const).map(
+              {(["details", "media", "reviews", "account"] as const).map(
                 (tab) => (
                   <button
                     key={tab}
@@ -1037,7 +1037,7 @@ const Profile: React.FC = () => {
                   {activeTab === "reviews" && (
                     <Reviewnoedit Data={playerData} />
                   )}
-                  {activeTab === "settings" && <Settings />}
+                  {activeTab === "account" && <Settings />}
                 </>
               )}
             </div>

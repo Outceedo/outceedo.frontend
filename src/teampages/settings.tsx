@@ -12,13 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {
-  Loader2,
-  CheckCircle2,
-  ExternalLink,
-  CreditCard,
-  CalendarDays,
-} from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface Plan {
@@ -52,22 +46,25 @@ export default function Settings() {
   const isPremiumUser = isActive && planName?.toLowerCase() !== "free";
   const API_PLANS = `${import.meta.env.VITE_PORT}/api/v1/subscription/plans`;
 
-  // --- 1. Fetch Data on Mount ---
+  // Fetch subscription status on mount
   useEffect(() => {
-    // Fetch user subscription status
     dispatch(fetchSubscriptionStatus());
-
-    // Fetch Plans immediately to get price details for the dashboard
-    setLoadingPlans(true);
-    const token = localStorage.getItem("token");
-    axios
-      .get(API_PLANS, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setPlans(res.data?.plans || []))
-      .catch(() => setPlans([]))
-      .finally(() => setLoadingPlans(false));
   }, [dispatch]);
+
+  // Fetch Plans when modal opens
+  useEffect(() => {
+    if (showModal) {
+      setLoadingPlans(true);
+      const token = localStorage.getItem("token");
+      axios
+        .get(API_PLANS, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => setPlans(res.data?.plans || []))
+        .catch(() => setPlans([]))
+        .finally(() => setLoadingPlans(false));
+    }
+  }, [showModal]);
 
   // --- Handlers ---
 
@@ -117,26 +114,7 @@ export default function Settings() {
     }
   };
 
-  // --- Helpers ---
-
-  // 2. Date Formatter (dd-mm-yyyy)
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "";
-    try {
-      const date = new Date(dateString);
-      const day = String(date.getDate()).padStart(2, "0");
-      const month = String(date.getMonth() + 1).padStart(2, "0");
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
-    } catch (e) {
-      return dateString;
-    }
-  };
-
-  // 3. Find Current Plan Details (Price & Interval)
-  const currentPlanDetails = plans.find((p) => p.id === currentPlanId);
-
-  // Plan logic for Modal
+  // --- Plan Helpers ---
   const basicPlan = {
     name: "Basic",
     description: "Free plan with limitations.",
@@ -203,43 +181,23 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            {/* Status Box */}
             <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border">
               <div className="text-sm font-medium text-muted-foreground mb-1">
                 Billing Status
               </div>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-green-500" />
-                  <span className="font-medium">
-                    {isActive ? "Good Standing" : "Free Plan"}
-                  </span>
-                </div>
-                {/* 4. Display Price if Premium */}
-                {isPremiumUser && currentPlanDetails && (
-                  <div className="flex items-center gap-1 bg-white dark:bg-slate-800 px-2 py-1 rounded shadow-sm border">
-                    <CreditCard className="h-3 w-3 text-gray-500" />
-                    <span className="text-sm font-bold text-gray-800 dark:text-gray-200">
-                      £{currentPlanDetails.price}
-                      <span className="text-xs text-gray-500 font-normal">
-                        /{currentPlanDetails.interval}
-                      </span>
-                    </span>
-                  </div>
-                )}
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-green-500" />
+                <span className="font-medium">
+                  {isActive ? "Good Standing" : "Free Plan"}
+                </span>
               </div>
             </div>
-
-            {/* Date Box */}
             {expiryDate && (
               <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border">
                 <div className="text-sm font-medium text-muted-foreground mb-1">
                   Next Renewal
                 </div>
-                <div className="flex items-center gap-2">
-                  <CalendarDays className="h-4 w-4 text-blue-500" />
-                  <div className="font-medium">{formatDate(expiryDate)}</div>
-                </div>
+                <div className="font-medium">{expiryDate.split(" ")[0]}</div>
               </div>
             )}
           </div>
@@ -272,7 +230,7 @@ export default function Settings() {
               onClick={() => setShowModal(true)}
               className="w-full sm:w-auto bg-red-500 hover:bg-red-600 text-white"
             >
-              Upgrade to Premium
+              Upgrade to Premium  
             </Button>
           )}
         </CardFooter>
@@ -287,7 +245,7 @@ export default function Settings() {
                 <h3 className="text-2xl font-bold">Select a Plan</h3>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="text-gray-500 hover:text-gray-700 text-5xl leading-none"
+                  className="text-gray-500 hover:text-gray-700 text-5xl"
                 >
                   &times;
                 </button>

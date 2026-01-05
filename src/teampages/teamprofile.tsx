@@ -16,9 +16,12 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
+import Settings from "./settings";
 
 const TeamProfile = () => {
-  const [activeTab, setActiveTab] = useState<"details" | "media">("details");
+  const [activeTab, setActiveTab] = useState<"details" | "media" | "account">(
+    "details"
+  );
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { currentProfile, status, error } = useAppSelector(
@@ -259,7 +262,7 @@ const TeamProfile = () => {
         {/* Tabs Section */}
         <div className="mt-6">
           <div className="flex gap-4 border-b overflow-x-auto">
-            {(["details", "media"] as const).map((tab) => (
+            {(["details", "media", "account"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -277,6 +280,7 @@ const TeamProfile = () => {
           <div className="mt-5">
             {activeTab === "details" && <TeamDetails profileData={data} />}
             {activeTab === "media" && <Mediaedit Data={data} />}
+            {activeTab === "account" && <Settings />}
           </div>
         </div>
       </>
