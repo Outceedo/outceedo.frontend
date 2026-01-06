@@ -289,12 +289,12 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
               <div
                 className={`border-2 rounded-xl p-6 flex flex-col items-center justify-between h-full relative ${
                   isPremiumUser
-                    ? "border-blue-200 dark:border-blue-800"
-                    : "border-blue-600 shadow-lg bg-white dark:bg-slate-900"
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-red-600 shadow-lg bg-white dark:bg-slate-900"
                 }`}
               >
                 {!isPremiumUser && (
-                  <div className="absolute top-0 right-0 bg-blue-600 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
+                  <div className="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">
                     RECOMMENDED
                   </div>
                 )}
@@ -334,7 +334,7 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
                   className={`w-full mt-6 ${
                     isCurrentPlanSelected
                       ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      : "bg-blue-600 hover:bg-blue-700 text-white"
+                      : "bg-red-500 hoverbg-red-600 text-white"
                   }`}
                   disabled={isCurrentPlanSelected}
                   onClick={() =>
