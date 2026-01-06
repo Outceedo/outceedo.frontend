@@ -272,8 +272,8 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
 
   return (
     <div className="p-4 w-full -ml-4 mt-3 pb-24 sm:pb-4">
-      {/* Plan Info Banner */}
-      {!subscriptionLoading && role === "player" && (
+      {/* Plan Info Banner - Now applies to both Player and Team */}
+      {!subscriptionLoading && (role === "player" || role === "team") && (
         <div
           className={`rounded-lg p-3 mb-4 ${
             isUserOnPremiumPlan
@@ -289,44 +289,40 @@ const Mediaedit: React.FC<MediaeditProps> = ({ Data }) => {
                   : "text-blue-700 dark:text-blue-300"
               }`}
             >
-              {role === "player" ? (
-                <>
-                  <p className="font-medium">
-                    {isUserOnPremiumPlan ? "✨ Premium Plan" : "📁 Free Plan"} -
-                    Storage Usage:
-                  </p>
-                  <div className="flex gap-4 mt-1">
-                    <span
-                      className={`${
-                        !canUploadPhoto ? "font-bold text-red-600" : ""
-                      }`}
-                    >
-                      Photos: {photoCount}/{planLimits.photos}
-                      {!canUploadPhoto && (
-                        <FontAwesomeIcon icon={faLock} className="ml-1" />
-                      )}
-                    </span>
-                    <span
-                      className={`${
-                        !canUploadVideo ? "font-bold text-red-600" : ""
-                      }`}
-                    >
-                      Videos: {videoCount}/{planLimits.videos}
-                      {!canUploadVideo && (
-                        <FontAwesomeIcon icon={faLock} className="ml-1" />
-                      )}
-                    </span>
-                  </div>
-                  {!isUserOnPremiumPlan && (
-                    <button
-                      onClick={() => nav("/plans")}
-                      className="text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded-md font-medium whitespace-nowrap"
-                    >
-                      Upgrade to Premium
-                    </button>
+              <p className="font-medium">
+                {isUserOnPremiumPlan ? "✨ Premium Plan" : "📁 Free Plan"} -
+                Storage Usage:
+              </p>
+              <div className="flex gap-4 mt-1">
+                <span
+                  className={`${
+                    !canUploadPhoto ? "font-bold text-red-600" : ""
+                  }`}
+                >
+                  Photos: {photoCount}/{planLimits.photos}
+                  {!canUploadPhoto && (
+                    <FontAwesomeIcon icon={faLock} className="ml-1" />
                   )}
-                </>
-              ) : null}
+                </span>
+                <span
+                  className={`${
+                    !canUploadVideo ? "font-bold text-red-600" : ""
+                  }`}
+                >
+                  Videos: {videoCount}/{planLimits.videos}
+                  {!canUploadVideo && (
+                    <FontAwesomeIcon icon={faLock} className="ml-1" />
+                  )}
+                </span>
+              </div>
+              {!isUserOnPremiumPlan && (
+                <button
+                  onClick={() => nav("/plans")}
+                  className="text-xs sm:text-sm bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-md font-medium whitespace-nowrap mt-2"
+                >
+                  Upgrade to Premium
+                </button>
+              )}
             </div>
           </div>
         </div>

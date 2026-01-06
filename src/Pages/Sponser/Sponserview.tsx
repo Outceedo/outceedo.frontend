@@ -280,7 +280,7 @@ const Sponsorview: React.FC = () => {
             alt="Sponsor"
             width={350}
             height={350}
-            className="rounded-md object-cover w-full h-48 sm:h-60 md:h-[350px]"
+            className="rounded-md object-contain w-full h-48 sm:h-60 md:h-[350px]"
             onError={(e) => {
               // Fallback to default image if profile photo fails to load
               e.currentTarget.src = Sponsor2;

@@ -57,7 +57,6 @@ interface Country {
   cca2: string;
 }
 
-
 interface PaginationProps {
   totalPages: number;
   currentPage: number;
@@ -71,7 +70,7 @@ interface FiltersState {
   budgetRange: string;
 }
 
-// Enhanced Pagination Component - Fixed ref composition issue
+// Enhanced Pagination Component
 const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
   const handlePrev = useCallback(() => {
     if (currentPage > 1) {
@@ -84,7 +83,6 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
       onPageChange(currentPage + 1);
     }
   }, [currentPage, totalPages, onPageChange]);
-
 
   const getVisiblePages = useCallback(() => {
     const delta = window.innerWidth < 768 ? 1 : 2;
@@ -120,7 +118,6 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
 
   const visiblePages = useMemo(() => getVisiblePages(), [getVisiblePages]);
 
-
   const handlePageClick = useCallback(
     (page) => {
       if (typeof page === "number") {
@@ -129,7 +126,6 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
     },
     [onPageChange]
   );
-
 
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
@@ -187,11 +183,13 @@ export default function SponsorProfiles() {
   const navigateRef = useRef(useNavigate());
   const dispatchRef = useRef(dispatch);
 
-  // Restriction check for player & premium
+  // Restriction check for player & team & premium
   const role = localStorage.getItem("role");
   const isUserOnPremiumPlan =
     isActive && planName && planName.toLowerCase() !== "free";
-  const isPlayer = role === "player";
+
+  // UPDATED: Check if user is either a player OR a team
+  const isRestrictedUser = role === "player" || role === "team";
 
   // Extract sponsors and pagination info from profiles response
   const sponsorsArray = profiles?.users || [];
@@ -233,7 +231,6 @@ export default function SponsorProfiles() {
     return Array.from(options);
   }, []);
 
-
   // Fetch sponsors with backend paging - Fixed to prevent infinite loops
   const fetchSponsors = useCallback(() => {
     const params = {
@@ -247,7 +244,7 @@ export default function SponsorProfiles() {
   // Fixed useEffect to prevent infinite loops
   useEffect(() => {
     fetchSponsors();
-  }, [currentPage, limit]); // Removed dispatch from dependencies
+  }, [currentPage, limit]);
 
   // Client-side filtering and searching (only on current page) - Memoized
   const filteredAndSearchedSponsors = useMemo(() => {
@@ -297,15 +294,14 @@ export default function SponsorProfiles() {
 
   // Stable handlers to prevent infinite re-renders
   const openReportModal = useCallback(
-
     (sponsor: SponsorProfile) => {
-
-      if (isPlayer && !isUserOnPremiumPlan) {
+      // UPDATED: Check if restricted user (Player or Team) AND not premium
+      if (isRestrictedUser && !isUserOnPremiumPlan) {
         Swal.fire({
           icon: "info",
           title: "Premium Required",
           html: `
-          <p class="mb-3">Only players with a <strong>Premium Plan</strong> can apply for sponsorships.</p>
+          <p class="mb-3">Only users with a <strong>Premium Plan</strong> can apply for sponsorships.</p>
           <div class="bg-blue-50 p-3 rounded-lg mb-3 text-left">
             <h4 class="font-semibold text-blue-800 mb-2">Premium Plan Benefits:</h4>
             <ul class="text-sm text-blue-700 space-y-1">
@@ -331,7 +327,7 @@ export default function SponsorProfiles() {
       localStorage.setItem("sponsorid", sponsor.id);
       setIsReportOpen(true);
     },
-    [isPlayer, isUserOnPremiumPlan, navigate]
+    [isRestrictedUser, isUserOnPremiumPlan, navigate]
   );
 
   const closeReportModal = useCallback(() => {
@@ -339,9 +335,7 @@ export default function SponsorProfiles() {
   }, []);
 
   const handleViewProfile = useCallback(
-
     (sponsorId: string, username: string) => {
-
       localStorage.setItem("viewsponsorusername", username);
 
       const role = localStorage.getItem("role");
@@ -358,7 +352,6 @@ export default function SponsorProfiles() {
     },
     [navigate]
   );
-
 
   const handleFilterChange = useCallback(
     (value: string, filterType: string) => {
@@ -390,7 +383,6 @@ export default function SponsorProfiles() {
     []
   );
 
-
   const clearAllFilters = useCallback(() => {
     setSearchTerm("");
     setFilters({
@@ -408,7 +400,7 @@ export default function SponsorProfiles() {
     );
   }, [searchTerm, filters]);
 
-  // Memoized filter options to prevent unnecessary re-calculations
+  // Memoized filter options
   const countryOptions = useMemo(
     () => extractFilterOptions("country", allSponsors),
     [allSponsors, extractFilterOptions]
@@ -430,21 +422,16 @@ export default function SponsorProfiles() {
   const defaultSponsorshipTypes = ["Cash", "Card", "Gift", "Professional Fee"];
   const defaultBudgetRanges = ["10K-50K", "50K-100K", "100K-500K", "500K+"];
 
-
   const calculateRating = useCallback((reviews: any[] = []) => {
-
     if (!reviews || reviews.length === 0) return 0;
     const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
     return (sum / reviews.length).toFixed(1);
   }, []);
 
-
   const handlePageChange = useCallback((page: number) => {
-
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, []);
-
 
   const handleLimitChange = useCallback((e) => {
     const newLimit = parseInt(e.target.value);
@@ -456,7 +443,6 @@ export default function SponsorProfiles() {
   const handleSearchChange = useCallback((e) => {
     setSearchTerm(e.target.value);
   }, []);
-
 
   return (
     <div className="px-3 sm:px-6 py-2 w-full mx-auto dark:bg-gray-900">
@@ -685,7 +671,7 @@ export default function SponsorProfiles() {
                   <img
                     src={sponsor.photo || sponsor2}
                     alt={displayName}
-                    className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 object-cover rounded-md"
+                    className="w-32 h-32 sm:w-40 sm:h-40 lg:w-48 lg:h-48 object-contain rounded-md"
                     onError={(e) => {
                       e.currentTarget.src = sponsor2;
                     }}
