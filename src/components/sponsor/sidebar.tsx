@@ -30,9 +30,9 @@ const sponsorSidebarMenuItems: MenuItem[] = [
   },
   {
     id: 2,
-    name: "Experts",
+    name: "Teams",
     icon: "fas fa-user-tie",
-    path: "/sponsor/experts",
+    path: "/sponsor/teams",
   },
 
   {

@@ -1,7 +1,6 @@
-import ExpertProfiles from "@/Pages/Expert/ExpertProfilefetch";
+import TeamProfiles from "@/Pages/team/teamProfiles";
 
-
-const Sponsorexperts = () => {
-  return <ExpertProfiles />;
+const Sponsorteams = () => {
+  return <TeamProfiles />;
 };
-export default Sponsorexperts;
+export default Sponsorteams;

@@ -90,6 +90,7 @@ import Contact from "./Pages/Home/Contact";
 import ScrollToTop from "./common/ScrollToTop";
 import Terms from "./Pages/Home/terms";
 import Privacy from "./Pages/Home/privacy";
+import TeamView from "./Pages/team/teamProfile";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -286,13 +287,13 @@ const AppContent: React.FC = () => {
           }
         >
           <Route path="players" element={<Sponsorplayer />} />
-          <Route path="experts" element={<Sponsorexperts />} />
+          <Route path="teams" element={<Sponsorexperts />} />
           <Route path="application" element={<SponsorApplication />} />
           <Route path="profile" element={<Sponsorprofile />} />
           <Route path="details-form" element={<SponsorDetailsForm />} />
           <Route path="SponsorForm" element={<SponsorForm />} />
           <Route path="playerinfo" element={<SponsorPlayerInfo />} />
-          <Route path="exdetails" element={<SponsorExperts />} />
+          <Route path="teaminfo" element={<TeamView />} />
         </Route>
 
         {/* Team routes */}

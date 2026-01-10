@@ -15,13 +15,13 @@ interface SponserHeaderProps {
 }
 const menuItems = [
   { path: "/sponsor/details-form", name: "Edit Profile" },
-  { path: "/sponsor/experts", name: "Experts" },
+  { path: "/sponsor/teams", name: "Teams" },
   { path: "/sponsor/players", name: "Players" },
   { path: "/sponsor/application", name: "Application Form" },
   { path: "/sponsor/profile", name: "Profile" },
   { path: "/sponsor/sponsorinfo", name: "Profile" },
   { path: "/sponsor/playerinfo", name: "Player Profile" },
-  { path: "/sponsor/exdetails", name: "Expert Profile" },
+  { path: "/sponsor/teaminfo", name: "Team Profile" },
 ];
 function SponsorHeader({ setOpen }: SponserHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
