@@ -592,7 +592,7 @@ const TeamView: React.FC = () => {
               )}
 
             {/* Stats Section (Added Back) */}
-            {profileData.role === "team" && (
+            {/* {profileData.role === "team" && (
               <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit mt-3">
                 {statsLoading ? (
                   <div className="flex items-center justify-center p-4 sm:p-8">
@@ -644,7 +644,7 @@ const TeamView: React.FC = () => {
                   </div>
                 )}
               </Card>
-            )}
+            )} */}
 
             {/* Rating Section */}
             <div className="flex items-center gap-2 mt-2 sm:mt-4">
