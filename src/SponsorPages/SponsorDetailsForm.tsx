@@ -20,7 +20,7 @@ import axios from "axios";
 
 interface FormData {
   sponsorType: string;
-  sportInterest: string;
+  sportInterests: string[];
   type: string;
   fullName: string;
   lastName: string;
@@ -34,6 +34,7 @@ interface FormData {
   email: string;
   CompanyLink: string;
   BudegetRange: string;
+  currency: string;
   SponsorshipType: string;
   SponsorshipCountryPreferred: string;
   bio: string;
@@ -62,24 +63,35 @@ interface City {
   country: string;
 }
 
+interface Currency {
+  code: string;
+  name: string;
+}
+
 export default function SponsorDetailsForm() {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [profilePhoto, setProfilePhoto] = useState<File | null>(null);
-  const [existingProfilePhoto, setExistingProfilePhoto] = useState<string | null>(null);
+  const [existingProfilePhoto, setExistingProfilePhoto] = useState<
+    string | null
+  >(null);
   const [profilePhotoChanged, setProfilePhotoChanged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string>
+  >({});
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const [countries, setCountries] = useState<Country[]>([]);
   const [cities, setCities] = useState<City[]>([]);
+  const [currencies, setCurrencies] = useState<Currency[]>([]);
   const [selectedCountry, setSelectedCountry] = useState<Country | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [citySearchTerm, setCitySearchTerm] = useState<string>("");
-  const [showCountryDropdown, setShowCountryDropdown] = useState<boolean>(false);
+  const [showCountryDropdown, setShowCountryDropdown] =
+    useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
@@ -90,7 +102,7 @@ export default function SponsorDetailsForm() {
 
   const [form, setForm] = useState<FormData>({
     sponsorType: "",
-    sportInterest: "",
+    sportInterests: [],
     type: "",
     fullName: "",
     lastName: "",
@@ -104,6 +116,7 @@ export default function SponsorDetailsForm() {
     email: "",
     CompanyLink: "",
     BudegetRange: "",
+    currency: "USD",
     SponsorshipType: "",
     SponsorshipCountryPreferred: "",
     bio: "",
@@ -148,6 +161,49 @@ export default function SponsorDetailsForm() {
       }
     };
     fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    const fetchCurrencies = async (): Promise<void> => {
+      try {
+        const response = await fetch(
+          "https://openexchangerates.org/api/currencies.json"
+        );
+        if (!response.ok) throw new Error("Failed to fetch currencies");
+
+        const data = await response.json();
+        const formattedCurrencies: Currency[] = Object.entries(data).map(
+          ([code, name]) => ({
+            code,
+            name: name as string,
+          })
+        );
+        setCurrencies(formattedCurrencies);
+      } catch (error) {
+        const fallbackCurrencies: Currency[] = [
+          { code: "USD", name: "United States Dollar" },
+          { code: "EUR", name: "Euro" },
+          { code: "GBP", name: "British Pound Sterling" },
+          { code: "INR", name: "Indian Rupee" },
+          { code: "AUD", name: "Australian Dollar" },
+          { code: "CAD", name: "Canadian Dollar" },
+          { code: "JPY", name: "Japanese Yen" },
+          { code: "CNY", name: "Chinese Yuan" },
+          { code: "CHF", name: "Swiss Franc" },
+          { code: "NZD", name: "New Zealand Dollar" },
+          { code: "SGD", name: "Singapore Dollar" },
+          { code: "HKD", name: "Hong Kong Dollar" },
+          { code: "KRW", name: "South Korean Won" },
+          { code: "MXN", name: "Mexican Peso" },
+          { code: "BRL", name: "Brazilian Real" },
+          { code: "ZAR", name: "South African Rand" },
+          { code: "AED", name: "United Arab Emirates Dirham" },
+          { code: "SAR", name: "Saudi Riyal" },
+        ];
+        setCurrencies(fallbackCurrencies);
+      }
+    };
+    fetchCurrencies();
   }, []);
 
   useEffect(() => {
@@ -284,9 +340,11 @@ export default function SponsorDetailsForm() {
           sponsorType: profile.sponsorType
             ? profile.sponsorType.toLowerCase()
             : "",
-          sportInterest: profile.profession
-            ? profile.profession.toLowerCase()
-            : "",
+          sportInterests: profile.profession
+            ? profile.profession
+                .split(",")
+                .map((s: string) => s.trim().toLowerCase())
+            : [],
           type: profile.role ? profile.role.toLowerCase() : "",
           fullName: profile.firstName || "",
           lastName: profile.lastName || "",
@@ -300,6 +358,7 @@ export default function SponsorDetailsForm() {
           email: userData?.email || profile.email || "",
           CompanyLink: profile.companyLink || "",
           BudegetRange: profile.budgetRange || "",
+          currency: profile.currency || "USD",
           SponsorshipType: profile.sponsorshipType
             ? profile.sponsorshipType.toLowerCase()
             : "",
@@ -397,7 +456,7 @@ export default function SponsorDetailsForm() {
         name === "sportInterest" ||
         name === "type" ||
         name === "SponsorshipType"
-          ? value.toLowerCase()
+          ? value
           : value,
     }));
     if (validationErrors[name]) {
@@ -450,10 +509,9 @@ export default function SponsorDetailsForm() {
 
       const sponsorData = {
         sponsorType: form.sponsorType,
-        profession: form.sportInterest
-          ? form.sportInterest.charAt(0).toUpperCase() +
-            form.sportInterest.slice(1)
-          : "",
+        profession: form.sportInterests
+          .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+          .join(", "),
         firstName: form.fullName
           ? form.fullName.charAt(0).toUpperCase() + form.fullName.slice(1)
           : "",
@@ -468,6 +526,7 @@ export default function SponsorDetailsForm() {
         country: form.country,
         address: form.address,
         budgetRange: form.BudegetRange,
+        currency: form.currency,
         sponsorshipType:
           form.SponsorshipType.charAt(0).toUpperCase() +
           form.SponsorshipType.slice(1),
@@ -685,9 +744,11 @@ export default function SponsorDetailsForm() {
                 }`}
               >
                 <option value="">Select a Sponsor</option>
-                <option value="corporate">Corporate</option>
-                <option value="individual">Individual</option>
-                <option value="institution">Institution</option>
+                <option value="Corporate">Corporate</option>
+                <option value="Individual">Individual</option>
+                <option value="Business">Business</option>
+                <option value="Limited Company">Limited Company</option>
+                <option value="NGO">NGO(Non-Govermental Organisation)</option>
               </select>
               {validationErrors.sponsorType && (
                 <p className="text-red-500 text-xs mt-1">
@@ -697,17 +758,65 @@ export default function SponsorDetailsForm() {
             </div>
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
-                Sport Interest
+                Sport Interest (Select multiple)
               </label>
-              <select
-                name="sportInterest"
-                value={form.sportInterest}
-                onChange={handleChange}
-                className="border p-2 rounded text-sm text-gray-700 w-full"
-              >
-                <option value="">Select a sport</option>
-                <option value="football">Football</option>
-              </select>
+              <div className="border p-2 rounded text-sm text-gray-700 w-full max-h-32 overflow-y-auto">
+                {[
+                  { value: "football", label: "Football" },
+                  { value: "basketball", label: "Basketball" },
+                  { value: "cricket", label: "Cricket" },
+                  { value: "tennis", label: "Tennis" },
+                  { value: "golf", label: "Golf" },
+                  { value: "swimming", label: "Swimming" },
+                  { value: "athletics", label: "Athletics" },
+                  { value: "boxing", label: "Boxing" },
+                  { value: "rugby", label: "Rugby" },
+                  { value: "hockey", label: "Hockey" },
+                  { value: "baseball", label: "Baseball" },
+                  { value: "volleyball", label: "Volleyball" },
+                  { value: "motorsports", label: "Motorsports" },
+                  { value: "cycling", label: "Cycling" },
+                  { value: "esports", label: "Esports" },
+                ].map((sport) => (
+                  <label
+                    key={sport.value}
+                    className="flex items-center gap-2 py-1 cursor-pointer hover:bg-gray-100 px-1 rounded"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={form.sportInterests.includes(sport.value)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setForm((prev) => ({
+                            ...prev,
+                            sportInterests: [
+                              ...prev.sportInterests,
+                              sport.value,
+                            ],
+                          }));
+                        } else {
+                          setForm((prev) => ({
+                            ...prev,
+                            sportInterests: prev.sportInterests.filter(
+                              (s) => s !== sport.value
+                            ),
+                          }));
+                        }
+                      }}
+                      className="accent-red-500"
+                    />
+                    <span>{sport.label}</span>
+                  </label>
+                ))}
+              </div>
+              {form.sportInterests.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">
+                  Selected:{" "}
+                  {form.sportInterests
+                    .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+                    .join(", ")}
+                </p>
+              )}
             </div>
             <div>
               <label className="text-sm font-medium text-gray-900 dark:text-white">
@@ -859,13 +968,26 @@ export default function SponsorDetailsForm() {
               <label className="text-sm font-medium text-gray-900 mb-1 block dark:text-white">
                 Budget Range
               </label>
-              <Input
-                name="BudegetRange"
-                placeholder="£"
-                value={form.BudegetRange}
-                onChange={handleChange}
-                className="w-full"
-              />
+              <div className="flex gap-2">
+                <select
+                  name="currency"
+                  value={form.currency}
+                  onChange={handleChange}
+                  className="border p-2 rounded text-sm text-gray-700 w-28"
+                >
+                  {currencies.map((currency) => (
+                    <option key={currency.code} value={currency.code}>
+                      {currency.code}
+                    </option>
+                  ))}
+                </select>
+                <Input
+                  name="BudegetRange"
+                  value={form.BudegetRange}
+                  onChange={handleChange}
+                  className="flex-1"
+                />
+              </div>
             </div>
             <div className="w-full">
               <label className="text-sm font-medium text-gray-900 mb-1 block dark:text-white">

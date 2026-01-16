@@ -359,7 +359,6 @@ const SponsorApplication = () => {
         )}
       </div>
 
-
       {/* Results info */}
       <div className="mb-4 text-sm text-gray-600">
         {!loading && (
@@ -382,7 +381,6 @@ const SponsorApplication = () => {
       )}
 
       <div className="dark:bg-gray-800 w-xs md:w-full">
-
         <Table>
           <TableHeader>
             <TableRow>
@@ -390,6 +388,7 @@ const SponsorApplication = () => {
               <TableHead>Application Date</TableHead>
               <TableHead>Sponsorship Type</TableHead>
               <TableHead>Application View</TableHead>
+              <TableHead>Budget</TableHead>
               <TableHead>Action</TableHead>
               <TableHead>Status</TableHead>
             </TableRow>
@@ -450,6 +449,7 @@ const SponsorApplication = () => {
                     ? `${app.user.firstName}${app.user.lastName}.application`
                     : "View"}
                 </TableCell>
+                <TableCell>{app.budget || "------"} </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <button

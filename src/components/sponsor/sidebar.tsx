@@ -181,7 +181,7 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           {currentProfile?.company}
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
-          {sponsorProfession} - {sponsorRole}
+          {sponsorRole?.toUpperCase()}
         </p>
 
         {/* Show loading indicator if profile is still loading */}

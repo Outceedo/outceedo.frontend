@@ -20,6 +20,7 @@ import { useAppDispatch } from "../store/hooks";
 import { updateProfile } from "../store/profile-slice";
 import Swal from "sweetalert2";
 import axios from "axios";
+import { current } from "@reduxjs/toolkit";
 
 const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
@@ -65,6 +66,7 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
 
   const [isEditingSponsorship, setIsEditingSponsorship] = useState(false);
   const [sponsorshipInfo, setSponsorshipInfo] = useState({
+    currency: profileData.currency,
     range: profileData.budgetRange || "Not Specified",
     type: profileData.sponsorshipType || "Not Specified",
     country: profileData.sponsorshipCountryPreferred || "Not Specified",
@@ -100,11 +102,13 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
       }
 
       setSponsorshipInfo({
+        currency: profileData.currency,
         range: profileData.budgetRange || "Not Specified",
         type: profileData.sponsorshipType || "Not Specified",
         country: profileData.sponsorshipCountryPreferred || "Not Specified",
       });
       setTempSponsorship({
+        currency: profileData.currency,
         range: profileData.budgetRange || "Not specified",
         type: profileData.sponsorshipType || "Not specified",
         country: profileData.sponsorshipCountryPreferred || "Not specified",
@@ -146,6 +150,7 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
     try {
       // Map to the correct field names expected by the API
       const updatedProfile = {
+        currency: tempSponsorship.currency,
         budgetRange: tempSponsorship.range,
         sponsorshipType: tempSponsorship.type,
         sponsorshipCountryPreferred: tempSponsorship.country,
@@ -280,6 +285,23 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Currency
+                </label>
+                <Input
+                  value={tempSponsorship.currency}
+                  onChange={(e) =>
+                    setTempSponsorship({
+                      ...tempSponsorship,
+                      currency: e.target.value,
+                    })
+                  }
+                  placeholder="e.g. USD/GBP/INR"
+                  disabled={isSubmitting}
+                  className="dark:bg-gray-800"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   Budget Range
                 </label>
                 <Input
@@ -366,7 +388,15 @@ const Sponsordetails: React.FC<{ profileData?: ProfileData }> = ({
           </>
         ) : (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div>
+                <p className="text-gray-600 dark:text-gray-400 mb-1">
+                  Currency
+                </p>
+                <p className="font-medium text-gray-800 dark:text-white">
+                  {profileData.currency}
+                </p>
+              </div>
               <div>
                 <p className="text-gray-600 dark:text-gray-400 mb-1">
                   Budget Range
