@@ -337,9 +337,7 @@ export default function SponsorDetailsForm() {
         }
 
         setForm({
-          sponsorType: profile.sponsorType
-            ? profile.sponsorType.toLowerCase()
-            : "",
+          sponsorType: profile.sponsorType,
           sportInterests: profile.profession
             ? profile.profession
                 .split(",")
