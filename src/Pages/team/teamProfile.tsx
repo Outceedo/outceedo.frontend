@@ -448,8 +448,7 @@ const TeamView: React.FC = () => {
   }
 
   const displayName =
-    profileData.company ||
-    profileData.firstName ||
+    profileData.teamName ||
     `${profileData.firstName || ""} ${profileData.lastName || ""}`.trim() ||
     "Team Profile";
 
@@ -480,6 +479,12 @@ const TeamView: React.FC = () => {
             <div>
               <h2 className="text-lg sm:text-3xl font-semibold text-gray-900 dark:text-white font-Raleway">
                 {displayName}
+              </h2>
+              <h2 className="text-lg sm:text-sm font-semibold text-gray-900 dark:text-white font-Raleway mb-3 mt-3">
+                Managed by{" "}
+                {profileData.firstName?.trim() +
+                  " " +
+                  profileData.lastName?.trim()}
               </h2>
               <div className="flex flex-wrap gap-x-5 gap-y-2 text-gray-600 font-Opensans mt-2 dark:text-gray-300 text-sm sm:text-base">
                 <span>
@@ -514,7 +519,7 @@ const TeamView: React.FC = () => {
                 </span>
               </div>
             </div>
-                    
+
             {/* Follow Button Section */}
             <div className="mt-2 sm:mt-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">

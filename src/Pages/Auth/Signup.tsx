@@ -16,7 +16,7 @@ const Signup: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
 
   const [, setRole] = useState<Role | null>(null);
@@ -41,6 +41,10 @@ const Signup: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // Checkbox states
+  const [ageVerify, setAgeVerify] = useState(false);
+  const [termsAccepted, setTermsAccepted] = useState(false);
+
   useEffect(() => {
     // Debug for Redux state changes
     if (error) {
@@ -63,7 +67,7 @@ const Signup: React.FC = () => {
     try {
       const myCountryCodesObject = countryCodes.customList(
         "countryCode",
-        "+{countryCallingCode} ({countryNameEn})"
+        "+{countryCallingCode} ({countryNameEn})",
       );
       setCountryList(Object.values(myCountryCodesObject));
     } catch (err) {
@@ -85,14 +89,14 @@ const Signup: React.FC = () => {
       const generatedUsername =
         `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(
           /\s+/g,
-          ""
+          "",
         );
       setUsername(generatedUsername);
     }
   }, [firstName, lastName, usernameGenerated]);
 
   const filteredCountries = countryList.filter((country) =>
-    country.toLowerCase().includes(searchTerm.toLowerCase())
+    country.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleSelect = (country: string) => {
@@ -140,6 +144,10 @@ const Signup: React.FC = () => {
       errors.confirmPassword = "Confirm Password is required.";
     if (!countryCode) errors.countryCode = "Country code is required.";
     if (!mobileNumber) errors.mobileNumber = "Mobile number is required.";
+    if (!ageVerify)
+      errors.ageVerify = "You must confirm that you are 18 years or older.";
+    if (!termsAccepted)
+      errors.termsAccepted = "You must agree to the Terms and Conditions.";
 
     if (username && !/^[a-zA-Z0-9_]+$/.test(username)) {
       errors.username =
@@ -163,6 +171,7 @@ const Signup: React.FC = () => {
       firstName,
       lastName,
       username,
+      ageVerify,
     };
 
     setRegistrationAttempted(true);
@@ -521,28 +530,81 @@ const Signup: React.FC = () => {
               )}
             </div>
           </div>
-          <div className="mb-4 flex justify-between items-center">
-            <label className="flex items-center">
-              <input type="checkbox" className="mr-2" required />
-              <span className="text-black-700">
-                I agree to the{" "}
+          {/* Age Verification Checkbox */}
+          <div className="mb-2">
+            <label className="flex items-start">
+              <input
+                type="checkbox"
+                className="mr-2 mt-1"
+                checked={ageVerify}
+                onChange={(e) => setAgeVerify(e.target.checked)}
+              />
+              <span
+                className={`text-sm ${fieldErrors.ageVerify ? "text-red-500" : "text-gray-700"}`}
+              >
+                I am 18 years old or older.{" "}
+                <span className="text-red-500">*</span>
+                <br />
+                <span className="text-xs text-gray-500">
+                  (Under 18 years: Parent/Legal Guardian must Sign up, Access
+                  and Maintain the user account)
+                </span>
+              </span>
+            </label>
+            {fieldErrors.ageVerify && (
+              <p className="text-red-500 text-sm ml-5">
+                {fieldErrors.ageVerify}
+              </p>
+            )}
+          </div>
+
+          {/* Terms and Conditions Checkbox */}
+          <div className="mb-4">
+            <label className="flex items-start">
+              <input
+                type="checkbox"
+                className="mr-2 mt-1"
+                checked={termsAccepted}
+                onChange={(e) => setTermsAccepted(e.target.checked)}
+              />
+              <span
+                className={`text-sm ${fieldErrors.termsAccepted ? "text-red-500" : "text-gray-700"}`}
+              >
+                I have read, understand and agree to Outceedo{" "}
                 <a
                   href="/terms"
                   className="text-blue-600 underline"
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  Terms
+                  Terms and Conditions
+                </a>
+                , ,{" "}
+                <a
+                  href="/privacy"
+                  className="text-blue-600 underline"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Privacy Policy
                 </a>{" "}
                 and{" "}
                 <a
                   href="/privacy"
                   className="text-blue-600 underline"
                   target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  Privacy Policy
+                  Cookie Use
                 </a>
+                . <span className="text-red-500">*</span>
               </span>
             </label>
+            {fieldErrors.termsAccepted && (
+              <p className="text-red-500 text-sm ml-5">
+                {fieldErrors.termsAccepted}
+              </p>
+            )}
           </div>
           <div className="flex justify-center">
             <button

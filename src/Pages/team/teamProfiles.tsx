@@ -202,6 +202,7 @@ export default function TeamProfiles() {
 
   // Local State
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
   const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
@@ -225,15 +226,26 @@ export default function TeamProfiles() {
     }
   }, [usersArray, status]);
 
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
   // Fetch Logic
   const fetchProfiles = useCallback(() => {
-    const params = {
+    const params: Record<string, any> = {
       page: currentPage,
       limit,
       userType: targetProfileType,
     };
+    if (debouncedSearchTerm.trim()) {
+      params.search = debouncedSearchTerm.trim();
+    }
     dispatchRef.current(getProfiles(params));
-  }, [currentPage, limit]);
+  }, [currentPage, limit, debouncedSearchTerm]);
 
   useEffect(() => {
     fetchProfiles();
@@ -303,7 +315,9 @@ export default function TeamProfiles() {
               : [profile.language];
             return langs.some((l) => l?.trim() === value);
           } else if (key === "teamType") {
-            return profile.teamType?.trim().toLowerCase() === value.toLowerCase();
+            return (
+              profile.teamType?.trim().toLowerCase() === value.toLowerCase()
+            );
           } else {
             return profile[key as keyof Profile]?.trim() === value;
           }
@@ -383,6 +397,7 @@ export default function TeamProfiles() {
       teamCategory: "",
     });
     setSearchTerm("");
+    setDebouncedSearchTerm("");
     setCurrentPage(1);
   };
 
@@ -404,6 +419,7 @@ export default function TeamProfiles() {
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1);
   };
 
   const handleViewProfile = (profile: Profile) => {
@@ -609,7 +625,7 @@ export default function TeamProfiles() {
           displayedProfiles.map((profile) => {
             // For teams, 'company' is often the Team Name. Fallback to username.
             const displayName =
-              profile.firstName?.trim() || profile.username?.trim();
+              profile.teamName?.trim() || profile.firstName?.trim();
             const avgRating = calculateAverageRating(profile.reviewsReceived);
             const reviewCount = profile.reviewsReceived?.length || 0;
             const teamSports = profile.sports

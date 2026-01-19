@@ -124,7 +124,7 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
         onPageChange(page);
       }
     },
-    [onPageChange]
+    [onPageChange],
   );
 
   return (
@@ -146,8 +146,8 @@ const Pagination = React.memo(({ totalPages, currentPage, onPageChange }) => {
               typeof page === "number" && currentPage === page
                 ? "bg-red-500 text-white"
                 : typeof page === "number"
-                ? "bg-gray-200 dark:bg-slate-600 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-500"
-                : "bg-transparent cursor-default"
+                  ? "bg-gray-200 dark:bg-slate-600 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-500"
+                  : "bg-transparent cursor-default"
             }`}
             onClick={() => handlePageClick(page)}
             disabled={typeof page !== "number"}
@@ -327,7 +327,7 @@ export default function SponsorProfiles() {
       localStorage.setItem("sponsorid", sponsor.id);
       setIsReportOpen(true);
     },
-    [isRestrictedUser, isUserOnPremiumPlan, navigate]
+    [isRestrictedUser, isUserOnPremiumPlan, navigate],
   );
 
   const closeReportModal = useCallback(() => {
@@ -350,7 +350,7 @@ export default function SponsorProfiles() {
         navigate("/expert/sponsorinfo");
       }
     },
-    [navigate]
+    [navigate],
   );
 
   const handleFilterChange = useCallback(
@@ -380,7 +380,7 @@ export default function SponsorProfiles() {
         [stateKey]: value,
       }));
     },
-    []
+    [],
   );
 
   const clearAllFilters = useCallback(() => {
@@ -403,19 +403,19 @@ export default function SponsorProfiles() {
   // Memoized filter options
   const countryOptions = useMemo(
     () => extractFilterOptions("country", allSponsors),
-    [allSponsors, extractFilterOptions]
+    [allSponsors, extractFilterOptions],
   );
   const sponsorTypeOptions = useMemo(
     () => extractFilterOptions("sponsorType", allSponsors),
-    [allSponsors, extractFilterOptions]
+    [allSponsors, extractFilterOptions],
   );
   const sponsorshipTypeOptions = useMemo(
     () => extractFilterOptions("sponsorshipType", allSponsors),
-    [allSponsors, extractFilterOptions]
+    [allSponsors, extractFilterOptions],
   );
   const budgetRangeOptions = useMemo(
     () => extractFilterOptions("budgetRange", allSponsors),
-    [allSponsors, extractFilterOptions]
+    [allSponsors, extractFilterOptions],
   );
 
   const defaultSponsorTypes = ["Individual", "Corporate", "Institution"];
@@ -704,12 +704,6 @@ export default function SponsorProfiles() {
                         />
                       ))}
                     </div>
-                    <span className="text-yellow-400 text-sm sm:text-lg">
-                      {rating || "N/A"}
-                    </span>
-                    <span className="ml-2 text-gray-500 dark:text-gray-400 text-xs sm:text-sm">
-                      (Sponsored - {sponsoredCount} players)
-                    </span>
                   </div>
                   <div className="flex flex-wrap gap-1 sm:gap-2 mt-2 justify-center sm:justify-start">
                     {sponsor.sponsorType && (

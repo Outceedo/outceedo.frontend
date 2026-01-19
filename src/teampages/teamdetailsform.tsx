@@ -24,6 +24,8 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 
 interface FormData {
   teamName: string;
+  firstName: string;
+  lastName: string;
   type: string;
   sport: string;
   clubName: string;
@@ -110,7 +112,9 @@ export default function TeamDetailsForm() {
 
   const [form, setForm] = useState<FormData>({
     teamName: "",
-    teamType: "",
+    firstName: "",
+    lastName: "",
+    type: "",
     sport: "",
     clubName: "",
     city: "",
@@ -387,7 +391,9 @@ export default function TeamDetailsForm() {
       }
 
       setForm({
-        teamName: profileData.firstName || "",
+        teamName: profileData.teamName || "",
+        firstName: profileData.firstName || "",
+        lastName: profileData.lastName || "",
         type: profileData.teamType || "",
         sport: profileData.sport ? profileData.sport.toLowerCase() : "",
         clubName: profileData.club || "",
@@ -463,10 +469,21 @@ export default function TeamDetailsForm() {
 
       const teamData = {
         teamType: form.type,
-        firstName:
-          form.teamName.charAt(0).toUpperCase() + form.teamName.slice(1),
-        sport: form.sport.charAt(0).toUpperCase() + form.sport.slice(1),
-        club: form.clubName.charAt(0).toUpperCase() + form.clubName.slice(1),
+        teamName: form.teamName
+          ? form.teamName.charAt(0).toUpperCase() + form.teamName.slice(1)
+          : "",
+        firstName: form.firstName
+          ? form.firstName.charAt(0).toUpperCase() + form.firstName.slice(1)
+          : "",
+        lastName: form.lastName
+          ? form.lastName.charAt(0).toUpperCase() + form.lastName.slice(1)
+          : "",
+        sport: form.sport
+          ? form.sport.charAt(0).toUpperCase() + form.sport.slice(1)
+          : "",
+        club: form.clubName
+          ? form.clubName.charAt(0).toUpperCase() + form.clubName.slice(1)
+          : "",
         city: form.city,
         country: form.country,
         address: form.address,
@@ -637,6 +654,42 @@ export default function TeamDetailsForm() {
               {validationErrors.teamName && (
                 <p className="text-red-500 text-xs mt-1">
                   {validationErrors.teamName}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                First Name
+              </label>
+              <Input
+                name="firstName"
+                value={form.firstName}
+                onChange={handleChange}
+                placeholder="Enter first name"
+                className={validationErrors.firstName ? "border-red-500" : ""}
+              />
+              {validationErrors.firstName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.firstName}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Last Name
+              </label>
+              <Input
+                name="lastName"
+                value={form.lastName}
+                onChange={handleChange}
+                placeholder="Enter last name"
+                className={validationErrors.lastName ? "border-red-500" : ""}
+              />
+              {validationErrors.lastName && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.lastName}
                 </p>
               )}
             </div>
