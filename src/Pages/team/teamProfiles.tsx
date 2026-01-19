@@ -60,6 +60,8 @@ interface Profile {
   sports?: string[];
   language?: string[];
   gender?: string; // Men's / Women's / Mixed
+  teamType?: string; // Grassroot, Club, Academy, League, Premier League, Championship
+  teamCategory?: string; // Men's, Women's, Others
   reviewsReceived?: Review[];
   verified?: boolean;
   [key: string]: any;
@@ -155,8 +157,8 @@ const Pagination = React.memo(
                 typeof page === "number" && currentPage === page
                   ? "bg-red-600 text-white"
                   : typeof page === "number"
-                  ? "bg-gray-200 dark:bg-slate-700 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-600"
-                  : "bg-transparent cursor-default dark:text-gray-400"
+                    ? "bg-gray-200 dark:bg-slate-700 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-600"
+                    : "bg-transparent cursor-default dark:text-gray-400"
               }`}
               onClick={() => typeof page === "number" && onPageChange(page)}
               disabled={typeof page !== "number"}
@@ -174,7 +176,7 @@ const Pagination = React.memo(
         </button>
       </div>
     );
-  }
+  },
 );
 
 Pagination.displayName = "Pagination";
@@ -208,8 +210,10 @@ export default function TeamProfiles() {
     sport: "",
     city: "",
     country: "",
-    gender: "", // e.g. Men's Team, Women's Team
+    gender: "",
     language: "",
+    teamType: "",
+    teamCategory: "",
   });
 
   // Sync data
@@ -263,7 +267,7 @@ export default function TeamProfiles() {
       });
       return Array.from(options).sort();
     },
-    []
+    [],
   );
 
   const filteredProfiles = useMemo(() => {
@@ -298,6 +302,8 @@ export default function TeamProfiles() {
               ? profile.language
               : [profile.language];
             return langs.some((l) => l?.trim() === value);
+          } else if (key === "teamType") {
+            return profile.teamType?.trim().toLowerCase() === value.toLowerCase();
           } else {
             return profile[key as keyof Profile]?.trim() === value;
           }
@@ -314,19 +320,27 @@ export default function TeamProfiles() {
       ...extractFilterOptions("sports", allProfiles),
       ...extractFilterOptions("sport", allProfiles),
     ],
-    [allProfiles, extractFilterOptions]
+    [allProfiles, extractFilterOptions],
   );
   const cityOptions = useMemo(
     () => extractFilterOptions("city", allProfiles),
-    [allProfiles, extractFilterOptions]
+    [allProfiles, extractFilterOptions],
   );
   const countryOptions = useMemo(
     () => extractFilterOptions("country", allProfiles),
-    [allProfiles, extractFilterOptions]
+    [allProfiles, extractFilterOptions],
   );
   const genderOptions = useMemo(
     () => extractFilterOptions("gender", allProfiles),
-    [allProfiles, extractFilterOptions]
+    [allProfiles, extractFilterOptions],
+  );
+  const teamTypeOptions = useMemo(
+    () => extractFilterOptions("teamType", allProfiles),
+    [allProfiles, extractFilterOptions],
+  );
+  const teamCategoryOptions = useMemo(
+    () => extractFilterOptions("teamCategory", allProfiles),
+    [allProfiles, extractFilterOptions],
   );
 
   // Default Fallbacks
@@ -334,9 +348,28 @@ export default function TeamProfiles() {
   const finalSportOptions =
     sportOptions.length > 0 ? [...new Set(sportOptions)].sort() : defaultSports;
 
+  const defaultTeamTypes = [
+    "Grassroot",
+    "Club",
+    "Academy",
+    "League",
+    "Premier League",
+    "Championship",
+  ];
+  const finalTeamTypeOptions =
+    teamTypeOptions.length > 0
+      ? [...new Set(teamTypeOptions)].sort()
+      : defaultTeamTypes;
+
+  const defaultTeamCategories = ["Men's", "Women's", "Others"];
+  const finalTeamCategoryOptions =
+    teamCategoryOptions.length > 0
+      ? [...new Set(teamCategoryOptions)].sort()
+      : defaultTeamCategories;
+
   // Handlers
   const handleFilterChange = (value: string, filterType: string) => {
-    setFilters((prev) => ({ ...prev, [filterType.toLowerCase()]: value }));
+    setFilters((prev) => ({ ...prev, [filterType]: value }));
   };
 
   const clearAllFilters = () => {
@@ -346,6 +379,8 @@ export default function TeamProfiles() {
       country: "",
       gender: "",
       language: "",
+      teamType: "",
+      teamCategory: "",
     });
     setSearchTerm("");
     setCurrentPage(1);
@@ -411,7 +446,7 @@ export default function TeamProfiles() {
 
       {/* Filters Section */}
       <div className="w-full mb-4 sm:mb-6">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 pt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-1">
           {/* Sport Filter */}
           <div className="w-full">
             <Select
@@ -475,21 +510,37 @@ export default function TeamProfiles() {
             </Select>
           </div>
 
-          {/* Team Category/Gender Filter */}
+          {/* Team Type Filter */}
           <div className="w-full">
             <Select
-              value={filters.gender}
-              onValueChange={(val) => handleFilterChange(val, "gender")}
+              value={filters.teamType}
+              onValueChange={(val) => handleFilterChange(val, "teamType")}
             >
               <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
                 <SelectValue placeholder="Team Type" />
               </SelectTrigger>
               <SelectContent>
-                {(genderOptions.length > 0
-                  ? genderOptions
-                  : ["Men's", "Women's", "Mixed"]
-                ).map((opt, i) => (
-                  <SelectItem key={`gender-${i}`} value={opt}>
+                {finalTeamTypeOptions.map((opt, i) => (
+                  <SelectItem key={`teamType-${i}`} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Team Category Filter */}
+          <div className="w-full">
+            <Select
+              value={filters.teamCategory}
+              onValueChange={(val) => handleFilterChange(val, "teamCategory")}
+            >
+              <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
+                <SelectValue placeholder="Team Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {finalTeamCategoryOptions.map((opt, i) => (
+                  <SelectItem key={`teamCategory-${i}`} value={opt}>
                     {opt}
                   </SelectItem>
                 ))}
@@ -558,8 +609,7 @@ export default function TeamProfiles() {
           displayedProfiles.map((profile) => {
             // For teams, 'company' is often the Team Name. Fallback to username.
             const displayName =
-              profile.firstName?.trim() + " " + profile.lastName?.trim() ||
-              profile.username?.trim();
+              profile.firstName?.trim() || profile.username?.trim();
             const avgRating = calculateAverageRating(profile.reviewsReceived);
             const reviewCount = profile.reviewsReceived?.length || 0;
             const teamSports = profile.sports

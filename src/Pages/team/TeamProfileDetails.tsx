@@ -129,6 +129,17 @@ const TeamProfileDetails: React.FC<TeamProfileDetailsProps> = ({
     return link && link !== "";
   }
 
+  // Helper to ensure URL has proper protocol
+  function formatSocialUrl(url: string): string {
+    if (!url) return "";
+    // If URL already has a protocol, return as-is
+    if (url.startsWith("http://") || url.startsWith("https://")) {
+      return url;
+    }
+    // Otherwise, prepend https://
+    return `https://${url}`;
+  }
+
   const validSocialLinks = socialMap
     .map((item) => {
       const val = rawSocialLinks[item.key];
@@ -356,10 +367,10 @@ const TeamProfileDetails: React.FC<TeamProfileDetailsProps> = ({
         </h3>
         {validSocialLinks.length > 0 ? (
           <div className="flex gap-6 mt-4 flex-wrap">
-            {validSocialLinks.map((item, index) => (
+            {validSocialLinks.map((item, index) => item && (
               <a
                 key={index}
-                href={item.url}
+                href={formatSocialUrl(item.url)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-11 h-11 flex items-center justify-center rounded-full text-white text-2xl shadow-lg hover:scale-110 transition-transform"

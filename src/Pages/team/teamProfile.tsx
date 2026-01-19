@@ -88,7 +88,7 @@ const mapStatsToDisplay = (apiStats: any[]): Stat[] => {
 
   const mappedStats = defaultStats.map((defaultStat) => {
     const apiStat = apiStats.find(
-      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase()
+      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase(),
     );
 
     return {
@@ -146,7 +146,7 @@ const StarRating: React.FC<{
 
 const TeamView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
-    "details"
+    "details",
   );
   const [profileData, setProfileData] = useState<Profile | null>(null);
 
@@ -256,7 +256,7 @@ const TeamView: React.FC = () => {
         `${API_STATS_URL}/player/${teamId}/overall`, // Using 'player' as generic user endpoint, or change to 'team' if specific
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
 
       const apiStats = response.data.data || [];
@@ -279,7 +279,7 @@ const TeamView: React.FC = () => {
         `${API_FOLLOW_URL}/${viewedProfile.id}/isfollowing`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setIsFollowing(response.data?.isFollowing || false);
     } catch {
@@ -289,7 +289,7 @@ const TeamView: React.FC = () => {
 
   const fetchFollowers = async (
     limit = followersLimit,
-    page = followersPage
+    page = followersPage,
   ) => {
     if (!profileData?.id) return;
     setLoadingFollowers(true);
@@ -299,7 +299,7 @@ const TeamView: React.FC = () => {
         `${API_FOLLOW_URL}/${profileData.id}/followers?limit=${limit}&page=${page}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setFollowers(response.data?.users || []);
       setFollowersCount(response.data?.users.length);
@@ -363,14 +363,14 @@ const TeamView: React.FC = () => {
         await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/unfollow`,
           {},
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         newFollowStatus = false;
       } else {
         await axios.patch(
           `${API_FOLLOW_URL}/${profileData.id}/follow`,
           {},
-          { headers: { Authorization: `Bearer ${token}` } }
+          { headers: { Authorization: `Bearer ${token}` } },
         );
         newFollowStatus = true;
       }
@@ -449,7 +449,7 @@ const TeamView: React.FC = () => {
 
   const displayName =
     profileData.company ||
-    profileData.username ||
+    profileData.firstName ||
     `${profileData.firstName || ""} ${profileData.lastName || ""}`.trim() ||
     "Team Profile";
 
@@ -482,8 +482,14 @@ const TeamView: React.FC = () => {
                 {displayName}
               </h2>
               <div className="flex flex-wrap gap-x-5 gap-y-2 text-gray-600 font-Opensans mt-2 dark:text-gray-300 text-sm sm:text-base">
-                <span>Location: {location}</span>
-                {profileData.sport && <span>Sport: {profileData.sport}</span>}
+                <span>
+                  <strong>Location:</strong> {location}
+                </span>
+                {profileData.sport && (
+                  <span>
+                    <strong>Sport:</strong> {profileData.sport}
+                  </span>
+                )}
                 {profileData.role === "team" && (
                   <span className="flex items-center">
                     <FontAwesomeIcon icon={faUsers} className="mr-1" />
@@ -491,15 +497,24 @@ const TeamView: React.FC = () => {
                   </span>
                 )}
                 <span>
-                  {`Language: `}
+                  <strong>Language:</strong>{" "}
                   {Array.isArray(profileData.language) &&
                   profileData.language.length > 0
                     ? profileData.language.join(", ")
                     : "English"}
                 </span>
+                <span>
+                  <strong>Club:</strong> {profileData.club}
+                </span>
+                <span>
+                  <strong>Category:</strong> {profileData.teamCategory}
+                </span>
+                <span>
+                  <strong>Type:</strong> {profileData.teamType}
+                </span>
               </div>
             </div>
-
+                    
             {/* Follow Button Section */}
             <div className="mt-2 sm:mt-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">

@@ -34,6 +34,8 @@ interface FormData {
   phone: string;
   email: string;
   bio: string;
+
+  teamCategory: string;
   socialLinks: {
     instagram: string;
     linkedin: string;
@@ -108,7 +110,7 @@ export default function TeamDetailsForm() {
 
   const [form, setForm] = useState<FormData>({
     teamName: "",
-    type: "",
+    teamType: "",
     sport: "",
     clubName: "",
     city: "",
@@ -118,6 +120,8 @@ export default function TeamDetailsForm() {
     phone: "",
     email: "",
     bio: "",
+
+    teamCategory: "",
     socialLinks: {
       instagram: "",
       linkedin: "",
@@ -137,7 +141,7 @@ export default function TeamDetailsForm() {
     const fetchCountries = async (): Promise<void> => {
       try {
         const response = await fetch(
-          "https://countriesnow.space/api/v0.1/countries/flag/images"
+          "https://countriesnow.space/api/v0.1/countries/flag/images",
         );
         if (!response.ok) throw new Error("Failed to fetch countries");
 
@@ -185,7 +189,7 @@ export default function TeamDetailsForm() {
             body: JSON.stringify({
               country: selectedCountry.name,
             }),
-          }
+          },
         );
 
         if (!response.ok) throw new Error("Failed to fetch cities");
@@ -248,7 +252,7 @@ export default function TeamDetailsForm() {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
 
         const data = response.data;
@@ -330,7 +334,7 @@ export default function TeamDetailsForm() {
   const handleSocialMedia = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     if (name.startsWith("socialLinks.")) {
@@ -371,7 +375,7 @@ export default function TeamDetailsForm() {
       if (profileData.country) {
         setSearchTerm(profileData.country);
         const country = countries.find(
-          (c) => c.name.toLowerCase() === profileData.country?.toLowerCase()
+          (c) => c.name.toLowerCase() === profileData.country?.toLowerCase(),
         );
         if (country) {
           setSelectedCountry(country);
@@ -384,9 +388,7 @@ export default function TeamDetailsForm() {
 
       setForm({
         teamName: profileData.firstName || "",
-        type: profileData.profession
-          ? profileData.profession.toLowerCase()
-          : "",
+        type: profileData.teamType || "",
         sport: profileData.sport ? profileData.sport.toLowerCase() : "",
         clubName: profileData.club || "",
         city: profileData.city || "",
@@ -396,6 +398,7 @@ export default function TeamDetailsForm() {
         phone: profileData.phone || "",
         email: userData?.email || profileData.email || "",
         bio: profileData.bio || "",
+        teamCategory: profileData.teamCategory || "",
         socialLinks: {
           instagram: profileData.socialLinks?.instagram || "",
           linkedin: profileData.socialLinks?.linkedin || "",
@@ -416,7 +419,7 @@ export default function TeamDetailsForm() {
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >
+    >,
   ) => {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -459,7 +462,7 @@ export default function TeamDetailsForm() {
       }
 
       const teamData = {
-        profession: form.type.charAt(0).toUpperCase() + form.type.slice(1),
+        teamType: form.type,
         firstName:
           form.teamName.charAt(0).toUpperCase() + form.teamName.slice(1),
         sport: form.sport.charAt(0).toUpperCase() + form.sport.slice(1),
@@ -469,6 +472,7 @@ export default function TeamDetailsForm() {
         address: form.address,
         bio: form.bio,
         photo: photoUrl,
+        teamCategory: form.teamCategory,
         socialLinks: {
           instagram: form.socialLinks.instagram || "",
           linkedin: form.socialLinks.linkedin || "",
@@ -500,7 +504,7 @@ export default function TeamDetailsForm() {
         setError("Please correct the errors in the form.");
       } else {
         setError(
-          error.message || "Failed to save team details. Please try again."
+          error.message || "Failed to save team details. Please try again.",
         );
       }
     } finally {
@@ -603,8 +607,8 @@ export default function TeamDetailsForm() {
                 {profilePhoto
                   ? profilePhoto.name
                   : existingProfilePhoto
-                  ? "Current profile photo"
-                  : "Upload a profile picture. Max size 2MB"}
+                    ? "Current profile photo"
+                    : "Upload a profile picture. Max size 2MB"}
               </span>
               <label className="cursor-pointer px-4 py-2 bg-gray-100 border rounded text-sm text-gray-700 hover:bg-gray-200">
                 Browse
@@ -705,12 +709,13 @@ export default function TeamDetailsForm() {
                   validationErrors.type ? "border-red-500" : ""
                 }`}
               >
-                <option value="">Select Type</option>
-                <option value="team">Team</option>
-                <option value="league">League</option>
-                <option value="club">Club</option>
-                <option value="academy">Academy</option>
-                <option value="athleticFacility">Athletic Facility</option>
+                <option value="">Select Team Type</option>
+                <option value="Grassroot">Grassroot</option>
+                <option value="Club">Club</option>
+                <option value="Academy">Academy</option>
+                <option value="League">League</option>
+                <option value="PremierLeague">Premier League</option>
+                <option value="Championship">Championship</option>
               </select>
               {validationErrors.type && (
                 <p className="text-red-500 text-xs mt-1">
@@ -745,7 +750,7 @@ export default function TeamDetailsForm() {
                     .filter((country) =>
                       country.name
                         .toLowerCase()
-                        .includes(searchTerm.toLowerCase())
+                        .includes(searchTerm.toLowerCase()),
                     )
                     .map((country, index) => (
                       <li
@@ -786,7 +791,7 @@ export default function TeamDetailsForm() {
                     .filter((city) =>
                       city.name
                         .toLowerCase()
-                        .includes(citySearchTerm.toLowerCase())
+                        .includes(citySearchTerm.toLowerCase()),
                     )
                     .map((city, index) => (
                       <li
@@ -811,6 +816,30 @@ export default function TeamDetailsForm() {
                 value={form.address}
                 onChange={handleChange}
               />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Team Category
+              </label>
+              <select
+                name="teamCategory"
+                value={form.teamCategory}
+                onChange={handleChange}
+                className={`border p-2 rounded text-sm text-gray-700 w-full ${
+                  validationErrors.teamCategory ? "border-red-500" : ""
+                }`}
+              >
+                <option value="">Select Team Category</option>
+                <option value="Mens">Men's</option>
+                <option value="Womens">Women's</option>
+                <option value="Others">Others</option>
+              </select>
+              {validationErrors.teamCategory && (
+                <p className="text-red-500 text-xs mt-1">
+                  {validationErrors.teamCategory}
+                </p>
+              )}
             </div>
           </div>
 

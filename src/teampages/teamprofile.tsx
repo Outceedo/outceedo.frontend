@@ -20,12 +20,12 @@ import Settings from "./settings";
 
 const TeamProfile = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "account">(
-    "details"
+    "details",
   );
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { currentProfile, status, error } = useAppSelector(
-    (state) => state.profile
+    (state) => state.profile,
   );
 
   // Use the profile that's actively being viewed (could be currentProfile or viewedProfile)
@@ -36,7 +36,7 @@ const TeamProfile = () => {
     teamName: "Team Name",
     firstName: "First",
     lastName: "Name",
-    profession: "Not specified",
+    teamType: "Not specified",
     country: "Not specified",
     city: "Not specified",
     club: "Not specified",
@@ -140,8 +140,8 @@ const TeamProfile = () => {
             <div className="flex items-center gap-3">
               <h1 className="text-2xl font-bold dark:text-white">
                 {data?.teamName ||
-                  (data?.firstName && data?.lastName
-                    ? `${data.firstName} ${data.lastName}`
+                  (data?.firstName
+                    ? `${data.firstName} `
                     : fallbackData.teamName)}
               </h1>
             </div>
@@ -153,7 +153,7 @@ const TeamProfile = () => {
                   Sport
                 </label>
                 <span className="font-semibold dark:text-white">
-                  {data?.sport || fallbackData.profession}
+                  {data?.sport || fallbackData.teamType}
                 </span>
               </div>
               <div>
@@ -177,7 +177,7 @@ const TeamProfile = () => {
                   Type
                 </label>
                 <span className="font-semibold dark:text-white">
-                  {data?.profession || fallbackData.profession}
+                  {data?.teamType || fallbackData.teamType}
                 </span>
               </div>
             </div>
@@ -190,6 +190,14 @@ const TeamProfile = () => {
                 </label>
                 <span className="font-semibold dark:text-white">
                   {data?.club || fallbackData.club}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-white mb-1">
+                  Team Category
+                </label>
+                <span className="font-semibold dark:text-white">
+                  {data?.teamCategory || fallbackData.teamType}
                 </span>
               </div>
             </div>
