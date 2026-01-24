@@ -16,12 +16,12 @@ interface MenuItem {
 }
 
 const expertSidebarMenuItems: MenuItem[] = [
-  {
-    id: 2,
-    name: "Players",
-    icon: "fas fa-user-tie",
-    path: "/expert/viewplayers",
-  },
+  // {
+  //   id: 2,
+  //   name: "Players",
+  //   icon: "fas fa-user-tie",
+  //   path: "/expert/viewplayers",
+  // },
   { id: 3, name: "Matches", icon: "fas fa-futbol", path: "/expert/matches" },
   {
     id: 4,
@@ -193,8 +193,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
                   isActive
                     ? "bg-gray-100 text-black font-medium dark:bg-gray-700 dark:text-white"
                     : menuItem.isLogout
-                    ? "text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      ? "text-red-500 hover:text-red-600 dark:text-red-400 dark:hover:text-red-300"
+                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 }
               `}
             >
@@ -203,8 +203,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
                   isActive
                     ? "text-gray-800 dark:text-white"
                     : menuItem.isLogout
-                    ? "text-red-500 dark:text-red-400"
-                    : "text-gray-500 dark:text-gray-400"
+                      ? "text-red-500 dark:text-red-400"
+                      : "text-gray-500 dark:text-gray-400"
                 }`}
               ></i>
               <span className={isActive ? "font-medium" : ""}>

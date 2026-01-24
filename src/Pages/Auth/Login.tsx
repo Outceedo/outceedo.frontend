@@ -159,6 +159,8 @@ const Login: React.FC = () => {
                 <div>Invalid Password</div>
               ) : formError.includes("OTP") ? (
                 <div>Please Verify Your Email!</div>
+              ) : formError.includes("Password should be atleast 8 letters") ? (
+                <div>Password should be at least 8 characters</div>
               ) : (
                 <div>User Not Found</div>
               )}
