@@ -8,7 +8,7 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Currency, Loader2 } from "lucide-react";
 import "react-circular-progressbar/dist/styles.css";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ import Mediaview from "../Media/MediaView";
 const Sponsorview: React.FC = () => {
   const dispatch = useAppDispatch();
   const { viewedProfile, status, error } = useAppSelector(
-    (state) => state.profile
+    (state) => state.profile,
   );
 
   const [activeTab, setActiveTab] = useState<"details" | "media">("details");
@@ -73,6 +73,7 @@ const Sponsorview: React.FC = () => {
         },
         // Use uploads array from viewedProfile
         media: viewedProfile.uploads || [],
+        currency: viewedProfile.currency,
       }
     : {
         name: "Company/Individual Name",
@@ -121,24 +122,6 @@ const Sponsorview: React.FC = () => {
     },
   ];
 
-  // Process the bio to remove any code snippets (since the sample data had code in the bio)
-  const cleanBio = (bio: string): string => {
-    // If bio contains code or import statements, extract just the human-readable part
-    if (
-      bio.includes("import ") ||
-      bio.includes("const ") ||
-      bio.includes("function ")
-    ) {
-      // Try to get the first sentence or paragraph before code starts
-      const firstPart = bio.split("import ")[0].trim();
-      if (firstPart) return firstPart;
-
-      // If no clear first part, return a default message
-      return "No sponsor bio available.";
-    }
-    return bio;
-  };
-
   // Check if we're still loading the profile
   if (status === "loading") {
     return (
@@ -164,7 +147,7 @@ const Sponsorview: React.FC = () => {
             className="mt-4 bg-red-600 hover:bg-red-700 text-white"
             onClick={() => {
               const viewSponsorUsername = localStorage.getItem(
-                "viewsponsorusername"
+                "viewsponsorusername",
               );
               if (viewSponsorUsername) {
                 dispatch(getProfile(viewSponsorUsername));
@@ -312,8 +295,8 @@ const Sponsorview: React.FC = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                 About Me
               </h3>
-              <p className="text-gray-700 dark:text-gray-300">
-                {cleanBio(sponsorData.bio)}
+              <p className="text-gray-700 dark:text-gray-300 whitespace-pre-wrap">
+                {sponsorData.bio}
               </p>
             </Card>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
@@ -321,6 +304,10 @@ const Sponsorview: React.FC = () => {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
                   Sponsorship
                 </h3>
+                <p className="dark:text-white">
+                  <span className="font-medium">Currency:</span>{" "}
+                  {sponsorData.currency}
+                </p>
                 <p className="dark:text-white">
                   <span className="font-medium">Range:</span>{" "}
                   {sponsorData.sponsorshipInfo.range}

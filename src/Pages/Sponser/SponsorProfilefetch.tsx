@@ -711,6 +711,11 @@ export default function SponsorProfiles() {
                         {sponsor.sponsorType}
                       </span>
                     )}
+                    {sponsor.currency && (
+                      <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-white">
+                        {sponsor.currency}
+                      </span>
+                    )}
                     {sponsor.budgetRange && (
                       <span className="text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded dark:text-white">
                         {sponsor.budgetRange}

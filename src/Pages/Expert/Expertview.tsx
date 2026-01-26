@@ -35,11 +35,11 @@ import ExpertProfiledetails from "./ExpertProfiledetails";
 import FollowersList from "../../components/follower/followerlist";
 import Swal from "sweetalert2";
 
-const icons = [
-  { icon: faLinkedin, color: "#0077B5", link: "https://www.linkedin.com" },
-  { icon: faFacebook, color: "#3b5998", link: "https://www.facebook.com" },
-  { icon: faInstagram, color: "#E1306C", link: "https://www.instagram.com" },
-  { icon: faXTwitter, color: "#1DA1F2", link: "https://www.twitter.com" },
+const socialIconsConfig = [
+  { key: "linkedin", icon: faLinkedin, color: "#0077B5" },
+  { key: "facebook", icon: faFacebook, color: "#3b5998" },
+  { key: "instagram", icon: faInstagram, color: "#E1306C" },
+  { key: "twitter", icon: faXTwitter, color: "#1DA1F2" },
 ];
 
 interface Service {
@@ -825,29 +825,44 @@ const Expertview = () => {
               {expertData.name}
             </h1>
             <div className="ml-0 sm:ml-10 flex gap-3 sm:gap-4 mt-2 sm:mt-0">
-              {icons.map((item, index) =>
-                item.link ? (
-                  <a
+              {socialIconsConfig.map((item, index) => {
+                const link = expertData.socialLinks?.[item.key] || "";
+                const hasLink = link && link.trim() !== "";
+
+                if (hasLink) {
+                  return (
+                    <a
+                      key={index}
+                      href={
+                        link.startsWith("http")
+                          ? link
+                          : `https://${link.replace(/^\/+/, "")}`
+                      }
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-white text-lg sm:text-xl shadow-lg"
+                      style={{
+                        background:
+                          item.icon === faInstagram
+                            ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                            : item.color,
+                      }}
+                    >
+                      <FontAwesomeIcon icon={item.icon} />
+                    </a>
+                  );
+                }
+
+                return (
+                  <div
                     key={index}
-                    href={
-                      item.link.startsWith("http")
-                        ? item.link
-                        : `https://${item.link.replace(/^\/+/, "")}`
-                    }
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-white text-lg sm:text-xl shadow-lg"
-                    style={{
-                      background:
-                        item.icon === faInstagram
-                          ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
-                          : item.color,
-                    }}
+                    className="w-9 h-9 sm:w-10 sm:h-10 flex items-center justify-center rounded-full text-gray-400 text-lg sm:text-xl bg-gray-200 dark:bg-gray-700 cursor-not-allowed"
+                    title="Not provided"
                   >
                     <FontAwesomeIcon icon={item.icon} />
-                  </a>
-                ) : null
-              )}
+                  </div>
+                );
+              })}
             </div>
           </div>
 

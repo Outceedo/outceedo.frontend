@@ -315,6 +315,7 @@ const AppContent: React.FC = () => {
           <Route path="playerinfo" element={<TeamPlayerInfo />} />
           <Route path="sponsorinfo" element={<TeamSponsorInfo />} />
           <Route path="book" element={<BookingCalendar />} />
+          <Route path="matches" element={<Matches />} />
         </Route>
 
         {/* Fan routes */}

@@ -33,7 +33,8 @@ interface FormData {
   phone: string;
   email: string;
   CompanyLink: string;
-  BudegetRange: string;
+  budgetMin: string;
+  budgetMax: string;
   currency: string;
   SponsorshipType: string;
   SponsorshipCountryPreferred: string;
@@ -115,7 +116,8 @@ export default function SponsorDetailsForm() {
     phone: "",
     email: "",
     CompanyLink: "",
-    BudegetRange: "",
+    budgetMin: "",
+    budgetMax: "",
     currency: "USD",
     SponsorshipType: "",
     SponsorshipCountryPreferred: "",
@@ -355,7 +357,8 @@ export default function SponsorDetailsForm() {
           phone: profile.phone || "",
           email: userData?.email || profile.email || "",
           CompanyLink: profile.companyLink || "",
-          BudegetRange: profile.budgetRange || "",
+          budgetMin: profile.budgetRange?.split("-")[0] || "",
+          budgetMax: profile.budgetRange?.split("-")[1] || "",
           currency: profile.currency || "USD",
           SponsorshipType: profile.sponsorshipType
             ? profile.sponsorshipType.toLowerCase()
@@ -523,7 +526,7 @@ export default function SponsorDetailsForm() {
         city: form.city,
         country: form.country,
         address: form.address,
-        budgetRange: form.BudegetRange,
+        budgetRange: form.budgetMin && form.budgetMax ? `${form.budgetMin}-${form.budgetMax}` : "",
         currency: form.currency,
         sponsorshipType:
           form.SponsorshipType.charAt(0).toUpperCase() +
@@ -966,12 +969,12 @@ export default function SponsorDetailsForm() {
               <label className="text-sm font-medium text-gray-900 mb-1 block dark:text-white">
                 Budget Range
               </label>
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <select
                   name="currency"
                   value={form.currency}
                   onChange={handleChange}
-                  className="border p-2 rounded text-sm text-gray-700 w-28"
+                  className="border p-2 rounded text-sm text-gray-700 w-24"
                 >
                   {currencies.map((currency) => (
                     <option key={currency.code} value={currency.code}>
@@ -980,9 +983,22 @@ export default function SponsorDetailsForm() {
                   ))}
                 </select>
                 <Input
-                  name="BudegetRange"
-                  value={form.BudegetRange}
+                  name="budgetMin"
+                  type="number"
+                  min="0"
+                  value={form.budgetMin}
                   onChange={handleChange}
+                  placeholder="Min"
+                  className="flex-1"
+                />
+                <span className="text-gray-500">-</span>
+                <Input
+                  name="budgetMax"
+                  type="number"
+                  min="0"
+                  value={form.budgetMax}
+                  onChange={handleChange}
+                  placeholder="Max"
                   className="flex-1"
                 />
               </div>

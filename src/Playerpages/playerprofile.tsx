@@ -4,8 +4,6 @@ import "react-circular-progressbar/dist/styles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCamera,
-  faCheck,
-  faTimes,
   faStar as faStarSolid,
   faStarHalfAlt,
   faLock,
@@ -13,8 +11,6 @@ import {
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import ProfileDetails from "./profiledetails";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import {
   getProfile,
@@ -37,19 +33,6 @@ interface Stat {
   color: string;
 }
 
-interface EditableProfileData {
-  age: string;
-  height: string;
-  weight: string;
-  city: string;
-  country: string;
-  club: string;
-  languages: string[];
-  firstName: string;
-  lastName: string;
-  bio: string[];
-  socialLinks: string[];
-}
 
 const calculateOVR = (stats: Stat[]) => {
   if (!stats.length) return 0;
@@ -81,7 +64,7 @@ const mapStatsToDisplay = (apiStats: any[]): Stat[] => {
   // Map API stats to display format
   const mappedStats = defaultStats.map((defaultStat) => {
     const apiStat = apiStats.find(
-      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase()
+      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase(),
     );
 
     return {
@@ -137,22 +120,6 @@ const Profile: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
-  const [isEditingBasicInfo, setIsEditingBasicInfo] = useState(false);
-  const [editData, setEditData] = useState<EditableProfileData>({
-    age: "",
-    firstName: "",
-    lastName: "",
-    bio: [],
-    socialLinks: [],
-    height: "",
-    weight: "",
-    city: "",
-    country: "",
-    club: "",
-    languages: [],
-  });
-  const [errors, setErrors] = useState<Record<string, string>>({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const [followers, setFollowers] = useState<any[]>([]);
   const [followersLimit, setFollowersLimit] = useState(10);
@@ -163,7 +130,7 @@ const Profile: React.FC = () => {
   const [statsLoading, setStatsLoading] = useState(false);
 
   const { currentProfile, status, error } = useAppSelector(
-    (state) => state.profile
+    (state) => state.profile,
   );
   const {
     isActive,
@@ -198,7 +165,7 @@ const Profile: React.FC = () => {
   };
 
   const handlePhotoChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -362,127 +329,9 @@ const Profile: React.FC = () => {
     }
   }, [currentProfile?.id]);
 
-  const handleInputChange = (
-    field: keyof EditableProfileData,
-    value: string
-  ) => {
-    setEditData((prev) => ({ ...prev, [field]: value }));
-
-    if (errors[field]) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
-  };
-
-  const handleLanguagesChange = (value: string) => {
-    const languageArray = value
-      .split(",")
-      .map((lang) => lang.trim())
-      .filter((lang) => lang !== "");
-    setEditData((prev) => ({ ...prev, languages: languageArray }));
-
-    if (errors.languages) {
-      setErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors.languages;
-        return newErrors;
-      });
-    }
-  };
-
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (
-      !editData.age ||
-      isNaN(Number(editData.age)) ||
-      Number(editData.age) <= 0
-    ) {
-      newErrors.age = "Age must be a positive number";
-    }
-
-    if (
-      !editData.height ||
-      isNaN(Number(editData.height)) ||
-      Number(editData.height) <= 0
-    ) {
-      newErrors.height = "Height must be a positive number";
-    }
-
-    if (
-      !editData.weight ||
-      isNaN(Number(editData.weight)) ||
-      Number(editData.weight) <= 0
-    ) {
-      newErrors.weight = "Weight must be a positive number";
-    }
-
-    if (!editData.city.trim()) {
-      newErrors.city = "City is required";
-    }
-
-    if (!editData.country.trim()) {
-      newErrors.country = "Country is required";
-    }
-
-    if (!editData.club.trim()) {
-      newErrors.club = "Club is required";
-    }
-
-    if (editData.languages.length === 0) {
-      newErrors.languages = "At least one language is required";
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSaveBasicInfo = async () => {
-    if (!validateForm()) {
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    try {
-      await dispatch(updateProfile(updateData)).unwrap();
-
-      Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: "Profile updated successfully",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-
-      setIsEditingBasicInfo(false);
-
-      const username = localStorage.getItem("username");
-      if (username) {
-        dispatch(getProfile(username));
-      }
-    } catch (error: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Update Failed",
-        text: error.message || "Failed to update profile",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setIsEditingBasicInfo(false);
-    setErrors({});
-  };
-
   const fetchFollowers = async (
     limit = followersLimit,
-    page = followersPage
+    page = followersPage,
   ) => {
     if (!currentProfile?.id) return;
     setFollowersLoading(true);
@@ -494,7 +343,7 @@ const Profile: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       const data = await response.json();
       setFollowers(data?.users || []);
@@ -518,7 +367,7 @@ const Profile: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       // Map the API response to the correct format
@@ -651,231 +500,36 @@ const Profile: React.FC = () => {
                 <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway break-words">
                   {playerData.name || "Player Profile"}
                 </h2>
-                {/* Basic Info Section with Edit Button */}
+                {/* Basic Info Section */}
                 <div className="mt-5">
-                  <div className="flex justify-between items-start flex-wrap gap-2">
-                    {!isEditingBasicInfo ? null : (
-                      <div className="flex gap-2 ml-auto">
-                        <Button
-                          onClick={handleCancelEdit}
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-1 text-red-600"
-                          disabled={isSubmitting}
-                        >
-                          <FontAwesomeIcon icon={faTimes} className="text-xs" />
-                          <span>Cancel</span>
-                        </Button>
-                        <Button
-                          onClick={handleSaveBasicInfo}
-                          variant="outline"
-                          size="sm"
-                          className="flex items-center gap-1 text-green-600"
-                          disabled={isSubmitting}
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <div className="animate-spin h-4 w-4 mr-1 border-2 border-t-transparent border-green-600 rounded-full"></div>
-                              <span>Saving...</span>
-                            </>
-                          ) : (
-                            <>
-                              <FontAwesomeIcon
-                                icon={faCheck}
-                                className="text-xs"
-                              />
-                              <span>Save</span>
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    )}
+                  <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-Opensans dark:text-gray-300 mt-2">
+                    <span>
+                      <strong className="font-bold">Age:</strong>{" "}
+                      {playerData.age || "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Height:</strong>{" "}
+                      {playerData.height || "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Weight:</strong>{" "}
+                      {playerData.weight || "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Location:</strong>{" "}
+                      {playerData.location || "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Club:</strong>{" "}
+                      {playerData.club || "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Languages:</strong>{" "}
+                      {playerData.languages && playerData.languages.length > 0
+                        ? playerData.languages.join(", ")
+                        : "Not specified"}
+                    </span>
                   </div>
-                  {!isEditingBasicInfo ? (
-                    <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-Opensans dark:text-gray-300 mt-2">
-                      <span>Age: {playerData.age || "Not specified"}</span>
-                      <span>
-                        Height: {playerData.height || "Not specified"}
-                      </span>
-                      <span>
-                        Weight: {playerData.weight || "Not specified"}
-                      </span>
-                      <span>
-                        Location: {playerData.location || "Not specified"}
-                      </span>
-                      <span>Club: {playerData.club || "Not specified"}</span>
-                      <span>
-                        Languages:{" "}
-                        {playerData.languages && playerData.languages.length > 0
-                          ? playerData.languages.join(", ")
-                          : "Not specified"}
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
-                      {/* Age */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Age
-                        </label>
-                        <Input
-                          type="number"
-                          value={editData.age}
-                          onChange={(e) =>
-                            handleInputChange("age", e.target.value)
-                          }
-                          placeholder="Enter age"
-                          className={`w-full ${
-                            errors.age ? "border-red-500" : ""
-                          }`}
-                          disabled={isSubmitting}
-                        />
-                        {errors.age && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.age}
-                          </p>
-                        )}
-                      </div>
-                      {/* Height */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Height (cm)
-                        </label>
-                        <Input
-                          type="number"
-                          value={editData.height}
-                          onChange={(e) =>
-                            handleInputChange("height", e.target.value)
-                          }
-                          placeholder="Enter height in cm"
-                          className={`w-full ${
-                            errors.height ? "border-red-500" : ""
-                          }`}
-                          disabled={isSubmitting}
-                        />
-                        {errors.height && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.height}
-                          </p>
-                        )}
-                      </div>
-                      {/* Weight */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Weight (kg)
-                        </label>
-                        <Input
-                          type="number"
-                          value={editData.weight}
-                          onChange={(e) =>
-                            handleInputChange("weight", e.target.value)
-                          }
-                          placeholder="Enter weight in kg"
-                          className={`w-full ${
-                            errors.weight ? "border-red-500" : ""
-                          }`}
-                          disabled={isSubmitting}
-                        />
-                        {errors.weight && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.weight}
-                          </p>
-                        )}
-                      </div>
-                      {/* City */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          City
-                        </label>
-                        <Input
-                          type="text"
-                          value={editData.city}
-                          onChange={(e) =>
-                            handleInputChange("city", e.target.value)
-                          }
-                          placeholder="Enter city"
-                          className={`w-full ${
-                            errors.city ? "border-red-500" : ""
-                          }`}
-                          disabled={isSubmitting}
-                        />
-                        {errors.city && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.city}
-                          </p>
-                        )}
-                      </div>
-                      {/* Country */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Country
-                        </label>
-                        <Input
-                          type="text"
-                          value={editData.country}
-                          onChange={(e) =>
-                            handleInputChange("country", e.target.value)
-                          }
-                          placeholder="Enter country"
-                          className={`w-full ${
-                            errors.country ? "border-red-500" : ""
-                          }`}
-                          disabled={isSubmitting}
-                        />
-                        {errors.country && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.country}
-                          </p>
-                        )}
-                      </div>
-                      {/* Club */}
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Club
-                        </label>
-                        <Input
-                          type="text"
-                          value={editData.club}
-                          onChange={(e) =>
-                            handleInputChange("club", e.target.value)
-                          }
-                          placeholder="Enter club name"
-                          className={`w-full ${
-                            errors.club ? "border-red-500" : ""
-                          }`}
-                          disabled={isSubmitting}
-                        />
-                        {errors.club && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.club}
-                          </p>
-                        )}
-                      </div>
-                      {/* Languages */}
-                      <div className="sm:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                          Languages (comma-separated)
-                        </label>
-                        <Input
-                          type="text"
-                          value={editData.languages.join(", ")}
-                          onChange={(e) =>
-                            handleLanguagesChange(e.target.value)
-                          }
-                          placeholder="Enter languages (e.g. English, Spanish)"
-                          className={`w-full ${
-                            errors.languages ? "border-red-500" : ""
-                          }`}
-                          disabled={isSubmitting}
-                        />
-                        {errors.languages && (
-                          <p className="text-red-500 text-xs mt-1">
-                            {errors.languages}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
                 </div>
               </div>
               {/* OVR Section */}
@@ -1005,7 +659,7 @@ const Profile: React.FC = () => {
                   >
                     {tab}
                   </button>
-                )
+                ),
               )}
             </div>
             <div className="mt-4">
