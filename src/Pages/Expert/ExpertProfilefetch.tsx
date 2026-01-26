@@ -234,11 +234,11 @@ const ExpertProfiles: React.FC = () => {
 
       const totalRating = reviews.reduce(
         (sum, review) => sum + (review.rating || 0),
-        0
+        0,
       );
       return totalRating / reviews.length;
     },
-    []
+    [],
   );
 
   // Helper function to get total completed services count
@@ -250,10 +250,10 @@ const ExpertProfiles: React.FC = () => {
         (review) =>
           review.bookingId !== null &&
           review.bookingId !== undefined &&
-          review.bookingId !== ""
+          review.bookingId !== "",
       ).length;
     },
-    []
+    [],
   );
 
   // Store all experts when data is fetched - for client-side filtering
@@ -299,7 +299,7 @@ const ExpertProfiles: React.FC = () => {
 
       return Array.from(options).sort();
     },
-    []
+    [],
   );
 
   // Fetch profiles only on initial load, page change, or limit change (not for filters/search)
@@ -718,10 +718,10 @@ const ExpertProfiles: React.FC = () => {
 
                 // Calculate average rating from reviewsReceived
                 const avgRating = calculateAverageRating(
-                  expert.reviewsReceived
+                  expert.reviewsReceived,
                 );
                 const totalReviews = getCompletedServicesCount(
-                  expert.reviewsReceived
+                  expert.reviewsReceived,
                 );
 
                 const expertImage = expert.photo || avatar;
@@ -741,7 +741,7 @@ const ExpertProfiles: React.FC = () => {
                     {/* Image Container */}
                     <div className="relative w-full h-48 sm:h-60">
                       <img
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain"
                         src={expertImage}
                         alt={displayName}
                         onError={(e) => {
