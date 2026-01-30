@@ -1,14 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { ArrowLeft, CheckCircle, XCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  ArrowLeft,
+  Check,
+  X,
+  Zap,
+  ShieldCheck,
+  Crown,
+  ArrowRight,
+} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
 import axios from "axios";
 import Navbar from "./Navbar";
-import OutceedoFooter from "./Footer";
+import FooterSection from "./FooterSection";
 
-// Interface for the structure of a subscription plan from the API
 interface Plan {
   id: string;
   name: string;
@@ -19,23 +26,63 @@ interface Plan {
   stripeProductId: string;
   createdAt: string;
   updatedAt: string;
-  features: any[]; // Kept as 'any' for flexibility
+  features: any[];
 }
 
+const planComparisonData = [
+  {
+    label: "Subscription Fee",
+    free: "Free",
+    pro: "dynamic",
+  },
+  { label: "Features", free: "Limited Use", pro: "Unlimited Use" },
+  {
+    label: "Cloud Storage",
+    free: "2 Photos & 2 Videos",
+    pro: "10 Photos & 5 Videos",
+  },
+  {
+    label: "Reports",
+    free: "Limited Access (7 days)",
+    pro: "Unlimited Access",
+  },
+  {
+    label: "Video Conference Recordings",
+    free: "Limited Access (7 days)",
+    pro: "Unlimited Access",
+  },
+  {
+    label: "Experts Search",
+    free: "Limited (Local)",
+    pro: "Unlimited (Worldwide)",
+  },
+  { label: "Reports Download & Share", free: false, pro: true },
+  {
+    label: "Bookings (Expert Services)",
+    free: "Recorded Video Assessment Only",
+    pro: "All Available Services",
+  },
+  { label: "Building Fans/Followers", free: false, pro: true },
+  {
+    label: "Promotions (Social Media, Newsletters, Front Page)",
+    free: false,
+    pro: true,
+  },
+  { label: "Sponsorship Applications", free: false, pro: true },
+  { label: "AI Features (coming soon)", free: false, pro: true },
+];
+
 export default function PricingPlans() {
-  // State for storing plans, loading status, and selected billing interval
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<"month" | "year">(
     "month"
   );
 
-  // Redux and Router hooks
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Selecting state from the Redux store
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const {
     isActive,
@@ -43,19 +90,15 @@ export default function PricingPlans() {
     loading: subscriptionLoading,
   } = useAppSelector((state) => state.subscription);
 
-  // API endpoint for fetching plans
   const API = `${import.meta.env.VITE_PORT}/api/v1/subscription/plans`;
 
-  // Effect to fetch user's subscription status and plan details on component mount
   useEffect(() => {
     if (isAuthenticated) {
       dispatch(fetchSubscriptionStatus());
     }
     fetchPlans();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, isAuthenticated]);
 
-  // Async function to fetch available plans from the backend
   const fetchPlans = async () => {
     setLoadingPlans(true);
     try {
@@ -63,36 +106,30 @@ export default function PricingPlans() {
       const response = await axios.get(API, {
         headers: {
           "Content-Type": "application/json",
-          // Authorization header is needed if the endpoint is protected
           Authorization: `Bearer ${token}`,
         },
       });
       setPlans(response.data?.plans || []);
     } catch (error) {
       console.error("Failed to fetch plans:", error);
-      setPlans([]); // Set to empty array on failure
+      setPlans([]);
     } finally {
       setLoadingPlans(false);
     }
   };
 
-  // Find the monthly and yearly plans from the fetched data
   const monthlyPlan = plans.find((p) => p.interval === "month");
   const yearlyPlan = plans.find((p) => p.interval === "year");
-
-  // Determine which premium plan is currently selected by the user
   const selectedProPlan =
     selectedInterval === "month" ? monthlyPlan : yearlyPlan;
 
-  // Determine the user's current subscription status
   const isUserOnProPlan =
     isAuthenticated && isActive && planName?.toLowerCase() !== "free";
   const currentPlanLabel = isUserOnProPlan ? "Premium" : "Basic";
 
-  // Function to handle the subscription process
   const handleSubscribe = async (planId: string | undefined) => {
     if (!isAuthenticated) {
-      navigate("/login"); // Redirect to login if not authenticated
+      navigate("/login");
       return;
     }
     if (!planId) {
@@ -108,7 +145,7 @@ export default function PricingPlans() {
 
       const response = await axios.post(
         api,
-        {}, // Empty body
+        {},
         {
           headers: {
             "Content-Type": "application/json",
@@ -116,7 +153,6 @@ export default function PricingPlans() {
           },
         }
       );
-      // Redirect to Stripe checkout page
       if (response.data?.url) {
         window.open(response.data.url, "_blank");
       } else {
@@ -132,223 +168,358 @@ export default function PricingPlans() {
     if (!isAuthenticated) {
       navigate("/login");
     }
-    // No action needed if user is already on the basic plan
   };
-
-  // Data for the feature comparison table, updated with dynamic prices
-  const planComparisonData = [
-    {
-      label: "Subscription Fee",
-      free: "Free",
-      pro: loadingPlans
-        ? "Loading..."
-        : monthlyPlan && yearlyPlan
-        ? `£${monthlyPlan.price}/month or £${yearlyPlan.price}/year`
-        : "N/A",
-    },
-    { label: "Features", free: "Limited Use", pro: "Unlimited Use" },
-    {
-      label: "Cloud Storage",
-      free: "2 Photos & 2 Videos",
-      pro: "10 Photos & 5 Videos",
-    },
-    {
-      label: "Reports",
-      free: "Limited Access (7 days)",
-      pro: "Unlimited Access",
-    },
-    {
-      label: "Video Conference Recordings",
-      free: "Limited Access (7 days)",
-      pro: "Unlimited Access",
-    },
-    {
-      label: "Experts Search",
-      free: "Limited (Local)",
-      pro: "Unlimited (Worldwide)",
-    },
-    { label: "Reports Download & Share", free: false, pro: true },
-    {
-      label: "Bookings (Expert Services)",
-      free: "Recorded Video Assessment Only",
-      pro: "All Available Services",
-    },
-    { label: "Building Fans/Followers", free: false, pro: true },
-    {
-      label: "Promotions (Social Media, Newsletters, Front Page)",
-      free: false,
-      pro: true,
-    },
-    { label: "Sponsorship Applications", free: false, pro: true },
-    { label: "AI Features (coming soon)", free: false, pro: true },
-  ];
 
   const showGoBack = location.pathname === "/plans";
 
   return (
     <>
       {showGoBack && <Navbar />}
-      <div
-        className="w-full flex flex-col items-center py-14 px-2 md:px-0 bg-[#f7fafb] min-h-screen mt-16"
+
+      <section
+        className="relative bg-white min-h-screen pt-32 pb-20 overflow-hidden"
         id="pricing"
       >
-        <div className="flex flex-col md:flex-row md:items-start w-full max-w-6xl gap-12">
-          {/* Left Section: Title and Go Back button */}
-          <div className="flex-1 md:max-w-xs flex flex-col items-start justify-start mt-2 mb-8 md:mb-0">
-            {showGoBack && (
+        {/* Background Pattern */}
+        <div className="absolute inset-0 z-0 opacity-[0.02] pointer-events-none select-none">
+          <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(circle_at_top_right,_#ef4444_1px,_transparent_1px)] [background-size:60px_60px]" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-7xl px-6">
+          {/* Go Back Button */}
+          {showGoBack && (
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              onClick={() => navigate(-1)}
+              className="mb-8 flex items-center gap-2 text-slate-600 hover:text-red-500 font-bold transition-colors"
+            >
+              <ArrowLeft className="h-5 w-5" />
+              Go Back
+            </motion.button>
+          )}
+
+          {/* Header */}
+          <div className="mb-16 text-center">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 inline-flex items-center gap-2 text-red-500 font-black tracking-[0.3em] uppercase text-xs"
+            >
+              <span className="h-[2px] w-8 bg-red-500"></span>
+              Subscription Plans
+              <span className="h-[2px] w-8 bg-red-500"></span>
+            </motion.div>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="text-5xl font-black tracking-tighter text-gray-900 sm:text-7xl uppercase italic"
+            >
+              CHOOSE YOUR <span className="text-red-500">LEVEL.</span>
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="mt-6 text-lg text-gray-500 max-w-xl mx-auto font-medium"
+            >
+              Players choose a plan that's right for you. Start free or unlock
+              the full tactical ecosystem.
+            </motion.p>
+          </div>
+
+          {/* Pricing Cards */}
+          <div className="grid gap-8 md:grid-cols-2 max-w-5xl mx-auto mb-20">
+            {/* Basic Plan */}
+            <motion.div
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              whileHover={{ y: -8 }}
+              className={`group relative flex flex-col rounded-[2.5rem] border-2 ${
+                currentPlanLabel === "Basic"
+                  ? "border-green-500"
+                  : "border-gray-100"
+              } bg-white p-10 transition-all duration-500 hover:border-gray-200 hover:shadow-2xl`}
+            >
+              {currentPlanLabel === "Basic" && (
+                <div className="absolute -top-3 left-8 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-green-500 text-white text-[10px] font-black tracking-widest uppercase shadow-lg">
+                  <Check size={12} /> Current Plan
+                </div>
+              )}
+
+              <div className="mb-10 flex justify-between items-start">
+                <div>
+                  <div className="h-12 w-12 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 mb-6 group-hover:text-red-500 transition-colors">
+                    <ShieldCheck size={28} />
+                  </div>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter text-gray-900">
+                    Basic
+                  </h3>
+                  <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">
+                    The Foundation
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-baseline justify-end">
+                    <span className="text-5xl font-black tracking-tighter text-gray-900">
+                      £0
+                    </span>
+                    <span className="text-sm font-bold text-gray-400 ml-1 italic">
+                      /mo
+                    </span>
+                  </div>
+                  <p className="text-[10px] font-black text-gray-300 mt-1 uppercase tracking-widest">
+                    Free Forever
+                  </p>
+                </div>
+              </div>
+
+              <p className="text-gray-500 font-medium mb-8">
+                Get started with our core features. Perfect for players just
+                beginning their journey.
+              </p>
+
               <button
-                className="mb-4 flex items-center gap-2 text-gray-800 hover:text-red-500 font-medium"
-                onClick={() => navigate(-1)}
-                aria-label="Go back"
+                onClick={handleFreePlanClick}
+                disabled={currentPlanLabel === "Basic"}
+                className={`w-full h-16 rounded-2xl border-2 font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all ${
+                  currentPlanLabel === "Basic"
+                    ? "border-green-500 bg-green-50 text-green-600 cursor-default"
+                    : "border-black bg-transparent text-black hover:bg-black hover:text-white"
+                }`}
               >
-                <ArrowLeft className="h-6 w-6" />
-                Go Back
+                {currentPlanLabel === "Basic" ? (
+                  <>
+                    <Check size={16} /> Current Plan
+                  </>
+                ) : (
+                  <>
+                    Get Started <ArrowRight size={16} />
+                  </>
+                )}
               </button>
-            )}
-            <h2 className="text-3xl md:text-4xl font-bold mb-6 text-center sm:text-left leading-tight px-3">
-               Players choose a plan that's right for you
-            </h2>
-          </div>
-          {/* Right Section: Plan Cards */}
-          <div className="flex-1 flex flex-col md:flex-row gap-6 w-full md:w-auto justify-end">
-            {/* Basic Plan Card */}
-            <div
-              className={`relative border border-gray-300 bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center ${
-                currentPlanLabel === "Basic" ? "ring-2 ring-green-300" : ""
-              }`}
-            >
-              <div className="w-full flex flex-col items-center">
-                <div className="font-bold text-2xl mb-2">Basic</div>
-                <div className="text-gray-500 mb-4 text-center">
-                  Get started with our core features.
-                </div>
-                <div className="text-gray-500 mb-4 text-center">Free Plan</div>
-                <Button
-                  className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
-                  disabled={currentPlanLabel === "Basic"}
-                  onClick={handleFreePlanClick}
-                >
-                  {currentPlanLabel === "Basic" && "Get Started"}
-                </Button>
-              </div>
-            </div>
-            {/* Premium Plan Card */}
-            <div
-              className={`relative border-[4px] ${
+            </motion.div>
+
+            {/* Premium Plan */}
+            <motion.div
+              initial={{ opacity: 0, x: 30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.4 }}
+              whileHover={{ y: -8 }}
+              className={`group relative flex flex-col rounded-[2.5rem] bg-white border-2 ${
                 currentPlanLabel === "Premium"
-                  ? "border-red-500"
-                  : "border-gray-300"
-              } bg-white rounded-xl p-8 flex-1 max-w-md min-w-[280px] flex flex-col items-center`}
+                  ? "border-green-500"
+                  : "border-red-500"
+              } p-10 overflow-hidden transition-all duration-500 shadow-2xl shadow-red-500/10`}
             >
-              <div className="absolute -top-5 left-0 right-0 flex justify-center">
-                <span className="bg-red-500 text-white text-xs font-bold py-1 px-5 rounded-full shadow">
-                  Popular
-                </span>
+              <div className="absolute inset-0 bg-gradient-to-br from-red-50/50 to-transparent pointer-events-none" />
+              <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[80px] rounded-full" />
+
+              {currentPlanLabel === "Premium" ? (
+                <div className="absolute -top-3 right-8 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-green-500 text-white text-[10px] font-black tracking-widest uppercase shadow-lg">
+                  <Check size={12} /> Current Plan
+                </div>
+              ) : (
+                <div className="absolute top-2 right-8 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-red-500 text-white text-[10px] font-black tracking-widest uppercase shadow-lg shadow-red-500/20">
+                  <Crown size={12} /> Popular
+                </div>
+              )}
+
+              <div className="relative z-10 mb-10 flex justify-between items-start">
+                <div>
+                  <div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center text-white mb-6 shadow-lg shadow-red-500/30">
+                    <Zap size={28} />
+                  </div>
+                  <h3 className="text-3xl font-black uppercase tracking-tighter text-gray-900">
+                    Premium
+                  </h3>
+                  <p className="text-red-500 font-black text-xs uppercase tracking-widest mt-1">
+                    Accelerated Path
+                  </p>
+                </div>
+                <div className="text-right">
+                  <div className="flex items-baseline justify-end">
+                    <span className="text-5xl font-black tracking-tighter text-gray-900">
+                      {loadingPlans
+                        ? "..."
+                        : selectedProPlan
+                        ? `£${selectedProPlan.price}`
+                        : "£10"}
+                    </span>
+                    <span className="text-sm font-bold text-gray-400 ml-1 italic">
+                      /{selectedInterval === "month" ? "mo" : "yr"}
+                    </span>
+                  </div>
+                  <AnimatePresence mode="wait">
+                    <motion.p
+                      key={selectedInterval}
+                      initial={{ opacity: 0, y: 5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-[10px] font-black text-red-500 mt-1 uppercase tracking-widest"
+                    >
+                      {selectedInterval === "year"
+                        ? "Save 20% Annually"
+                        : "Billed Monthly"}
+                    </motion.p>
+                  </AnimatePresence>
+                </div>
               </div>
-              <div className="w-full flex flex-col items-center">
-                <div className="font-bold text-2xl mb-2">Premium</div>
-                {/* Monthly/Yearly Toggle */}
-                <div className="bg-gray-200 rounded-full p-1 flex w-full max-w-xs mb-4">
-                  <button
-                    onClick={() => setSelectedInterval("month")}
-                    className={`flex-1 py-1 rounded-full font-semibold transition-colors ${
-                      selectedInterval === "month"
-                        ? "bg-white shadow"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => setSelectedInterval("year")}
-                    className={`flex-1 py-1 rounded-full font-semibold transition-colors ${
-                      selectedInterval === "year"
-                        ? "bg-white shadow"
-                        : "text-gray-600"
-                    }`}
-                  >
-                    Yearly
-                  </button>
-                </div>
-                <div className="text-gray-800 font-mono h-6 mb-4">
-                  {loadingPlans
-                    ? "Loading..."
-                    : selectedProPlan
-                    ? `£${selectedProPlan.price}/${selectedProPlan.interval}`
-                    : "Not available"}
-                </div>
-                <Button
-                  className="bg-[#ffe07f] hover:bg-[#ffe07f]/90 text-black w-full shadow-none text-lg font-bold rounded-lg py-2 mt-2"
-                  onClick={() => handleSubscribe(selectedProPlan?.id)}
-                  disabled={
-                    currentPlanLabel === "Premium" ||
-                    subscriptionLoading ||
-                    loadingPlans ||
-                    !selectedProPlan
-                  }
+
+              {/* Interval Toggle */}
+              <div className="relative z-10 flex items-center justify-center gap-4 mb-8">
+                <button
+                  onClick={() => setSelectedInterval("month")}
+                  className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                    selectedInterval === "month"
+                      ? "bg-red-500 text-white shadow-lg shadow-red-500/20"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
                 >
-                  {currentPlanLabel === "Premium"
-                    ? "Current Plan"
-                    : "Get Started"}
-                </Button>
+                  Monthly
+                </button>
+                <button
+                  onClick={() => setSelectedInterval("year")}
+                  className={`px-4 py-2 rounded-xl font-bold text-sm transition-all ${
+                    selectedInterval === "year"
+                      ? "bg-red-500 text-white shadow-lg shadow-red-500/20"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  }`}
+                >
+                  Yearly
+                </button>
               </div>
-            </div>
+
+              <p className="relative z-10 text-gray-500 font-medium mb-8">
+                Unlock the full tactical ecosystem to accelerate your
+                professional career.
+              </p>
+
+              <button
+                onClick={() => handleSubscribe(selectedProPlan?.id)}
+                disabled={
+                  currentPlanLabel === "Premium" ||
+                  subscriptionLoading ||
+                  loadingPlans ||
+                  !selectedProPlan
+                }
+                className={`relative z-10 w-full h-16 rounded-2xl font-black uppercase tracking-widest text-sm flex items-center justify-center gap-2 transition-all active:scale-95 ${
+                  currentPlanLabel === "Premium"
+                    ? "bg-green-500 text-white cursor-default"
+                    : "bg-red-500 text-white hover:bg-red-600 shadow-xl shadow-red-500/20"
+                }`}
+              >
+                {currentPlanLabel === "Premium" ? (
+                  <>
+                    <Check size={16} /> Current Plan
+                  </>
+                ) : (
+                  <>
+                    Upgrade to Premium <Crown size={16} />
+                  </>
+                )}
+              </button>
+            </motion.div>
           </div>
+
+          {/* Comparison Table */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5 }}
+            className="max-w-5xl mx-auto"
+          >
+            <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight text-center mb-8">
+              Feature Comparison
+            </h3>
+
+            <div className="rounded-[2rem] border-2 border-gray-100 overflow-hidden shadow-xl">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="p-6 text-left text-xs font-black text-gray-400 uppercase tracking-widest">
+                      Features
+                    </th>
+                    <th className="p-6 text-center text-xs font-black text-gray-900 uppercase tracking-widest border-l border-gray-100">
+                      Basic
+                    </th>
+                    <th className="p-6 text-center text-xs font-black text-red-500 uppercase tracking-widest border-l border-gray-100">
+                      Premium
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {planComparisonData.map((row, idx) => (
+                    <tr
+                      key={row.label}
+                      className={idx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
+                    >
+                      <td className="p-5 text-gray-700 font-medium border-t border-gray-100">
+                        {row.label}
+                      </td>
+                      <td className="p-5 text-center border-t border-l border-gray-100">
+                        {typeof row.free === "boolean" ? (
+                          row.free ? (
+                            <Check className="h-5 w-5 text-green-500 mx-auto" />
+                          ) : (
+                            <X className="h-5 w-5 text-gray-300 mx-auto" />
+                          )
+                        ) : (
+                          <span className="text-sm text-gray-600 font-medium">
+                            {row.free}
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-5 text-center border-t border-l border-gray-100 bg-red-50/30">
+                        {typeof row.pro === "boolean" ? (
+                          row.pro ? (
+                            <Check className="h-5 w-5 text-green-500 mx-auto" />
+                          ) : (
+                            <X className="h-5 w-5 text-gray-300 mx-auto" />
+                          )
+                        ) : row.pro === "dynamic" ? (
+                          <span className="text-sm text-gray-900 font-bold">
+                            {loadingPlans
+                              ? "Loading..."
+                              : monthlyPlan && yearlyPlan
+                              ? `£${monthlyPlan.price}/mo or £${yearlyPlan.price}/yr`
+                              : "Contact us"}
+                          </span>
+                        ) : (
+                          <span className="text-sm text-gray-900 font-bold">
+                            {row.pro}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </motion.div>
+
+          {/* Enterprise CTA */}
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-16 text-center"
+          >
+            <p className="text-gray-400 text-xs font-black uppercase tracking-[0.2em] mb-4">
+              Have more specific needs?
+            </p>
+            <button
+              onClick={() => navigate("/contactus")}
+              className="text-gray-900 font-black uppercase text-sm border-b-2 border-red-500 pb-1 hover:text-red-500 transition-colors"
+            >
+              Contact Enterprise Scouting
+            </button>
+          </motion.div>
         </div>
-        {/* Plan Comparison Table */}
-        <div className="overflow-x-auto w-full mt-12 max-w-4xl rounded-xl shadow border border-gray-200">
-          <table className="w-full text-left bg-[#fcfbf6]">
-            <thead>
-              <tr>
-                <th className="w-1/2 md:w-1/3 p-4 bg-[#f7fafb] text-base font-semibold text-gray-800">
-                  Features
-                </th>
-                <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
-                  Basic
-                </th>
-                <th className="p-4 bg-[#f7fafb] text-lg font-bold text-gray-800 border-l border-gray-200">
-                  Premium
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {planComparisonData.map((row, idx) => (
-                <tr
-                  key={row.label}
-                  className={idx % 2 === 0 ? "bg-[#f8f5e8]" : "bg-white"}
-                >
-                  <td className="p-4 text-gray-700 font-medium border-t border-gray-200">
-                    {row.label}
-                  </td>
-                  <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
-                    {typeof row.free === "boolean" ? (
-                      row.free ? (
-                        <CheckCircle className="h-6 w-6 text-green-500" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-400" />
-                      )
-                    ) : (
-                      row.free
-                    )}
-                  </td>
-                  <td className="p-4 border-t border-l border-gray-200 text-gray-700 text-base">
-                    {typeof row.pro === "boolean" ? (
-                      row.pro ? (
-                        <CheckCircle className="h-6 w-6 text-green-500" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-400" />
-                      )
-                    ) : (
-                      row.pro
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-      {showGoBack && <OutceedoFooter />}
+      </section>
+
+      {showGoBack && <FooterSection />}
     </>
   );
 }
