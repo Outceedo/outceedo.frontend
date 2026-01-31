@@ -27,7 +27,7 @@ const Signup: React.FC = () => {
     (state: RootState) => state.auth
   );
 
-  const [role, setRole] = useState<Role | null>(null);
+  const [role, setRole] = useState<Role | null>();
   const [formError, setFormError] = useState<string | null>(null);
   const [countryList, setCountryList] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");

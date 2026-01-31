@@ -9,8 +9,10 @@ import {
   ShieldCheck,
   User,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function HowItWorks() {
+  const nav = useNavigate();
   return (
     <section
       id="how-it-works"
@@ -255,7 +257,12 @@ export default function HowItWorks() {
           whileInView={{ opacity: 1 }}
           className="mt-16 flex justify-center"
         >
-          <button className="flex items-center gap-3 text-red-500 font-black uppercase tracking-widest text-sm hover:gap-6 transition-all group">
+          <button
+            className="flex items-center gap-3 text-red-500 font-black uppercase tracking-widest text-sm hover:gap-6 transition-all group"
+            onClick={() => {
+              nav("/login");
+            }}
+          >
             Start your journey now{" "}
             <ChevronRight
               size={20}
