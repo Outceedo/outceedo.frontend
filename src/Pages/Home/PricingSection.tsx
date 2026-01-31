@@ -5,20 +5,28 @@ import { useNavigate } from "react-router-dom";
 
 const features = {
   free: [
-    { text: "Basic Technical CV", included: true },
-    { text: "2 Photos & 2 Video Highlights", included: true },
-    { text: "Local Expert Directory Access", included: true },
-    { text: "7-Day Report Retention", included: true },
-    { text: "Full Report Downloads", included: false },
-    { text: "Direct Scout Messaging", included: false },
+    { text: "Limited Use", included: true },
+    { text: "2 Photos & 2 Videos Storage", included: true },
+    { text: "Reports Access (7 Days)", included: true },
+    { text: "Video Conference Recordings (7 Days)", included: true },
+    { text: "Local Experts Search", included: true },
+    { text: "Recorded Video Assessment Bookings", included: true },
+    { text: "Reports Download & Share", included: false },
+    { text: "Building Fans/Followers", included: false },
+    { text: "Promotions & Sponsorship Applications", included: false },
+    { text: "AI Features (Coming Soon)", included: false },
   ],
   premium: [
-    { text: "Infinite Media Vault", included: true },
-    { text: "Worldwide Expert Network", included: true },
-    { text: "Unlimited Report History", included: true },
-    { text: "One-Click Scouting Portability", included: true },
-    { text: "Priority Mentorship Access", included: true },
-    { text: "Verified 'Pro' Profile Badge", included: true },
+    { text: "Unlimited Use", included: true },
+    { text: "10 Photos & 5 Videos Storage", included: true },
+    { text: "Unlimited Reports Access", included: true },
+    { text: "Unlimited Video Conference Recordings", included: true },
+    { text: "Worldwide Experts Search", included: true },
+    { text: "All Expert Services & Bookings", included: true },
+    { text: "Reports Download & Share", included: true },
+    { text: "Building Fans/Followers", included: true },
+    { text: "Promotions & Sponsorship Applications", included: true },
+    { text: "AI Features (Coming Soon)", included: true },
   ],
 };
 
@@ -100,10 +108,10 @@ export default function PricingSection() {
                   <ShieldCheck size={28} />
                 </div>
                 <h3 className="text-3xl font-black uppercase tracking-tighter text-gray-900">
-                  Standard
+                  Basic
                 </h3>
                 <p className="text-gray-400 font-bold text-xs uppercase tracking-widest mt-1">
-                  The Foundation
+                  Get Started Free
                 </p>
               </div>
               <div className="text-right">
@@ -162,7 +170,7 @@ export default function PricingSection() {
             <div className="absolute top-0 right-0 w-32 h-32 bg-red-500/5 blur-[80px] rounded-full" />
 
             <div className="absolute top-2 right-8 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-red-500 text-white text-[10px] font-black tracking-widest uppercase shadow-lg shadow-red-500/20">
-              <Crown size={12} /> Pro Choice
+              <Crown size={12} /> Best Value
             </div>
 
             <div className="relative z-10 mb-10 flex justify-between items-start">
@@ -171,10 +179,10 @@ export default function PricingSection() {
                   <Zap size={28} />
                 </div>
                 <h3 className="text-3xl font-black uppercase tracking-tighter text-gray-900">
-                  Elite
+                  Premium
                 </h3>
                 <p className="text-red-500 font-black text-xs uppercase tracking-widest mt-1">
-                  Accelerated Path
+                  Unlock Everything
                 </p>
               </div>
               <div className="text-right">
@@ -216,12 +224,12 @@ export default function PricingSection() {
               onClick={() => navigate("/plans")}
               className="relative z-10 w-full h-16 rounded-2xl bg-red-500 font-black uppercase tracking-widest text-sm text-white hover:bg-red-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 active:scale-95"
             >
-              Upgrade to Elite <Crown size={16} />
+              Upgrade to Premium <Crown size={16} />
             </button>
 
             <div className="relative z-10 mt-6 pt-6 border-t border-gray-100 text-center">
               <span className="text-[9px] font-mono text-gray-400 tracking-widest uppercase">
-                Verified Expert Assessment Included
+                Full Access to All Features
               </span>
             </div>
           </motion.div>

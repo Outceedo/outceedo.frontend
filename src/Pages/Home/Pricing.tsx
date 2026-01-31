@@ -76,7 +76,7 @@ export default function PricingPlans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
   const [selectedInterval, setSelectedInterval] = useState<"month" | "year">(
-    "month"
+    "month",
   );
 
   const dispatch = useAppDispatch();
@@ -151,7 +151,7 @@ export default function PricingPlans() {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (response.data?.url) {
         window.open(response.data.url, "_blank");
@@ -345,8 +345,8 @@ export default function PricingPlans() {
                       {loadingPlans
                         ? "..."
                         : selectedProPlan
-                        ? `£${selectedProPlan.price}`
-                        : "£10"}
+                          ? `£${selectedProPlan.price}`
+                          : "£10"}
                     </span>
                     <span className="text-sm font-bold text-gray-400 ml-1 italic">
                       /{selectedInterval === "month" ? "mo" : "yr"}
@@ -360,7 +360,7 @@ export default function PricingPlans() {
                       className="text-[10px] font-black text-red-500 mt-1 uppercase tracking-widest"
                     >
                       {selectedInterval === "year"
-                        ? "Save 20% Annually"
+                        ? "Save 17% Annually"
                         : "Billed Monthly"}
                     </motion.p>
                   </AnimatePresence>
@@ -483,8 +483,8 @@ export default function PricingPlans() {
                             {loadingPlans
                               ? "Loading..."
                               : monthlyPlan && yearlyPlan
-                              ? `£${monthlyPlan.price}/mo or £${yearlyPlan.price}/yr`
-                              : "Contact us"}
+                                ? `£${monthlyPlan.price}/mo or £${yearlyPlan.price}/yr`
+                                : "Contact us"}
                           </span>
                         ) : (
                           <span className="text-sm text-gray-900 font-bold">

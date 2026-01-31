@@ -1,11 +1,5 @@
 import { motion } from "motion/react";
-import {
-  Users,
-  Briefcase,
-  UserCheck,
-  ArrowRight,
-  Target,
-} from "lucide-react";
+import { Users, Briefcase, UserCheck, ArrowRight, Target, Heart } from "lucide-react";
 
 const ecosystemItems = [
   {
@@ -24,7 +18,7 @@ const ecosystemItems = [
   },
   {
     number: "03",
-    title: "Teams & Managers",
+    title: "Teams",
     desc: "Streamline your scouting. Access verified player data, expert technical reports, and direct communication channels.",
     icon: Target,
     tag: "Recruitment",
@@ -35,6 +29,13 @@ const ecosystemItems = [
     desc: "Identify brand ambassadors early. Partner with rising stars and track their performance growth through real data.",
     icon: Briefcase,
     tag: "Partnership",
+  },
+  {
+    number: "05",
+    title: "Fans",
+    desc: "Follow your favourite players, stay updated on their journey, and support rising talent as they pursue their professional dreams.",
+    icon: Heart,
+    tag: "Support",
   },
 ];
 
@@ -117,7 +118,7 @@ export default function Profiles() {
         </div>
 
         {/* Cards Grid */}
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {ecosystemItems.map((item, index) => (
             <motion.div
               key={item.title}

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Play, Pause, Star, Users, Trophy, X } from "lucide-react";
+import { Play, Pause, Star, Users, Trophy, X, File } from "lucide-react";
 import img from "@/assets/images/Main.png";
+import logo from "@/assets/images/logosmall.png";
 import User from "./user";
 
 interface FloatingExpertCardProps {
@@ -57,7 +58,11 @@ export default function Hero() {
     >
       {/* Background Image Layer */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none">
-        <img className="w-full h-full object-cover" src={img} alt="Hero background" />
+        <img
+          className="w-full h-full object-cover"
+          src={img}
+          alt="Hero background"
+        />
 
         {/* White overlay gradients */}
         <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50 to-white/90" />
@@ -82,8 +87,8 @@ export default function Hero() {
             <FloatingExpertCard
               delay={1.5}
               icon={Star}
-              title="Top Ratings"
-              sub="4.9/5 Average Score"
+              title="Big Sponsers"
+              // sub="4.9/5 Average Score"
               color="bg-orange-500"
             />
           </div>
@@ -94,6 +99,14 @@ export default function Hero() {
               icon={Users}
               title="Pro Coaches"
               color="bg-blue-500"
+            />
+          </div>
+          <div className="hidden lg:block absolute top-[65%] right-[20%]">
+            <FloatingExpertCard
+              delay={1.8}
+              icon={File}
+              title="Assessment Reports"
+              color="bg-red-500"
             />
           </div>
         </div>
@@ -109,15 +122,13 @@ export default function Hero() {
           >
             {/* Tagline */}
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-bold tracking-widest text-slate-800 backdrop-blur-md uppercase shadow-sm">
-              <span className="relative flex h-2 w-2">
-                <span
-                  className={`animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 ${isPlaying ? "block" : "hidden"}`}
-                ></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500"></span>
+              <span className="relative flex h-6 w-6">
+                <span>
+                  <img src={logo} alt="" />
+                </span>
               </span>
               Outdo your sport to Succeed
             </div>
-
             {/* Headline */}
             <h1 className="mb-8 text-6xl font-black tracking-tight text-slate-900 sm:text-8xl lg:text-[100px] leading-[0.9] lg:leading-[0.9]">
               ELITE ACCESS <br />
@@ -125,10 +136,12 @@ export default function Hero() {
                 FOR THE PROS.
               </span>
             </h1>
-
             {/* Description */}
-            <p className="mx-auto mb-12 max-w-2xl text-lg md:text-xl text-slate-500 font-medium leading-relaxed px-4">
-              The premier ecosystem connecting rising football stars with
+            <p className="mx-auto max-w-2xl text-lg md:text-xl text-slate-800 font-medium leading-relaxed px-4">
+              {`The premier ecosystem connecting rising football stars with`}
+            </p>
+            <p className="mx-auto mb-12 max-w-2xl text-lg md:text-xl text-slate-800 font-medium leading-relaxed px-4">
+              {" "}
               world-class coaches, scouts, and performance experts.
             </p>
 
@@ -152,7 +165,11 @@ export default function Hero() {
                   {isPlaying ? (
                     <Pause size={16} fill="white" className="text-white" />
                   ) : (
-                    <Play size={16} fill="white" className="ml-0.5 text-white" />
+                    <Play
+                      size={16}
+                      fill="white"
+                      className="ml-0.5 text-white"
+                    />
                   )}
                 </div>
                 {isPlaying ? "Pause Demo" : "Watch Story"}

@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ShieldCheck,
+  User,
 } from "lucide-react";
 
 export default function HowItWorks() {
@@ -87,8 +88,8 @@ export default function HowItWorks() {
                 Identity Build
               </h3>
               <p className="text-gray-500 font-medium leading-relaxed">
-                Construct your digital scouting pass. Upload performance data,
-                medical history, and technical highlights.
+                Construct your digital scouting pass. Upload match performances,
+                Get yourself evaluated by experts and add technical highlights.
               </p>
             </div>
 
@@ -96,7 +97,7 @@ export default function HowItWorks() {
             <div className="mt-10 relative h-48 w-full bg-white rounded-2xl border border-gray-100 p-6 shadow-sm transform group-hover:translate-y-[-10px] group-hover:rotate-2 transition-all duration-700">
               <div className="flex items-center gap-4 mb-6">
                 <div className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center text-white font-black italic">
-                  JD
+                  <User />
                 </div>
                 <div className="space-y-2">
                   <div className="h-3 w-24 bg-gray-100 rounded-full" />
@@ -145,8 +146,8 @@ export default function HowItWorks() {
                   Elite Marketplace
                 </h3>
                 <p className="text-red-50 text-lg font-medium max-w-md">
-                  Browse a curated directory of UEFA-licensed coaches, top-tier
-                  scouts, and performance nutritionists.
+                  Browse a curated directory of top coaches, top-tier sponsors,
+                  and the best scouts.
                 </p>
               </div>
 
@@ -188,8 +189,8 @@ export default function HowItWorks() {
                 Data Insights
               </h3>
               <p className="text-gray-500 text-sm font-medium leading-relaxed">
-                Receive comprehensive technical audits and scouting reports with
-                actionable metrics.
+                Receive comprehensive coach feedbacks and assessment reports
+                with actionable metrics.
               </p>
             </div>
 
@@ -225,8 +226,8 @@ export default function HowItWorks() {
                 The Breakout
               </h3>
               <p className="text-red-900/60 text-sm font-bold leading-relaxed">
-                Connect directly with clubs, agents, and sponsors who leverage
-                our data to sign talent.
+                Connect directly with coaches and sponsors who leverage our data
+                to fund talent.
               </p>
             </div>
 

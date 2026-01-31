@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { Menu, X, ArrowRight } from "lucide-react";
 import User from "./user";
 import logo from "../../assets/images/logosmall.png";
+import outceedo from "@/assets/images/outceedologo.png";
 
 const NAV_ITEMS = [
   { label: "Home", anchor: "home", path: "/" },
@@ -36,7 +37,7 @@ export default function Navbar() {
 
   useEffect(() => {
     const currentItem = NAV_ITEMS.find(
-      (item) => item.path === location.pathname
+      (item) => item.path === location.pathname,
     );
     if (currentItem) {
       setActiveNav(currentItem.label);
@@ -90,12 +91,12 @@ export default function Navbar() {
           onClick={() => handleNavigate("/")}
           className="flex items-center gap-2"
         >
-          <div className="w-10 h-10 rounded-lg flex items-center justify-center">
-            <img src={logo} alt="Outceedo" className="w-10 h-10" />
+          <div className="w-56 h-10 rounded-lg flex items-center justify-center">
+            <img src={outceedo} alt="Outceedo" className="w-56" />
           </div>
-          <span className="text-2xl font-black tracking-tighter text-slate-900">
+          {/* <span className="text-2xl font-black tracking-tighter text-slate-900">
             OUTCEEDO
-          </span>
+          </span> */}
         </button>
 
         {/* Desktop Links */}
@@ -132,10 +133,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile menu button */}
-        <button
-          className="lg:hidden"
-          onClick={() => setMobileMenuOpen(true)}
-        >
+        <button className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
           <Menu
             className={`h-7 w-7 ${isScrolled ? "text-slate-900" : "text-white"}`}
           />

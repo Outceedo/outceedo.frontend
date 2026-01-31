@@ -1,16 +1,16 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, useLocation, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { motion } from "motion/react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { resetPassword } from "../../store/auth-slice";
-import logo from "../../assets/images/outceedologo.png";
-import football from "../../assets/images/football.jpg";
+import { ArrowLeft, KeyRound, Eye, EyeOff, CheckCircle } from "lucide-react";
+import logo from "../../assets/images/logosmall.png";
+import img from "@/assets/images/Main.png";
 
 const ResetPassword: React.FC = () => {
   const navigate = useNavigate();
-
   const { id } = useParams();
-  const token = id || ""; // Only use route params
-  console.log(token);
+  const token = id || "";
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -26,7 +26,6 @@ const ResetPassword: React.FC = () => {
     (state) => state.auth
   );
 
-  // Start countdown after successful password reset
   useEffect(() => {
     let timer: NodeJS.Timeout;
 
@@ -43,15 +42,13 @@ const ResetPassword: React.FC = () => {
     };
   }, [countdown, navigate]);
 
-  // Monitor resetPasswordSuccess state from Redux
   useEffect(() => {
     if (resetPasswordSuccess) {
       setSuccess("Password reset successful! Redirecting to login page...");
-      setCountdown(5); // Start 5-second countdown
+      setCountdown(5);
     }
   }, [resetPasswordSuccess]);
 
-  // Handle password reset
   const handleResetPassword = async () => {
     setError("");
 
@@ -74,9 +71,7 @@ const ResetPassword: React.FC = () => {
         resetPassword({ token, password: newPassword })
       );
 
-      if (resetPassword.fulfilled.match(resultAction)) {
-        // Success handling is now in the useEffect that watches resetPasswordSuccess
-      } else if (resetPassword.rejected.match(resultAction)) {
+      if (resetPassword.rejected.match(resultAction)) {
         setError(
           (resultAction as any).payload?.error ||
             (resultAction as any).error?.message ||
@@ -91,129 +86,224 @@ const ResetPassword: React.FC = () => {
     }
   };
 
-  // Handle manual navigation to login
   const handleLoginRedirect = () => {
     navigate("/login");
   };
 
-  // Check if form is valid
   const isFormValid =
     newPassword && confirmPassword && newPassword === confirmPassword;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${football})` }}
-      ></div>
-      <div className="absolute inset-0 bg-black opacity-40"></div>
-      <div className="absolute inset-0 bg-black opacity-20"></div>
-      <img src={logo} alt="logo" className="w-96 mb-8 z-10" />
-      <div className="bg-white p-8 rounded-lg shadow-lg w-[90%] max-w-md z-10">
-        <h2 className="text-3xl font-bold text-center font-Raleway mb-4">
-          Reset Password
-        </h2>
-        <p className="text-gray-600 text-center font-Opensans mb-6">
-          Set a new password to regain access to your account. Make sure it's
-          strong and secure.
-        </p>
+    <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-white">
+      {/* Background Image Layer */}
+      <div className="absolute inset-0 z-0 select-none pointer-events-none">
+        <img
+          className="w-full h-full object-cover"
+          src={img}
+          alt="Background"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white/90" />
+        <div className="absolute inset-0 opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-multiply" />
+      </div>
 
-        {/* Success Message with Countdown */}
-        {success && (
-          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
-            <p className="text-green-600 font-medium">{success}</p>
-            {countdown !== null && (
-              <p className="text-green-500 mt-2">
-                Redirecting in {countdown} seconds...
-              </p>
-            )}
-            <button
-              onClick={handleLoginRedirect}
-              className="mt-3 w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded-lg transition duration-300"
-            >
-              Go to Login Now
-            </button>
+      {/* Go Back Button */}
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+        onClick={() => navigate("/")}
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md border border-gray-200 rounded-xl text-gray-900 font-bold text-sm hover:bg-white hover:shadow-lg transition-all z-30"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Go Back
+      </motion.button>
+
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-20 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20">
+        {/* Left Side - Branding */}
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center lg:text-left lg:w-1/2"
+        >
+          <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
+            <img src={logo} alt="Outceedo" className="w-14 h-14" />
+            <span className="text-4xl font-black tracking-tighter text-gray-900">
+              OUTCEEDO
+            </span>
           </div>
-        )}
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-gray-900 uppercase italic mb-6">
+            SET NEW <span className="text-red-500">PASSWORD</span>
+          </h1>
+          <p className="text-lg text-gray-600 font-medium leading-relaxed max-w-md mx-auto lg:mx-0">
+            Set a new password to regain access to your account. Make sure it's strong and secure.
+          </p>
+        </motion.div>
 
-        {!success && (
-          <>
-            {/* New Password Input */}
-            <div className="mb-4">
-              <label className="block text-sm font-Opensans font-medium text-gray-700">
-                New Password
-              </label>
-              <div className="relative mt-1">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FE221E]"
-                  placeholder="Enter your Password"
-                />
+        {/* Right Side - Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-[2rem] shadow-2xl shadow-black/5 p-8 md:p-10">
+            {success ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center"
+              >
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-50 flex items-center justify-center">
+                  <CheckCircle className="w-10 h-10 text-green-500" />
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-4">
+                  Password Reset!
+                </h2>
+                <p className="text-gray-600 font-medium mb-4">{success}</p>
+                {countdown !== null && (
+                  <p className="text-gray-500 mb-6">
+                    Redirecting in{" "}
+                    <span className="font-bold text-red-500">{countdown}</span>{" "}
+                    seconds...
+                  </p>
+                )}
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-600 hover:text-gray-900"
+                  onClick={handleLoginRedirect}
+                  className="w-full h-14 bg-red-500 text-white font-bold text-lg rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  <i
-                    className={showPassword ? "fas fa-eye-slash" : "fas fa-eye"}
-                  ></i>
+                  Go to Login Now
                 </button>
-              </div>
-            </div>
+              </motion.div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-500/20">
+                    <KeyRound className="w-6 h-6" />
+                  </div>
+                  <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">
+                    Reset Password
+                  </h2>
+                </div>
 
-            {/* Confirm Password Input */}
-            <div className="mb-6">
-              <label className="block text-sm font-Opensans font-medium text-gray-700">
-                Confirm Password
-              </label>
-              <div className="relative mt-1">
-                <input
-                  type={showConfirmPassword ? "text" : "password"}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-[#FE221E]"
-                  placeholder="Enter your Password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-600 hover:text-gray-900"
-                >
-                  <i
-                    className={
-                      showConfirmPassword ? "fas fa-eye-slash" : "fas fa-eye"
-                    }
-                  ></i>
-                </button>
-              </div>
-              {error && <p className="text-[#FE221E] text-sm mt-2">{error}</p>}
-            </div>
+                {error && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="font-bold text-red-600">Error</p>
+                    <p className="text-sm text-red-500">{error}</p>
+                  </div>
+                )}
 
-            {/* Reset Password Button */}
-            <button
-              className={`w-full py-3 rounded-lg text-sm font-semibold transition ${
-                isFormValid && !loading
-                  ? "bg-[#FE221E] text-white hover:bg-red-500"
-                  : "bg-red-400 text-white cursor-not-allowed"
-              }`}
-              onClick={handleResetPassword}
-              disabled={!isFormValid || loading || isLoading}
-            >
-              {loading || isLoading ? "Resetting..." : "Reset Password"}
-            </button>
+                <div className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      New Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all pr-12"
+                        placeholder="Enter new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
-            {/* Back to Login Button */}
-            <button
-              className="w-full mt-4 py-3 rounded-lg text-sm font-semibold bg-gray-200 text-gray-700 hover:bg-gray-300 transition"
-              onClick={handleLoginRedirect}
-              type="button"
-            >
-              Back to Login
-            </button>
-          </>
-        )}
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Confirm Password
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all pr-12"
+                        placeholder="Confirm new password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                      >
+                        {showConfirmPassword ? (
+                          <EyeOff size={20} />
+                        ) : (
+                          <Eye size={20} />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={handleResetPassword}
+                    disabled={!isFormValid || loading || isLoading}
+                    className={`w-full h-14 bg-red-500 text-white font-bold text-lg rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 transition-all ${
+                      !isFormValid || loading || isLoading
+                        ? "opacity-70 cursor-not-allowed"
+                        : "hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98]"
+                    }`}
+                  >
+                    {loading || isLoading ? (
+                      <>
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        Resetting...
+                      </>
+                    ) : (
+                      "Reset Password"
+                    )}
+                  </button>
+
+                  <div className="pt-4 border-t border-gray-100 text-center">
+                    <button
+                      onClick={handleLoginRedirect}
+                      className="text-gray-600 font-medium hover:text-gray-900 transition-colors"
+                      type="button"
+                    >
+                      <span className="flex items-center justify-center gap-2">
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Login
+                      </span>
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

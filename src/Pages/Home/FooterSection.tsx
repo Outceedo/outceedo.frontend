@@ -16,16 +16,9 @@ export default function FooterSection() {
     "https://www.google.com/maps/search/?api=1&query=82+Berryden+Gardens,+Aberdeen,+UK";
 
   const platformLinks = [
-    { label: "Find Experts", path: "/" },
-    { label: "Scouting Reports", path: "/" },
+    { label: "About", path: "/about" },
+    { label: "Team", path: "/teams" },
     { label: "Pricing", path: "/plans" },
-    { label: "Success Stories", path: "/" },
-  ];
-
-  const companyLinks = [
-    { label: "About Us", path: "/about" },
-    { label: "Elite Staff", path: "/teams" },
-    { label: "Careers", path: "/" },
     { label: "Contact", path: "/contactus" },
   ];
 
@@ -63,49 +56,26 @@ export default function FooterSection() {
           </div>
 
           {/* Links Grid */}
-          <div className="md:col-span-4 grid grid-cols-2 gap-8">
-            <div>
-              <h3 className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-red-500">
-                Platform
-              </h3>
-              <ul className="space-y-4">
-                {platformLinks.map((link) => (
-                  <li key={link.label}>
-                    <button
-                      onClick={() => navigate(link.path)}
-                      className="text-sm font-bold text-gray-600 hover:text-black transition-colors flex items-center gap-1 group"
-                    >
-                      {link.label}{" "}
-                      <ArrowUpRight
-                        size={12}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h3 className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-red-500">
-                Company
-              </h3>
-              <ul className="space-y-4">
-                {companyLinks.map((link) => (
-                  <li key={link.label}>
-                    <button
-                      onClick={() => navigate(link.path)}
-                      className="text-sm font-bold text-gray-600 hover:text-black transition-colors flex items-center gap-1 group"
-                    >
-                      {link.label}{" "}
-                      <ArrowUpRight
-                        size={12}
-                        className="opacity-0 group-hover:opacity-100 transition-opacity"
-                      />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <div className="md:col-span-4">
+            <h3 className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-red-500">
+              Platform
+            </h3>
+            <ul className="space-y-4">
+              {platformLinks.map((link) => (
+                <li key={link.label}>
+                  <button
+                    onClick={() => navigate(link.path)}
+                    className="text-sm font-bold text-gray-600 hover:text-black transition-colors flex items-center gap-1 group"
+                  >
+                    {link.label}{" "}
+                    <ArrowUpRight
+                      size={12}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity"
+                    />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
 
           {/* Contact / Location Column */}
