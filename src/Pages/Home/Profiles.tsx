@@ -1,5 +1,13 @@
 import { motion } from "motion/react";
-import { Users, Briefcase, UserCheck, ArrowRight, Target, Heart } from "lucide-react";
+import {
+  Users,
+  Briefcase,
+  UserCheck,
+  ArrowRight,
+  Target,
+  Heart,
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const ecosystemItems = [
   {
@@ -8,6 +16,7 @@ const ecosystemItems = [
     desc: "Build a professional profile, undergo elite assessments, and broadcast your highlights to a global network of decision-makers.",
     icon: Users,
     tag: "Talent",
+    role: "player", // Added role value
   },
   {
     number: "02",
@@ -15,6 +24,7 @@ const ecosystemItems = [
     desc: "Monetize your professional expertise. Conduct skill reviews, generate technical reports, and mentor the next generation.",
     icon: UserCheck,
     tag: "Mentorship",
+    role: "expert", // Added role value
   },
   {
     number: "03",
@@ -22,6 +32,7 @@ const ecosystemItems = [
     desc: "Streamline your scouting. Access verified player data, expert technical reports, and direct communication channels.",
     icon: Target,
     tag: "Recruitment",
+    role: "team", // Added role value
   },
   {
     number: "04",
@@ -29,6 +40,7 @@ const ecosystemItems = [
     desc: "Identify brand ambassadors early. Partner with rising stars and track their performance growth through real data.",
     icon: Briefcase,
     tag: "Partnership",
+    role: "sponsor", // Added role value
   },
   {
     number: "05",
@@ -36,10 +48,20 @@ const ecosystemItems = [
     desc: "Follow your favourite players, stay updated on their journey, and support rising talent as they pursue their professional dreams.",
     icon: Heart,
     tag: "Support",
+    role: "user", // Added role value
   },
 ];
 
 export default function Profiles() {
+  const navigate = useNavigate();
+
+  const handleNavigation = (role: any) => {
+    // Set local storage
+    localStorage.setItem("selectedRole", role);
+    // Navigate to signup
+    navigate("/signup");
+  };
+
   return (
     <section className="relative overflow-hidden bg-white py-32">
       {/* --- Tactical Background Pattern --- */}
@@ -130,7 +152,8 @@ export default function Profiles() {
                 duration: 0.7,
                 ease: [0.22, 1, 0.36, 1],
               }}
-              className="group relative flex flex-col justify-between rounded-[2rem] border border-gray-100 bg-white p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(239,68,68,0.15)] hover:-translate-y-2 overflow-hidden"
+              onClick={() => handleNavigation(item.role)}
+              className="group cursor-pointer relative flex flex-col justify-between rounded-[2rem] border border-gray-100 bg-white p-8 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] transition-all duration-500 hover:shadow-[0_30px_60px_-15px_rgba(239,68,68,0.15)] hover:-translate-y-2 overflow-hidden"
             >
               {/* Background Accent Number */}
               <div className="absolute -right-4 -top-4 text-[120px] font-black text-gray-50 select-none group-hover:text-red-50 transition-colors duration-500">
