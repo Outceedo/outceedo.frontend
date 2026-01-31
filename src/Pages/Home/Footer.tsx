@@ -27,7 +27,7 @@ const OutceedoFooter: React.FC = () => {
           {/* Center - Links */}
           <div className="flex flex-1 flex-col md:flex-row justify-around gap-10 items-center md:items-start">
             <div className="flex flex-col items-center md:items-start ">
-              <h3 className="font-bold mb-2 text-lg text-red-500">Resources</h3>
+              <h3 className="font-bold mb-2 text-lg text-red-500">Platform</h3>
               <ul className="space-y-1 text-[#e3e9f1]">
                 <li>
                   <button

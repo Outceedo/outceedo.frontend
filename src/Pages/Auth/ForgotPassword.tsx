@@ -1,9 +1,11 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { forgotPassword } from "../../store/auth-slice";
-import logo from "../../assets/images/outceedologo.png";
-import football from "../../assets/images/football.jpg";
+import { ArrowLeft, KeyRound, Mail, CheckCircle } from "lucide-react";
+import logo from "../../assets/images/logosmall.png";
+import img from "@/assets/images/Main.png";
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -15,14 +17,12 @@ const ForgotPassword = () => {
   const [email, setEmail] = useState<string>("");
   const [error, setError] = useState<string>("");
 
-  //  Email Validation
   const validateEmail = (email: string): boolean => {
     const emailPattern: RegExp =
       /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailPattern.test(email);
   };
 
-  // Handle API Call
   const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
 
@@ -35,84 +35,184 @@ const ForgotPassword = () => {
     dispatch(forgotPassword({ email }));
   };
 
-  // Handle Email Input
   const handleEmailChange = (e: ChangeEvent<HTMLInputElement>): void => {
     setEmail(e.target.value);
   };
 
   return (
-    <>
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${football})` }}
-        ></div>
-        <div className="absolute inset-0 bg-black opacity-40"></div>
-        <div className="absolute inset-0 bg-black opacity-20"></div>
-        <img src={logo} alt="logo" className="w-96 mb-8 z-10" />
-        <div className="bg-white p-10 rounded-xl shadow-lg w-96 z-10">
-          {emailSent ? (
-            <div>
-              <h2 className="text-2xl font-bold text-gray-700 mb-2 font-Raleway">
-                Check Your Email
-              </h2>
-              <p className="text-green-600 mb-4 font-Opensans">
-                A password reset link has been sent to your email. Please check
-                your inbox.
-              </p>
-            </div>
-          ) : (
-            <>
-              <h2 className="text-2xl font-bold text-gray-800 mb-2 font-Raleway">
-                Forgot Password
-              </h2>
-              <p className="text-gray-600 mb-4 font-Opensans">
-                Enter your email ID to reset your password.
-              </p>
-              <form onSubmit={handleSubmit}>
-                <div className="mb-4">
-                  <label className="block text-gray-700 text-sm font-Opensans mb-2">
-                    Email ID
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={handleEmailChange}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-red-400"
-                    placeholder="Enter your email"
-                    required
-                  />
-                </div>
-                {error && (
-                  <div className="text-red-600 text-sm mb-4">
-                    <p>{error}</p>
-                  </div>
-                )}
-                {forgotPasswordError && (
-                  <div className="text-red-600 text-sm mb-4">
-                    <p>{forgotPasswordError}</p>
-                  </div>
-                )}
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-400 transition font-Raleway"
-                >
-                  {isLoading ? "Sending..." : "Send"}
-                </button>
-              </form>
-            </>
-          )}
-
-          <button
-            onClick={() => navigate("/login")}
-            className="w-full mt-4 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition font-Raleway"
-          >
-            Back to Login
-          </button>
-        </div>
+    <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-white">
+      {/* Background Image Layer */}
+      <div className="absolute inset-0 z-0 select-none pointer-events-none">
+        <img
+          className="w-full h-full object-cover"
+          src={img}
+          alt="Background"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white/90" />
+        <div className="absolute inset-0 opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-multiply" />
       </div>
-    </>
+
+      {/* Go Back Button */}
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+        onClick={() => navigate("/")}
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md border border-gray-200 rounded-xl text-gray-900 font-bold text-sm hover:bg-white hover:shadow-lg transition-all z-30"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Go Back
+      </motion.button>
+
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-20 flex flex-col lg:flex-row items-center justify-center gap-12 lg:gap-20">
+        {/* Left Side - Branding */}
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center lg:text-left lg:w-1/2"
+        >
+          <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
+            <img src={logo} alt="Outceedo" className="w-14 h-14" />
+            <span className="text-4xl font-black tracking-tighter text-gray-900">
+              OUTCEEDO
+            </span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-gray-900 uppercase italic mb-6">
+            FORGOT <span className="text-red-500">PASSWORD?</span>
+          </h1>
+          <p className="text-lg text-gray-600 font-medium leading-relaxed max-w-md mx-auto lg:mx-0">
+            No worries! Enter your email address and we'll send you a link to reset your password.
+          </p>
+        </motion.div>
+
+        {/* Right Side - Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="w-full max-w-md"
+        >
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-[2rem] shadow-2xl shadow-black/5 p-8 md:p-10">
+            {emailSent ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center"
+              >
+                <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-50 flex items-center justify-center">
+                  <CheckCircle className="w-10 h-10 text-green-500" />
+                </div>
+                <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight mb-4">
+                  Check Your Email
+                </h2>
+                <p className="text-gray-600 font-medium mb-8">
+                  A password reset link has been sent to your email. Please check your inbox.
+                </p>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="w-full h-14 bg-red-500 text-white font-bold text-lg rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98] transition-all"
+                >
+                  Back to Login
+                </button>
+              </motion.div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 mb-8">
+                  <div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-500/20">
+                    <KeyRound className="w-6 h-6" />
+                  </div>
+                  <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">
+                    Reset Password
+                  </h2>
+                </div>
+
+                <p className="text-gray-600 font-medium mb-6">
+                  Enter your email ID to reset your password.
+                </p>
+
+                {(error || forgotPasswordError) && (
+                  <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                    <p className="font-bold text-red-600">Error</p>
+                    <p className="text-sm text-red-500">{error || forgotPasswordError}</p>
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">
+                      Email ID
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={email}
+                        onChange={handleEmailChange}
+                        className="w-full px-4 py-3 pl-12 bg-gray-50 border border-gray-200 rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all"
+                        placeholder="Enter your email"
+                        required
+                      />
+                      <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    </div>
+                  </div>
+
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className={`w-full h-14 bg-red-500 text-white font-bold text-lg rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 transition-all ${
+                      isLoading
+                        ? "opacity-70 cursor-not-allowed"
+                        : "hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98]"
+                    }`}
+                  >
+                    {isLoading ? (
+                      <>
+                        <svg
+                          className="animate-spin h-5 w-5 text-white"
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            className="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            strokeWidth="4"
+                          />
+                          <path
+                            className="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          />
+                        </svg>
+                        Sending...
+                      </>
+                    ) : (
+                      "Send Reset Link"
+                    )}
+                  </button>
+                </form>
+
+                <div className="mt-8 pt-6 border-t border-gray-100 text-center">
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="text-gray-600 font-medium hover:text-gray-900 transition-colors"
+                  >
+                    <span className="flex items-center justify-center gap-2">
+                      <ArrowLeft className="w-4 h-4" />
+                      Back to Login
+                    </span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </div>
   );
 };
 

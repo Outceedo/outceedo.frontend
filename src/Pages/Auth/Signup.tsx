@@ -1,25 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import football from "../../assets/images/football.jpg";
+import { motion } from "motion/react";
 import * as countryCodes from "country-codes-list";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { registerUser } from "../../store/auth-slice";
 import { RootState } from "../../store/store";
 import Swal from "sweetalert2";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { ArrowLeft } from "lucide-react";
-import logo from "../../assets/images/outceedologo.png";
+import { Eye, EyeOff, ArrowLeft, UserPlus } from "lucide-react";
+import logo from "../../assets/images/logosmall.png";
+import img from "@/assets/images/Main.png";
 
-type Role = "expert" | "player" | "team" | "sponser" | "user";
+type Role = "expert" | "player" | "team" | "sponsor" | "user";
+
+const ROLE_OPTIONS: { value: Role; label: string }[] = [
+  { value: "player", label: "Player" },
+  { value: "expert", label: "Expert" },
+  { value: "team", label: "Team" },
+  { value: "sponsor", label: "Sponsor" },
+  { value: "user", label: "Fan" },
+];
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector(
-    (state: RootState) => state.auth,
+    (state: RootState) => state.auth
   );
 
-  const [, setRole] = useState<Role | null>(null);
+  const [role, setRole] = useState<Role | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [countryList, setCountryList] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
@@ -37,16 +45,13 @@ const Signup: React.FC = () => {
   const [usernameGenerated, setUsernameGenerated] = useState(false);
   const [check, setcheck] = useState("false");
 
-  // Password visibility state
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // Checkbox states
   const [ageVerify, setAgeVerify] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
 
   useEffect(() => {
-    // Debug for Redux state changes
     if (error) {
       try {
         if (typeof error === "string" && error.includes("{")) {
@@ -67,7 +72,7 @@ const Signup: React.FC = () => {
     try {
       const myCountryCodesObject = countryCodes.customList(
         "countryCode",
-        "+{countryCallingCode} ({countryNameEn})",
+        "+{countryCallingCode} ({countryNameEn})"
       );
       setCountryList(Object.values(myCountryCodesObject));
     } catch (err) {
@@ -83,20 +88,19 @@ const Signup: React.FC = () => {
     }
   }, []);
 
-  // Generate a username suggestion when first and last name change
   useEffect(() => {
     if (firstName && lastName && !usernameGenerated) {
       const generatedUsername =
         `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(
           /\s+/g,
-          "",
+          ""
         );
       setUsername(generatedUsername);
     }
   }, [firstName, lastName, usernameGenerated]);
 
   const filteredCountries = countryList.filter((country) =>
-    country.toLowerCase().includes(searchTerm.toLowerCase()),
+    country.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleSelect = (country: string) => {
@@ -116,15 +120,24 @@ const Signup: React.FC = () => {
     setUsernameGenerated(true);
   };
 
+  const handleRoleChange = (newRole: Role) => {
+    setRole(newRole);
+    localStorage.setItem("selectedRole", newRole);
+  };
+
+  const getRoleLabel = (roleValue: Role | null): string => {
+    const found = ROLE_OPTIONS.find((r) => r.value === roleValue);
+    return found ? found.label : "Select Role";
+  };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setFieldErrors({});
-    setFormError(null); // Clear any existing errors
+    setFormError(null);
 
-    const selectedRole = localStorage.getItem("selectedRole") as Role | null;
     if (
-      !selectedRole ||
-      !["expert", "player", "team", "sponsor", "user"].includes(selectedRole)
+      !role ||
+      !["expert", "player", "team", "sponsor", "user"].includes(role)
     ) {
       setFieldErrors((prev) => ({
         ...prev,
@@ -164,7 +177,7 @@ const Signup: React.FC = () => {
     }
 
     const requestData = {
-      role: selectedRole,
+      role: role,
       email,
       password,
       mobileNumber: `${countryCode} ${mobileNumber}`,
@@ -250,383 +263,323 @@ const Signup: React.FC = () => {
   ]);
 
   return (
-    <div className="relative w-full min-h-screen flex flex-col lg:flex-row items-center justify-center px-6 lg:px-20">
-      {/* Background Image */}
-      <div
-        className="absolute inset-0 bg-cover bg-center"
-        style={{ backgroundImage: `url(${football})` }}
-      ></div>
-      {/* Overlay for better text visibility */}
-      <div className="absolute inset-0 bg-black opacity-40"></div>
-      <div className="absolute inset-0 bg-black opacity-20"></div>
-      {/* Left Side - Welcome Text */}
-      <button
-        onClick={() => navigate("/")}
-        className="absolute top-6 left-6 flex items-center gap-2 px-3 py-2 bg-transparent bg-opacity-80 rounded hover:bg-opacity-100 hover:text-red-500 font-medium text-white shadow transition z-30 mb-12"
-      >
-        <ArrowLeft className="w-5 h-5" />
-        Go Back
-      </button>
-      <div className="relative text-center lg:text-left text-white z-10 lg:w-1/2 px-6 lg:px-0 md:mb-8 mt-12 md:mt-2  ">
-        <h2 className="text-2xl sm:text-3xl lg:text-5xl font-Raleway mb-4">
-          {/* Welcome To <span className="text-red-500 font-bold">Outceedo</span> */}
-          <img src={logo} alt="logo" className="w-96" />
-        </h2>
-        <p className="text-sm sm:text-base lg:text-lg max-w-xs sm:max-w-md lg:max-w-none mx-auto lg:mx-0 font-Opensans hidden md:block">
-          An online platform where football players connect with experts to get
-          their sports skills and performances assessed.
-        </p>
+    <div className="relative w-full min-h-screen flex items-center justify-center overflow-hidden bg-white">
+      {/* Background Image Layer */}
+      <div className="absolute inset-0 z-0 select-none pointer-events-none">
+        <img
+          className="w-full h-full object-cover"
+          src={img}
+          alt="Background"
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/70 to-white/90" />
+        <div className="absolute inset-0 opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-multiply" />
       </div>
-      {/* Right Side - Signup Form */}
-      <div className="relative bg-slate-100 p-6 sm:p-8 rounded-lg shadow-2xl z-10 w-full max-w-lg mx-auto lg:w-[500px] mt-16 sm:mt-8 lg:mt-0">
-        <h2 className="text-3xl font-bold text-black mb-6">Sign Up</h2>
 
-        {/* Error Message */}
-        {formError && (
-          <div className="mb-4 p-2 bg-red-100 text-red-800 rounded border border-red-300">
-            <p className="font-medium">Error</p>
-            <p className="text-sm">{formError}</p>
-          </div>
-        )}
+      {/* Go Back Button */}
+      <motion.button
+        initial={{ opacity: 0, x: -20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5 }}
+        onClick={() => navigate("/")}
+        className="absolute top-6 left-6 flex items-center gap-2 px-4 py-2 bg-white/80 backdrop-blur-md border border-gray-200 rounded-xl text-gray-900 font-bold text-sm hover:bg-white hover:shadow-lg transition-all z-30"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Go Back
+      </motion.button>
 
-        <form onSubmit={handleSignup} className="space-y-3 md:space-y-4">
-          <div className="flex space-x-4">
-            <div className="w-1/2">
-              <label
-                className={`block text-sm font-medium ${
-                  fieldErrors.firstName ? "text-red-500" : "text-gray-700"
-                }`}
-              >
-                First Name <span className="text-red-500 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="First Name"
-                value={firstName}
-                onChange={(e) => setFirstName(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                  fieldErrors.firstName
-                    ? "border-red-500 ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-              />
-              {fieldErrors.firstName && (
-                <p className="text-red-500 text-sm">{fieldErrors.firstName}</p>
-              )}
-            </div>
-
-            <div className="w-1/2">
-              <label
-                className={`block text-sm font-medium ${
-                  fieldErrors.lastName ? "text-red-500" : "text-gray-700"
-                }`}
-              >
-                Last Name <span className="text-red-500 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Last Name"
-                value={lastName}
-                onChange={(e) => setLastName(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                  fieldErrors.lastName
-                    ? "border-red-500 ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-              />
-              {fieldErrors.lastName && (
-                <p className="text-red-500 text-sm">{fieldErrors.lastName}</p>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <label
-              className={`block text-sm font-medium ${
-                fieldErrors.username ? "text-red-500" : "text-gray-700"
-              }`}
-            >
-              Username <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input
-              type="text"
-              placeholder="Choose a username"
-              value={username}
-              onChange={handleUsernameChange}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                fieldErrors.username
-                  ? "border-red-500 ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
-              }`}
-            />
-            {fieldErrors.username && (
-              <p className="text-red-500 text-sm">{fieldErrors.username}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-1">
-              Only letters, numbers, and underscores allowed. No spaces.
-            </p>
-          </div>
-
-          <div>
-            <label
-              className={`block text-sm font-medium ${
-                fieldErrors.email ? "text-red-500" : "text-gray-700"
-              }`}
-            >
-              Email ID <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                fieldErrors.email
-                  ? "border-red-500 ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
-              }`}
-            />
-            {fieldErrors.email && (
-              <p className="text-red-500 text-sm">{fieldErrors.email}</p>
-            )}
-          </div>
-
-          {/* Password field with eye icon */}
-          <div className="relative">
-            <label
-              className={`block text-sm font-medium ${
-                fieldErrors.password ? "text-red-500" : "text-gray-700"
-              }`}
-            >
-              New Password <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                fieldErrors.password
-                  ? "border-red-500 ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
-              } pr-10`}
-            />
-            <span
-              className="absolute right-3 top-10 transform -translate-y-1/2 cursor-pointer text-xl text-gray-500"
-              onClick={() => setShowPassword((prev) => !prev)}
-              tabIndex={0}
-              role="button"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? <FaEyeSlash /> : <FaEye />}
+      {/* Main Content */}
+      <div className="relative z-10 w-full max-w-6xl mx-auto px-6 py-20 flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
+        {/* Left Side - Branding */}
+        <motion.div
+          initial={{ opacity: 0, x: -30 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ duration: 0.8 }}
+          className="text-center lg:text-left lg:w-1/2 hidden lg:block"
+        >
+          <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
+            <img src={logo} alt="Outceedo" className="w-14 h-14" />
+            <span className="text-4xl font-black tracking-tighter text-gray-900">
+              OUTCEEDO
             </span>
-            {fieldErrors.password && (
-              <p className="text-red-500 text-sm">{fieldErrors.password}</p>
-            )}
           </div>
-
-          {/* Confirm password field with eye icon */}
-          <div className="relative">
-            <label
-              className={`block text-sm font-medium ${
-                fieldErrors.confirmPassword ? "text-red-500" : "text-gray-700"
-              }`}
-            >
-              Confirm Password <span className="text-red-500 ml-1">*</span>
-            </label>
-            <input
-              type={showConfirmPassword ? "text" : "password"}
-              placeholder="Enter your password again"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                fieldErrors.confirmPassword
-                  ? "border-red-500 ring-red-500"
-                  : "border-gray-300 focus:ring-blue-500"
-              } pr-10`}
-            />
-            <span
-              className="absolute right-3 top-10 transform -translate-y-1/2 cursor-pointer text-xl text-gray-500"
-              onClick={() => setShowConfirmPassword((prev) => !prev)}
-              tabIndex={0}
-              role="button"
-              aria-label={
-                showConfirmPassword ? "Hide password" : "Show password"
-              }
-            >
-              {showConfirmPassword ? <FaEyeSlash /> : <FaEye />}
-            </span>
-            {fieldErrors.confirmPassword && (
-              <p className="text-red-500 text-sm">
-                {fieldErrors.confirmPassword}
-              </p>
-            )}
-          </div>
-
-          <div className="flex space-x-4">
-            <div className="w-1/2 relative">
-              <label
-                className={`block text-sm font-medium ${
-                  fieldErrors.countryCode ? "text-red-500" : "text-gray-700"
-                }`}
-              >
-                Country Code <span className="text-red-500 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Search country code"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                onFocus={() => setShowDropdown(true)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                  fieldErrors.countryCode
-                    ? "border-red-500 ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-              />
-              {showDropdown && filteredCountries.length > 0 && (
-                <ul className="absolute w-full bg-white border rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
-                  {filteredCountries.map((country, index) => (
-                    <li
-                      key={index}
-                      onClick={() => handleSelect(country)}
-                      className="px-4 py-2 cursor-pointer hover:bg-gray-200"
-                    >
-                      {country}
-                    </li>
-                  ))}
-                </ul>
-              )}
-              {fieldErrors.countryCode && (
-                <p className="text-red-500 text-sm">
-                  {fieldErrors.countryCode}
-                </p>
-              )}
-            </div>
-
-            <div className="w-2/3">
-              <label
-                className={`block text-sm font-medium ${
-                  fieldErrors.mobileNumber ? "text-red-500" : "text-gray-700"
-                }`}
-              >
-                Mobile Number <span className="text-red-500 ml-1">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Mobile Number"
-                value={mobileNumber}
-                onChange={(e) => setMobileNumber(e.target.value)}
-                className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-1 ${
-                  fieldErrors.mobileNumber
-                    ? "border-red-500 ring-red-500"
-                    : "border-gray-300 focus:ring-blue-500"
-                }`}
-              />
-              {fieldErrors.mobileNumber && (
-                <p className="text-red-500 text-sm">
-                  {fieldErrors.mobileNumber}
-                </p>
-              )}
-            </div>
-          </div>
-          {/* Age Verification Checkbox */}
-          <div className="mb-2">
-            <label className="flex items-start">
-              <input
-                type="checkbox"
-                className="mr-2 mt-1"
-                checked={ageVerify}
-                onChange={(e) => setAgeVerify(e.target.checked)}
-              />
-              <span
-                className={`text-sm ${fieldErrors.ageVerify ? "text-red-500" : "text-gray-700"}`}
-              >
-                I am 18 years old or older.{" "}
-                <span className="text-red-500">*</span>
-                <br />
-                <span className="text-xs text-gray-500">
-                  (Under 18 years: Parent/Legal Guardian must Sign up, Access
-                  and Maintain the user account)
-                </span>
-              </span>
-            </label>
-            {fieldErrors.ageVerify && (
-              <p className="text-red-500 text-sm ml-5">
-                {fieldErrors.ageVerify}
-              </p>
-            )}
-          </div>
-
-          {/* Terms and Conditions Checkbox */}
-          <div className="mb-4">
-            <label className="flex items-start">
-              <input
-                type="checkbox"
-                className="mr-2 mt-1"
-                checked={termsAccepted}
-                onChange={(e) => setTermsAccepted(e.target.checked)}
-              />
-              <span
-                className={`text-sm ${fieldErrors.termsAccepted ? "text-red-500" : "text-gray-700"}`}
-              >
-                I have read, understand and agree to Outceedo{" "}
-                <a
-                  href="/terms"
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Terms and Conditions
-                </a>
-                , ,{" "}
-                <a
-                  href="/privacy"
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Privacy Policy
-                </a>{" "}
-                and{" "}
-                <a
-                  href="/privacy"
-                  className="text-blue-600 underline"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Cookie Use
-                </a>
-                . <span className="text-red-500">*</span>
-              </span>
-            </label>
-            {fieldErrors.termsAccepted && (
-              <p className="text-red-500 text-sm ml-5">
-                {fieldErrors.termsAccepted}
-              </p>
-            )}
-          </div>
-          <div className="flex justify-center">
-            <button
-              type="submit"
-              className="w-4/5 bg-[#FE221E] text-white py-2 rounded-lg hover:bg-[#C91C1A] transition duration-300"
-              disabled={isLoading}
-            >
-              {isLoading ? "Signing Up..." : "Sign Up"}
-            </button>
-          </div>
-
-          <p className="text-gray-600">
-            Already Registered?{" "}
-            <button
-              onClick={() => navigate("/login")}
-              className="text-[#FA6357] hover:underline cursor-pointer"
-              type="button"
-            >
-              Login
-            </button>
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tighter text-gray-900 uppercase italic mb-6">
+            JOIN THE <span className="text-red-500">ELITE.</span>
+          </h1>
+          <p className="text-lg text-gray-600 font-medium leading-relaxed max-w-md mx-auto lg:mx-0">
+            An online platform where football players connect with experts to get
+            their sports skills and performances assessed.
           </p>
-        </form>
+        </motion.div>
+
+        {/* Right Side - Signup Form */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+          className="w-full max-w-lg mt-12 lg:mt-0"
+        >
+          <div className="bg-white/80 backdrop-blur-xl border border-gray-200 rounded-[2rem] shadow-2xl shadow-black/5 p-6 md:p-8">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="h-12 w-12 rounded-xl bg-red-500 flex items-center justify-center text-white shadow-lg shadow-red-500/20">
+                <UserPlus className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">
+                Sign Up
+              </h2>
+            </div>
+
+            {/* Role Selector */}
+            <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
+              <p className="text-sm font-medium text-gray-600 mb-3">
+                Signing up as <span className="font-bold text-gray-900">{getRoleLabel(role)}</span>
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {ROLE_OPTIONS.map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => handleRoleChange(option.value)}
+                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                      role === option.value
+                        ? "bg-red-500 text-white shadow-lg shadow-red-500/20"
+                        : "bg-white border border-gray-200 text-gray-700 hover:border-red-300 hover:text-red-500"
+                    }`}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+              </div>
+              {fieldErrors.role && <p className="text-red-500 text-xs mt-2">{fieldErrors.role}</p>}
+            </div>
+
+            {formError && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl">
+                <p className="font-bold text-red-600">Error</p>
+                <p className="text-sm text-red-500">{formError}</p>
+              </div>
+            )}
+
+            <form onSubmit={handleSignup} className="space-y-4">
+              {/* Name Row */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.firstName ? "text-red-500" : "text-gray-700"}`}>
+                    First Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="First Name"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.firstName ? "border-red-500" : "border-gray-200"}`}
+                  />
+                  {fieldErrors.firstName && <p className="text-red-500 text-xs mt-1">{fieldErrors.firstName}</p>}
+                </div>
+                <div>
+                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.lastName ? "text-red-500" : "text-gray-700"}`}>
+                    Last Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.lastName ? "border-red-500" : "border-gray-200"}`}
+                  />
+                  {fieldErrors.lastName && <p className="text-red-500 text-xs mt-1">{fieldErrors.lastName}</p>}
+                </div>
+              </div>
+
+              {/* Username */}
+              <div>
+                <label className={`block text-sm font-bold mb-2 ${fieldErrors.username ? "text-red-500" : "text-gray-700"}`}>
+                  Username <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Choose a username"
+                  value={username}
+                  onChange={handleUsernameChange}
+                  className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.username ? "border-red-500" : "border-gray-200"}`}
+                />
+                {fieldErrors.username && <p className="text-red-500 text-xs mt-1">{fieldErrors.username}</p>}
+                <p className="text-xs text-gray-500 mt-1">Only letters, numbers, and underscores allowed.</p>
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className={`block text-sm font-bold mb-2 ${fieldErrors.email ? "text-red-500" : "text-gray-700"}`}>
+                  Email ID <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.email ? "border-red-500" : "border-gray-200"}`}
+                />
+                {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
+              </div>
+
+              {/* Password */}
+              <div>
+                <label className={`block text-sm font-bold mb-2 ${fieldErrors.password ? "text-red-500" : "text-gray-700"}`}>
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all pr-12 ${fieldErrors.password ? "border-red-500" : "border-gray-200"}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                {fieldErrors.password && <p className="text-red-500 text-xs mt-1">{fieldErrors.password}</p>}
+              </div>
+
+              {/* Confirm Password */}
+              <div>
+                <label className={`block text-sm font-bold mb-2 ${fieldErrors.confirmPassword ? "text-red-500" : "text-gray-700"}`}>
+                  Confirm Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    placeholder="Confirm your password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all pr-12 ${fieldErrors.confirmPassword ? "border-red-500" : "border-gray-200"}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{fieldErrors.confirmPassword}</p>}
+              </div>
+
+              {/* Phone */}
+              <div className="grid grid-cols-5 gap-3">
+                <div className="col-span-2 relative">
+                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.countryCode ? "text-red-500" : "text-gray-700"}`}>
+                    Country <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onFocus={() => setShowDropdown(true)}
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.countryCode ? "border-red-500" : "border-gray-200"}`}
+                  />
+                  {showDropdown && filteredCountries.length > 0 && (
+                    <ul className="absolute w-full bg-white border border-gray-200 rounded-xl shadow-lg mt-1 max-h-40 overflow-y-auto z-20">
+                      {filteredCountries.map((country, index) => (
+                        <li
+                          key={index}
+                          onClick={() => handleSelect(country)}
+                          className="px-4 py-2 cursor-pointer hover:bg-gray-50 text-sm font-medium"
+                        >
+                          {country}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="col-span-3">
+                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.mobileNumber ? "text-red-500" : "text-gray-700"}`}>
+                    Mobile <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Mobile Number"
+                    value={mobileNumber}
+                    onChange={(e) => setMobileNumber(e.target.value)}
+                    className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.mobileNumber ? "border-red-500" : "border-gray-200"}`}
+                  />
+                </div>
+              </div>
+
+              {/* Checkboxes */}
+              <div className="space-y-3 pt-2">
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={ageVerify}
+                    onChange={(e) => setAgeVerify(e.target.checked)}
+                    className="w-5 h-5 rounded border-gray-300 text-red-500 focus:ring-red-500 mt-0.5"
+                  />
+                  <span className={`text-sm font-medium ${fieldErrors.ageVerify ? "text-red-500" : "text-gray-700"}`}>
+                    I am 18 years old or older. <span className="text-red-500">*</span>
+                    <span className="block text-xs text-gray-500 mt-1">
+                      (Under 18 years: Parent/Legal Guardian must Sign up)
+                    </span>
+                  </span>
+                </label>
+
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={termsAccepted}
+                    onChange={(e) => setTermsAccepted(e.target.checked)}
+                    className="w-5 h-5 rounded border-gray-300 text-red-500 focus:ring-red-500 mt-0.5"
+                  />
+                  <span className={`text-sm font-medium ${fieldErrors.termsAccepted ? "text-red-500" : "text-gray-700"}`}>
+                    I agree to Outceedo{" "}
+                    <a href="/terms" className="text-red-500 hover:underline" target="_blank" rel="noopener noreferrer">
+                      Terms and Conditions
+                    </a>
+                    ,{" "}
+                    <a href="/privacy" className="text-red-500 hover:underline" target="_blank" rel="noopener noreferrer">
+                      Privacy Policy
+                    </a>{" "}
+                    and{" "}
+                    <a href="/privacy" className="text-red-500 hover:underline" target="_blank" rel="noopener noreferrer">
+                      Cookie Use
+                    </a>
+                    . <span className="text-red-500">*</span>
+                  </span>
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`w-full h-14 bg-red-500 text-white font-bold text-lg rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-red-500/20 transition-all ${
+                  isLoading
+                    ? "opacity-70 cursor-not-allowed"
+                    : "hover:bg-red-600 hover:scale-[1.02] active:scale-[0.98]"
+                }`}
+              >
+                {isLoading ? "Signing Up..." : "Sign Up"}
+              </button>
+            </form>
+
+            <div className="mt-6 pt-4 border-t border-gray-100 text-center">
+              <p className="text-gray-600 font-medium">
+                Already Registered?{" "}
+                <button
+                  onClick={() => navigate("/login")}
+                  className="text-red-500 font-bold hover:text-red-600 transition-colors"
+                  type="button"
+                >
+                  Login
+                </button>
+              </p>
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   );
