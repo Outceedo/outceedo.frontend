@@ -47,11 +47,6 @@ const planComparisonData = [
     pro: "Unlimited Access",
   },
   {
-    label: "Video Conference Recordings",
-    free: "Limited Access (7 days)",
-    pro: "Unlimited Access",
-  },
-  {
     label: "Experts Search",
     free: "Limited (Local)",
     pro: "Unlimited (Worldwide)",
@@ -61,6 +56,11 @@ const planComparisonData = [
     label: "Bookings (Expert Services)",
     free: "Recorded Video Assessment Only",
     pro: "All Available Services",
+  },
+  {
+    label: "Video Conference Recordings",
+    free: "Limited Access (7 days)",
+    pro: "Unlimited Access",
   },
   { label: "Building Fans/Followers", free: false, pro: true },
   {
@@ -207,7 +207,7 @@ export default function PricingPlans() {
               className="mb-4 inline-flex items-center gap-2 text-red-500 font-black tracking-[0.3em] uppercase text-xs"
             >
               <span className="h-[2px] w-8 bg-red-500"></span>
-              Subscription Plans
+              Player Subscriptions
               <span className="h-[2px] w-8 bg-red-500"></span>
             </motion.div>
             <motion.h1
@@ -216,7 +216,7 @@ export default function PricingPlans() {
               transition={{ delay: 0.1 }}
               className="text-5xl font-black tracking-tighter text-gray-900 sm:text-7xl uppercase italic"
             >
-              CHOOSE YOUR <span className="text-red-500">LEVEL.</span>
+              CHOOSE YOUR <span className="text-red-500">LEVEL</span>
             </motion.h1>
             <motion.p
               initial={{ opacity: 0, y: 20 }}

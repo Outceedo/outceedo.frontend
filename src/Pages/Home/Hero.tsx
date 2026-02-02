@@ -1,6 +1,16 @@
 import { useState } from "react";
 import { motion } from "motion/react";
-import { Play, Pause, Star, Users, Trophy, X, File } from "lucide-react";
+import {
+  Play,
+  Pause,
+  Star,
+  Users,
+  Trophy,
+  X,
+  File,
+  Fan,
+  UserSearchIcon,
+} from "lucide-react";
 import img from "@/assets/images/Main.png";
 import logo from "@/assets/images/logosmall.png";
 import User from "./user";
@@ -24,7 +34,7 @@ const FloatingExpertCard = ({
     initial={{ opacity: 0, y: 30, scale: 0.9 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
     transition={{ delay, duration: 0.8, ease: "easeOut" }}
-    className="hidden lg:flex absolute z-30 bg-white/80 backdrop-blur-xl border border-slate-200 p-5 rounded-2xl shadow-xl items-center gap-4 group hover:bg-white transition-colors cursor-pointer"
+    className="hidden lg:flex absolute z-30 bg-white/80 backdrop-blur-xl border border-slate-200 p-3 rounded-2xl shadow-xl items-center gap-4 group hover:bg-white transition-colors cursor-pointer"
     style={{
       boxShadow: `0 20px 40px -10px rgba(0,0,0,0.1)`,
     }}
@@ -83,11 +93,21 @@ export default function Hero() {
             />
           </div>
 
+          <div className="hidden lg:block absolute bottom-[45%] -left-[10%]">
+            <FloatingExpertCard
+              delay={1.5}
+              icon={UserSearchIcon}
+              title="Worldwide Followers"
+              // sub="4.9/5 Average Score"
+              color="bg-orange-500"
+            />
+          </div>
+
           <div className="hidden lg:block absolute bottom-[20%] left-[8%]">
             <FloatingExpertCard
               delay={1.5}
               icon={Star}
-              title="Big Sponsers"
+              title="Worldwide Sponsers"
               // sub="4.9/5 Average Score"
               color="bg-orange-500"
             />
@@ -105,7 +125,7 @@ export default function Hero() {
             <FloatingExpertCard
               delay={1.8}
               icon={File}
-              title="Assessment Reports"
+              title="Player Performance Assessment"
               color="bg-red-500"
             />
           </div>
@@ -120,7 +140,6 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, ease: "easeOut" }}
           >
-            {/* Tagline */}
             <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-4 py-1.5 text-xs font-bold tracking-widest text-slate-800 backdrop-blur-md uppercase shadow-sm">
               <span className="relative flex h-6 w-6">
                 <span>

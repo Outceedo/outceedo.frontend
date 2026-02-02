@@ -260,7 +260,7 @@ export default function HowItWorks() {
           <button
             className="flex items-center gap-3 text-red-500 font-black uppercase tracking-widest text-sm hover:gap-6 transition-all group"
             onClick={() => {
-              nav("/login");
+              nav("/signup");
             }}
           >
             Start your journey now{" "}

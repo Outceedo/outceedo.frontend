@@ -72,7 +72,7 @@ const User: React.FC = () => {
         <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-gray-900 uppercase">
           Sign Up to <span className="text-red-500">Outceedo</span>
         </h2>
-        <p className="mt-2 text-gray-500 font-medium text-sm">
+        <p className="mt-2 text-gray-700 font-medium text-md">
           Select your profile type to get started
         </p>
       </div>
@@ -120,7 +120,7 @@ const User: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-        <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">
+        <p className="text-[14px] text-gray-600 font-bold uppercase tracking-widest">
           Already have an account?{" "}
           <button
             onClick={() => navigate("/login")}
@@ -131,7 +131,7 @@ const User: React.FC = () => {
         </p>
       </div>
     </motion.div>
-  );
+    );
 };
 
 export default User;

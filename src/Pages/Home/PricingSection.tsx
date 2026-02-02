@@ -8,9 +8,9 @@ const features = {
     { text: "Limited Use", included: true },
     { text: "2 Photos & 2 Videos Storage", included: true },
     { text: "Reports Access (7 Days)", included: true },
-    { text: "Video Conference Recordings (7 Days)", included: true },
     { text: "Local Experts Search", included: true },
     { text: "Recorded Video Assessment Bookings", included: true },
+    { text: "Video Conference Recordings (7 Days)", included: true },
     { text: "Reports Download & Share", included: false },
     { text: "Building Fans/Followers", included: false },
     { text: "Promotions & Sponsorship Applications", included: false },
@@ -20,9 +20,9 @@ const features = {
     { text: "Unlimited Use", included: true },
     { text: "10 Photos & 5 Videos Storage", included: true },
     { text: "Unlimited Reports Access", included: true },
-    { text: "Unlimited Video Conference Recordings", included: true },
     { text: "Worldwide Experts Search", included: true },
     { text: "All Expert Services & Bookings", included: true },
+    { text: "Unlimited Video Conference Recordings", included: true },
     { text: "Reports Download & Share", included: true },
     { text: "Building Fans/Followers", included: true },
     { text: "Promotions & Sponsorship Applications", included: true },
@@ -51,7 +51,7 @@ export default function PricingSection() {
             className="mb-4 inline-flex items-center gap-2 text-red-500 font-black tracking-[0.3em] uppercase text-xs"
           >
             <span className="h-[2px] w-8 bg-red-500"></span>
-            Subscription Plans
+            SPlayer Subscriptions
             <span className="h-[2px] w-8 bg-red-500"></span>
           </motion.div>
           <h2 className="text-5xl font-black tracking-tighter text-gray-900 sm:text-7xl uppercase italic">
@@ -236,7 +236,7 @@ export default function PricingSection() {
         </div>
 
         {/* FAQ Shortcut */}
-        <div className="mt-24 text-center">
+        {/* <div className="mt-24 text-center">
           <p className="text-gray-400 text-xs font-black uppercase tracking-[0.2em]">
             Have more specific needs?
           </p>
@@ -246,7 +246,7 @@ export default function PricingSection() {
           >
             Contact Enterprise Scouting
           </button>
-        </div>
+        </div> */}
       </div>
     </section>
   );
