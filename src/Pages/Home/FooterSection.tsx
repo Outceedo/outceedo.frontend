@@ -47,7 +47,7 @@ export default function FooterSection() {
                 <a
                   key={i}
                   href={social.url}
-                  className="h-10 w-10 rounded-xl bg-gray-50 flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white transition-all duration-300"
+                  className="h-14 w-14 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-300"
                 >
                   <social.icon size={18} />
                 </a>
@@ -57,7 +57,7 @@ export default function FooterSection() {
 
           {/* Links Grid */}
           <div className="md:col-span-4">
-            <h3 className="mb-6 text-xs font-black uppercase tracking-[0.2em] text-red-500">
+            <h3 className="mb-6 text-sm font-black uppercase tracking-[0.2em] text-red-500">
               Platform
             </h3>
             <ul className="space-y-4">
@@ -65,7 +65,7 @@ export default function FooterSection() {
                 <li key={link.label}>
                   <button
                     onClick={() => navigate(link.path)}
-                    className="text-sm font-bold text-gray-600 hover:text-black transition-colors flex items-center gap-1 group"
+                    className="text-md font-bold text-gray-600 hover:text-black transition-colors flex items-center gap-1 group"
                   >
                     {link.label}{" "}
                     <ArrowUpRight
@@ -109,8 +109,8 @@ export default function FooterSection() {
                   href="mailto:info@outceedo.com"
                 >
                   <Mail size={16} className="text-red-500" />
-                  <span className="font-mono text-xs tracking-tight">
-                    INFO@OUTCEEDO.COM
+                  <span className="font-mono text-md tracking-tight">
+                    info@outceedo.com
                   </span>
                 </a>
                 <a
@@ -118,7 +118,7 @@ export default function FooterSection() {
                   href="tel:+447707201236"
                 >
                   <Phone size={16} className="text-red-500" />
-                  <span className="font-mono text-xs tracking-tight">
+                  <span className="font-mono text-md tracking-tight">
                     +44 7707 201236
                   </span>
                 </a>
@@ -129,19 +129,19 @@ export default function FooterSection() {
 
         {/* Bottom Bar */}
         <div className="mt-24 pt-12 border-t border-gray-100 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-[10px] font-black uppercase tracking-widest text-gray-300">
-            © 2025 OUTCEEDO LIMITED. ALL RIGHTS RESERVED.
+          <p className="text-[14px] font-black uppercase tracking-widest text-gray-600">
+            © 2026 OUTCEEDO LIMITED. ALL RIGHTS RESERVED.
           </p>
           <div className="flex gap-8">
             <button
               onClick={() => navigate("/privacy")}
-              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500"
+              className="text-[12px] font-black uppercase tracking-widest text-gray-600 hover:text-red-500"
             >
               Privacy Policy
             </button>
             <button
               onClick={() => navigate("/terms")}
-              className="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-red-500"
+              className="text-[12px] font-black uppercase tracking-widest text-gray-600 hover:text-red-500"
             >
               Terms of Service
             </button>

@@ -105,7 +105,7 @@ export default function Navbar() {
             <button
               key={item.label}
               onClick={() => handleNavClick(item)}
-              className={`text-sm font-bold transition-colors ${
+              className={`text-md font-bold transition-colors ${
                 activeNav === item.label
                   ? "text-red-500"
                   : "text-slate-600 hover:text-red-500"

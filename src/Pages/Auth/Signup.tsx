@@ -24,7 +24,7 @@ const Signup: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
 
   const [role, setRole] = useState<Role | null>();
@@ -72,7 +72,7 @@ const Signup: React.FC = () => {
     try {
       const myCountryCodesObject = countryCodes.customList(
         "countryCode",
-        "+{countryCallingCode} ({countryNameEn})"
+        "+{countryCallingCode} ({countryNameEn})",
       );
       setCountryList(Object.values(myCountryCodesObject));
     } catch (err) {
@@ -93,14 +93,14 @@ const Signup: React.FC = () => {
       const generatedUsername =
         `${firstName.toLowerCase()}_${lastName.toLowerCase()}`.replace(
           /\s+/g,
-          ""
+          "",
         );
       setUsername(generatedUsername);
     }
   }, [firstName, lastName, usernameGenerated]);
 
   const filteredCountries = countryList.filter((country) =>
-    country.toLowerCase().includes(searchTerm.toLowerCase())
+    country.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   const handleSelect = (country: string) => {
@@ -294,7 +294,7 @@ const Signup: React.FC = () => {
           initial={{ opacity: 0, x: -30 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.8 }}
-          className="text-center lg:text-left lg:w-1/2 hidden lg:block"
+          className="text-center lg:text-left lg:w-1/2 hidden lg:block mb-120"
         >
           <div className="flex items-center justify-center lg:justify-start gap-3 mb-6">
             <img src={logo} alt="Outceedo" className="w-14 h-14" />
@@ -306,8 +306,8 @@ const Signup: React.FC = () => {
             JOIN THE <span className="text-red-500">ELITE.</span>
           </h1>
           <p className="text-lg text-gray-600 font-medium leading-relaxed max-w-md mx-auto lg:mx-0">
-            An online platform where football players connect with experts to get
-            their sports skills and performances assessed.
+            An online platform where football players connect with experts to
+            get their sports skills and performances assessed.
           </p>
         </motion.div>
 
@@ -331,7 +331,10 @@ const Signup: React.FC = () => {
             {/* Role Selector */}
             <div className="mb-6 p-4 bg-gray-50 border border-gray-200 rounded-xl">
               <p className="text-sm font-medium text-gray-600 mb-3">
-                Signing up as <span className="font-bold text-gray-900">{getRoleLabel(role)}</span>
+                Signing up as{" "}
+                <span className="font-bold text-gray-900">
+                  {getRoleLabel(role)}
+                </span>
               </p>
               <div className="flex flex-wrap gap-2">
                 {ROLE_OPTIONS.map((option) => (
@@ -349,7 +352,9 @@ const Signup: React.FC = () => {
                   </button>
                 ))}
               </div>
-              {fieldErrors.role && <p className="text-red-500 text-xs mt-2">{fieldErrors.role}</p>}
+              {fieldErrors.role && (
+                <p className="text-red-500 text-xs mt-2">{fieldErrors.role}</p>
+              )}
             </div>
 
             {formError && (
@@ -363,7 +368,9 @@ const Signup: React.FC = () => {
               {/* Name Row */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.firstName ? "text-red-500" : "text-gray-700"}`}>
+                  <label
+                    className={`block text-sm font-bold mb-2 ${fieldErrors.firstName ? "text-red-500" : "text-gray-700"}`}
+                  >
                     First Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -373,10 +380,16 @@ const Signup: React.FC = () => {
                     onChange={(e) => setFirstName(e.target.value)}
                     className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.firstName ? "border-red-500" : "border-gray-200"}`}
                   />
-                  {fieldErrors.firstName && <p className="text-red-500 text-xs mt-1">{fieldErrors.firstName}</p>}
+                  {fieldErrors.firstName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {fieldErrors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div>
-                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.lastName ? "text-red-500" : "text-gray-700"}`}>
+                  <label
+                    className={`block text-sm font-bold mb-2 ${fieldErrors.lastName ? "text-red-500" : "text-gray-700"}`}
+                  >
                     Last Name <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -386,13 +399,19 @@ const Signup: React.FC = () => {
                     onChange={(e) => setLastName(e.target.value)}
                     className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.lastName ? "border-red-500" : "border-gray-200"}`}
                   />
-                  {fieldErrors.lastName && <p className="text-red-500 text-xs mt-1">{fieldErrors.lastName}</p>}
+                  {fieldErrors.lastName && (
+                    <p className="text-red-500 text-xs mt-1">
+                      {fieldErrors.lastName}
+                    </p>
+                  )}
                 </div>
               </div>
 
               {/* Username */}
               <div>
-                <label className={`block text-sm font-bold mb-2 ${fieldErrors.username ? "text-red-500" : "text-gray-700"}`}>
+                <label
+                  className={`block text-sm font-bold mb-2 ${fieldErrors.username ? "text-red-500" : "text-gray-700"}`}
+                >
                   Username <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -402,13 +421,21 @@ const Signup: React.FC = () => {
                   onChange={handleUsernameChange}
                   className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.username ? "border-red-500" : "border-gray-200"}`}
                 />
-                {fieldErrors.username && <p className="text-red-500 text-xs mt-1">{fieldErrors.username}</p>}
-                <p className="text-xs text-gray-500 mt-1">Only letters, numbers, and underscores allowed.</p>
+                {fieldErrors.username && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {fieldErrors.username}
+                  </p>
+                )}
+                <p className="text-xs text-gray-500 mt-1">
+                  Only letters, numbers, and underscores allowed.
+                </p>
               </div>
 
               {/* Email */}
               <div>
-                <label className={`block text-sm font-bold mb-2 ${fieldErrors.email ? "text-red-500" : "text-gray-700"}`}>
+                <label
+                  className={`block text-sm font-bold mb-2 ${fieldErrors.email ? "text-red-500" : "text-gray-700"}`}
+                >
                   Email ID <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -418,12 +445,18 @@ const Signup: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   className={`w-full px-4 py-3 bg-gray-50 border rounded-xl text-gray-900 font-medium placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all ${fieldErrors.email ? "border-red-500" : "border-gray-200"}`}
                 />
-                {fieldErrors.email && <p className="text-red-500 text-xs mt-1">{fieldErrors.email}</p>}
+                {fieldErrors.email && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {fieldErrors.email}
+                  </p>
+                )}
               </div>
 
               {/* Password */}
               <div>
-                <label className={`block text-sm font-bold mb-2 ${fieldErrors.password ? "text-red-500" : "text-gray-700"}`}>
+                <label
+                  className={`block text-sm font-bold mb-2 ${fieldErrors.password ? "text-red-500" : "text-gray-700"}`}
+                >
                   Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -442,12 +475,18 @@ const Signup: React.FC = () => {
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                   </button>
                 </div>
-                {fieldErrors.password && <p className="text-red-500 text-xs mt-1">{fieldErrors.password}</p>}
+                {fieldErrors.password && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {fieldErrors.password}
+                  </p>
+                )}
               </div>
 
               {/* Confirm Password */}
               <div>
-                <label className={`block text-sm font-bold mb-2 ${fieldErrors.confirmPassword ? "text-red-500" : "text-gray-700"}`}>
+                <label
+                  className={`block text-sm font-bold mb-2 ${fieldErrors.confirmPassword ? "text-red-500" : "text-gray-700"}`}
+                >
                   Confirm Password <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
@@ -463,16 +502,26 @@ const Signup: React.FC = () => {
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                    {showConfirmPassword ? (
+                      <EyeOff size={20} />
+                    ) : (
+                      <Eye size={20} />
+                    )}
                   </button>
                 </div>
-                {fieldErrors.confirmPassword && <p className="text-red-500 text-xs mt-1">{fieldErrors.confirmPassword}</p>}
+                {fieldErrors.confirmPassword && (
+                  <p className="text-red-500 text-xs mt-1">
+                    {fieldErrors.confirmPassword}
+                  </p>
+                )}
               </div>
 
               {/* Phone */}
               <div className="grid grid-cols-5 gap-3">
                 <div className="col-span-2 relative">
-                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.countryCode ? "text-red-500" : "text-gray-700"}`}>
+                  <label
+                    className={`block text-sm font-bold mb-2 ${fieldErrors.countryCode ? "text-red-500" : "text-gray-700"}`}
+                  >
                     Country <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -498,7 +547,9 @@ const Signup: React.FC = () => {
                   )}
                 </div>
                 <div className="col-span-3">
-                  <label className={`block text-sm font-bold mb-2 ${fieldErrors.mobileNumber ? "text-red-500" : "text-gray-700"}`}>
+                  <label
+                    className={`block text-sm font-bold mb-2 ${fieldErrors.mobileNumber ? "text-red-500" : "text-gray-700"}`}
+                  >
                     Mobile <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -520,8 +571,11 @@ const Signup: React.FC = () => {
                     onChange={(e) => setAgeVerify(e.target.checked)}
                     className="w-5 h-5 rounded border-gray-300 text-red-500 focus:ring-red-500 mt-0.5"
                   />
-                  <span className={`text-sm font-medium ${fieldErrors.ageVerify ? "text-red-500" : "text-gray-700"}`}>
-                    I am 18 years old or older. <span className="text-red-500">*</span>
+                  <span
+                    className={`text-sm font-medium ${fieldErrors.ageVerify ? "text-red-500" : "text-gray-700"}`}
+                  >
+                    I am 18 years old or older.{" "}
+                    <span className="text-red-500">*</span>
                     <span className="block text-xs text-gray-500 mt-1">
                       (Under 18 years: Parent/Legal Guardian must Sign up)
                     </span>
@@ -535,17 +589,34 @@ const Signup: React.FC = () => {
                     onChange={(e) => setTermsAccepted(e.target.checked)}
                     className="w-5 h-5 rounded border-gray-300 text-red-500 focus:ring-red-500 mt-0.5"
                   />
-                  <span className={`text-sm font-medium ${fieldErrors.termsAccepted ? "text-red-500" : "text-gray-700"}`}>
+                  <span
+                    className={`text-sm font-medium ${fieldErrors.termsAccepted ? "text-red-500" : "text-gray-700"}`}
+                  >
                     I agree to Outceedo{" "}
-                    <a href="/terms" className="text-red-500 hover:underline" target="_blank" rel="noopener noreferrer">
+                    <a
+                      href="/terms"
+                      className="text-red-500 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Terms and Conditions
                     </a>
                     ,{" "}
-                    <a href="/privacy" className="text-red-500 hover:underline" target="_blank" rel="noopener noreferrer">
+                    <a
+                      href="/privacy"
+                      className="text-red-500 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Privacy Policy
                     </a>{" "}
                     and{" "}
-                    <a href="/privacy" className="text-red-500 hover:underline" target="_blank" rel="noopener noreferrer">
+                    <a
+                      href="/privacy"
+                      className="text-red-500 hover:underline"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       Cookie Use
                     </a>
                     . <span className="text-red-500">*</span>
