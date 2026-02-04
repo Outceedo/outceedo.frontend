@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
 import * as countryCodes from "country-codes-list";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
@@ -22,10 +22,14 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
 
 const Signup: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const { isLoading, error, user } = useAppSelector(
     (state: RootState) => state.auth,
   );
+
+  // Extract referral code from URL
+  const referralCode = searchParams.get("ref");
 
   const [role, setRole] = useState<Role | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
@@ -50,6 +54,7 @@ const Signup: React.FC = () => {
 
   const [ageVerify, setAgeVerify] = useState(false);
   const [termsAccepted, setTermsAccepted] = useState(false);
+  const [manualReferralCode, setManualReferralCode] = useState("");
 
   useEffect(() => {
     if (error) {
@@ -158,6 +163,9 @@ const Signup: React.FC = () => {
       return;
     }
 
+    // Use URL referral code first, otherwise use manual input
+    const finalReferralCode = referralCode || manualReferralCode.trim();
+
     const requestData = {
       role,
       email,
@@ -167,6 +175,7 @@ const Signup: React.FC = () => {
       lastName,
       username,
       ageVerify,
+      ...(finalReferralCode && { referralCode: finalReferralCode }),
     };
 
     setRegistrationAttempted(true);
@@ -374,6 +383,31 @@ const Signup: React.FC = () => {
                 </div>
               </div>
 
+              {/* Referral Code (Optional) */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1 uppercase">
+                  Referral Code{" "}
+                  <span className="text-gray-400 font-medium normal-case">
+                    (Optional)
+                  </span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter referral code if you have one"
+                  value={referralCode || manualReferralCode}
+                  onChange={(e) => setManualReferralCode(e.target.value)}
+                  disabled={!!referralCode}
+                  className={`w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:border-red-500 outline-none transition-all ${
+                    referralCode ? "bg-green-50 border-green-300" : ""
+                  }`}
+                />
+                {referralCode && (
+                  <p className="text-[10px] text-green-600 mt-1 font-bold">
+                    Referral code applied from link
+                  </p>
+                )}
+              </div>
+
               {/* Checkboxes */}
               <div className="space-y-3 pt-2">
                 <Checkbox
@@ -386,13 +420,33 @@ const Signup: React.FC = () => {
                 <Checkbox
                   checked={termsAccepted}
                   onChange={setTermsAccepted}
+                  error={fieldErrors.termsAccepted}
                   label={
-                    <span>
-                      I agree to{" "}
-                      <span className="text-red-500">Terms & Privacy</span>
+                    <span className="text-gray-700">
+                      I agree to Outceedo{" "}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevents clicking the link from toggling the checkbox
+                          navigate("/terms");
+                        }}
+                        className="text-red-500 hover:underline font-bold"
+                      >
+                        Terms and Conditions
+                      </button>{" "}
+                      and{" "}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate("/privacy");
+                        }}
+                        className="text-red-500 hover:underline font-bold"
+                      >
+                        Privacy Policy
+                      </button>
                     </span>
                   }
-                  error={fieldErrors.termsAccepted}
                 />
               </div>
 

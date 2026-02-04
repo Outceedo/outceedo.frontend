@@ -19,6 +19,7 @@ const menuItems = [
   { path: "/expert/details-form", name: "Edit Profile" },
   { path: "/expert/playerinfo", name: "Player Profile" },
   { path: "/expert/slots", name: "Calendar" },
+  { path: "/expert/referral", name: "Referral Program" },
 ];
 function ExpertHeader({ setOpen }: ExpertHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
