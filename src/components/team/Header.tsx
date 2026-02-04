@@ -44,6 +44,7 @@ const menuItems = [
   { path: "/team/sponsorinfo", name: "Sponsor Profile" },
   { path: "/team/playerinfo", name: "Player Profile" },
   { path: "/team/exdetails", name: "Expert Profile" },
+  { path: "/team/referral", name: "Referral Program" },
 ];
 
 function TeamHeader({ setOpen }: teamHeaderProps) {
@@ -164,7 +165,7 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (response.data?.url) {
         window.open(response.data.url, "_self");
@@ -190,7 +191,7 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.data?.url) {
@@ -227,8 +228,8 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
     selectedInterval === "month"
       ? monthlyPlan
       : selectedInterval === "year"
-      ? yearlyPlan
-      : dailyPlan;
+        ? yearlyPlan
+        : dailyPlan;
 
   const isCurrentPlanSelected =
     isPremiumUser && currentPlanId === selectedPremiumPlan?.id;
@@ -345,8 +346,8 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
                   {isCurrentPlanSelected
                     ? "Current Plan"
                     : isPremiumUser
-                    ? "Switch Plan"
-                    : "Select Premium"}
+                      ? "Switch Plan"
+                      : "Select Premium"}
                 </Button>
               </div>
             </div>
@@ -403,8 +404,8 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
                 {subscriptionLoading
                   ? "Loading..."
                   : isPremiumUser
-                  ? "Premium Plan"
-                  : "Upgrade to Premium"}
+                    ? "Premium Plan"
+                    : "Upgrade to Premium"}
               </p>
               {isPremiumUser && (
                 <ChevronDown className="h-4 w-4 ml-1 text-white opacity-80" />

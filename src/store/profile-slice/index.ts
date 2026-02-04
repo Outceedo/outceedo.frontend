@@ -67,6 +67,10 @@ interface Profile {
   reviewsReceived?: Review[] | null;
   services?: any[];
   [key: string]: any;
+  referralCode: string;
+  referredBy?: string | null;
+  referredFree: string[];
+  referredPaid: JSON[];
 }
 
 interface Service {
@@ -136,7 +140,7 @@ export const createProfile = createAsyncThunk(
   "profile/createProfile",
   async (
     { role, profileData }: { role: Role; profileData: any },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const username = getUsernameFromStorage();
@@ -156,16 +160,16 @@ export const createProfile = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       return response.data.user;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to create profile"
+        error.response?.data?.error || "Failed to create profile",
       );
     }
-  }
+  },
 );
 
 export const updateProfile = createAsyncThunk(
@@ -181,10 +185,10 @@ export const updateProfile = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to update profile"
+        error.response?.data?.error || "Failed to update profile",
       );
     }
-  }
+  },
 );
 
 export const getProfile = createAsyncThunk(
@@ -200,17 +204,17 @@ export const getProfile = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to get profile"
+        error.response?.data?.error || "Failed to get profile",
       );
     }
-  }
+  },
 );
 
 export const getProfiles = createAsyncThunk(
   "profile/getProfiles",
   async (
     { page, limit, userType }: { page: number; limit: number; userType: Role },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const token = getAuthToken();
@@ -223,10 +227,10 @@ export const getProfiles = createAsyncThunk(
       return { ...response.data, userType };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to get profiles"
+        error.response?.data?.error || "Failed to get profiles",
       );
     }
-  }
+  },
 );
 
 export const updateProfilePhoto = createAsyncThunk(
@@ -246,10 +250,10 @@ export const updateProfilePhoto = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to update profile photo"
+        error.response?.data?.error || "Failed to update profile photo",
       );
     }
-  }
+  },
 );
 
 export const getPlatformServices = createAsyncThunk(
@@ -265,10 +269,10 @@ export const getPlatformServices = createAsyncThunk(
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to get services"
+        error.response?.data?.error || "Failed to get services",
       );
     }
-  }
+  },
 );
 
 export const addExpertService = createAsyncThunk(
@@ -279,7 +283,7 @@ export const addExpertService = createAsyncThunk(
       price,
       additionalDetails,
     }: { serviceId: string; price: number; additionalDetails?: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const token = getAuthToken();
@@ -293,15 +297,15 @@ export const addExpertService = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to add expert service"
+        error.response?.data?.error || "Failed to add expert service",
       );
     }
-  }
+  },
 );
 
 export const updateExpertService = createAsyncThunk(
@@ -312,7 +316,7 @@ export const updateExpertService = createAsyncThunk(
       price,
       additionalDetails,
     }: { serviceId: string; price?: number; additionalDetails?: string },
-    { rejectWithValue }
+    { rejectWithValue },
   ) => {
     try {
       const token = getAuthToken();
@@ -326,15 +330,15 @@ export const updateExpertService = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return response.data;
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to update expert service"
+        error.response?.data?.error || "Failed to update expert service",
       );
     }
-  }
+  },
 );
 
 export const deleteExpertService = createAsyncThunk(
@@ -348,15 +352,15 @@ export const deleteExpertService = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return { serviceId, data: response.data };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to delete expert service"
+        error.response?.data?.error || "Failed to delete expert service",
       );
     }
-  }
+  },
 );
 
 export const getExpertServices = createAsyncThunk(
@@ -370,15 +374,15 @@ export const getExpertServices = createAsyncThunk(
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       return { expertId, services: response.data };
     } catch (error: any) {
       return rejectWithValue(
-        error.response?.data?.error || "Failed to get expert services"
+        error.response?.data?.error || "Failed to get expert services",
       );
     }
-  }
+  },
 );
 
 const profileSlice = createSlice({
@@ -416,7 +420,7 @@ const profileSlice = createSlice({
           state.status = "succeeded";
           state.currentProfile = action.payload;
           localStorage.setItem("role", action.payload.role);
-        }
+        },
       )
       .addCase(createProfile.rejected, (state, action) => {
         state.status = "failed";
@@ -439,7 +443,7 @@ const profileSlice = createSlice({
           ) {
             state.viewedProfile = action.payload;
           }
-        }
+        },
       )
       .addCase(updateProfile.rejected, (state, action) => {
         state.status = "failed";
@@ -457,7 +461,7 @@ const profileSlice = createSlice({
           if (currentUsername && action.payload.username === currentUsername) {
             state.currentProfile = action.payload;
           }
-        }
+        },
       )
       .addCase(getProfile.rejected, (state, action) => {
         state.status = "failed";
@@ -496,7 +500,7 @@ const profileSlice = createSlice({
           ) {
             state.viewedProfile = action.payload;
           }
-        }
+        },
       )
       .addCase(updateProfilePhoto.rejected, (state, action) => {
         state.status = "failed";
@@ -510,7 +514,7 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<Service[]>) => {
           state.status = "succeeded";
           state.platformServices = action.payload;
-        }
+        },
       )
       .addCase(getPlatformServices.rejected, (state, action) => {
         state.status = "failed";
@@ -524,7 +528,7 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<ExpertService>) => {
           state.status = "succeeded";
           state.expertServices.push(action.payload);
-        }
+        },
       )
       .addCase(addExpertService.rejected, (state, action) => {
         state.status = "failed";
@@ -538,12 +542,12 @@ const profileSlice = createSlice({
         (state, action: PayloadAction<ExpertService>) => {
           state.status = "succeeded";
           const index = state.expertServices.findIndex(
-            (service) => service.id === action.payload.id
+            (service) => service.id === action.payload.id,
           );
           if (index !== -1) {
             state.expertServices[index] = action.payload;
           }
-        }
+        },
       )
       .addCase(updateExpertService.rejected, (state, action) => {
         state.status = "failed";
@@ -555,7 +559,7 @@ const profileSlice = createSlice({
       .addCase(deleteExpertService.fulfilled, (state, action) => {
         state.status = "succeeded";
         state.expertServices = state.expertServices.filter(
-          (service) => service.id !== action.payload.serviceId
+          (service) => service.id !== action.payload.serviceId,
         );
       })
       .addCase(deleteExpertService.rejected, (state, action) => {

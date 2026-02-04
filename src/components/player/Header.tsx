@@ -44,6 +44,7 @@ const menuItems = [
   { path: "/player/exdetails", name: "Expert Profile" },
   { path: "/player/sponsorinfo", name: "Sponsor Profile" },
   { path: "/player/applications", name: "Sponsor Applications" },
+  { path: "/player/referral", name: "Referral Program" },
 ];
 
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {
@@ -159,7 +160,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       if (response.data?.url) {
         window.open(response.data.url, "_self");
@@ -185,7 +186,7 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.data?.url) {
@@ -222,8 +223,8 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
     selectedInterval === "month"
       ? monthlyPlan
       : selectedInterval === "year"
-      ? yearlyPlan
-      : dailyPlan;
+        ? yearlyPlan
+        : dailyPlan;
 
   // Check if the selected card matches the user's actual plan
   const isCurrentPlanSelected =
@@ -341,8 +342,8 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
                   {isCurrentPlanSelected
                     ? "Current Plan"
                     : isPremiumUser
-                    ? "Switch Plan"
-                    : "Select Premium"}
+                      ? "Switch Plan"
+                      : "Select Premium"}
                 </Button>
               </div>
             </div>
@@ -395,8 +396,8 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
                 {subscriptionLoading
                   ? "Loading..."
                   : isPremiumUser
-                  ? "Premium Plan"
-                  : "Upgrade to Premium"}
+                    ? "Premium Plan"
+                    : "Upgrade to Premium"}
               </p>
               {isPremiumUser && (
                 <ChevronDown className="h-4 w-4 ml-1 text-white opacity-80" />

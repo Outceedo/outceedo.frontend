@@ -19,12 +19,10 @@ import ResetPassword from "./Pages/Auth/Resetpassword";
 import loader from "./assets/images/loader.gif";
 //playerpage
 import Profile from "./Playerpages/playerprofile";
-import Dashboard from "./Playerpages/dashboard";
 import Matches from "./Playerpages/matches";
 import MyBooking from "./Playerpages/bookings/mybooking";
 import Experts from "./Playerpages/experts";
 import Expertspage from "./Playerpages/expertspage";
-import AssessmentReport from "./Pages/common/AssessmentReport";
 import BookingCalendar from "./Playerpages/BookService";
 import PlayerSponsors from "./Playerpages/PlayerSponsors";
 import SponsorApplicationpage from "./Playerpages/SponsorApplications";
@@ -42,7 +40,6 @@ import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
 import PlayersProfile from "./expertpages/playerProfiles";
-import ExpertDashboard from "./expertpages/Dashboard";
 import ExpertMatches from "./expertpages/ExpertMatches";
 import BookingExpertside from "./expertpages/bookings/Bookings";
 import ExpertProfile from "./expertpages/expertdata";
@@ -61,7 +58,6 @@ import Sponsorexperts from "./SponsorPages/Sponsorexperts";
 import SponsorDetailsForm from "./SponsorPages/SponsorDetailsForm";
 import TeamPlayerInfo from "./SponsorPages/playerinfo";
 import SponsorPlayerInfo from "./SponsorPages/playerinfo";
-import SponsorExperts from "./SponsorPages/Expertssponsor";
 
 //Team pages
 import TeamDetailsForm from "./teampages/teamdetailsform";
@@ -91,6 +87,7 @@ import ScrollToTop from "./common/ScrollToTop";
 import Terms from "./Pages/Home/terms";
 import Privacy from "./Pages/Home/privacy";
 import TeamView from "./Pages/team/teamProfile";
+import ReferralPage from "./Pages/common/referral";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -254,6 +251,7 @@ const AppContent: React.FC = () => {
           <Route path="sponsors" element={<PlayerSponsors />} />
           <Route path="sponsorinfo" element={<PlayerSponsorInfo />} />
           <Route path="applications" element={<SponsorApplicationpage />} />
+          <Route path="referral" element={<ReferralPage />} />
         </Route>
 
         {/* Expert routes */}
@@ -275,6 +273,7 @@ const AppContent: React.FC = () => {
           <Route path="sponsorinfo" element={<SponsorInfo />} />
           <Route path="slots" element={<ExpertAvailabilityManager />} />
           <Route path="evaluation" element={<AssessmentEvaluationForm />} />
+          <Route path="referral" element={<ReferralPage />} />
         </Route>
 
         {/* Sponsor routes */}
@@ -294,6 +293,7 @@ const AppContent: React.FC = () => {
           <Route path="SponsorForm" element={<SponsorForm />} />
           <Route path="playerinfo" element={<SponsorPlayerInfo />} />
           <Route path="teaminfo" element={<TeamView />} />
+          <Route path="referral" element={<ReferralPage />} />
         </Route>
 
         {/* Team routes */}
@@ -316,6 +316,7 @@ const AppContent: React.FC = () => {
           <Route path="sponsorinfo" element={<TeamSponsorInfo />} />
           <Route path="book" element={<BookingCalendar />} />
           <Route path="matches" element={<Matches />} />
+          <Route path="referral" element={<ReferralPage />} />
         </Route>
 
         {/* Fan routes */}
@@ -333,6 +334,7 @@ const AppContent: React.FC = () => {
           <Route path="details-form" element={<Fandetailsform />} />
           <Route path="exdetails" element={<Expertinfo />} />
           <Route path="playerinfo" element={<Playerinfo />} />
+          <Route path="referral" element={<ReferralPage />} />
         </Route>
 
         {/* Utility routes */}

@@ -22,6 +22,7 @@ const menuItems = [
   { path: "/sponsor/sponsorinfo", name: "Profile" },
   { path: "/sponsor/playerinfo", name: "Player Profile" },
   { path: "/sponsor/teaminfo", name: "Team Profile" },
+  { path: "/sponsor/referral", name: "Referral Program" },
 ];
 function SponsorHeader({ setOpen }: SponserHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
