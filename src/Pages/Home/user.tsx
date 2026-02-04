@@ -51,8 +51,7 @@ const User: React.FC = () => {
   const navigate = useNavigate();
 
   const handleUserSelection = (role: string) => {
-    const lowerCaseRole = role.toLowerCase();
-    localStorage.setItem("selectedRole", lowerCaseRole);
+    localStorage.setItem("selectedRole", role.toLowerCase());
     navigate("/signup");
   };
 
@@ -60,25 +59,27 @@ const User: React.FC = () => {
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-white p-8 md:p-10 rounded-[2.5rem] shadow-2xl max-w-4xl w-full border border-gray-100"
+      // 👇 ADDED: max-h-[90vh] and overflow-y-auto
+      className="bg-white p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl max-w-4xl w-[95%] md:w-full border border-gray-100 max-h-[90vh] overflow-y-auto"
     >
       {/* Header */}
-      <div className="text-center mb-8">
+      <div className="text-center mb-6 md:mb-8">
         <div className="mb-3 inline-flex items-center gap-2 text-red-500 font-black tracking-[0.2em] uppercase text-[10px]">
           <span className="h-[2px] w-6 bg-red-500"></span>
           Join The Network
           <span className="h-[2px] w-6 bg-red-500"></span>
         </div>
-        <h2 className="text-3xl md:text-4xl font-black tracking-tighter text-gray-900 uppercase">
+        <h2 className="text-2xl md:text-4xl font-black tracking-tighter text-gray-900 uppercase">
           Sign Up to <span className="text-red-500">Outceedo</span>
         </h2>
-        <p className="mt-2 text-gray-700 font-medium text-md">
+        <p className="mt-2 text-gray-700 font-medium text-sm md:text-md">
           Select your profile type to get started
         </p>
       </div>
 
       {/* Options Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      {/* 👇 ADJUSTED: Changed grid-cols-2 to grid-cols-1 on very small screens if needed */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
         {options.map((option, index) => (
           <motion.button
             key={index}
@@ -88,31 +89,26 @@ const User: React.FC = () => {
             whileHover={{ y: -5, scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => handleUserSelection(option.role)}
-            className="group relative flex flex-col items-center p-6 rounded-2xl border-2 border-gray-100 bg-white hover:border-red-500 hover:shadow-xl transition-all duration-300"
+            className="group relative flex flex-col items-center p-4 md:p-6 rounded-2xl border-2 border-gray-100 bg-white hover:border-red-500 hover:shadow-xl transition-all duration-300"
           >
-            {/* Icon */}
             <div
-              className={`h-14 w-14 rounded-2xl ${option.color} flex items-center justify-center text-white mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}
+              className={`h-12 w-12 md:h-14 md:w-14 rounded-2xl ${option.color} flex items-center justify-center text-white mb-3 md:mb-4 shadow-lg group-hover:scale-110 transition-transform duration-300`}
             >
-              <option.icon size={28} />
+              <option.icon size={24} className="md:w-[28px]" />
             </div>
 
-            {/* Name */}
-            <h3 className="font-black text-gray-900 uppercase tracking-tight text-sm mb-1">
+            <h3 className="font-black text-gray-900 uppercase tracking-tight text-[12px] md:text-sm mb-1">
               {option.name}
             </h3>
 
-            {/* Description */}
-            <p className="text-[10px] text-gray-400 font-medium hidden md:block">
+            <p className="text-[10px] text-gray-400 font-medium hidden md:block text-center">
               {option.desc}
             </p>
 
-            {/* Arrow indicator on hover */}
-            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">
               <ArrowRight size={14} className="text-red-500" />
             </div>
 
-            {/* Red accent line */}
             <div className="absolute bottom-0 left-0 right-0 h-1 bg-red-500 rounded-b-xl transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
           </motion.button>
         ))}
@@ -120,7 +116,7 @@ const User: React.FC = () => {
 
       {/* Footer */}
       <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-        <p className="text-[14px] text-gray-600 font-bold uppercase tracking-widest">
+        <p className="text-[12px] md:text-[14px] text-gray-600 font-bold uppercase tracking-widest">
           Already have an account?{" "}
           <button
             onClick={() => navigate("/login")}
@@ -131,7 +127,6 @@ const User: React.FC = () => {
         </p>
       </div>
     </motion.div>
-    );
+  );
 };
-
 export default User;

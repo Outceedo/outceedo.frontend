@@ -135,7 +135,7 @@ export default function Navbar() {
         {/* Mobile menu button */}
         <button className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
           <Menu
-            className={`h-7 w-7 ${isScrolled ? "text-slate-900" : "text-white"}`}
+            className={`h-7 w-7 ${isScrolled ? "text-slate-900" : "text-black"}`}
           />
           <span className="sr-only">Open menu</span>
         </button>
