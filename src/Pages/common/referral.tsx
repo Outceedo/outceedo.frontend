@@ -263,7 +263,10 @@ const ReferralPage = () => {
                       #
                     </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">
-                      User Info
+                      Username
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">
+                      Plan
                     </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">
                       Status
@@ -278,22 +281,14 @@ const ReferralPage = () => {
                     >
                       <td className="py-3 px-4 text-gray-500">{index + 1}</td>
                       <td className="py-3 px-4 text-gray-900 font-medium">
-                        {typeof user === "object" ? (
-                          <div>
-                            <p>
-                              {user.username ||
-                                user.name ||
-                                `User ${index + 1}`}
-                            </p>
-                            {user.email && (
-                              <p className="text-sm text-gray-500">
-                                {user.email}
-                              </p>
-                            )}
-                          </div>
-                        ) : (
-                          String(user)
-                        )}
+                        {typeof user === "object"
+                          ? user.username || user.name || `User ${index + 1}`
+                          : String(user)}
+                      </td>
+                      <td className="py-3 px-4 text-gray-900">
+                        {typeof user === "object" && user.planName
+                          ? user.planName
+                          : "-"}
                       </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-sm">
