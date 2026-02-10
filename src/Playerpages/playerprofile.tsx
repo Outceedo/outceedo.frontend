@@ -7,6 +7,8 @@ import {
   faStar as faStarSolid,
   faStarHalfAlt,
   faLock,
+  faExclamationTriangle,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
 import ProfileDetails from "./profiledetails";
@@ -128,6 +130,7 @@ const Profile: React.FC = () => {
   const [followersCount, setFollowersCount] = useState(0);
   const [isFollowersDialogOpen, setIsFollowersDialogOpen] = useState(false);
   const [statsLoading, setStatsLoading] = useState(false);
+  const [showIncompleteNotice, setShowIncompleteNotice] = useState(true);
 
   const { currentProfile, status, error } = useAppSelector(
     (state) => state.profile,
@@ -292,6 +295,43 @@ const Profile: React.FC = () => {
 
   const playerData = formatProfileData();
 
+  // Check for missing profile fields
+  const getMissingFields = () => {
+    if (!currentProfile) return [];
+
+    const missingFields: string[] = [];
+
+    if (!currentProfile.photo) {
+      missingFields.push("Profile Picture");
+    }
+    if (!currentProfile.bio) {
+      missingFields.push("Bio");
+    }
+    if (!currentProfile.birthYear && !currentProfile.age) {
+      missingFields.push("Age");
+    }
+    if (!currentProfile.height) {
+      missingFields.push("Height");
+    }
+    if (!currentProfile.weight) {
+      missingFields.push("Weight");
+    }
+    if (!currentProfile.city || !currentProfile.country) {
+      missingFields.push("Location");
+    }
+    if (!currentProfile.club) {
+      missingFields.push("Club");
+    }
+    if (!currentProfile.language || currentProfile.language.length === 0) {
+      missingFields.push("Languages");
+    }
+
+    return missingFields;
+  };
+
+  const missingFields = getMissingFields();
+  const isProfileIncompleteCheck = missingFields.length > 0;
+
   useEffect(() => {
     const navigationTimer = setTimeout(async () => {
       const userRole = localStorage.getItem("role");
@@ -452,6 +492,50 @@ const Profile: React.FC = () => {
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
       <div className="flex-1 p-2 sm:p-4">
+        {/* Profile Incomplete Notice */}
+        {isProfileIncompleteCheck && showIncompleteNotice && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 relative">
+            <button
+              onClick={() => setShowIncompleteNotice(false)}
+              className="absolute top-2 right-2 text-amber-600 hover:text-amber-800 p-1"
+              aria-label="Dismiss notice"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+            <div className="flex items-start gap-3">
+              <FontAwesomeIcon
+                icon={faExclamationTriangle}
+                className="text-amber-600 mt-1 flex-shrink-0"
+              />
+              <div className="flex-1 pr-6">
+                <h3 className="font-semibold text-amber-800 mb-1">
+                  Profile Incomplete
+                </h3>
+                <p className="text-sm text-amber-700 mb-2">
+                  Complete your profile to get better recommendations and
+                  visibility. The following fields are missing:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {missingFields.map((field, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={() => navigate("/player/details-form")}
+                  className="mt-3 inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-sm font-medium rounded hover:bg-amber-700 transition-colors"
+                >
+                  Complete Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="w-full">
           {/* Hybrid responsive layout for profile image + info */}
           <div className="flex flex-col lg:flex-row gap-6 items-center lg:items-start justify-center lg:justify-start mt-4 relative w-full">

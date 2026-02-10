@@ -11,6 +11,10 @@ import {
   faFacebookF,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
+import {
+  faExclamationTriangle,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { Link, useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
@@ -18,10 +22,11 @@ import Mediaedit from "@/Pages/Media/MediaEdit";
 
 const SponsorProfile = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media">("details");
+  const [showIncompleteNotice, setShowIncompleteNotice] = useState(true);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { currentProfile, status, error } = useAppSelector(
-    (state) => state.profile
+    (state) => state.profile,
   );
 
   // Use the profile that's actively being viewed (could be currentProfile or viewedProfile)
@@ -88,6 +93,40 @@ const SponsorProfile = () => {
     }
   }, [dispatch, username]);
 
+  // Check for missing profile fields
+  const getMissingFields = () => {
+    if (!currentProfile) return [];
+
+    const missingFields: string[] = [];
+
+    if (!currentProfile.photo) {
+      missingFields.push("Profile Picture");
+    }
+    if (!currentProfile.bio) {
+      missingFields.push("Bio");
+    }
+    if (!currentProfile.profession) {
+      missingFields.push("Sport");
+    }
+    if (!currentProfile.country) {
+      missingFields.push("Country");
+    }
+    if (!currentProfile.city) {
+      missingFields.push("City");
+    }
+    if (!currentProfile.sponsorType) {
+      missingFields.push("Sponsor Type");
+    }
+    if (!currentProfile.sponsorshipType) {
+      missingFields.push("Sponsorship Type");
+    }
+
+    return missingFields;
+  };
+
+  const missingFields = getMissingFields();
+  const isProfileIncomplete = missingFields.length > 0;
+
   // Even in loading or error states, we'll show the UI with fallback values
   if (status === "loading") {
     return (
@@ -129,6 +168,50 @@ const SponsorProfile = () => {
   function renderProfileContent(data: any) {
     return (
       <>
+        {/* Profile Incomplete Notice */}
+        {isProfileIncomplete && showIncompleteNotice && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 relative">
+            <button
+              onClick={() => setShowIncompleteNotice(false)}
+              className="absolute top-2 right-2 text-amber-600 hover:text-amber-800 p-1"
+              aria-label="Dismiss notice"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+            <div className="flex items-start gap-3">
+              <FontAwesomeIcon
+                icon={faExclamationTriangle}
+                className="text-amber-600 mt-1 flex-shrink-0"
+              />
+              <div className="flex-1 pr-6">
+                <h3 className="font-semibold text-amber-800 mb-1">
+                  Profile Incomplete
+                </h3>
+                <p className="text-sm text-amber-700 mb-2">
+                  Complete your profile to attract more players and increase
+                  visibility. The following fields are missing:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {missingFields.map((field, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={() => navigate("/sponsor/details-form")}
+                  className="mt-3 inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-sm font-medium rounded hover:bg-amber-700 transition-colors"
+                >
+                  Complete Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
           <div>

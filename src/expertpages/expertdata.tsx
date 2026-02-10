@@ -11,6 +11,8 @@ import {
   faStarHalfAlt,
   faCamera,
   faSpinner,
+  faExclamationTriangle,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import ExpertDetails from "./Expertdetails";
@@ -93,6 +95,7 @@ const ExpertProfile = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUpdatingPhoto, setIsUpdatingPhoto] = useState(false);
   const [serviceCount, setServiceCount] = useState(0);
+  const [showIncompleteNotice, setShowIncompleteNotice] = useState(true);
 
   // Follower states
   const [followersCount, setFollowersCount] = useState(0);
@@ -356,6 +359,46 @@ const ExpertProfile = () => {
 
   const expertData = formatExpertData();
 
+  // Check for missing profile fields
+  const getMissingFields = () => {
+    if (!currentProfile) return [];
+
+    const missingFields: string[] = [];
+
+    if (!currentProfile.photo) {
+      missingFields.push("Profile Picture");
+    }
+    if (!currentProfile.bio) {
+      missingFields.push("Bio");
+    }
+    if (!currentProfile.profession) {
+      missingFields.push("Profession");
+    }
+    if (!currentProfile.club) {
+      missingFields.push("Club");
+    }
+    if (!currentProfile.language || currentProfile.language.length === 0) {
+      missingFields.push("Languages");
+    }
+    if (!currentProfile.city || !currentProfile.country) {
+      missingFields.push("Location");
+    }
+    if (!currentProfile.certificationLevel) {
+      missingFields.push("Certification Level");
+    }
+    if (!currentProfile.responseTime) {
+      missingFields.push("Response Time");
+    }
+    if (!currentProfile.travelLimit) {
+      missingFields.push("Travel Limit");
+    }
+
+    return missingFields;
+  };
+
+  const missingFields = getMissingFields();
+  const isProfileIncomplete = missingFields.length > 0;
+
   // Review Stars Calculation:
   const reviewsArray = expertData.reviewsReceived || [];
   const totalReviews = reviewsArray.length;
@@ -405,6 +448,50 @@ const ExpertProfile = () => {
     <div className="flex -mt-6">
       {/* Main Content */}
       <main className="flex-1 p-3 sm:p-4 md:p-6 dark:bg-gray-900 ml-0 sm:ml-15">
+        {/* Profile Incomplete Notice */}
+        {isProfileIncomplete && showIncompleteNotice && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 relative">
+            <button
+              onClick={() => setShowIncompleteNotice(false)}
+              className="absolute top-2 right-2 text-amber-600 hover:text-amber-800 p-1"
+              aria-label="Dismiss notice"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+            <div className="flex items-start gap-3">
+              <FontAwesomeIcon
+                icon={faExclamationTriangle}
+                className="text-amber-600 mt-1 flex-shrink-0"
+              />
+              <div className="flex-1 pr-6">
+                <h3 className="font-semibold text-amber-800 mb-1">
+                  Profile Incomplete
+                </h3>
+                <p className="text-sm text-amber-700 mb-2">
+                  Complete your profile to increase visibility and attract more
+                  clients. The following fields are missing:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {missingFields.map((field, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={() => navigate("/expert/details-form")}
+                  className="mt-3 inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-sm font-medium rounded hover:bg-amber-700 transition-colors"
+                >
+                  Complete Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="flex flex-col lg:flex-row justify-between items-start w-full p-2 sm:p-4 mx-auto bg-dark:bg-slate-700 gap-4 lg:gap-6">
           {/* Left - Expert Info Section */}
           <div className="flex-1 w-full lg:pr-6">
