@@ -10,6 +10,10 @@ import {
   faFacebookF,
   faXTwitter,
 } from "@fortawesome/free-brands-svg-icons";
+import {
+  faExclamationTriangle,
+  faTimes,
+} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import teamImage from "../assets/images/avatar.png";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
@@ -22,6 +26,7 @@ const TeamProfile = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "account">(
     "details",
   );
+  const [showIncompleteNotice, setShowIncompleteNotice] = useState(true);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { currentProfile, status, error } = useAppSelector(
@@ -92,6 +97,43 @@ const TeamProfile = () => {
     }
   }, [dispatch, username]);
 
+  // Check for missing profile fields
+  const getMissingFields = () => {
+    if (!currentProfile) return [];
+
+    const missingFields: string[] = [];
+
+    if (!currentProfile.photo) {
+      missingFields.push("Profile Picture");
+    }
+    if (!currentProfile.bio) {
+      missingFields.push("Bio");
+    }
+    if (!currentProfile.sport) {
+      missingFields.push("Sport");
+    }
+    if (!currentProfile.country) {
+      missingFields.push("Country");
+    }
+    if (!currentProfile.city) {
+      missingFields.push("City");
+    }
+    if (!currentProfile.teamType) {
+      missingFields.push("Type");
+    }
+    if (!currentProfile.club) {
+      missingFields.push("Club");
+    }
+    if (!currentProfile.teamCategory) {
+      missingFields.push("Team Category");
+    }
+
+    return missingFields;
+  };
+
+  const missingFields = getMissingFields();
+  const isProfileIncomplete = missingFields.length > 0;
+
   // Even in loading or error states, we'll show the UI with fallback values
   if (status === "loading") {
     return (
@@ -133,6 +175,50 @@ const TeamProfile = () => {
   function renderProfileContent(data: any) {
     return (
       <>
+        {/* Profile Incomplete Notice */}
+        {isProfileIncomplete && showIncompleteNotice && (
+          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 relative">
+            <button
+              onClick={() => setShowIncompleteNotice(false)}
+              className="absolute top-2 right-2 text-amber-600 hover:text-amber-800 p-1"
+              aria-label="Dismiss notice"
+            >
+              <FontAwesomeIcon icon={faTimes} />
+            </button>
+            <div className="flex items-start gap-3">
+              <FontAwesomeIcon
+                icon={faExclamationTriangle}
+                className="text-amber-600 mt-1 flex-shrink-0"
+              />
+              <div className="flex-1 pr-6">
+                <h3 className="font-semibold text-amber-800 mb-1">
+                  Profile Incomplete
+                </h3>
+                <p className="text-sm text-amber-700 mb-2">
+                  Complete your team profile to attract more players and sponsors.
+                  The following fields are missing:
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {missingFields.map((field, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded"
+                    >
+                      {field}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={() => navigate("/team/details-form")}
+                  className="mt-3 inline-flex items-center px-3 py-1.5 bg-amber-600 text-white text-sm font-medium rounded hover:bg-amber-700 transition-colors"
+                >
+                  Complete Profile
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
           {/* Left Section: Info */}
