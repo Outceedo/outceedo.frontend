@@ -7,6 +7,8 @@ import {
   Instagram,
   Twitter,
   Linkedin,
+  Facebook,
+  Youtube,
 } from "lucide-react";
 import logo from "@/assets/images/logosmall.png";
 
@@ -40,16 +42,21 @@ export default function FooterSection() {
             </p>
             <div className="flex gap-4">
               {[
-                { icon: Instagram, url: "#" },
-                { icon: Twitter, url: "#" },
-                { icon: Linkedin, url: "#" },
+                { icon: Twitter, url: "https://x.com/outceedo" },
+                { icon: Instagram, url: "https://www.instagram.com/outceedo/" },
+                {
+                  icon: Facebook,
+                  url: "https://www.facebook.com/profile.php?id=61577579885680",
+                },
+                { icon: Youtube, url: "https://www.youtube.com/@outceedo" },
               ].map((social, i) => (
                 <a
                   key={i}
                   href={social.url}
+                  target="_blank"
                   className="h-14 w-14 rounded-xl bg-gray-50 flex items-center justify-center text-gray-700 hover:bg-red-500 hover:text-white transition-all duration-300"
                 >
-                  <social.icon size={18} />
+                  <social.icon size={24} />
                 </a>
               ))}
             </div>

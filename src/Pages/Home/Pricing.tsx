@@ -57,11 +57,11 @@ const planComparisonData = [
     free: "Recorded Video Assessment Only",
     pro: "All Available Services",
   },
-  {
-    label: "Video Conference Recordings",
-    free: "Limited Access (7 days)",
-    pro: "Unlimited Access",
-  },
+  // {
+  //   label: "Video Conference Recordings",
+  //   // free: "false",
+  //   // pro: "Unlimited Access",
+  // },
   { label: "Building Fans/Followers", free: false, pro: true },
   {
     label: "Promotions (Social Media, Newsletters, Front Page)",
@@ -500,7 +500,7 @@ export default function PricingPlans() {
           </motion.div>
 
           {/* Enterprise CTA */}
-          <motion.div
+          {/* <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
@@ -515,7 +515,7 @@ export default function PricingPlans() {
             >
               Contact Enterprise Scouting
             </button>
-          </motion.div>
+          </motion.div> */}
         </div>
       </section>
 
