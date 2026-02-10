@@ -509,7 +509,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                       >
                         <FontAwesomeIcon icon={faTimes} />
                       </Button>
-                      <Button
+                      {/* <Button
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-yellow-600 hover:bg-yellow-100 hover:text-yellow-700"
@@ -525,7 +525,7 @@ const BookingTable: React.FC<BookingTableProps> = ({
                         }
                       >
                         <FontAwesomeIcon icon={faCalendarAlt} />
-                      </Button>
+                      </Button> */}
                     </div>
                   </TableCell>
                   <TableCell className="text-center">

@@ -182,10 +182,10 @@ const MyBooking: React.FC = () => {
   const [reviewText, setReviewText] = useState("");
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
-    null
+    null,
   );
   const [visibilityMap, setVisibilityMap] = useState<{ [id: string]: boolean }>(
-    {}
+    {},
   );
 
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
@@ -201,6 +201,7 @@ const MyBooking: React.FC = () => {
 
   const [submittingReview, setSubmittingReview] = useState(false);
   const [newRating, setNewRating] = useState<number>(0);
+  const [acceptingReschedule, setAcceptingReschedule] = useState(false);
 
   const [reportData, setReportData] = useState<any[]>([]);
   const [reportLoading, setReportLoading] = useState(false);
@@ -224,7 +225,7 @@ const MyBooking: React.FC = () => {
    */
   const convertTimeToTimezone = (
     isoString: string,
-    timezone: string
+    timezone: string,
   ): string => {
     if (!isoString) return "Invalid Time";
 
@@ -249,7 +250,7 @@ const MyBooking: React.FC = () => {
   const formatTimeRangeInTimezone = (
     startAt: string,
     endAt: string,
-    timezone: string
+    timezone: string,
   ): string => {
     const startTime = convertTimeToTimezone(startAt, timezone);
     const endTime = convertTimeToTimezone(endAt, timezone);
@@ -261,7 +262,7 @@ const MyBooking: React.FC = () => {
    */
   const formatDateTimeInTimezone = (
     isoString: string,
-    timezone: string
+    timezone: string,
   ): string => {
     if (!isoString) return "Invalid Date";
 
@@ -297,7 +298,7 @@ const MyBooking: React.FC = () => {
    */
   const formatShortDateInTimezone = (
     isoString: string,
-    timezone: string
+    timezone: string,
   ): string => {
     if (!isoString) return "Invalid Date";
 
@@ -319,7 +320,7 @@ const MyBooking: React.FC = () => {
    * Get both player and expert times for display
    */
   const getTimesForBothParties = (
-    booking: Booking
+    booking: Booking,
   ): {
     playerTime: string;
     expertTime: string;
@@ -337,12 +338,12 @@ const MyBooking: React.FC = () => {
       playerTimeRange: formatTimeRangeInTimezone(
         booking.startAt,
         booking.endAt,
-        playerTimezone
+        playerTimezone,
       ),
       expertTimeRange: formatTimeRangeInTimezone(
         booking.startAt,
         booking.endAt,
-        expertTimezone
+        expertTimezone,
       ),
       playerDateTime: formatDateTimeInTimezone(booking.startAt, playerTimezone),
       expertDateTime: formatDateTimeInTimezone(booking.startAt, expertTimezone),
@@ -420,7 +421,7 @@ const MyBooking: React.FC = () => {
   const formatTimeRange = (
     startAt: string,
     endAt: string,
-    timezone?: string
+    timezone?: string,
   ): string => {
     const tz = timezone || "UTC";
     return formatTimeRangeInTimezone(startAt, endAt, tz);
@@ -432,7 +433,7 @@ const MyBooking: React.FC = () => {
         actionFilter !== "all" ||
         serviceTypeFilter !== "all" ||
         dateFilter !== "" ||
-        search !== ""
+        search !== "",
     );
   }, [bookingStatus, actionFilter, serviceTypeFilter, dateFilter, search]);
 
@@ -530,15 +531,15 @@ const MyBooking: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setBookings((prevBookings) =>
         prevBookings.map((booking) =>
           booking.id === bookingId
             ? { ...booking, status: "COMPLETED" }
-            : booking
-        )
+            : booking,
+        ),
       );
 
       if (selectedBooking && selectedBooking.id === bookingId) {
@@ -566,6 +567,55 @@ const MyBooking: React.FC = () => {
     }
   };
 
+  const handleAcceptReschedule = async (bookingId: string) => {
+    try {
+      setAcceptingReschedule(true);
+      const token = localStorage.getItem("token");
+
+      await axios.patch(
+        `${API_BASE_URL}/${bookingId}/reschedule/accept`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, status: "SCHEDULED" }
+            : booking,
+        ),
+      );
+
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "SCHEDULED" });
+      }
+
+      closeBookingDetails();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Reschedule Accepted!",
+        text: "You have accepted the new schedule. The expert has been notified.",
+        confirmButtonColor: "#10B981",
+        timer: 2500,
+      });
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to accept reschedule. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+    } finally {
+      setAcceptingReschedule(false);
+    }
+  };
+
   const sessionsToComplete = bookings.filter((booking) => {
     const isOverAndPaid = isPaid(booking) && isSessionOver(booking);
     const isScheduled = booking.status === "SCHEDULED";
@@ -586,12 +636,12 @@ const MyBooking: React.FC = () => {
 
       // Get today's date in the player's timezone
       const todayInTz = new Date(
-        now.toLocaleString("en-US", { timeZone: playerTimezone })
+        now.toLocaleString("en-US", { timeZone: playerTimezone }),
       );
       const sessionInTz = new Date(
         new Date(booking.startAt).toLocaleString("en-US", {
           timeZone: playerTimezone,
-        })
+        }),
       );
 
       return (
@@ -635,7 +685,7 @@ const MyBooking: React.FC = () => {
 
   const handleVideoError = () => {
     setVideoError(
-      "Failed to load video. The URL might be invalid or the video may no longer be available."
+      "Failed to load video. The URL might be invalid or the video may no longer be available.",
     );
   };
 
@@ -680,7 +730,7 @@ const MyBooking: React.FC = () => {
   // Define the fetch function
   const fetchBookingsData = async (
     pageNumber: number,
-    isLoadMore: boolean = false
+    isLoadMore: boolean = false,
   ) => {
     if (isLoadMore) {
       setLoadingMore(true);
@@ -755,7 +805,7 @@ const MyBooking: React.FC = () => {
 
     if (!hasPaymentIntent(booking)) {
       setError(
-        "Payment not available for this booking. Please contact support."
+        "Payment not available for this booking. Please contact support.",
       );
       return;
     }
@@ -766,7 +816,7 @@ const MyBooking: React.FC = () => {
 
   const handlePaymentSuccess = async (
     bookingId: string,
-    paymentResult: any
+    paymentResult: any,
   ) => {
     setBookings((prevBookings) =>
       prevBookings.map((booking) =>
@@ -776,8 +826,8 @@ const MyBooking: React.FC = () => {
               isPaid: true,
               status: "SCHEDULED",
             }
-          : booking
-      )
+          : booking,
+      ),
     );
 
     if (selectedBooking?.id === bookingId) {
@@ -824,7 +874,7 @@ const MyBooking: React.FC = () => {
             "Content-Type": "application/json",
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const agoraCredentials = response.data;
@@ -912,7 +962,7 @@ const MyBooking: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.status === 200 && response.data) {
@@ -1005,7 +1055,7 @@ const MyBooking: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setBookings((prev) =>
@@ -1020,8 +1070,8 @@ const MyBooking: React.FC = () => {
                   id: response.data?.reviewId || `review_${Date.now()}`,
                 },
               }
-            : b
-        )
+            : b,
+        ),
       );
 
       closeReviewModal();
@@ -1059,6 +1109,8 @@ const MyBooking: React.FC = () => {
       case "WAITING_EXPERT_APPROVAL":
       case "PENDING":
         return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case "RESCHEDULE_REQUESTED":
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       case "COMPLETED":
         return "bg-purple-100 text-purple-800 hover:bg-purple-100";
       default:
@@ -1137,6 +1189,11 @@ const MyBooking: React.FC = () => {
     if (
       actionFilter === "waiting" &&
       booking.status === "WAITING_EXPERT_APPROVAL"
+    )
+      return true;
+    if (
+      actionFilter === "rescheduled" &&
+      booking.status === "RESCHEDULE_REQUESTED"
     )
       return true;
     if (actionFilter === "scheduled" && booking.status === "SCHEDULED")
@@ -1250,6 +1307,7 @@ const MyBooking: React.FC = () => {
               <SelectItem value="accepted">Accepted</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
               <SelectItem value="waiting">Waiting Approval</SelectItem>
+              <SelectItem value="rescheduled">Reschedule Requested</SelectItem>
               <SelectItem value="scheduled">Scheduled</SelectItem>
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
@@ -1373,7 +1431,7 @@ const MyBooking: React.FC = () => {
                             const expert = booking.expert?.username;
                             localStorage.setItem(
                               "viewexpertusername",
-                              expert || ""
+                              expert || "",
                             );
                             navigate("/player/exdetails");
                           }}
@@ -1381,7 +1439,7 @@ const MyBooking: React.FC = () => {
                           with{" "}
                           {truncateText(
                             booking.expert?.username || "Expert",
-                            15
+                            15,
                           )}
                         </p>
                       </div>
@@ -1394,7 +1452,7 @@ const MyBooking: React.FC = () => {
                         <div className="text-xs text-gray-500">
                           {formatShortDateInTimezone(
                             booking.startAt,
-                            booking.timezone
+                            booking.timezone,
                           )}
                         </div>
                       )}
@@ -1546,7 +1604,7 @@ const MyBooking: React.FC = () => {
                           const expert = booking.expert?.username;
                           localStorage.setItem(
                             "viewexpertusername",
-                            expert || ""
+                            expert || "",
                           );
                           navigate("/player/exdetails");
                         }}
@@ -1613,7 +1671,7 @@ const MyBooking: React.FC = () => {
                   const times = getTimesForBothParties(selectedBooking);
                   const duration = formatDuration(
                     selectedBooking.startAt,
-                    selectedBooking.endAt
+                    selectedBooking.endAt,
                   );
 
                   return (
@@ -1622,7 +1680,7 @@ const MyBooking: React.FC = () => {
                         <Badge
                           variant="outline"
                           className={getActionBadgeStyle(
-                            selectedBooking.status
+                            selectedBooking.status,
                           )}
                         >
                           {formatStatus(selectedBooking.status)}
@@ -1668,8 +1726,8 @@ const MyBooking: React.FC = () => {
                               canGoLive(selectedBooking)
                                 ? "bg-green-50 border-green-200"
                                 : isSessionToday(selectedBooking)
-                                ? "bg-blue-50 border-blue-200"
-                                : "bg-gray-50 border-gray-200"
+                                  ? "bg-blue-50 border-blue-200"
+                                  : "bg-gray-50 border-gray-200"
                             }`}
                           >
                             <div className="flex items-start">
@@ -1678,15 +1736,15 @@ const MyBooking: React.FC = () => {
                                   canGoLive(selectedBooking)
                                     ? faPlay
                                     : isSessionToday(selectedBooking)
-                                    ? faInfoCircle
-                                    : faClock
+                                      ? faInfoCircle
+                                      : faClock
                                 }
                                 className={`mr-2 mt-1 flex-shrink-0 ${
                                   canGoLive(selectedBooking)
                                     ? "text-green-600"
                                     : isSessionToday(selectedBooking)
-                                    ? "text-blue-600"
-                                    : "text-gray-600"
+                                      ? "text-blue-600"
+                                      : "text-gray-600"
                                 }`}
                               />
                               <div className="flex-1">
@@ -1695,30 +1753,30 @@ const MyBooking: React.FC = () => {
                                     canGoLive(selectedBooking)
                                       ? "text-green-800"
                                       : isSessionToday(selectedBooking)
-                                      ? "text-blue-800"
-                                      : "text-gray-800"
+                                        ? "text-blue-800"
+                                        : "text-gray-800"
                                   }`}
                                 >
                                   {canGoLive(selectedBooking)
                                     ? "Session is Live Now!"
                                     : isSessionToday(selectedBooking)
-                                    ? "Session Today"
-                                    : "Upcoming Session"}
+                                      ? "Session Today"
+                                      : "Upcoming Session"}
                                 </p>
                                 <p
                                   className={`text-sm mt-1 ${
                                     canGoLive(selectedBooking)
                                       ? "text-green-700"
                                       : isSessionToday(selectedBooking)
-                                      ? "text-blue-700"
-                                      : "text-gray-700"
+                                        ? "text-blue-700"
+                                        : "text-gray-700"
                                   }`}
                                 >
                                   {canGoLive(selectedBooking)
                                     ? "Your session is currently live.  You can join the video call now."
                                     : isSessionToday(selectedBooking)
-                                    ? `Your session starts at ${times.playerTimeRange}. Video call will be available 10 minutes before the session. `
-                                    : `Session scheduled for ${times.playerDateTime}`}
+                                      ? `Your session starts at ${times.playerTimeRange}. Video call will be available 10 minutes before the session. `
+                                      : `Session scheduled for ${times.playerDateTime}`}
                                 </p>
                                 <div className="mt-3">
                                   {canGoLive(selectedBooking) ? (
@@ -1841,7 +1899,7 @@ const MyBooking: React.FC = () => {
                           <h3 className="text-lg font-semibold flex items-center">
                             <FontAwesomeIcon
                               icon={getServiceTypeIcon(
-                                getServiceType(selectedBooking)
+                                getServiceType(selectedBooking),
                               )}
                               className="mr-2 text-gray-600"
                             />
@@ -2016,6 +2074,29 @@ const MyBooking: React.FC = () => {
                         </div>
                       )}
 
+                      {/* Reschedule requested info */}
+                      {selectedBooking.status === "RESCHEDULE_REQUESTED" && (
+                        <div className="mb-5 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                          <div className="flex items-start">
+                            <FontAwesomeIcon
+                              icon={faCalendarAlt}
+                              className="mr-2 mt-1 text-yellow-600 flex-shrink-0"
+                            />
+                            <div>
+                              <p className="font-medium text-yellow-800">
+                                Reschedule Requested
+                              </p>
+                              <p className="text-yellow-700 text-sm mt-1">
+                                The expert has requested to reschedule this
+                                booking to a new date and time. Please review
+                                the new schedule below and accept if it works
+                                for you.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Video recording */}
                       {(selectedBooking.recordedVideo ||
                         selectedBooking.meetingRecording) && (
@@ -2073,7 +2154,7 @@ const MyBooking: React.FC = () => {
                                     <p>
                                       Uploaded:{" "}
                                       {new Date(
-                                        selectedBooking.createdAt
+                                        selectedBooking.createdAt,
                                       ).toLocaleDateString()}
                                     </p>
                                     {selectedBooking.description && (
@@ -2228,6 +2309,32 @@ const MyBooking: React.FC = () => {
                         </Button>
                       )}
 
+                      {/* Accept Reschedule button */}
+                      {selectedBooking.status === "RESCHEDULE_REQUESTED" && (
+                        <Button
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                          onClick={() =>
+                            handleAcceptReschedule(selectedBooking.id)
+                          }
+                          disabled={acceptingReschedule}
+                        >
+                          {acceptingReschedule ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Accepting...
+                            </>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon
+                                icon={faCheckCircle}
+                                className="mr-2"
+                              />
+                              Accept Reschedule
+                            </>
+                          )}
+                        </Button>
+                      )}
+
                       {/* Report and Review buttons */}
                       <Button
                         variant="outline"
@@ -2285,7 +2392,7 @@ const MyBooking: React.FC = () => {
                         autoPlay
                         onError={() => {
                           setError(
-                            "Failed to load video. Please try again later."
+                            "Failed to load video. Please try again later.",
                           );
                         }}
                       >
@@ -2306,7 +2413,7 @@ const MyBooking: React.FC = () => {
                         autoPlay
                         onError={() => {
                           setError(
-                            "Failed to load video. Please try again later."
+                            "Failed to load video. Please try again later.",
                           );
                         }}
                       >
@@ -2403,7 +2510,7 @@ const MyBooking: React.FC = () => {
                     on{" "}
                     {(() => {
                       const booking = bookings.find(
-                        (b) => b.id === selectedBookingId
+                        (b) => b.id === selectedBookingId,
                       );
                       if (booking) {
                         const times = getTimesForBothParties(booking);

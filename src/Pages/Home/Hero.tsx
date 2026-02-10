@@ -107,7 +107,7 @@ export default function Hero() {
             <FloatingExpertCard
               delay={1.5}
               icon={Star}
-              title="Worldwide Sponsers"
+              title="Worldwide Sponsors"
               // sub="4.9/5 Average Score"
               color="bg-orange-500"
             />

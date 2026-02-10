@@ -10,7 +10,7 @@ const features = {
     { text: "Reports Access (7 Days)", included: true },
     { text: "Local Experts Search", included: true },
     { text: "Recorded Video Assessment Bookings", included: true },
-    { text: "Video Conference Recordings (7 Days)", included: true },
+    { text: "Video Conference Recordings (7 Days)", included: false },
     { text: "Reports Download & Share", included: false },
     { text: "Building Fans/Followers", included: false },
     { text: "Promotions & Sponsorship Applications", included: false },
@@ -22,7 +22,7 @@ const features = {
     { text: "Unlimited Reports Access", included: true },
     { text: "Worldwide Experts Search", included: true },
     { text: "All Expert Services & Bookings", included: true },
-    { text: "Unlimited Video Conference Recordings", included: true },
+    // { text: "Unlimited Video Conference Recordings", included: true },
     { text: "Reports Download & Share", included: true },
     { text: "Building Fans/Followers", included: true },
     { text: "Promotions & Sponsorship Applications", included: true },
@@ -51,7 +51,7 @@ export default function PricingSection() {
             className="mb-4 inline-flex items-center gap-2 text-red-500 font-black tracking-[0.3em] uppercase text-xs"
           >
             <span className="h-[2px] w-8 bg-red-500"></span>
-            SPlayer Subscriptions
+            Player Subscriptions
             <span className="h-[2px] w-8 bg-red-500"></span>
           </motion.div>
           <h2 className="text-5xl font-black tracking-tighter text-gray-900 sm:text-7xl uppercase italic">

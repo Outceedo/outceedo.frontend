@@ -74,6 +74,15 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   const playerProfession = currentProfile?.profession || "";
   const playerSubProfession = currentProfile?.subProfession || "";
 
+  // Calculate age from birthYear
+  const calculateAge = (birthYear: number | undefined): number | null => {
+    if (!birthYear) return null;
+    const currentYear = new Date().getFullYear();
+    return currentYear - birthYear;
+  };
+
+  const playerAge = calculateAge(currentProfile?.birthYear);
+
   // Function to handle logout
   function handleLogout() {
     setShowLogoutDialog(false);
@@ -150,10 +159,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
           {playerName}
         </h2>
         <p className="text-gray-500 text-sm font-Opensans dark:text-gray-400 font-sans">
-          {currentProfile?.age
-            ? `Age ${currentProfile.age} yrs (${
-                new Date().getFullYear() - currentProfile.age
-              })`
+          {playerAge !== null && currentProfile?.birthYear
+            ? `Age ${playerAge} yrs (${currentProfile.birthYear})`
             : ""}
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
@@ -196,8 +203,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
                   isActive
                     ? "bg-gray-100 text-black font-medium dark:bg-gray-700 dark:text-white"
                     : menuItem.isLogout
-                    ? "text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-                    : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
+                      ? "text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+                      : "text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 }
               `}
             >
@@ -206,8 +213,8 @@ function MenuItems({ setOpen }: MenuItemsProps) {
                   isActive
                     ? "text-gray-800 dark:text-white"
                     : menuItem.isLogout
-                    ? "text-red-500 dark:text-red-400"
-                    : "text-gray-500 dark:text-gray-400"
+                      ? "text-red-500 dark:text-red-400"
+                      : "text-gray-500 dark:text-gray-400"
                 }`}
               ></i>
               <span className={isActive ? "font-medium" : ""}>

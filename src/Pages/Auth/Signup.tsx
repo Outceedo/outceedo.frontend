@@ -414,7 +414,7 @@ const Signup: React.FC = () => {
                   checked={ageVerify}
                   onChange={setAgeVerify}
                   label="I am 18 years or older"
-                  subLabel="(Under 18: Guardian must sign up)"
+                  subLabel="(Under 18: Parent or Guardian must sign up)"
                   error={fieldErrors.ageVerify}
                 />
                 <Checkbox
