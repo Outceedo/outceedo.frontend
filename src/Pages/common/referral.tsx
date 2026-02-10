@@ -372,7 +372,7 @@ const ReferralPage = () => {
             Share and Earn!
           </h3>
           <p className="text-gray-600 mb-4">
-            Invite your fellow football personals to join using your referral
+            Invite your fellow football personnel's to join using your referral
             code or link. You’ll earn rewards when they sign up and upgrade to a
             paid plan.
           </p>
