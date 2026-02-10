@@ -124,7 +124,7 @@ const Expertview = () => {
 
   const dispatch = useAppDispatch();
   const { viewedProfile, status, error } = useAppSelector(
-    (state) => state.profile
+    (state) => state.profile,
   );
   const {
     isActive,
@@ -217,7 +217,7 @@ const Expertview = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setIsFollowing(response.data?.isFollowing || false);
@@ -236,7 +236,7 @@ const Expertview = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setServiceCount(response.data?.count || 0);
@@ -258,7 +258,7 @@ const Expertview = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         setFollowers(response.data?.users || []);
         if (typeof response.data?.totalCount === "number") {
@@ -273,7 +273,7 @@ const Expertview = () => {
         setLoadingFollowers(false);
       }
     },
-    [viewedProfile?.id, API_FOLLOW_URL]
+    [viewedProfile?.id, API_FOLLOW_URL],
   );
 
   const handleFollowersClick = () => {
@@ -361,7 +361,7 @@ const Expertview = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         newFollowStatus = false;
       } else {
@@ -373,7 +373,7 @@ const Expertview = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         newFollowStatus = true;
       }
@@ -523,7 +523,7 @@ const Expertview = () => {
   };
 
   const getServiceNameById = (
-    serviceId: string | number | undefined
+    serviceId: string | number | undefined,
   ): string => {
     if (!serviceId) return "Unknown Service";
     const id = String(serviceId);
@@ -562,7 +562,7 @@ const Expertview = () => {
       let displayDescription;
       if (typeof service.additionalDetails === "object") {
         displayDescription = formatServiceDescription(
-          service.additionalDetails
+          service.additionalDetails,
         );
       } else {
         displayDescription =
@@ -780,7 +780,7 @@ const Expertview = () => {
         },
         onUploadProgress: (progressEvent) => {
           const progress = Math.round(
-            50 + (progressEvent.loaded * 40) / progressEvent.total!
+            50 + (progressEvent.loaded * 40) / progressEvent.total!,
           );
           setUploadProgress(progress);
         },
@@ -1090,7 +1090,7 @@ const Expertview = () => {
               {services.length > 0 ? (
                 services.map((service) => {
                   const serviceAllowed = isServiceAllowed(
-                    String(service.serviceId)
+                    String(service.serviceId),
                   );
 
                   return (

@@ -1,6 +1,21 @@
 import { useState } from "react";
 import { useAppSelector } from "@/store/hooks";
-import { Copy, Check, Users, UserCheck, Gift, Link } from "lucide-react";
+import {
+  Copy,
+  Check,
+  Users,
+  UserCheck,
+  Gift,
+  Link,
+  PoundSterling,
+  Clock,
+} from "lucide-react";
+
+const COMMISSION_RATES: Record<string, number> = {
+  test: 0.1, // £1 * 10% = £0.10
+  monthly: 1.0, // £10 * 10% = £1.00
+  yearly: 10.0, // £100 * 10% = £10.00
+};
 
 const ReferralPage = () => {
   const { currentProfile, status, error } = useAppSelector(
@@ -58,19 +73,40 @@ const ReferralPage = () => {
   const referredPaid = currentProfile.referredPaid || [];
   const totalReferrals = referredFree.length + referredPaid.length;
 
+  // Calculate total commission from paid referrals
+  const totalCommission = referredPaid.reduce((total: number, user: any) => {
+    if (typeof user === "object" && user.planName) {
+      const planKey = user.planName.toLowerCase();
+      return total + (COMMISSION_RATES[planKey] || 0);
+    }
+    return total;
+  }, 0);
+
   return (
     <div className="min-h-screen py-8 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-5xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Referral Program</h1>
           <p className="mt-2 text-gray-600">
-            Share your referral code and earn rewards when friends join!
+            Share your referral code or link to fellow footballers or fans and
+            earn rewards when they join!{" "}
+          </p>
+          <span className="text-red-500 font-bold">
+            Rewards will be for subscribed accounts.
+          </span>
+        </div>
+
+        {/* Notice */}
+        <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-center gap-3">
+          <Clock className="h-5 w-5 text-amber-600 flex-shrink-0" />
+          <p className="text-sm text-amber-700">
+            Referrals can take up to 60 minutes to reflect. Please be patient!
           </p>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
             <div className="flex items-center">
               <div className="p-3 bg-red-100 rounded-full">
@@ -110,6 +146,22 @@ const ReferralPage = () => {
                 <p className="text-sm font-medium text-gray-500">Paid Users</p>
                 <p className="text-2xl font-semibold text-gray-900">
                   {referredPaid.length}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div className="flex items-center">
+              <div className="p-3 bg-purple-100 rounded-full">
+                <PoundSterling className="h-6 w-6 text-purple-500" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-500">
+                  Commission Earned
+                </p>
+                <p className="text-2xl font-semibold text-gray-900">
+                  £{totalCommission.toFixed(2)}
                 </p>
               </div>
             </div>
@@ -269,6 +321,9 @@ const ReferralPage = () => {
                       Plan
                     </th>
                     <th className="text-left py-3 px-4 font-medium text-gray-600">
+                      Commission
+                    </th>
+                    <th className="text-left py-3 px-4 font-medium text-gray-600">
                       Status
                     </th>
                   </tr>
@@ -290,6 +345,14 @@ const ReferralPage = () => {
                           ? user.planName
                           : "-"}
                       </td>
+                      <td className="py-3 px-4 text-green-600 font-medium">
+                        £
+                        {typeof user === "object" && user.planName
+                          ? (
+                              COMMISSION_RATES[user.planName.toLowerCase()] || 0
+                            ).toFixed(2)
+                          : "0.00"}
+                      </td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-1 bg-yellow-100 text-yellow-700 rounded text-sm">
                           Paid
@@ -309,9 +372,9 @@ const ReferralPage = () => {
             Share and Earn!
           </h3>
           <p className="text-gray-600 mb-4">
-            Invite your friends to join using your referral code. You'll earn
-            rewards when they sign up and even more when they upgrade to a paid
-            plan!
+            Invite your fellow football personals to join using your referral
+            code or link. You’ll earn rewards when they sign up and upgrade to a
+            paid plan.
           </p>
           <div className="flex flex-wrap gap-3">
             <button
@@ -331,7 +394,44 @@ const ReferralPage = () => {
               }}
               className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
             >
-              Share on Twitter
+              Share on Twitter/X
+            </button>
+            <button
+              onClick={() => {
+                const link = `${import.meta.env.VITE_HOME}/signup?ref=${currentProfile.referralCode}`;
+                window.open(
+                  `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(link)}`,
+                  "_blank",
+                );
+              }}
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Share on LinkedIn
+            </button>
+            <button
+              onClick={() => {
+                const link = `${import.meta.env.VITE_HOME}/signup?ref=${currentProfile.referralCode}`;
+                const text = `Join me on Outceedo! Use my referral code: ${currentProfile.referralCode}`;
+                window.open(
+                  `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(link)}&quote=${encodeURIComponent(text)}`,
+                  "_blank",
+                );
+              }}
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Share on Facebook
+            </button>
+            <button
+              onClick={() => {
+                const link = `${import.meta.env.VITE_HOME}/signup?ref=${currentProfile.referralCode}`;
+                const text = `Join me on Outceedo! Use my referral code: ${currentProfile.referralCode}\n${link}`;
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+              className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              {copied ? "Copied for Instagram!" : "Share on Instagram"}
             </button>
           </div>
         </div>

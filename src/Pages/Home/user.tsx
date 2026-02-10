@@ -101,7 +101,7 @@ const User: React.FC = () => {
               {option.name}
             </h3>
 
-            <p className="text-[10px] text-gray-400 font-medium hidden md:block text-center">
+            <p className="text-[10px] text-gray-700 font-bold block text-center">
               {option.desc}
             </p>
 
