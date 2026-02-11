@@ -53,6 +53,12 @@ const adminSidebarMenuItems: MenuItem[] = [
   },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
   {
+    id: 8,
+    name: "Referral",
+    icon: "fas fa-user-plus",
+    path: "/team/referral",
+  },
+  {
     id: 7,
     name: "Logout",
     icon: "fas fa-sign-out-alt",

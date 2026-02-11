@@ -38,6 +38,12 @@ const expertSidebarMenuItems: MenuItem[] = [
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
   {
     id: 7,
+    name: "Referral",
+    icon: "fas fa-user-plus",
+    path: "/expert/referral",
+  },
+  {
+    id: 8,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",
