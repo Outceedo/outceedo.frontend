@@ -268,11 +268,10 @@ export const forgotPassword = createAsyncThunk<any, any, ThunkApiConfig>(
       const response = await authService.post("/forgot-password", formData);
       return response.data;
     } catch (err) {
-      const error = err as AxiosError;
+      const error = err as AxiosError<{ error?: string }>;
       console.error("Error in API call:", error.response?.data);
-      return rejectWithValue(
-        (error.response?.data as string) || "Forgot password failed"
-      );
+      const errorMessage = error.response?.data?.error || "Forgot password failed";
+      return rejectWithValue(errorMessage);
     }
   }
 );
