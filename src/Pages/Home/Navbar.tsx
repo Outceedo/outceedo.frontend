@@ -8,7 +8,7 @@ import outceedo from "@/assets/images/outceedologo.png";
 const NAV_ITEMS = [
   { label: "Home", anchor: "home", path: "/" },
   { label: "About", anchor: "about", path: "/about" },
-  { label: "Team", anchor: "team", path: "/teams" },
+  // { label: "Team", anchor: "team", path: "/teams" },
   { label: "Pricing", anchor: "pricing", path: "/plans" },
   { label: "Contact Us", anchor: "contactus", path: "/contactus" },
 ];
