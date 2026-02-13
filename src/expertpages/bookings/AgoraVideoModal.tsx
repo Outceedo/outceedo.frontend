@@ -135,24 +135,28 @@ const VIDEO_PROFILES: Record<string, VideoQuality> = {
     width: 1280,
     height: 720,
     frameRate: 30,
-    bitrateMin: 1000,
-    bitrateMax: 2000,
+    bitrateMin: 1500,
+    bitrateMax: 3000,
   },
   "480p": {
-    width: 640,
+    width: 854,
     height: 480,
     frameRate: 30,
-    bitrateMin: 500,
-    bitrateMax: 1000,
+    bitrateMin: 800,
+    bitrateMax: 1500,
   },
   "360p": {
-    width: 480,
+    width: 640,
     height: 360,
     frameRate: 24,
-    bitrateMin: 200,
-    bitrateMax: 500,
+    bitrateMin: 400,
+    bitrateMax: 800,
   },
 };
+
+// Configure Agora SDK for better quality
+AgoraRTC.setLogLevel(3); // Warnings only
+AgoraRTC.enableLogUpload(); // Enable for debugging
 
 const useAgoraConnection = (agora?: Agora) => {
   const [client, setClient] = useState<IAgoraRTCClient | null>(null);
@@ -171,7 +175,7 @@ const useAgoraConnection = (agora?: Agora) => {
     try {
       const client = AgoraRTC.createClient({
         mode: "rtc",
-        codec: "vp8",
+        codec: "h264", // H264 is more widely supported and efficient
       });
       return client;
     } catch (error) {
@@ -314,6 +318,8 @@ const useLocalTracks = () => {
   const [currentVideoQuality, setCurrentVideoQuality] =
     useState<string>("720p");
   const [hasPermissions, setHasPermissions] = useState(false);
+  const localVideoContainerRef = useRef<HTMLDivElement | null>(null);
+  const isPlayingRef = useRef(false);
 
   const requestPermissions = useCallback(async () => {
     try {
@@ -335,9 +341,16 @@ const useLocalTracks = () => {
     const tracks: (ICameraVideoTrack | IMicrophoneAudioTrack)[] = [];
 
     try {
-      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+      // Create audio track with echo cancellation, noise suppression, and auto gain control
+      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+        AEC: true, // Acoustic Echo Cancellation
+        ANS: true, // Automatic Noise Suppression
+        AGC: true, // Automatic Gain Control
+        encoderConfig: "high_quality_stereo",
+      });
       tracks.push(audioTrack);
       setLocalAudioTrack(audioTrack);
+      console.log("Expert audio track created with AEC, ANS, AGC enabled");
     } catch (error) {
       console.error("Failed to create audio track:", error);
     }
@@ -346,21 +359,63 @@ const useLocalTracks = () => {
       const profile = VIDEO_PROFILES[currentVideoQuality];
       const videoTrack = await AgoraRTC.createCameraVideoTrack({
         encoderConfig: {
-          width: profile.width,
-          height: profile.height,
-          frameRate: profile.frameRate,
+          width: { ideal: profile.width, max: profile.width },
+          height: { ideal: profile.height, max: profile.height },
+          frameRate: { ideal: profile.frameRate, max: profile.frameRate },
           bitrateMin: profile.bitrateMin,
           bitrateMax: profile.bitrateMax,
         },
+        optimizationMode: "detail", // Prioritize clarity over smoothness
       });
       tracks.push(videoTrack);
       setLocalVideoTrack(videoTrack);
+      console.log("Expert video track created:", profile);
     } catch (error) {
       console.error("Failed to create video track:", error);
     }
 
     return tracks;
   }, [currentVideoQuality]);
+
+  const playLocalVideo = useCallback(
+    (container: HTMLDivElement | null) => {
+      if (!container || !localVideoTrack || isVideoMuted) return;
+
+      // Avoid re-playing if already playing in the same container
+      if (localVideoContainerRef.current === container && isPlayingRef.current) {
+        return;
+      }
+
+      try {
+        // Stop playing in previous container if different
+        if (localVideoContainerRef.current && localVideoContainerRef.current !== container) {
+          localVideoTrack.stop();
+          isPlayingRef.current = false;
+        }
+
+        localVideoContainerRef.current = container;
+        localVideoTrack.play(container, { fit: "cover", mirror: true });
+        isPlayingRef.current = true;
+        console.log("Expert local video playing in container");
+      } catch (error) {
+        console.error("Failed to play expert local video:", error);
+        isPlayingRef.current = false;
+      }
+    },
+    [localVideoTrack, isVideoMuted]
+  );
+
+  const stopLocalVideo = useCallback(() => {
+    if (localVideoTrack && isPlayingRef.current) {
+      try {
+        localVideoTrack.stop();
+        isPlayingRef.current = false;
+        localVideoContainerRef.current = null;
+      } catch (error) {
+        console.warn("Error stopping expert local video:", error);
+      }
+    }
+  }, [localVideoTrack]);
 
   const toggleAudio = useCallback(async () => {
     if (!localAudioTrack) return isAudioMuted;
@@ -410,16 +465,19 @@ const useLocalTracks = () => {
   );
 
   const cleanup = useCallback(async () => {
-    console.log("Local tracks cleanup starting...");
+    console.log("Expert local tracks cleanup starting...");
+
+    isPlayingRef.current = false;
+    localVideoContainerRef.current = null;
 
     if (localAudioTrack) {
       try {
         await localAudioTrack.setEnabled(false);
         localAudioTrack.stop();
         localAudioTrack.close();
-        console.log("Audio track stopped and closed");
+        console.log("Expert audio track stopped and closed");
       } catch (error) {
-        console.warn("Error cleaning up audio track:", error);
+        console.warn("Error cleaning up expert audio track:", error);
       }
       setLocalAudioTrack(null);
     }
@@ -429,9 +487,9 @@ const useLocalTracks = () => {
         await localVideoTrack.setEnabled(false);
         localVideoTrack.stop();
         localVideoTrack.close();
-        console.log("Video track stopped and closed");
+        console.log("Expert video track stopped and closed");
       } catch (error) {
-        console.warn("Error cleaning up video track:", error);
+        console.warn("Error cleaning up expert video track:", error);
       }
       setLocalVideoTrack(null);
     }
@@ -439,7 +497,7 @@ const useLocalTracks = () => {
     setIsAudioMuted(false);
     setIsVideoMuted(false);
     setHasPermissions(false);
-    console.log("Local tracks cleanup completed");
+    console.log("Expert local tracks cleanup completed");
   }, [localAudioTrack, localVideoTrack]);
 
   return {
@@ -454,14 +512,17 @@ const useLocalTracks = () => {
     toggleAudio,
     toggleVideo,
     changeVideoQuality,
+    playLocalVideo,
+    stopLocalVideo,
     cleanup,
   };
 };
 
 const useRemoteUsers = () => {
   const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
-  const [volume, setVolume] = useState(50);
+  const [volume, setVolume] = useState(100); // Default to full volume
   const remoteVideoRefs = useRef<{ [uid: string]: HTMLDivElement | null }>({});
+  const playingVideosRef = useRef<{ [uid: string]: boolean }>({});
 
   const addRemoteUser = useCallback(
     (
@@ -469,6 +530,8 @@ const useRemoteUsers = () => {
       mediaType: "video" | "audio",
       track: IRemoteVideoTrack | IRemoteAudioTrack
     ) => {
+      console.log(`Expert: Adding remote user ${uid} with ${mediaType}`);
+
       setRemoteUsers((prev) => {
         const existingIndex = prev.findIndex((user) => user.uid === uid);
 
@@ -500,10 +563,16 @@ const useRemoteUsers = () => {
         }
       });
 
+      // Play audio immediately with current volume
       if (mediaType === "audio") {
         const audioTrack = track as IRemoteAudioTrack;
-        audioTrack.play();
-        audioTrack.setVolume(volume);
+        try {
+          audioTrack.play();
+          audioTrack.setVolume(volume);
+          console.log(`Expert: Remote audio playing for user ${uid} at volume ${volume}`);
+        } catch (error) {
+          console.error("Expert: Failed to play remote audio:", error);
+        }
       }
     },
     [volume]
@@ -511,6 +580,12 @@ const useRemoteUsers = () => {
 
   const removeRemoteUser = useCallback(
     (uid: UID, mediaType?: "video" | "audio") => {
+      console.log(`Expert: Removing remote user ${uid} ${mediaType || 'completely'}`);
+
+      if (mediaType === "video" || !mediaType) {
+        playingVideosRef.current[uid.toString()] = false;
+      }
+
       setRemoteUsers((prev) => {
         if (mediaType) {
           return prev.map((user) =>
@@ -533,18 +608,47 @@ const useRemoteUsers = () => {
 
   const playRemoteVideo = useCallback(
     (uid: UID, videoTrack: IRemoteVideoTrack) => {
-      const container = remoteVideoRefs.current[uid.toString()];
-      if (container && videoTrack) {
-        setTimeout(() => {
-          try {
-            videoTrack.play(container);
-          } catch (error) {
-            console.error("Failed to play remote video:", error);
-          }
-        }, 100);
+      const uidStr = uid.toString();
+      const container = remoteVideoRefs.current[uidStr];
+
+      if (!container || !videoTrack) {
+        console.log(`Expert: Cannot play remote video - container: ${!!container}, track: ${!!videoTrack}`);
+        return;
+      }
+
+      // Check if already playing in this container
+      if (playingVideosRef.current[uidStr]) {
+        console.log(`Expert: Remote video already playing for ${uid}`);
+        return;
+      }
+
+      try {
+        videoTrack.play(container, { fit: "cover" });
+        playingVideosRef.current[uidStr] = true;
+        console.log(`Expert: Remote video playing for user ${uid}`);
+      } catch (error) {
+        console.error("Expert: Failed to play remote video:", error);
+        playingVideosRef.current[uidStr] = false;
       }
     },
     []
+  );
+
+  const setRemoteVideoRef = useCallback(
+    (uid: UID, videoTrack: IRemoteVideoTrack | undefined) => {
+      return (ref: HTMLDivElement | null) => {
+        const uidStr = uid.toString();
+        remoteVideoRefs.current[uidStr] = ref;
+
+        if (ref && videoTrack && !playingVideosRef.current[uidStr]) {
+          // Use requestAnimationFrame for smooth rendering
+          requestAnimationFrame(() => {
+            playRemoteVideo(uid, videoTrack);
+          });
+        }
+      };
+    },
+    [playRemoteVideo]
   );
 
   const updateVolume = useCallback(
@@ -552,7 +656,11 @@ const useRemoteUsers = () => {
       setVolume(newVolume);
       remoteUsers.forEach((user) => {
         if (user.audioTrack) {
-          user.audioTrack.setVolume(newVolume);
+          try {
+            user.audioTrack.setVolume(newVolume);
+          } catch (error) {
+            console.warn("Expert: Error setting volume:", error);
+          }
         }
       });
     },
@@ -560,27 +668,28 @@ const useRemoteUsers = () => {
   );
 
   const cleanup = useCallback(() => {
-    console.log("Remote users cleanup starting...");
+    console.log("Expert: Remote users cleanup starting...");
     remoteUsers.forEach((user) => {
       if (user.audioTrack) {
         try {
           user.audioTrack.stop();
         } catch (error) {
-          console.warn("Error stopping remote audio:", error);
+          console.warn("Expert: Error stopping remote audio:", error);
         }
       }
       if (user.videoTrack) {
         try {
           user.videoTrack.stop();
         } catch (error) {
-          console.warn("Error stopping remote video:", error);
+          console.warn("Expert: Error stopping remote video:", error);
         }
       }
     });
 
     setRemoteUsers([]);
     remoteVideoRefs.current = {};
-    console.log("Remote users cleanup completed");
+    playingVideosRef.current = {};
+    console.log("Expert: Remote users cleanup completed");
   }, [remoteUsers]);
 
   return {
@@ -590,6 +699,7 @@ const useRemoteUsers = () => {
     addRemoteUser,
     removeRemoteUser,
     playRemoteVideo,
+    setRemoteVideoRef,
     updateVolume,
     cleanup,
   };
@@ -843,46 +953,57 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
   const setupAgoraEventHandlers = useCallback(
     (client: IAgoraRTCClient) => {
+      // Enable dual stream for adaptive quality
+      client.enableDualStream().then(() => {
+        console.log("Expert: Dual stream enabled for adaptive quality");
+      }).catch((error) => {
+        console.warn("Expert: Failed to enable dual stream:", error);
+      });
+
       client.on("user-published", async (user, mediaType) => {
         if (user.uid === agoraConnection.myUIDRef.current) return;
 
+        console.log(`Expert: User ${user.uid} published ${mediaType}`);
+
         try {
           await client.subscribe(user, mediaType);
+          console.log(`Expert: Subscribed to user ${user.uid} ${mediaType}`);
 
           if (mediaType === "video" && user.videoTrack) {
+            // Subscribe to high quality stream by default (0 = high, 1 = low)
             try {
-              await client.setRemoteVideoStreamType(user.uid, 1);
+              await client.setRemoteVideoStreamType(user.uid, 0);
+              console.log(`Expert: Set high quality stream for user ${user.uid}`);
             } catch (streamError) {
-              console.warn("Failed to set low stream:", streamError);
+              console.warn("Expert: Failed to set stream type:", streamError);
             }
-            remoteUsers.playRemoteVideo(user.uid, user.videoTrack);
           }
 
-          remoteUsers.addRemoteUser(
-            user.uid,
-            mediaType,
-            user[`${mediaType}Track`]!
-          );
+          const track = user[`${mediaType}Track`];
+          if (track) {
+            remoteUsers.addRemoteUser(user.uid, mediaType, track);
+          }
         } catch (error) {
-          console.error("Error subscribing to user:", error);
+          console.error("Expert: Error subscribing to user:", error);
         }
       });
 
       client.on("user-unpublished", (user, mediaType) => {
         if (user.uid === agoraConnection.myUIDRef.current) return;
+        console.log(`Expert: User ${user.uid} unpublished ${mediaType}`);
         remoteUsers.removeRemoteUser(user.uid, mediaType);
       });
 
       client.on("user-joined", (user) => {
         if (user.uid !== agoraConnection.myUIDRef.current) {
-          console.log("User joined:", user.uid);
+          console.log("Expert: User joined:", user.uid);
         }
       });
 
       client.on("user-left", (user) => {
         if (user.uid !== agoraConnection.myUIDRef.current) {
           remoteUsers.removeRemoteUser(user.uid);
-          console.log("User left:", user.uid);
+          console.log("Expert: User left:", user.uid);
         }
       });
 
@@ -917,10 +1038,26 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           stats.uplinkNetworkQuality
         );
 
+        // Quality levels: 0-unknown, 1-excellent, 2-good, 3-poor, 4-bad, 5-very bad, 6-down
         if (quality >= 4) {
           setNetworkStatus("poor");
+          // Downgrade to lower quality for poor network
           if (quality >= 5 && localTracks.currentVideoQuality !== "360p") {
             localTracks.changeVideoQuality("360p");
+            console.log("Expert: Network quality very poor, switching to 360p");
+          } else if (quality === 4 && localTracks.currentVideoQuality === "720p") {
+            localTracks.changeVideoQuality("480p");
+            console.log("Expert: Network quality poor, switching to 480p");
+          }
+        } else if (quality <= 2) {
+          setNetworkStatus("online");
+          // Upgrade quality for good network
+          if (localTracks.currentVideoQuality === "360p") {
+            localTracks.changeVideoQuality("480p");
+            console.log("Expert: Network quality good, upgrading to 480p");
+          } else if (quality === 1 && localTracks.currentVideoQuality === "480p") {
+            localTracks.changeVideoQuality("720p");
+            console.log("Expert: Network quality excellent, upgrading to 720p");
           }
         } else {
           setNetworkStatus("online");
@@ -1171,8 +1308,13 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     isCleaningUp.current = false;
   }, [agoraConnection, localTracks, remoteUsers, screenShare]);
 
+  // Handle local video rendering
   useEffect(() => {
-    if (!localTracks.localVideoTrack || localTracks.isVideoMuted) return;
+    if (!localTracks.localVideoTrack || localTracks.isVideoMuted) {
+      localTracks.stopLocalVideo();
+      setLocalVideoContainer(null);
+      return;
+    }
 
     const shouldShowInWaiting = remoteUsers.remoteUsers.length === 0;
     const targetContainer = shouldShowInWaiting
@@ -1181,24 +1323,19 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     const expectedContainer = shouldShowInWaiting ? "waiting" : "grid";
 
     if (targetContainer && localVideoContainer !== expectedContainer) {
-      try {
-        localTracks.localVideoTrack.stop();
-
-        setTimeout(() => {
-          if (targetContainer && localTracks.localVideoTrack) {
-            localTracks.localVideoTrack.play(targetContainer);
-            setLocalVideoContainer(expectedContainer);
-          }
-        }, 50);
-      } catch (error) {
-        console.error("Failed to play expert local video:", error);
-      }
+      // Use requestAnimationFrame for smoother rendering
+      requestAnimationFrame(() => {
+        localTracks.playLocalVideo(targetContainer);
+        setLocalVideoContainer(expectedContainer);
+      });
     }
   }, [
     localTracks.localVideoTrack,
     localTracks.isVideoMuted,
     remoteUsers.remoteUsers.length,
     localVideoContainer,
+    localTracks.playLocalVideo,
+    localTracks.stopLocalVideo,
   ]);
 
   useEffect(() => {
@@ -1219,20 +1356,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     };
   }, [agoraConnection.isJoined]);
 
-  useEffect(() => {
-    if (isOpen && agora && !agoraConnection.isInitializingRef.current) {
-      initializeAgora();
-    }
-
-    return () => {
-      if (!isOpen) {
-        console.log(
-          "Expert modal closed or component unmounting, running cleanup..."
-        );
-        cleanup().catch(console.error);
-      }
-    };
-  }, [isOpen, agora]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -1678,18 +1801,12 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         <div className="w-full h-full relative">
                           {participant.hasVideo && participant.videoTrack ? (
                             <div
-                              ref={(ref) => {
-                                remoteUsers.remoteVideoRefs.current[
-                                  participant.uid.toString()
-                                ] = ref;
-                                if (ref && participant.videoTrack) {
-                                  remoteUsers.playRemoteVideo(
-                                    participant.uid,
-                                    participant.videoTrack
-                                  );
-                                }
-                              }}
+                              ref={remoteUsers.setRemoteVideoRef(
+                                participant.uid,
+                                participant.videoTrack
+                              )}
                               className="w-full h-full"
+                              style={{ backgroundColor: "#1a1a1a" }}
                             />
                           ) : (
                             <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-green-100 to-emerald-100">
