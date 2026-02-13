@@ -8,22 +8,26 @@ function Aboutus() {
     {
       icon: Users,
       title: "Connect with Experts",
-      description: "Access certified football experts worldwide for real-time guidance.",
+      description:
+        "Access certified football experts worldwide for real-time guidance.",
     },
     {
       icon: TrendingUp,
       title: "Expert Analysis",
-      description: "Get real-time expert analysis of your game, skill level, strengths and weaknesses.",
+      description:
+        "Get real-time expert analysis of your game, skill level, strengths and weaknesses.",
     },
     {
       icon: Award,
       title: "Actionable Reports",
-      description: "Receive actionable expert reports and personalized training guidance.",
+      description:
+        "Receive actionable expert reports and personalized training guidance.",
     },
     {
       icon: Shield,
       title: "Career Advancement",
-      description: "Enhance opportunities for team selection, sponsorships, and career advancement.",
+      description:
+        "Enhance opportunities for team selection, sponsorships, and career advancement.",
     },
   ];
 
@@ -70,11 +74,16 @@ function Aboutus() {
             className="bg-gray-50 rounded-[2.5rem] p-10 mb-12 border border-gray-100"
           >
             <p className="text-lg text-gray-600 font-medium leading-relaxed mb-6">
-              Outceedo is a UK registered company. <span className="text-red-500 font-bold">Arun Muppana</span> and <span className="text-red-500 font-bold">Karthik Reddy</span>, passionate football fans, co-founded this company in 2025.
+              Outceedo is a UK registered company.{" "}
+              <span className="text-red-500 font-bold">Arun Muppana</span> and{" "}
+              <span className="text-red-500 font-bold">Karthik Reddy</span>,
+              passionate football fans, co-founded this company in 2026.
             </p>
             <div className="bg-white rounded-2xl p-6 border border-red-100 shadow-sm">
               <p className="text-xl text-red-500 font-bold leading-relaxed">
-                Our mission is to create the best football players for a team by connecting them with worldwide experts for real-time performance assessment and guidance.
+                Our mission is to create the best football players for a team by
+                connecting them with worldwide experts for real-time performance
+                assessment and guidance.
               </p>
             </div>
           </motion.div>
@@ -87,14 +96,24 @@ function Aboutus() {
             className="max-w-4xl mx-auto mb-20"
           >
             <p className="text-lg text-gray-600 font-medium leading-relaxed mb-6">
-              Outceedo is an online platform where football players connect with global experts to get their sports skills and performances assessed. We proudly serve{" "}
-              <span className="font-bold text-red-500">players, managers, coaches, scouts, sponsors, fans</span> and <span className="font-bold text-red-500">followers</span>, creating a dynamic and supportive football community.
+              Outceedo is an online platform where football players connect with
+              global experts to get their sports skills and performances
+              assessed. We proudly serve{" "}
+              <span className="font-bold text-red-500">
+                players, managers, coaches, scouts, sponsors, fans
+              </span>{" "}
+              and <span className="font-bold text-red-500">followers</span>,
+              creating a dynamic and supportive football community.
             </p>
             <p className="text-lg text-gray-600 font-medium leading-relaxed mb-6">
-              We know how competitive it is for players to get into the best teams. It is hard to get a place in league or national teams, so we believe that expert assessment is essential to understand one's skills and enter the next level in sports.
+              We know how competitive it is for players to get into the best
+              teams. It is hard to get a place in league or national teams, so
+              we believe that expert assessment is essential to understand one's
+              skills and enter the next level in sports.
             </p>
             <p className="text-lg text-gray-600 font-medium leading-relaxed">
-              Outceedo helps elevate every player's game through professional guidance and expert analysis.
+              Outceedo helps elevate every player's game through professional
+              guidance and expert analysis.
             </p>
           </motion.div>
 
@@ -120,10 +139,17 @@ function Aboutus() {
                 Our Vision
               </h3>
               <p className="text-gray-500 font-medium leading-relaxed mb-4">
-                To revolutionize the football industry with cutting-edge solutions using technology and a user-centric approach. Outceedo bridges the gap between players and experts, empowering football talents to grow, transform weaknesses into strengths, and excel in their sporting careers.
+                To revolutionize the football industry with cutting-edge
+                solutions using technology and a user-centric approach. Outceedo
+                bridges the gap between players and experts, empowering football
+                talents to grow, transform weaknesses into strengths, and excel
+                in their sporting careers.
               </p>
               <p className="text-gray-500 font-medium leading-relaxed">
-                Whether you're a parent seeking expert training for your child, an aspiring player aiming for professional leagues, or a seasoned footballer looking to refine your skills, Outceedo makes it easier to find the perfect expert to guide you.
+                Whether you're a parent seeking expert training for your child,
+                an aspiring player aiming for professional leagues, or a
+                seasoned footballer looking to refine your skills, Outceedo
+                makes it easier to find the perfect expert to guide you.
               </p>
             </motion.div>
 
@@ -143,9 +169,7 @@ function Aboutus() {
                   <div className="h-14 w-14 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center text-white">
                     <Target className="h-7 w-7" />
                   </div>
-                  <span className="text-6xl font-black text-white/20">
-                    02
-                  </span>
+                  <span className="text-6xl font-black text-white/20">02</span>
                 </div>
                 <h3 className="text-2xl font-black mb-6 uppercase tracking-tighter">
                   Why Outceedo?
@@ -157,8 +181,13 @@ function Aboutus() {
                         <feature.icon size={14} className="text-white" />
                       </div>
                       <div>
-                        <span className="text-white font-bold">{feature.title}:</span>
-                        <span className="text-red-100 font-medium"> {feature.description}</span>
+                        <span className="text-white font-bold">
+                          {feature.title}:
+                        </span>
+                        <span className="text-red-100 font-medium">
+                          {" "}
+                          {feature.description}
+                        </span>
                       </div>
                     </li>
                   ))}
