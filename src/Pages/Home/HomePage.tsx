@@ -9,6 +9,7 @@ import PricingSection from "./PricingSection";
 import Advisors from "./Advisors";
 import Testimonials from "./Testimonials";
 import FooterSection from "./FooterSection";
+import CookieConsent from "./CookieConsent";
 
 const HomePage: React.FC = () => {
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
@@ -35,6 +36,7 @@ const HomePage: React.FC = () => {
       {/* <Advisors /> */}
       {/* <Testimonials /> */}
       <FooterSection />
+      <CookieConsent />
     </div>
   );
 };
