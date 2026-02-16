@@ -101,6 +101,7 @@ interface RemoteUser {
   hasAudio: boolean;
   username?: string;
   photo?: string;
+  isScreenShare?: boolean;
 }
 
 interface NetworkStats {
@@ -128,6 +129,7 @@ interface Participant {
   photo: string;
   videoTrack?: IRemoteVideoTrack;
   audioTrack?: IRemoteAudioTrack;
+  isScreenShare?: boolean;
 }
 
 const VIDEO_PROFILES: Record<string, VideoQuality> = {
@@ -215,14 +217,14 @@ const useAgoraConnection = (agora?: Agora) => {
   const handleAutoReconnect = useCallback(async () => {
     if (!agora || reconnectAttempts >= 3) {
       setConnectionError(
-        "Maximum reconnection attempts reached. Please refresh the page."
+        "Maximum reconnection attempts reached. Please refresh the page.",
       );
       return;
     }
 
     const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
     setConnectionError(
-      `Connection lost. Reconnecting in ${Math.ceil(delay / 1000)}s...`
+      `Connection lost. Reconnecting in ${Math.ceil(delay / 1000)}s...`,
     );
 
     reconnectTimeoutRef.current = setTimeout(async () => {
@@ -239,7 +241,7 @@ const useAgoraConnection = (agora?: Agora) => {
           import.meta.env.VITE_AGORA_APP_ID,
           agora.channel,
           agora.token,
-          agora.uid
+          agora.uid,
         );
 
         setClient(newClient);
@@ -390,13 +392,19 @@ const useLocalTracks = () => {
       if (!container || !localVideoTrack || isVideoMuted) return;
 
       // Avoid re-playing if already playing in the same container
-      if (localVideoContainerRef.current === container && isPlayingRef.current) {
+      if (
+        localVideoContainerRef.current === container &&
+        isPlayingRef.current
+      ) {
         return;
       }
 
       try {
         // Stop playing in previous container if different
-        if (localVideoContainerRef.current && localVideoContainerRef.current !== container) {
+        if (
+          localVideoContainerRef.current &&
+          localVideoContainerRef.current !== container
+        ) {
           localVideoTrack.stop();
           isPlayingRef.current = false;
         }
@@ -410,7 +418,7 @@ const useLocalTracks = () => {
         isPlayingRef.current = false;
       }
     },
-    [localVideoTrack, isVideoMuted]
+    [localVideoTrack, isVideoMuted],
   );
 
   const stopLocalVideo = useCallback(() => {
@@ -469,7 +477,7 @@ const useLocalTracks = () => {
         console.error("Failed to change video quality:", error);
       }
     },
-    [localVideoTrack]
+    [localVideoTrack],
   );
 
   const cleanup = useCallback(async () => {
@@ -529,16 +537,60 @@ const useLocalTracks = () => {
 const useRemoteUsers = () => {
   const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
   const [volume, setVolume] = useState(100); // Default to full volume
+  const [remoteScreenShareUid, setRemoteScreenShareUid] = useState<UID | null>(
+    null,
+  );
   const remoteVideoRefs = useRef<{ [uid: string]: HTMLDivElement | null }>({});
   const playingVideosRef = useRef<{ [uid: string]: boolean }>({});
+  const screenShareVideoRef = useRef<HTMLDivElement | null>(null);
+
+  // Detect if a video track is likely a screen share based on dimensions
+  const isScreenShareTrack = useCallback(
+    (videoTrack: IRemoteVideoTrack): boolean => {
+      try {
+        // Screen shares typically have higher width than height (landscape)
+        // and usually have content hint set to "detail" or track label contains "screen"
+        const settings = videoTrack.getMediaStreamTrack().getSettings();
+        const width = settings.width || 0;
+        const height = settings.height || 0;
+
+        // Screen shares are usually 1920x1080 or higher, and aspect ratio > 1.5
+        const aspectRatio = width / height;
+        const isHighRes = width >= 1280;
+        const isWideAspect = aspectRatio >= 1.5;
+
+        // Check track label for screen share indicators
+        const trackLabel =
+          videoTrack.getMediaStreamTrack().label?.toLowerCase() || "";
+        const hasScreenLabel =
+          trackLabel.includes("screen") ||
+          trackLabel.includes("window") ||
+          trackLabel.includes("monitor");
+
+        return (isHighRes && isWideAspect) || hasScreenLabel;
+      } catch {
+        return false;
+      }
+    },
+    [],
+  );
 
   const addRemoteUser = useCallback(
     (
       uid: UID,
       mediaType: "video" | "audio",
-      track: IRemoteVideoTrack | IRemoteAudioTrack
+      track: IRemoteVideoTrack | IRemoteAudioTrack,
     ) => {
       console.log(`Expert: Adding remote user ${uid} with ${mediaType}`);
+
+      let isScreenShare = false;
+      if (mediaType === "video") {
+        isScreenShare = isScreenShareTrack(track as IRemoteVideoTrack);
+        if (isScreenShare) {
+          console.log(`Expert: Detected screen share from user ${uid}`);
+          setRemoteScreenShareUid(uid);
+        }
+      }
 
       setRemoteUsers((prev) => {
         const existingIndex = prev.findIndex((user) => user.uid === uid);
@@ -549,6 +601,7 @@ const useRemoteUsers = () => {
             ...updated[existingIndex],
             [mediaType === "video" ? "videoTrack" : "audioTrack"]: track,
             [mediaType === "video" ? "hasVideo" : "hasAudio"]: true,
+            ...(mediaType === "video" ? { isScreenShare } : {}),
           };
           return updated;
         } else {
@@ -566,6 +619,7 @@ const useRemoteUsers = () => {
                   : undefined,
               hasVideo: mediaType === "video",
               hasAudio: mediaType === "audio",
+              isScreenShare: mediaType === "video" ? isScreenShare : false,
             },
           ];
         }
@@ -577,21 +631,27 @@ const useRemoteUsers = () => {
         try {
           audioTrack.play();
           audioTrack.setVolume(volume);
-          console.log(`Expert: Remote audio playing for user ${uid} at volume ${volume}`);
+          console.log(
+            `Expert: Remote audio playing for user ${uid} at volume ${volume}`,
+          );
         } catch (error) {
           console.error("Expert: Failed to play remote audio:", error);
         }
       }
     },
-    [volume]
+    [volume, isScreenShareTrack],
   );
 
   const removeRemoteUser = useCallback(
     (uid: UID, mediaType?: "video" | "audio") => {
-      console.log(`Expert: Removing remote user ${uid} ${mediaType || 'completely'}`);
+      console.log(
+        `Expert: Removing remote user ${uid} ${mediaType || "completely"}`,
+      );
 
       if (mediaType === "video" || !mediaType) {
         playingVideosRef.current[uid.toString()] = false;
+        // Clear screen share if this user was sharing
+        setRemoteScreenShareUid((prev) => (prev === uid ? null : prev));
       }
 
       setRemoteUsers((prev) => {
@@ -603,15 +663,16 @@ const useRemoteUsers = () => {
                   [mediaType === "video" ? "videoTrack" : "audioTrack"]:
                     undefined,
                   [mediaType === "video" ? "hasVideo" : "hasAudio"]: false,
+                  ...(mediaType === "video" ? { isScreenShare: false } : {}),
                 }
-              : user
+              : user,
           );
         } else {
           return prev.filter((user) => user.uid !== uid);
         }
       });
     },
-    []
+    [],
   );
 
   const playRemoteVideo = useCallback(
@@ -620,7 +681,9 @@ const useRemoteUsers = () => {
       const container = remoteVideoRefs.current[uidStr];
 
       if (!container || !videoTrack) {
-        console.log(`Expert: Cannot play remote video - container: ${!!container}, track: ${!!videoTrack}`);
+        console.log(
+          `Expert: Cannot play remote video - container: ${!!container}, track: ${!!videoTrack}`,
+        );
         return;
       }
 
@@ -639,24 +702,44 @@ const useRemoteUsers = () => {
         playingVideosRef.current[uidStr] = false;
       }
     },
-    []
+    [],
   );
 
   const setRemoteVideoRef = useCallback(
-    (uid: UID, videoTrack: IRemoteVideoTrack | undefined) => {
+    (
+      uid: UID,
+      videoTrack: IRemoteVideoTrack | undefined,
+      isScreenShare?: boolean,
+    ) => {
       return (ref: HTMLDivElement | null) => {
         const uidStr = uid.toString();
-        remoteVideoRefs.current[uidStr] = ref;
+
+        if (isScreenShare) {
+          screenShareVideoRef.current = ref;
+        } else {
+          remoteVideoRefs.current[uidStr] = ref;
+        }
 
         if (ref && videoTrack && !playingVideosRef.current[uidStr]) {
           // Use requestAnimationFrame for smooth rendering
           requestAnimationFrame(() => {
-            playRemoteVideo(uid, videoTrack);
+            try {
+              videoTrack.play(ref, {
+                fit: isScreenShare ? "contain" : "cover",
+              });
+              playingVideosRef.current[uidStr] = true;
+              console.log(
+                `Expert: Remote ${isScreenShare ? "screen share" : "video"} playing for user ${uid}`,
+              );
+            } catch (error) {
+              console.error("Expert: Failed to play remote video:", error);
+              playingVideosRef.current[uidStr] = false;
+            }
           });
         }
       };
     },
-    [playRemoteVideo]
+    [],
   );
 
   const updateVolume = useCallback(
@@ -672,7 +755,7 @@ const useRemoteUsers = () => {
         }
       });
     },
-    [remoteUsers]
+    [remoteUsers],
   );
 
   const cleanup = useCallback(() => {
@@ -704,6 +787,7 @@ const useRemoteUsers = () => {
     remoteUsers,
     volume,
     remoteVideoRefs,
+    remoteScreenShareUid,
     addRemoteUser,
     removeRemoteUser,
     playRemoteVideo,
@@ -724,7 +808,7 @@ const useChat = () => {
       sender: string,
       message: string,
       isOwn: boolean,
-      type: "system" | "user" = "user"
+      type: "system" | "user" = "user",
     ) => {
       const newMsg: ChatMessage = {
         id: Date.now().toString() + Math.random(),
@@ -736,7 +820,7 @@ const useChat = () => {
       };
       setChatMessages((prev) => [...prev, newMsg]);
     },
-    []
+    [],
   );
 
   const sendMessage = useCallback(
@@ -774,7 +858,7 @@ const useChat = () => {
         setIsMessageSending(false);
       }
     },
-    [newMessage, isMessageSending, addChatMessage]
+    [newMessage, isMessageSending, addChatMessage],
   );
 
   useEffect(() => {
@@ -796,66 +880,115 @@ const useChat = () => {
 
 const useScreenShare = () => {
   const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [screenTrack, setScreenTrack] = useState<any>(null);
   const currentScreenTrackRef = useRef<any>(null);
+  const screenVideoContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const startScreenShare = useCallback(
+    async (
+      client: IAgoraRTCClient | null,
+      localVideoTrack: ICameraVideoTrack | null,
+    ) => {
+      if (!client || isScreenSharing) return false;
+
+      try {
+        const newScreenTrack = await AgoraRTC.createScreenVideoTrack({
+          encoderConfig: "1080p_1",
+          optimizationMode: "detail",
+        });
+
+        currentScreenTrackRef.current = newScreenTrack;
+        setScreenTrack(newScreenTrack);
+
+        if (localVideoTrack) {
+          await client.unpublish([localVideoTrack]);
+        }
+
+        await client.publish([newScreenTrack]);
+        setIsScreenSharing(true);
+
+        newScreenTrack.on("track-ended", async () => {
+          try {
+            await client.unpublish([newScreenTrack]);
+            newScreenTrack.stop();
+            newScreenTrack.close();
+            currentScreenTrackRef.current = null;
+            setScreenTrack(null);
+            setIsScreenSharing(false);
+
+            if (localVideoTrack) {
+              await client.publish([localVideoTrack]);
+            }
+          } catch (error) {
+            console.error("Error ending screen share:", error);
+          }
+        });
+
+        return true;
+      } catch (error) {
+        console.error("Screen share error:", error);
+        return false;
+      }
+    },
+    [isScreenSharing],
+  );
+
+  const stopScreenShare = useCallback(
+    async (
+      client: IAgoraRTCClient | null,
+      localVideoTrack: ICameraVideoTrack | null,
+    ) => {
+      if (!client || !isScreenSharing || !currentScreenTrackRef.current) return;
+
+      try {
+        await client.unpublish([currentScreenTrackRef.current]);
+        currentScreenTrackRef.current.stop();
+        currentScreenTrackRef.current.close();
+        currentScreenTrackRef.current = null;
+        setScreenTrack(null);
+        setIsScreenSharing(false);
+
+        if (localVideoTrack) {
+          await client.publish([localVideoTrack]);
+        }
+      } catch (error) {
+        console.error("Error stopping screen share:", error);
+      }
+    },
+    [isScreenSharing],
+  );
 
   const toggleScreenShare = useCallback(
     async (
       client: IAgoraRTCClient | null,
       localVideoTrack: ICameraVideoTrack | null,
-      localVideoRef: React.RefObject<HTMLDivElement>,
-      addChatMessage: (
-        sender: string,
-        message: string,
-        isOwn: boolean,
-        type?: "system" | "user"
-      ) => void
     ) => {
-      if (!client) return;
-
-      try {
-        if (!isScreenSharing) {
-          const screenTrack = await AgoraRTC.createScreenVideoTrack({
-            encoderConfig: "1080p_1",
-            optimizationMode: "detail",
-          });
-
-          currentScreenTrackRef.current = screenTrack;
-
-          if (localVideoTrack) {
-            await client.unpublish([localVideoTrack]);
-          }
-
-          await client.publish([screenTrack]);
-          setIsScreenSharing(true);
-
-          if (localVideoRef.current) {
-            screenTrack.play(localVideoRef.current);
-          }
-
-          screenTrack.on("track-ended", async () => {
-            try {
-              await client.unpublish([screenTrack]);
-              screenTrack.stop();
-              screenTrack.close();
-              currentScreenTrackRef.current = null;
-              setIsScreenSharing(false);
-
-              if (localVideoTrack) {
-                await client.publish([localVideoTrack]);
-                if (localVideoRef.current) {
-                  localVideoTrack.play(localVideoRef.current);
-                }
-              }
-            } catch (error) {
-              console.error("Error ending screen share:", error);
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Screen share error:", error);
+      if (isScreenSharing) {
+        await stopScreenShare(client, localVideoTrack);
+      } else {
+        await startScreenShare(client, localVideoTrack);
       }
     },
-    [isScreenSharing]
+    [isScreenSharing, startScreenShare, stopScreenShare],
+  );
+
+  const playScreenShare = useCallback(
+    (container: HTMLDivElement | null) => {
+      if (!container || !screenTrack) return;
+
+      if (screenVideoContainerRef.current === container) return;
+
+      try {
+        if (screenVideoContainerRef.current) {
+          screenTrack.stop();
+        }
+        screenVideoContainerRef.current = container;
+        screenTrack.play(container, { fit: "contain" });
+      } catch (error) {
+        console.error("Failed to play screen share:", error);
+      }
+    },
+    [screenTrack],
   );
 
   const cleanup = useCallback(async () => {
@@ -870,13 +1003,19 @@ const useScreenShare = () => {
       }
       currentScreenTrackRef.current = null;
     }
+    setScreenTrack(null);
     setIsScreenSharing(false);
+    screenVideoContainerRef.current = null;
     console.log("Screen share cleanup completed");
   }, []);
 
   return {
     isScreenSharing,
+    screenTrack,
+    startScreenShare,
+    stopScreenShare,
     toggleScreenShare,
+    playScreenShare,
     cleanup,
   };
 };
@@ -900,16 +1039,34 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     "online" | "offline" | "poor"
   >("online");
   const [localVideoContainer, setLocalVideoContainer] = useState<
-    "waiting" | "grid" | null
+    "waiting" | "grid" | "thumbnail" | null
   >(null);
   const [isRecording, setIsRecording] = useState(false);
   const [sessionNotes, setSessionNotes] = useState("");
 
   const localVideoRef = useRef<HTMLDivElement>(null);
   const waitingLocalVideoRef = useRef<HTMLDivElement>(null);
+  const screenShareRef = useRef<HTMLDivElement>(null);
   const callStartTime = useRef<number>(0);
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
   const isCleaningUp = useRef(false);
+
+  // Determine if anyone is screen sharing
+  const isAnyoneScreenSharing =
+    screenShare.isScreenSharing || remoteUsers.remoteScreenShareUid !== null;
+  const screenShareUser = screenShare.isScreenSharing
+    ? {
+        uid: agoraConnection.myUIDRef.current || 0,
+        isLocal: true,
+        username: "You (Expert)",
+      }
+    : remoteUsers.remoteScreenShareUid
+      ? {
+          uid: remoteUsers.remoteScreenShareUid,
+          isLocal: false,
+          username: booking.player.username || "Student",
+        }
+      : null;
 
   const getUsername = useCallback(
     (uid: UID): string => {
@@ -918,7 +1075,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       }
       return booking.player.username || "Student";
     },
-    [agoraConnection.myUIDRef, booking]
+    [agoraConnection.myUIDRef, booking],
   );
 
   const allParticipants = useMemo<Participant[]>(() => {
@@ -976,7 +1133,9 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
             // Subscribe to high quality stream by default (0 = high, 1 = low)
             try {
               await client.setRemoteVideoStreamType(user.uid, 0);
-              console.log(`Expert: Set high quality stream for user ${user.uid}`);
+              console.log(
+                `Expert: Set high quality stream for user ${user.uid}`,
+              );
             } catch (streamError) {
               console.warn("Expert: Failed to set stream type:", streamError);
             }
@@ -1015,7 +1174,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         (
           curState: ConnectionState,
           revState: ConnectionState,
-          reason?: ConnectionDisconnectedReason
+          reason?: ConnectionDisconnectedReason,
         ) => {
           console.log("Connection state change:", {
             curState,
@@ -1032,13 +1191,13 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               agoraConnection.handleAutoReconnect();
             }
           }
-        }
+        },
       );
 
       client.on("network-quality", (stats) => {
         const quality = Math.max(
           stats.downlinkNetworkQuality,
-          stats.uplinkNetworkQuality
+          stats.uplinkNetworkQuality,
         );
 
         // Quality levels: 0-unknown, 1-excellent, 2-good, 3-poor, 4-bad, 5-very bad, 6-down
@@ -1048,7 +1207,10 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           if (quality >= 5 && localTracks.currentVideoQuality !== "360p") {
             localTracks.changeVideoQuality("360p");
             console.log("Expert: Network quality very poor, switching to 360p");
-          } else if (quality === 4 && localTracks.currentVideoQuality === "720p") {
+          } else if (
+            quality === 4 &&
+            localTracks.currentVideoQuality === "720p"
+          ) {
             localTracks.changeVideoQuality("480p");
             console.log("Expert: Network quality poor, switching to 480p");
           }
@@ -1058,7 +1220,10 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           if (localTracks.currentVideoQuality === "360p") {
             localTracks.changeVideoQuality("480p");
             console.log("Expert: Network quality good, upgrading to 480p");
-          } else if (quality === 1 && localTracks.currentVideoQuality === "480p") {
+          } else if (
+            quality === 1 &&
+            localTracks.currentVideoQuality === "480p"
+          ) {
             localTracks.changeVideoQuality("720p");
             console.log("Expert: Network quality excellent, upgrading to 720p");
           }
@@ -1091,13 +1256,15 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         }
       });
     },
-    [agoraConnection, remoteUsers, chat, localTracks]
+    [agoraConnection, remoteUsers, chat, localTracks],
   );
 
   const initializeAgora = useCallback(async () => {
     // Prevent double initialization
     if (!agora || agoraConnection.isInitializingRef.current) {
-      console.log("Expert: Skipping initialization - already initializing or no agora config");
+      console.log(
+        "Expert: Skipping initialization - already initializing or no agora config",
+      );
       return;
     }
 
@@ -1118,21 +1285,21 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     // Validate required fields
     if (!agora.token || agora.token.trim() === "") {
       agoraConnection.setConnectionError(
-        "Invalid session token. Please refresh the page and try again."
+        "Invalid session token. Please refresh the page and try again.",
       );
       return;
     }
 
     if (!agora.channel || agora.channel.trim() === "") {
       agoraConnection.setConnectionError(
-        "Invalid channel configuration. Please refresh the page and try again."
+        "Invalid channel configuration. Please refresh the page and try again.",
       );
       return;
     }
 
     if (!agora.uid || agora.uid <= 0) {
       agoraConnection.setConnectionError(
-        "Invalid user ID. Please refresh the page and try again."
+        "Invalid user ID. Please refresh the page and try again.",
       );
       return;
     }
@@ -1153,12 +1320,17 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
       // Clean up any existing client before creating a new one
       if (agoraConnection.client) {
-        console.log("Expert: Cleaning up existing client before reinitializing");
+        console.log(
+          "Expert: Cleaning up existing client before reinitializing",
+        );
         try {
           agoraConnection.client.removeAllListeners();
           await agoraConnection.client.leave();
         } catch (cleanupError) {
-          console.warn("Expert: Error cleaning up existing client:", cleanupError);
+          console.warn(
+            "Expert: Error cleaning up existing client:",
+            cleanupError,
+          );
         }
       }
 
@@ -1172,7 +1344,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           import.meta.env.VITE_AGORA_APP_ID,
           agora.channel,
           agora.token,
-          agora.uid
+          agora.uid,
         );
 
         console.log("Expert successfully joined with UID:", uid);
@@ -1183,9 +1355,11 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           await agoraClient.enableDualStream();
           console.log("Expert: Dual stream enabled for adaptive quality");
         } catch (dualStreamError) {
-          console.warn("Expert: Failed to enable dual stream:", dualStreamError);
+          console.warn(
+            "Expert: Failed to enable dual stream:",
+            dualStreamError,
+          );
         }
-
       } catch (joinError: any) {
         console.error("Expert join failed:", joinError);
 
@@ -1194,14 +1368,14 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           joinError.code === "TOKEN_EXPIRED"
         ) {
           agoraConnection.setConnectionError(
-            "Session token is invalid or expired. Please refresh the page."
+            "Session token is invalid or expired. Please refresh the page.",
           );
           agoraConnection.isInitializingRef.current = false;
           agoraConnection.setIsConnecting(false);
           return;
         } else if (joinError.code === "CAN_NOT_GET_GATEWAY_SERVER") {
           agoraConnection.setConnectionError(
-            "Invalid token - authorization failed. Please refresh the page."
+            "Invalid token - authorization failed. Please refresh the page.",
           );
           agoraConnection.isInitializingRef.current = false;
           agoraConnection.setIsConnecting(false);
@@ -1211,7 +1385,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
           // Since tokens are UID-bound, we cannot use a different UID
           // This usually means the user has multiple tabs open or previous session wasn't cleaned up
           agoraConnection.setConnectionError(
-            "You are already connected in another tab or window. Please close other sessions and try again."
+            "You are already connected in another tab or window. Please close other sessions and try again.",
           );
           agoraConnection.isInitializingRef.current = false;
           agoraConnection.setIsConnecting(false);
@@ -1225,7 +1399,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       if (tracks.length > 0) {
         console.log(
           "Expert publishing tracks:",
-          tracks.map((t) => t.trackMediaType)
+          tracks.map((t) => t.trackMediaType),
         );
         await agoraClient.publish(tracks);
       }
@@ -1239,7 +1413,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     } catch (error: any) {
       console.error("Failed to initialize Expert Agora:", error);
       agoraConnection.setConnectionError(
-        error.message || "Failed to connect. Please try again."
+        error.message || "Failed to connect. Please try again.",
       );
       agoraConnection.setIsConnecting(false);
     } finally {
@@ -1252,11 +1426,16 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     let mounted = true;
 
     const init = async () => {
-      if (isOpen && agora && !agoraConnection.isInitializingRef.current && !agoraConnection.isJoined) {
+      if (
+        isOpen &&
+        agora &&
+        !agoraConnection.isInitializingRef.current &&
+        !agoraConnection.isJoined
+      ) {
         // Validate agora object before initializing
         if (!agora.token || !agora.channel || !agora.uid) {
           agoraConnection.setConnectionError(
-            "Missing session configuration. Please refresh the page and try again."
+            "Missing session configuration. Please refresh the page and try again.",
           );
           return;
         }
@@ -1272,7 +1451,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       mounted = false;
       if (!isOpen) {
         console.log(
-          "Expert modal closed or component unmounting, running cleanup..."
+          "Expert modal closed or component unmounting, running cleanup...",
         );
         cleanup().catch(console.error);
       }
@@ -1354,11 +1533,23 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       return;
     }
 
-    const shouldShowInWaiting = remoteUsers.remoteUsers.length === 0;
-    const targetContainer = shouldShowInWaiting
-      ? waitingLocalVideoRef.current
-      : localVideoRef.current;
-    const expectedContainer = shouldShowInWaiting ? "waiting" : "grid";
+    // Determine where to play local video based on current state
+    let targetContainer: HTMLDivElement | null = null;
+    let expectedContainer: "waiting" | "grid" | "thumbnail" | null = null;
+
+    if (isAnyoneScreenSharing && remoteUsers.remoteUsers.length > 0) {
+      // Screen sharing active with remote users - play in thumbnail
+      targetContainer = localVideoRef.current;
+      expectedContainer = "thumbnail";
+    } else if (remoteUsers.remoteUsers.length === 0) {
+      // No remote users - play in waiting area
+      targetContainer = waitingLocalVideoRef.current;
+      expectedContainer = "waiting";
+    } else {
+      // Normal call with remote users - play in grid
+      targetContainer = localVideoRef.current;
+      expectedContainer = "grid";
+    }
 
     if (targetContainer && localVideoContainer !== expectedContainer) {
       // Use requestAnimationFrame for smoother rendering
@@ -1374,6 +1565,23 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     localVideoContainer,
     localTracks.playLocalVideo,
     localTracks.stopLocalVideo,
+    screenShare.isScreenSharing,
+    isAnyoneScreenSharing,
+  ]);
+
+  // Handle local screen share playback
+  useEffect(() => {
+    if (
+      screenShare.isScreenSharing &&
+      screenShare.screenTrack &&
+      screenShareRef.current
+    ) {
+      screenShare.playScreenShare(screenShareRef.current);
+    }
+  }, [
+    screenShare.isScreenSharing,
+    screenShare.screenTrack,
+    screenShare.playScreenShare,
   ]);
 
   useEffect(() => {
@@ -1381,7 +1589,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       callStartTime.current = Date.now();
       durationInterval.current = setInterval(() => {
         setCallDuration(
-          Math.floor((Date.now() - callStartTime.current) / 1000)
+          Math.floor((Date.now() - callStartTime.current) / 1000),
         );
       }, 1000);
     }
@@ -1393,7 +1601,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       }
     };
   }, [agoraConnection.isJoined]);
-
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -1420,7 +1627,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     const handleOffline = () => {
       setNetworkStatus("offline");
       agoraConnection.setConnectionError(
-        "You are offline. Please check your internet connection."
+        "You are offline. Please check your internet connection.",
       );
     };
 
@@ -1432,11 +1639,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       window.removeEventListener("offline", handleOffline);
     };
   }, [agora, agoraConnection, initializeAgora]);
-
-  const getGridCols = (participantCount: number) => {
-    if (participantCount === 1) return "grid-cols-1";
-    return "grid-cols-2";
-  };
 
   const getSessionProgress = () => {
     const startDate = new Date(booking.startAt);
@@ -1481,8 +1683,6 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     screenShare.toggleScreenShare(
       agoraConnection.client,
       localTracks.localVideoTrack,
-      localVideoRef,
-      chat.addChatMessage
     );
   };
 
@@ -1587,8 +1787,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 networkStatus === "offline"
                   ? "text-red-500"
                   : networkStatus === "poor"
-                  ? "text-yellow-500"
-                  : "text-green-500"
+                    ? "text-yellow-500"
+                    : "text-green-500"
               }`}
             >
               <FontAwesomeIcon
@@ -1596,8 +1796,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   networkStatus === "offline"
                     ? faSignal
                     : networkStatus === "poor"
-                    ? faExclamationTriangle
-                    : faWifi
+                      ? faExclamationTriangle
+                      : faWifi
                 }
               />
               <span className="capitalize font-medium">{networkStatus}</span>
@@ -1611,8 +1811,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 {agoraConnection.isConnecting
                   ? "Connecting..."
                   : agoraConnection.isJoined
-                  ? "Expert Ready"
-                  : "Disconnected"}
+                    ? "Expert Ready"
+                    : "Disconnected"}
               </span>
             </div>
 
@@ -1687,11 +1887,131 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
               showChat ? "flex-1" : "w-full"
             } flex flex-col relative`}
           >
-            <div className="flex-1 relative bg-gradient-to-br from-green-100 to-emerald-100 p-4">
-              {remoteUsers.remoteUsers.length === 0 ? (
-                <div className="w-full h-full flex gap-24 items-center justify-center">
+            <div className="flex-1 relative bg-gradient-to-br from-green-100 to-emerald-100 p-2 sm:p-4">
+              {/* Screen Share Layout - When someone is sharing screen */}
+              {isAnyoneScreenSharing && remoteUsers.remoteUsers.length > 0 ? (
+                <div className="w-full h-full flex flex-col lg:flex-row gap-2 sm:gap-4">
+                  {/* Main Screen Share Area */}
+                  <div className="flex-1 relative bg-black rounded-xl overflow-hidden shadow-2xl min-h-0">
+                    {screenShare.isScreenSharing ? (
+                      // Local screen share
+                      <div
+                        ref={screenShareRef}
+                        className="w-full h-full"
+                        style={{ backgroundColor: "#1a1a1a" }}
+                      />
+                    ) : (
+                      // Remote screen share
+                      remoteUsers.remoteUsers
+                        .filter((u) => u.isScreenShare && u.videoTrack)
+                        .map((user) => (
+                          <div
+                            key={`screen-${user.uid}`}
+                            ref={remoteUsers.setRemoteVideoRef(
+                              user.uid,
+                              user.videoTrack,
+                              true,
+                            )}
+                            className="w-full h-full"
+                            style={{ backgroundColor: "#1a1a1a" }}
+                          />
+                        ))
+                    )}
+                    {/* Screen Share Label */}
+                    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-blue-500 text-white px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-medium shadow-lg flex items-center space-x-1 sm:space-x-2">
+                      <FontAwesomeIcon icon={faDesktop} />
+                      <span className="hidden sm:inline">
+                        {screenShareUser?.isLocal
+                          ? "You are sharing"
+                          : `${screenShareUser?.username} is sharing`}
+                      </span>
+                      <span className="sm:hidden">Screen</span>
+                    </div>
+                  </div>
+
+                  {/* Floating Video Thumbnails Panel */}
+                  <div className="lg:w-48 xl:w-56 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden pb-2 lg:pb-0 shrink-0">
+                    {/* Local video thumbnail - shows camera even when sharing screen */}
+                    <div className="relative bg-black rounded-xl overflow-hidden shadow-lg shrink-0 w-32 h-24 sm:w-40 sm:h-28 lg:w-full lg:h-32 xl:h-36">
+                      {localTracks.localVideoTrack && !localTracks.isVideoMuted ? (
+                        <div ref={localVideoRef} className="w-full h-full" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-200 to-emerald-200">
+                          <img
+                            src={booking.expert.photo}
+                            alt="You"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white shadow"
+                          />
+                        </div>
+                      )}
+                      <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs flex items-center space-x-1">
+                        <FontAwesomeIcon
+                          icon={faChalkboardTeacher}
+                          className="text-green-400"
+                        />
+                        <span className="hidden sm:inline">You</span>
+                        {localTracks.isAudioMuted && (
+                          <FontAwesomeIcon
+                            icon={faMicrophoneSlash}
+                            className="text-red-400"
+                          />
+                        )}
+                      </div>
+                      <div className="absolute top-1 right-1 bg-green-500 text-white px-1.5 py-0.5 rounded text-[10px]">
+                        Expert
+                      </div>
+                    </div>
+
+                    {/* Remote user thumbnails (exclude screen share) */}
+                    {remoteUsers.remoteUsers
+                      .filter((u) => !u.isScreenShare)
+                      .map((user) => (
+                        <div
+                          key={user.uid}
+                          className="relative bg-black rounded-xl overflow-hidden shadow-lg shrink-0 w-32 h-24 sm:w-40 sm:h-28 lg:w-full lg:h-32 xl:h-36"
+                        >
+                          {user.hasVideo && user.videoTrack ? (
+                            <div
+                              ref={remoteUsers.setRemoteVideoRef(
+                                user.uid,
+                                user.videoTrack,
+                              )}
+                              className="w-full h-full"
+                              style={{ backgroundColor: "#1a1a1a" }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-200 to-indigo-200">
+                              <img
+                                src={booking.player.photo}
+                                alt={booking.player.username}
+                                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white shadow"
+                              />
+                            </div>
+                          )}
+                          <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs flex items-center space-x-1">
+                            <FontAwesomeIcon
+                              icon={faGraduationCap}
+                              className="text-blue-400"
+                            />
+                            <span className="hidden sm:inline truncate max-w-16">
+                              {booking.player.username}
+                            </span>
+                            {!user.hasAudio && (
+                              <FontAwesomeIcon
+                                icon={faMicrophoneSlash}
+                                className="text-red-400"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ) : remoteUsers.remoteUsers.length === 0 ? (
+                /* Waiting State - No remote users */
+                <div className="w-full h-full flex flex-col sm:flex-row gap-6 sm:gap-12 lg:gap-24 items-center justify-center p-4">
                   {localTracks.localVideoTrack && !localTracks.isVideoMuted ? (
-                    <div className="w-80 h-60 bg-black rounded-xl overflow-hidden shadow-lg mb-6 relative">
+                    <div className="w-full max-w-xs sm:w-64 md:w-72 lg:w-80 aspect-[4/3] bg-black rounded-xl overflow-hidden shadow-lg relative shrink-0">
                       <div
                         ref={waitingLocalVideoRef}
                         className="w-full h-full"
@@ -1714,18 +2034,18 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         Preview
                       </div>
                       <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs">
-                        Quality: {localTracks.currentVideoQuality}
+                        {localTracks.currentVideoQuality}
                       </div>
                     </div>
                   ) : (
-                    <div className="w-80 h-60 bg-gradient-to-br from-green-200 to-emerald-200 rounded-xl flex items-center justify-center mb-6 shadow-lg">
+                    <div className="w-full max-w-xs sm:w-64 md:w-72 lg:w-80 aspect-[4/3] bg-gradient-to-br from-green-200 to-emerald-200 rounded-xl flex items-center justify-center shadow-lg shrink-0">
                       <div className="text-center">
                         <img
                           src={booking.expert.photo}
                           alt={booking.expert.username}
-                          className="w-16 h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
+                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
                         />
-                        <p className="text-sm text-gray-700 font-medium">
+                        <p className="text-xs sm:text-sm text-gray-700 font-medium">
                           {!localTracks.localVideoTrack
                             ? "Camera Access Denied"
                             : "Camera Off"}
@@ -1734,21 +2054,21 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                     </div>
                   )}
 
-                  <div className="text-center">
-                    <div className="w-20 h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-4">
+                  <div className="text-center shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
                       <FontAwesomeIcon
                         icon={faGraduationCap}
-                        className="text-3xl text-green-500"
+                        className="text-2xl sm:text-3xl text-green-500"
                       />
                     </div>
-                    <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2">
                       Waiting for {booking.player.username}
                     </h3>
-                    <p className="text-gray-500 text-sm mb-4">
-                      Your student will join the expert session shortly...
+                    <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">
+                      Your student will join shortly...
                     </p>
 
-                    <div className="bg-white bg-opacity-90 backdrop-blur rounded-lg p-4 max-w-md mx-auto shadow-lg">
+                    <div className="bg-white bg-opacity-90 backdrop-blur rounded-lg p-3 sm:p-4 max-w-md mx-auto shadow-lg">
                       <div className="text-xs text-gray-600 space-y-2">
                         <p className="flex items-center justify-center">
                           <FontAwesomeIcon
@@ -1756,7 +2076,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                             className="mr-2 text-green-500"
                           />
                           <span className="font-medium">Session:</span>
-                          <span className="ml-1">
+                          <span className="ml-1 truncate">
                             {booking.service.service.name}
                           </span>
                         </p>
@@ -1778,23 +2098,13 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                             })}
                           </span>
                         </p>
-                        <p className="flex items-center justify-center">
-                          <FontAwesomeIcon
-                            icon={faGraduationCap}
-                            className="mr-2 text-purple-500"
-                          />
-                          <span className="font-medium">Student:</span>
-                          <span className="ml-1">
-                            {booking.player.username}
-                          </span>
-                        </p>
                         {agoraConnection.isJoined && (
-                          <p className="text-green-600 mt-3 flex items-center justify-center font-medium">
+                          <p className="text-green-600 mt-2 sm:mt-3 flex items-center justify-center font-medium">
                             <FontAwesomeIcon
                               icon={faCheckCircle}
                               className="mr-1"
                             />
-                            Expert connected and ready to teach
+                            Ready to teach
                           </p>
                         )}
                       </div>
@@ -1802,15 +2112,18 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   </div>
                 </div>
               ) : (
+                /* Normal Grid Layout - When not screen sharing */
                 <div
-                  className={`w-full h-full grid ${getGridCols(
-                    allParticipants.length
-                  )} gap-4 auto-rows-fr`}
+                  className={`w-full h-full grid gap-2 sm:gap-4 auto-rows-fr ${
+                    allParticipants.length === 1
+                      ? "grid-cols-1"
+                      : "grid-cols-1 sm:grid-cols-2"
+                  }`}
                 >
                   {allParticipants.map((participant) => (
                     <div
                       key={participant.uid}
-                      className="relative bg-black rounded-xl overflow-hidden shadow-lg"
+                      className="relative bg-black rounded-xl overflow-hidden shadow-lg min-h-[200px] sm:min-h-0"
                     >
                       {participant.isLocal ? (
                         <div
@@ -1824,9 +2137,9 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                                 <img
                                   src={participant.photo}
                                   alt={participant.username}
-                                  className="w-16 h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
+                                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
                                 />
-                                <p className="text-sm text-white font-medium">
+                                <p className="text-xs sm:text-sm text-white font-medium">
                                   {!localTracks.localVideoTrack
                                     ? "Camera Access Denied"
                                     : "Camera Off"}
@@ -1841,7 +2154,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                             <div
                               ref={remoteUsers.setRemoteVideoRef(
                                 participant.uid,
-                                participant.videoTrack
+                                participant.videoTrack,
                               )}
                               className="w-full h-full"
                               style={{ backgroundColor: "#1a1a1a" }}
@@ -1852,10 +2165,10 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                                 <img
                                   src={participant.photo}
                                   alt={participant.username}
-                                  className="w-16 h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
+                                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
                                 />
-                                <p className="text-sm text-gray-700 font-medium">
-                                  Student camera is off
+                                <p className="text-xs sm:text-sm text-gray-700 font-medium">
+                                  Camera is off
                                 </p>
                               </div>
                             </div>
@@ -1876,7 +2189,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                               : "text-blue-400"
                           }
                         />
-                        <span className="font-medium">
+                        <span className="font-medium truncate max-w-24 sm:max-w-none">
                           {participant.username}
                         </span>
                         {!participant.hasAudio && (
@@ -1889,7 +2202,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
 
                       {participant.isLocal && (
                         <div className="absolute top-2 right-2 bg-green-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
-                          Expert {screenShare.isScreenSharing && "(Screen)"}
+                          Expert
                         </div>
                       )}
 
@@ -1905,32 +2218,38 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 </div>
               )}
 
-              <div className="absolute top-4 left-4">
-                <div className="bg-white bg-opacity-90 backdrop-blur text-gray-700 px-3 py-2 rounded-full shadow-lg border border-green-100 text-sm">
+              {/* Participants Badge */}
+              <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                <div className="bg-white bg-opacity-90 backdrop-blur text-gray-700 px-2 sm:px-3 py-1 sm:py-2 rounded-full shadow-lg border border-green-100 text-xs sm:text-sm">
                   <FontAwesomeIcon
                     icon={faUsers}
-                    className="mr-2 text-green-500"
+                    className="mr-1 sm:mr-2 text-green-500"
                   />
                   <span className="font-medium">
-                    {allParticipants.length} participant
-                    {allParticipants.length !== 1 ? "s" : ""}
+                    {allParticipants.length}
+                    <span className="hidden sm:inline">
+                      {" "}
+                      participant{allParticipants.length !== 1 ? "s" : ""}
+                    </span>
                   </span>
                 </div>
               </div>
-              <div className="absolute top-4 right-4">
-                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg flex items-center space-x-2">
+
+              {/* Expert Mode Badge */}
+              <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
+                <div className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center space-x-1 sm:space-x-2">
                   <FontAwesomeIcon icon={faStar} />
-                  <span>Expert Mode</span>
+                  <span className="hidden sm:inline">Expert Mode</span>
                 </div>
               </div>
             </div>
 
-            <div className="p-4 bg-white border-t border-gray-200">
-              <div className="flex items-center justify-center space-x-4">
+            <div className="p-2 sm:p-4 bg-white border-t border-gray-200">
+              <div className="flex items-center justify-center space-x-2 sm:space-x-4 flex-wrap gap-y-2 sm:gap-y-0">
                 <button
                   onClick={handleToggleAudio}
                   disabled={!localTracks.localAudioTrack}
-                  className={`w-12 h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
                     localTracks.isAudioMuted || !localTracks.localAudioTrack
                       ? "bg-red-500 hover:bg-red-600 text-white"
                       : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
@@ -1948,7 +2267,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 <button
                   onClick={handleToggleVideo}
                   disabled={!localTracks.localVideoTrack}
-                  className={`w-12 h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
                     localTracks.isVideoMuted || !localTracks.localVideoTrack
                       ? "bg-red-500 hover:bg-red-600 text-white"
                       : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
@@ -1966,11 +2285,16 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 <button
                   onClick={handleScreenShare}
                   disabled={!agoraConnection.isJoined}
-                  className={`w-12 h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
                     screenShare.isScreenSharing
                       ? "bg-blue-500 hover:bg-blue-600 text-white"
                       : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
                   }`}
+                  title={
+                    screenShare.isScreenSharing
+                      ? "Stop sharing"
+                      : "Share screen"
+                  }
                 >
                   <FontAwesomeIcon icon={faDesktop} />
                 </button>
@@ -1978,7 +2302,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 <button
                   onClick={toggleRecording}
                   disabled={!agoraConnection.isJoined}
-                  className={`w-12 h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed ${
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base hidden sm:flex items-center justify-center ${
                     isRecording
                       ? "bg-red-500 hover:bg-red-600 text-white"
                       : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
@@ -1987,7 +2311,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                   <FontAwesomeIcon icon={isRecording ? faStop : faPlay} />
                 </button>
 
-                <div className="flex items-center space-x-2 bg-white rounded-full px-3 py-2 shadow-lg border-2 border-gray-200">
+                <div className="hidden sm:flex items-center space-x-2 bg-white rounded-full px-3 py-2 shadow-lg border-2 border-gray-200">
                   <FontAwesomeIcon
                     icon={faVolumeDown}
                     className="text-gray-500 text-sm"
@@ -2014,7 +2338,7 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                 {/* End Call */}
                 <button
                   onClick={handleEndCall}
-                  className="w-12 h-12 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-200 shadow-lg"
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-200 shadow-lg text-sm sm:text-base"
                 >
                   <FontAwesomeIcon
                     icon={faPhone}
@@ -2061,8 +2385,8 @@ const ExpertAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
                         msg.isOwn
                           ? "bg-green-500 text-white rounded-br-sm"
                           : msg.type === "system"
-                          ? "bg-gray-200 text-gray-700 rounded-bl-sm"
-                          : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
+                            ? "bg-gray-200 text-gray-700 rounded-bl-sm"
+                            : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
                       }`}
                     >
                       {!msg.isOwn && msg.type !== "system" && (
