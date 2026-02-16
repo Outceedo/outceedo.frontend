@@ -152,6 +152,8 @@ const useAgoraConnection = (agora?: Agora) => {
   const myUIDRef = useRef<number | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const statsIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const clientRef = useRef<IAgoraRTCClient | null>(null);
+  const hasJoinedRef = useRef(false);
 
   const createAgoraClient = useCallback(() => {
     try {
@@ -243,7 +245,9 @@ const useAgoraConnection = (agora?: Agora) => {
   ]);
 
   const cleanup = useCallback(async () => {
+    console.log("Player: Agora connection cleanup starting...");
     isInitializingRef.current = false;
+    hasJoinedRef.current = false;
     setIsConnecting(false);
     setIsJoined(false);
     setConnectionError(null);
@@ -256,16 +260,23 @@ const useAgoraConnection = (agora?: Agora) => {
 
     stopStatsMonitoring();
 
-    if (client) {
+    // Use clientRef for cleanup to avoid stale closure issues
+    const clientToClean = clientRef.current || client;
+    if (clientToClean) {
       try {
-        await client.leave();
+        // Remove all event listeners first
+        clientToClean.removeAllListeners();
+        await clientToClean.leave();
+        console.log("Player: Agora client left successfully");
       } catch (error) {
-        console.warn("Error leaving client:", error);
+        console.warn("Player: Error leaving client:", error);
       }
+      clientRef.current = null;
       setClient(null);
     }
 
     myUIDRef.current = null;
+    console.log("Player: Agora connection cleanup completed");
   }, [client, stopStatsMonitoring]);
 
   return {
@@ -781,16 +792,47 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
   const durationInterval = useRef<NodeJS.Timeout | null>(null);
 
   const initializeAgora = useCallback(async () => {
+    // Prevent double initialization
     if (!agora || agoraConnection.isInitializingRef.current) {
+      console.log("Player: Skipping initialization - already initializing or no agora config");
       return;
     }
 
-    console.log("Initializing Agora with:", {
+    // Check if already joined
+    if (agoraConnection.client && agoraConnection.isJoined) {
+      console.log("Player: Already joined, skipping initialization");
+      return;
+    }
+
+    console.log("Initializing Player Agora with:", {
       appId: import.meta.env.VITE_AGORA_APP_ID,
       channel: agora.channel,
       token: agora.token ? "present" : "missing",
+      tokenLength: agora.token?.length || 0,
       uid: agora.uid,
     });
+
+    // Validate required fields
+    if (!agora.token || agora.token.trim() === "") {
+      agoraConnection.setConnectionError(
+        "Invalid session token. Please refresh the page and try again."
+      );
+      return;
+    }
+
+    if (!agora.channel || agora.channel.trim() === "") {
+      agoraConnection.setConnectionError(
+        "Invalid channel configuration. Please refresh the page and try again."
+      );
+      return;
+    }
+
+    if (!agora.uid || agora.uid <= 0) {
+      agoraConnection.setConnectionError(
+        "Invalid user ID. Please refresh the page and try again."
+      );
+      return;
+    }
 
     agoraConnection.isInitializingRef.current = true;
     agoraConnection.setIsConnecting(true);
@@ -806,50 +848,80 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
         throw new Error("Camera and microphone permissions are required");
       }
 
+      // Clean up any existing client before creating a new one
+      if (agoraConnection.client) {
+        console.log("Player: Cleaning up existing client before reinitializing");
+        try {
+          agoraConnection.client.removeAllListeners();
+          await agoraConnection.client.leave();
+        } catch (cleanupError) {
+          console.warn("Player: Error cleaning up existing client:", cleanupError);
+        }
+      }
+
       const agoraClient = agoraConnection.createAgoraClient();
       setupAgoraEventHandlers(agoraClient);
 
-      let joinSuccess = false;
-      let currentUID = agora.uid;
+      try {
+        console.log("Player join attempt with UID:", agora.uid);
 
-      for (let attempt = 0; attempt < 3 && !joinSuccess; attempt++) {
+        const uid = await agoraClient.join(
+          import.meta.env.VITE_AGORA_APP_ID,
+          agora.channel,
+          agora.token,
+          agora.uid
+        );
+
+        console.log("Player successfully joined with UID:", uid);
+        agoraConnection.myUIDRef.current = uid as number;
+
+        // Enable dual stream AFTER successful join
         try {
-          console.log(`Join attempt ${attempt + 1} with UID:`, currentUID);
+          await agoraClient.enableDualStream();
+          console.log("Player: Dual stream enabled for adaptive quality");
+        } catch (dualStreamError) {
+          console.warn("Player: Failed to enable dual stream:", dualStreamError);
+        }
 
-          const uid = await agoraClient.join(
-            import.meta.env.VITE_AGORA_APP_ID,
-            agora.channel,
-            agora.token || null,
-            currentUID
+      } catch (joinError: any) {
+        console.error("Player join failed:", joinError);
+
+        if (
+          joinError.code === "INVALID_TOKEN" ||
+          joinError.code === "TOKEN_EXPIRED"
+        ) {
+          agoraConnection.setConnectionError(
+            "Session token is invalid or expired. Please refresh the page."
           );
-
-          console.log("Successfully joined with UID:", uid);
-          agoraConnection.myUIDRef.current = uid as number;
-          joinSuccess = true;
-        } catch (joinError: any) {
-          console.error(`Join attempt ${attempt + 1} failed:`, joinError);
-
-          if (
-            joinError.code === "INVALID_TOKEN" ||
-            joinError.code === "TOKEN_EXPIRED"
-          ) {
-            agoraConnection.setConnectionError(
-              "Session token is invalid or expired. Please refresh the page."
-            );
-            return;
-          } else if (joinError.code === "UID_CONFLICT") {
-            currentUID = Math.floor(Math.random() * 1000000);
-            console.log("UID conflict, trying with new UID:", currentUID);
-          } else if (attempt === 2) {
-            throw joinError;
-          }
+          agoraConnection.isInitializingRef.current = false;
+          agoraConnection.setIsConnecting(false);
+          return;
+        } else if (joinError.code === "CAN_NOT_GET_GATEWAY_SERVER") {
+          agoraConnection.setConnectionError(
+            "Invalid token - authorization failed. Please refresh the page."
+          );
+          agoraConnection.isInitializingRef.current = false;
+          agoraConnection.setIsConnecting(false);
+          return;
+        } else if (joinError.code === "UID_CONFLICT") {
+          // UID conflict means someone with this UID is already in the channel
+          // Since tokens are UID-bound, we cannot use a different UID
+          // This usually means the user has multiple tabs open or previous session wasn't cleaned up
+          agoraConnection.setConnectionError(
+            "You are already connected in another tab or window. Please close other sessions and try again."
+          );
+          agoraConnection.isInitializingRef.current = false;
+          agoraConnection.setIsConnecting(false);
+          return;
+        } else {
+          throw joinError;
         }
       }
 
       const tracks = await localTracks.createLocalTracks();
       if (tracks.length > 0) {
         console.log(
-          "Publishing tracks:",
+          "Player publishing tracks:",
           tracks.map((t) => t.trackMediaType)
         );
         await agoraClient.publish(tracks);
@@ -860,9 +932,9 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
       agoraConnection.setIsConnecting(false);
       agoraConnection.startStatsMonitoring(agoraClient);
 
-      console.log("Agora initialization completed successfully");
+      console.log("Player Agora initialization completed successfully");
     } catch (error: any) {
-      console.error("Failed to initialize Agora:", error);
+      console.error("Failed to initialize Player Agora:", error);
       agoraConnection.setConnectionError(
         error.message || "Failed to connect. Please try again."
       );
@@ -870,16 +942,11 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     } finally {
       agoraConnection.isInitializingRef.current = false;
     }
-  }, [agora, agoraConnection, localTracks]);
+  }, [agora, agoraConnection, localTracks, setupAgoraEventHandlers]);
 
   const setupAgoraEventHandlers = useCallback(
     (client: IAgoraRTCClient) => {
-      // Enable dual stream for adaptive quality
-      client.enableDualStream().then(() => {
-        console.log("Dual stream enabled for adaptive quality");
-      }).catch((error) => {
-        console.warn("Failed to enable dual stream:", error);
-      });
+      // NOTE: enableDualStream is now called after successful join in initializeAgora
 
       client.on("user-published", async (user, mediaType) => {
         if (user.uid === agoraConnection.myUIDRef.current) return;
@@ -1060,17 +1127,37 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     };
   }, [agoraConnection.isJoined]);
 
+  // Main initialization effect - only run when modal opens
   useEffect(() => {
-    if (isOpen && agora && !agoraConnection.isInitializingRef.current) {
-      initializeAgora();
-    }
+    let mounted = true;
 
-    return () => {
-      if (!isOpen) {
-        cleanup();
+    const init = async () => {
+      if (isOpen && agora && !agoraConnection.isInitializingRef.current && !agoraConnection.isJoined) {
+        // Validate agora object before initializing
+        if (!agora.token || !agora.channel || !agora.uid) {
+          agoraConnection.setConnectionError(
+            "Missing session configuration. Please refresh the page and try again."
+          );
+          return;
+        }
+        if (mounted) {
+          await initializeAgora();
+        }
       }
     };
-  }, [isOpen, agora, initializeAgora]);
+
+    init();
+
+    return () => {
+      mounted = false;
+      if (!isOpen) {
+        console.log(
+          "Player modal closed or component unmounting, running cleanup..."
+        );
+        cleanup().catch(console.error);
+      }
+    };
+  }, [isOpen, agora?.channel]); // Only depend on isOpen and channel to prevent re-initialization
 
   useEffect(() => {
     const handleOnline = () => {
