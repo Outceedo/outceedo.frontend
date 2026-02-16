@@ -942,7 +942,8 @@ const PlayerAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
     } finally {
       agoraConnection.isInitializingRef.current = false;
     }
-  }, [agora, agoraConnection, localTracks, setupAgoraEventHandlers]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agora, agoraConnection, localTracks]);
 
   const setupAgoraEventHandlers = useCallback(
     (client: IAgoraRTCClient) => {
