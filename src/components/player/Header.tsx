@@ -286,8 +286,8 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
               <div
                 className={`border-2 rounded-xl p-6 flex flex-col items-center justify-between h-full relative ${
                   isPremiumUser
-                    ? "border-red-400 dark:border-blue-800"
-                    : "border-blue-600 shadow-lg bg-white dark:bg-slate-900"
+                    ? "border-red-400 dark:border-red-500"
+                    : "border-red-500 shadow-lg bg-white dark:bg-slate-900"
                 }`}
               >
                 {!isPremiumUser && (
