@@ -88,6 +88,7 @@ import Terms from "./Pages/Home/terms";
 import Privacy from "./Pages/Home/privacy";
 import TeamView from "./Pages/team/teamProfile";
 import ReferralPage from "./Pages/common/referral";
+import SubscriptionCancel from "./Pages/common/subscriptionCancel";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -368,6 +369,7 @@ const AppContent: React.FC = () => {
         <Route path="/privacy" element={<Privacy />} />
 
         <Route path="/subscription/success" element={<Success />} />
+        <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>
