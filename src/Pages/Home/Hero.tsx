@@ -182,7 +182,7 @@ export default function Hero() {
               >
                 <div className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center group-hover:scale-110 transition-transform shadow-md">
                   {isPlaying ? (
-                    <Pause size={16} fill="white" className="text-white" />
+                    <Play size={16} fill="white" className="text-white" />
                   ) : (
                     <Play
                       size={16}
@@ -191,7 +191,7 @@ export default function Hero() {
                     />
                   )}
                 </div>
-                {isPlaying ? "Pause Demo" : "Watch Story"}
+                {isPlaying ? "Coming Soon" : "Watch Story"}
               </button>
             </div>
           </motion.div>
