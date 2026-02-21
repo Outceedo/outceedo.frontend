@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
-import { ArrowLeft, Mail, Phone, MapPin, Send, MessageSquare } from "lucide-react";
+import { ArrowLeft, Mail, Phone, MapPin, Send, MessageSquare, Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import Navbar from "./Navbar";
 import FooterSection from "./FooterSection";
 
@@ -12,14 +12,20 @@ const Contact = () => {
     email: "",
     phoneCode: "+44",
     phoneNumber: "",
+    subject: "",
     message: "",
     agreeToPolicy: false,
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const checked = (e.target as HTMLInputElement).checked;
     setFormData((prev) => ({
@@ -28,9 +34,62 @@ const Contact = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
+    setSubmitStatus({ type: null, message: "" });
+
+    if (!formData.agreeToPolicy) {
+      setSubmitStatus({ type: "error", message: "Please agree to the Privacy Policy to continue." });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_PORT}/api/v1/auth/contact`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          phoneNumber: `${formData.phoneCode} ${formData.phoneNumber}`,
+          subject: formData.subject,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit form");
+      }
+
+      setSubmitStatus({
+        type: "success",
+        message: data.message || "Your message has been sent successfully!",
+      });
+
+      setFormData({
+        firstName: "",
+        lastName: "",
+        email: "",
+        phoneCode: "+44",
+        phoneNumber: "",
+        subject: "",
+        message: "",
+        agreeToPolicy: false,
+      });
+    } catch (error) {
+      setSubmitStatus({
+        type: "error",
+        message: error instanceof Error ? error.message : "Something went wrong. Please try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const showGoBack = location.pathname === "/contactus";
@@ -252,6 +311,29 @@ const Contact = () => {
 
                   <div>
                     <label
+                      htmlFor="subject"
+                      className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"
+                    >
+                      Subject
+                    </label>
+                    <select
+                      id="subject"
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 border-2 border-gray-100 rounded-xl focus:outline-none focus:border-red-500 font-medium transition-colors bg-white"
+                    >
+                      <option value="">Select a subject</option>
+                      <option value="General Inquiry">General Inquiry</option>
+                      <option value="Partnership">Partnership</option>
+                      <option value="Support">Support</option>
+                      <option value="Feedback">Feedback</option>
+                      <option value="Other">Other</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
                       htmlFor="message"
                       className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-2"
                     >
@@ -291,11 +373,38 @@ const Contact = () => {
                     </label>
                   </div>
 
+                  {submitStatus.type && (
+                    <div
+                      className={`flex items-center gap-3 p-4 rounded-xl ${
+                        submitStatus.type === "success"
+                          ? "bg-green-50 text-green-700 border border-green-200"
+                          : "bg-red-50 text-red-700 border border-red-200"
+                      }`}
+                    >
+                      {submitStatus.type === "success" ? (
+                        <CheckCircle size={20} />
+                      ) : (
+                        <AlertCircle size={20} />
+                      )}
+                      <span className="font-medium">{submitStatus.message}</span>
+                    </div>
+                  )}
+
                   <button
                     type="submit"
-                    className="w-full h-14 rounded-2xl bg-red-500 font-black uppercase tracking-widest text-sm text-white hover:bg-red-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 active:scale-95"
+                    disabled={isLoading}
+                    className="w-full h-14 rounded-2xl bg-red-500 font-black uppercase tracking-widest text-sm text-white hover:bg-red-600 transition-all flex items-center justify-center gap-2 shadow-xl shadow-red-500/20 active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed disabled:active:scale-100"
                   >
-                    Send Message <Send size={18} />
+                    {isLoading ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      <>
+                        Send Message <Send size={18} />
+                      </>
+                    )}
                   </button>
                 </form>
               </div>
