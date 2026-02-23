@@ -89,6 +89,7 @@ import Privacy from "./Pages/Home/privacy";
 import TeamView from "./Pages/team/teamProfile";
 import ReferralPage from "./Pages/common/referral";
 import SubscriptionCancel from "./Pages/common/subscriptionCancel";
+import Advisors from "./Pages/Home/Advisors";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -367,6 +368,7 @@ const AppContent: React.FC = () => {
         <Route path="/contactus" element={<Contact />} />
         <Route path="/terms" element={<Terms />} />
         <Route path="/privacy" element={<Privacy />} />
+        <Route path="/outceedo" element={<Advisors />} />
 
         <Route path="/subscription/success" element={<Success />} />
         <Route path="/subscription/cancel" element={<SubscriptionCancel />} />

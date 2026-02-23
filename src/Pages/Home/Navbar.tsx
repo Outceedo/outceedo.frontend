@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   // { label: "Team", anchor: "team", path: "/teams" },
   { label: "Pricing", anchor: "pricing", path: "/plans" },
   { label: "Contact Us", anchor: "contactus", path: "/contactus" },
+  { label: "Board", anchor: "board", path: "/outceedo" },
 ];
 
 export default function Navbar() {
@@ -143,7 +144,7 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-50 bg-white/95 backdrop-blur-md lg:hidden max-h-screen overflow-y-auto">
+        <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-md lg:hidden max-h-screen overflow-y-auto">
           <div className="flex justify-between items-center p-6">
             <div className="flex items-center gap-2">
               <img src={logo} alt="Outceedo" className="w-10 h-10" />
@@ -192,7 +193,7 @@ export default function Navbar() {
 
       {/* Signup Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
+        <div className="fixed inset-0 flex items-center justify-center z-[100]">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setModalOpen(false)}
