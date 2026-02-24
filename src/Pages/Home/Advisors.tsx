@@ -284,7 +284,7 @@ export default function NetworkAndStaff() {
             </p>
           </div>
 
-          <div className="flex flex-wrap justify-center gap-8">
+          <div className="grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 justify-center gap-8">
             {experts.map((expert, index) => (
               <motion.div
                 key={index}
