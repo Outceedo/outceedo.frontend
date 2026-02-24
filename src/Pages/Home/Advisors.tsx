@@ -24,7 +24,9 @@ import srisriImg from "@/assets/board/srisri.png";
 import sonavisionImg from "@/assets/board/sonavision.png";
 import ssdImg from "@/assets/board/ssd.png";
 import mythriImg from "@/assets/board/spaceKreators.png";
-
+import ram from "@/assets/board/ram.png";
+import srikanth from "@/assets/board/srikanth.png";
+import sudhir from "@/assets/board/sudhir.png";
 // --- DATA ---
 const advisors = [
   {
@@ -129,16 +131,19 @@ const individualSponsors: {
     name: "Ramchander P",
     profession: "IT Consultant",
     location: "UK",
+    img: ram,
   },
   {
     name: "Kiran V",
     profession: "Mech Chartered Engineer",
     location: "UK",
+    img: srikanth,
   },
   {
     name: "Sudhir P",
     profession: "Senior Electrical Engineer",
     location: "UK",
+    img: sudhir,
   },
 ];
 
@@ -169,7 +174,7 @@ export default function NetworkAndStaff() {
       ========================================= */}
       <section className="relative bg-white py-32 border-t border-gray-100 overflow-hidden">
         <div className="absolute top-0 right-10 p-12 opacity-[0.03] pointer-events-none select-none">
-          <span className="text-[200px] font-black italic tracking-tighter leading-none">
+          <span className="text-[130px] md:text-[200px] font-black italic tracking-tighter leading-none">
             BOARD
           </span>
         </div>
@@ -252,7 +257,7 @@ export default function NetworkAndStaff() {
       ========================================= */}
       <section className="relative bg-gray-50 py-32 border-t border-gray-200 overflow-hidden">
         <div className="absolute top-0 left-10 p-12 opacity-[0.03] pointer-events-none select-none">
-          <span className="text-[200px] font-black italic tracking-tighter leading-none">
+          <span className="text-[130px] md:text-[200px] font-black italic tracking-tighter leading-none">
             COACH
           </span>
         </div>
@@ -350,8 +355,8 @@ export default function NetworkAndStaff() {
       ========================================= */}
       <section className="relative bg-white py-32 border-t border-gray-100 overflow-hidden">
         <div className="absolute bottom-0 right-10 p-12 opacity-[0.03] pointer-events-none select-none">
-          <span className="text-[200px] font-black italic tracking-tighter leading-none">
-            ALLIES
+          <span className="text-[80px] md:text-[200px] font-black italic tracking-tighter leading-none">
+            SPONSORS
           </span>
         </div>
 
@@ -365,15 +370,15 @@ export default function NetworkAndStaff() {
                 className="mb-4 inline-flex items-center gap-2 text-red-500 font-black tracking-[0.3em] uppercase text-xs"
               >
                 <span className="h-[2px] w-12 bg-red-500"></span>
-                Backing the Vision
+                Supporting The Athletes
               </motion.div>
               <h2 className="text-5xl font-black tracking-tighter text-gray-900 sm:text-7xl uppercase italic">
-                GLOBAL <span className="text-red-500">PARTNERS.</span>
+                TALENT <span className="text-red-500">SPONSORS.</span>
               </h2>
             </div>
             <p className="text-lg text-gray-500 max-w-xs font-medium border-l-2 border-red-500 pl-6 py-2">
-              The organizations and individuals fueling our mission to develop
-              football worldwide.
+              The organizations and individuals directly funding and supporting
+              the players and teams across our platform.
             </p>
           </div>
 
@@ -461,14 +466,13 @@ export default function NetworkAndStaff() {
                       <img
                         src={sponsor.img}
                         alt={sponsor.name}
-                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110 grayscale opacity-70 group-hover:opacity-100"
+                        className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.5s] ease-out group-hover:scale-110 opacity-100 group-hover:opacity-100"
                       />
                     ) : (
                       <div className="absolute inset-0 h-full w-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
                         <User size={80} className="text-gray-700" />
                       </div>
                     )}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-90" />
 
                     <div className="absolute top-6 right-6 z-20">
                       <div className="px-3 py-1.5 rounded-lg bg-gray-800/80 backdrop-blur-sm border border-gray-700 text-white font-black text-[10px] tracking-widest uppercase">

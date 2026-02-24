@@ -26,7 +26,7 @@ const CookieConsent: React.FC = () => {
   if (!showModal) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 p-5">
+    <div className="fixed bottom-4 left-4 right-4 z-50 md:left-auto md:max-w-sm bg-white rounded-lg shadow-lg border border-gray-200 p-5">
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
         Cookie Consent
       </h3>

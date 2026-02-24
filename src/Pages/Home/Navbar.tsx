@@ -9,9 +9,9 @@ const NAV_ITEMS = [
   { label: "Home", anchor: "home", path: "/" },
   { label: "About", anchor: "about", path: "/about" },
   // { label: "Team", anchor: "team", path: "/teams" },
+  { label: "Board", anchor: "board", path: "/outceedo" },
   { label: "Pricing", anchor: "pricing", path: "/plans" },
   { label: "Contact Us", anchor: "contactus", path: "/contactus" },
-  { label: "Board", anchor: "board", path: "/outceedo" },
 ];
 
 export default function Navbar() {
@@ -79,72 +79,71 @@ export default function Navbar() {
   };
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled
-          ? "bg-white/80 backdrop-blur-md py-4 shadow-sm"
-          : "bg-transparent py-6"
-      }`}
-    >
-      <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
-        {/* Logo Section */}
-        <button
-          onClick={() => handleNavigate("/")}
-          className="flex items-center gap-2"
-        >
-          <div className="w-56 h-10 rounded-lg flex items-center justify-center">
-            <img src={outceedo} alt="Outceedo" className="w-56" />
+    <>
+      <nav
+        className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+          isScrolled
+            ? "bg-white/80 backdrop-blur-md py-4 shadow-sm"
+            : "bg-transparent py-6"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 flex items-center justify-between">
+          {/* Logo Section */}
+          <button
+            onClick={() => handleNavigate("/")}
+            className="flex items-center gap-2"
+          >
+            <div className="w-56 h-10 rounded-lg flex items-center justify-center">
+              <img src={outceedo} alt="Outceedo" className="w-56" />
+            </div>
+          </button>
+
+          {/* Desktop Links */}
+          <div className="hidden lg:flex items-center gap-8">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => handleNavClick(item)}
+                className={`text-md font-bold transition-colors ${
+                  activeNav === item.label
+                    ? "text-red-500"
+                    : "text-slate-600 hover:text-red-500"
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
           </div>
-          {/* <span className="text-2xl font-black tracking-tighter text-slate-900">
-            OUTCEEDO
-          </span> */}
-        </button>
 
-        {/* Desktop Links */}
-        <div className="hidden lg:flex items-center gap-8">
-          {NAV_ITEMS.map((item) => (
+          {/* Buttons */}
+          <div className="hidden lg:flex items-center gap-4">
             <button
-              key={item.label}
-              onClick={() => handleNavClick(item)}
-              className={`text-md font-bold transition-colors ${
-                activeNav === item.label
-                  ? "text-red-500"
-                  : "text-slate-600 hover:text-red-500"
-              }`}
+              onClick={() => handleNavigate("/login")}
+              className="text-sm font-bold text-slate-900 hover:text-red-500 transition-colors"
             >
-              {item.label}
+              Login
             </button>
-          ))}
-        </div>
+            <button
+              onClick={handleSignUpClick}
+              className="bg-red-500 text-white px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-600 transition-all active:scale-95 shadow-lg shadow-red-500/20"
+            >
+              Get Started <ArrowRight size={16} />
+            </button>
+          </div>
 
-        {/* Buttons */}
-        <div className="hidden lg:flex items-center gap-4">
-          <button
-            onClick={() => handleNavigate("/login")}
-            className="text-sm font-bold text-slate-900 hover:text-red-500 transition-colors"
-          >
-            Login
-          </button>
-          <button
-            onClick={handleSignUpClick}
-            className="bg-red-500 text-white px-6 py-2.5 rounded-full text-sm font-bold flex items-center gap-2 hover:bg-red-600 transition-all active:scale-95 shadow-lg shadow-red-500/20"
-          >
-            Get Started <ArrowRight size={16} />
+          {/* Mobile menu button */}
+          <button className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
+            <Menu
+              className={`h-7 w-7 ${isScrolled ? "text-slate-900" : "text-black"}`}
+            />
+            <span className="sr-only">Open menu</span>
           </button>
         </div>
+      </nav>
 
-        {/* Mobile menu button */}
-        <button className="lg:hidden" onClick={() => setMobileMenuOpen(true)}>
-          <Menu
-            className={`h-7 w-7 ${isScrolled ? "text-slate-900" : "text-black"}`}
-          />
-          <span className="sr-only">Open menu</span>
-        </button>
-      </div>
-
-      {/* Mobile menu */}
+      {/* Mobile menu - outside nav to avoid nested fixed positioning issues */}
       {mobileMenuOpen && (
-        <div className="fixed inset-0 z-[100] bg-white/95 backdrop-blur-md lg:hidden max-h-screen overflow-y-auto">
+        <div className="fixed top-0 left-0 right-0 bottom-0 w-full h-full z-[100] bg-white/95 backdrop-blur-md lg:hidden overflow-y-auto">
           <div className="flex justify-between items-center p-6">
             <div className="flex items-center gap-2">
               <img src={logo} alt="Outceedo" className="w-10 h-10" />
@@ -158,7 +157,7 @@ export default function Navbar() {
             </button>
           </div>
           <div className="flex flex-col justify-center items-center mt-12">
-            <nav className="flex flex-col items-center justify-center space-y-6 p-4 w-full">
+            <div className="flex flex-col items-center justify-center space-y-6 p-4 w-full">
               {NAV_ITEMS.map((item) => (
                 <button
                   key={item.label}
@@ -186,7 +185,7 @@ export default function Navbar() {
                   Get Started <ArrowRight size={16} />
                 </button>
               </div>
-            </nav>
+            </div>
           </div>
         </div>
       )}
@@ -209,6 +208,6 @@ export default function Navbar() {
           </div>
         </div>
       )}
-    </nav>
+    </>
   );
 }
