@@ -71,23 +71,31 @@ const ActivityCard: React.FC<ActivityCardProps> = ({
 };
 
 const Reviews: React.FC = () => {
-  const cards = Array(4).fill({
-    userName: "Laura W",
-    userImage: "",
-    activityText: "From practice to pitch_my first tournament start!",
-    activityTime: "13w",
-    commentUser: "Rohan Rohan",
-    commentText: "Proud of you! This is just the beginning!",
-    commentTime: "5w",
-    mediaImage: "",
-  });
-
   return (
-    <div className=" ">
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-        {cards.map((card, index) => (
-          <ActivityCard key={index} {...card} />
-        ))}
+    <div className="relative min-h-[300px] flex items-center justify-center">
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900 rounded-lg" />
+      <div className="relative z-10 text-center p-8">
+        <div className="inline-flex items-center justify-center w-16 h-16 mb-4 rounded-full bg-gradient-to-r from-blue-500 to-purple-600">
+          <svg
+            className="w-8 h-8 text-white"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
+          Coming Soon
+        </h2>
+        <p className="text-gray-600 dark:text-gray-400 max-w-sm">
+          Reviews feature is currently under development. Stay tuned for updates!
+        </p>
       </div>
     </div>
   );

@@ -102,7 +102,7 @@ const Fanprofile = () => {
               limit: 100,
               page: 1,
             },
-          }
+          },
         );
 
         if (response.data?.users) {
@@ -120,7 +120,7 @@ const Fanprofile = () => {
               acc.total++;
               return acc;
             },
-            { players: 0, experts: 0, total: 0 }
+            { players: 0, experts: 0, total: 0 },
           );
 
           setFollowingCounts(counts);
@@ -219,7 +219,7 @@ const Fanprofile = () => {
                 Sports Interest
               </label>
               <span className="font-semibold dark:text-white">
-                {currentProfile?.interests?.join(", ") || "Not specified"}
+                {currentProfile?.sport || "Not specified"}
               </span>
             </div>
           </div>
@@ -296,9 +296,7 @@ const Fanprofile = () => {
             <Fandetails profileData={currentProfile} />
           )}
           {activeTab === "reviews" && <Reviews />}
-          {activeTab === "Following" && (
-            <FollowingList following={following} loading={loadingFollowing} />
-          )}
+          {activeTab === "Following" && <FollowingList />}
         </div>
       </div>
     </div>
