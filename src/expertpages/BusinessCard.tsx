@@ -12,6 +12,7 @@ import {
   faMapMarkerAlt,
   faCertificate,
   faAward,
+  faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import {
@@ -365,7 +366,9 @@ const BusinessCardPDF: React.FC<{
               )}
               {data.certificationLevel && data.certificationLevel !== "N/A" && (
                 <View style={pdfStyles.tag}>
-                  <Text style={pdfStyles.tagText}>{data.certificationLevel}</Text>
+                  <Text style={pdfStyles.tagText}>
+                    {data.certificationLevel}
+                  </Text>
                 </View>
               )}
             </View>
@@ -423,7 +426,8 @@ const BusinessCardPDF: React.FC<{
             {data.totalReviews > 0 && (
               <View style={pdfStyles.reviewsRow}>
                 <Text style={pdfStyles.reviewsText}>
-                  {data.avgRating.toFixed(1)} / 5.0 ({data.totalReviews} reviews)
+                  {data.avgRating.toFixed(1)} / 5.0 ({data.totalReviews}{" "}
+                  reviews)
                 </Text>
               </View>
             )}
@@ -442,18 +446,21 @@ const BusinessCardPDF: React.FC<{
 const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Extract certificates and awards from documents
   const certificates =
     expertData.documents
       ?.filter((doc) => doc.type === "certificate")
-      .map((cert) => cert.title) || [];
+      .map((cert) => cert.title)
+      .filter((title): title is string => title !== undefined) || [];
 
   const awards =
     expertData.documents
       ?.filter((doc) => doc.type === "award")
-      .map((award) => award.title) || [];
+      .map((award) => award.title)
+      .filter((title): title is string => title !== undefined) || [];
 
   // Calculate average rating
   const reviewsArray = expertData.reviewsReceived || [];
@@ -485,12 +492,14 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
     const newCertificates =
       expertData.documents
         ?.filter((doc) => doc.type === "certificate")
-        .map((cert) => cert.title) || [];
+        .map((cert) => cert.title)
+        .filter((title): title is string => title !== undefined) || [];
 
     const newAwards =
       expertData.documents
         ?.filter((doc) => doc.type === "award")
-        .map((award) => award.title) || [];
+        .map((award) => award.title)
+        .filter((title): title is string => title !== undefined) || [];
 
     const newReviewsArray = expertData.reviewsReceived || [];
     const newTotalReviews = newReviewsArray.length;
@@ -520,21 +529,39 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
     setIsExporting(true);
 
     try {
-      const canvas = await html2canvas(cardRef.current, {
-        scale: 2,
+      // Clone the element to avoid modifying the original
+      const element = cardRef.current;
+
+      const canvas = await html2canvas(element, {
+        scale: 3,
         useCORS: true,
-        allowTaint: true,
-        backgroundColor: "#ffffff",
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false,
+        imageTimeout: 15000,
+        onclone: (clonedDoc) => {
+          // Ensure images are loaded in the cloned document
+          const clonedElement = clonedDoc.querySelector(
+            '[data-card-ref="true"]',
+          );
+          if (clonedElement) {
+            (clonedElement as HTMLElement).style.transform = "none";
+          }
+        },
       });
 
-      canvas.toBlob((blob) => {
-        if (blob) {
-          saveAs(
-            blob,
-            `${cardData.name.replace(/\s+/g, "_")}_business_card.png`,
-          );
-        }
-      }, "image/png");
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            saveAs(
+              blob,
+              `${cardData.name.replace(/\s+/g, "_")}_business_card.png`,
+            );
+          }
+        },
+        "image/png",
+        1.0,
+      );
     } catch (error) {
       console.error("Error generating PNG:", error);
     } finally {
@@ -598,16 +625,15 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex gap-2">
           <Button
-            variant={!isEditing ? "default" : "outline"}
-            onClick={() => setIsEditing(false)}
-            className="flex items-center gap-2"
+            onClick={() => setShowPreviewModal(true)}
+            className="flex items-center gap-2 bg-red-500 text-white"
           >
             <FontAwesomeIcon icon={faEye} />
             Preview
           </Button>
           <Button
             variant={isEditing ? "default" : "outline"}
-            onClick={() => setIsEditing(true)}
+            onClick={() => setIsEditing(!isEditing)}
             className="flex items-center gap-2"
           >
             <FontAwesomeIcon icon={faEdit} />
@@ -779,6 +805,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
         <div className="flex-1 flex justify-center">
           <div
             ref={cardRef}
+            data-card-ref="true"
             className="w-full max-w-md relative rounded-2xl shadow-2xl overflow-hidden"
             style={{ aspectRatio: "9/16", maxHeight: "600px" }}
           >
@@ -787,24 +814,18 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
               src={businesscard}
               alt="Business Card Background"
               className="absolute inset-0 w-full h-full object-cover"
-              crossOrigin="anonymous"
             />
 
-            {/* Overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/60" />
+            {/* Darker overlay for better text readability */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
 
             {/* Card Content */}
             <div className="relative h-full flex flex-col p-6">
               {/* Top Section - Logo */}
               <div className="flex justify-between items-start">
-                <img
-                  src={logo}
-                  alt="Outceedo"
-                  className="h-8 object-contain"
-                  crossOrigin="anonymous"
-                />
-                <div className="bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                  <span className="text-xs font-semibold text-red-600">
+                <img src={logo} alt="Outceedo" className="h-8 object-contain" />
+                <div className="bg-white px-3 py-1 rounded-full shadow-md">
+                  <span className="text-xs font-bold text-red-600">
                     Verified Expert
                   </span>
                 </div>
@@ -818,12 +839,24 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                     <img
                       src={cardData.profileImage}
                       alt={cardData.name}
-                      className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover"
-                      crossOrigin="anonymous"
+                      className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-gray-200"
+                      onError={(e) => {
+                        // Fallback to initial if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const fallback = document.createElement("div");
+                          fallback.className =
+                            "w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center";
+                          fallback.innerHTML = `<span class="text-4xl font-bold text-white">${cardData.name.charAt(0).toUpperCase()}</span>`;
+                          parent.insertBefore(fallback, target);
+                        }
+                      }}
                     />
                   ) : (
-                    <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
-                      <span className="text-4xl font-bold text-gray-500">
+                    <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                      <span className="text-4xl font-bold text-white">
                         {cardData.name.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -839,37 +872,43 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                   )}
                 </div>
 
-                {/* Name & Profession */}
-                <h2 className="text-2xl font-bold text-white drop-shadow-lg">
+                {/* Name & Profession - improved visibility */}
+                <h2
+                  className="text-2xl font-bold text-white"
+                  style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                >
                   {cardData.name}
                 </h2>
                 {cardData.profession && (
-                  <p className="text-white/90 text-sm mt-1 font-medium">
+                  <p
+                    className="text-white text-sm mt-1 font-semibold"
+                    style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+                  >
                     {cardData.profession}
                   </p>
                 )}
 
-                {/* Location & Certification */}
+                {/* Location & Certification - improved visibility */}
                 <div className="flex flex-wrap justify-center gap-3 mt-4">
                   {cardData.location && (
-                    <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+                    <div className="bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
                       <FontAwesomeIcon
                         icon={faMapMarkerAlt}
                         className="text-white text-xs"
                       />
-                      <span className="text-white text-xs font-medium">
+                      <span className="text-white text-xs font-semibold">
                         {cardData.location}
                       </span>
                     </div>
                   )}
                   {cardData.certificationLevel &&
                     cardData.certificationLevel !== "N/A" && (
-                      <div className="bg-white/20 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2">
+                      <div className="bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
                         <FontAwesomeIcon
                           icon={faCertificate}
                           className="text-white text-xs"
                         />
-                        <span className="text-white text-xs font-medium">
+                        <span className="text-white text-xs font-semibold">
                           {cardData.certificationLevel}
                         </span>
                       </div>
@@ -878,7 +917,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
               </div>
 
               {/* Bottom Section - Credentials */}
-              <div className="bg-white/95 backdrop-blur-sm rounded-xl p-4 space-y-3">
+              <div className="bg-white rounded-xl p-4 space-y-3 shadow-lg">
                 {/* Certificates */}
                 {cardData.showCertificates &&
                   cardData.certificates.length > 0 && (
@@ -888,7 +927,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                           icon={faCertificate}
                           className="text-blue-600 text-sm"
                         />
-                        <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                        <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
                           Certificates
                         </span>
                       </div>
@@ -896,13 +935,13 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                         {cardData.certificates.slice(0, 3).map((cert, idx) => (
                           <span
                             key={idx}
-                            className="text-xs bg-blue-50 text-blue-700 px-2 py-1 rounded-md truncate max-w-[140px]"
+                            className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
                           >
                             {cert}
                           </span>
                         ))}
                         {cardData.certificates.length > 3 && (
-                          <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-md">
+                          <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
                             +{cardData.certificates.length - 3}
                           </span>
                         )}
@@ -918,7 +957,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                         icon={faAward}
                         className="text-amber-500 text-sm"
                       />
-                      <span className="text-xs font-bold text-gray-700 uppercase tracking-wide">
+                      <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
                         Awards
                       </span>
                     </div>
@@ -926,13 +965,13 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                       {cardData.awards.slice(0, 3).map((award, idx) => (
                         <span
                           key={idx}
-                          className="text-xs bg-amber-50 text-amber-700 px-2 py-1 rounded-md truncate max-w-[140px]"
+                          className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
                         >
                           {award}
                         </span>
                       ))}
                       {cardData.awards.length > 3 && (
-                        <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-md">
+                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
                           +{cardData.awards.length - 3}
                         </span>
                       )}
@@ -942,18 +981,21 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
 
                 {/* Reviews Count */}
                 {cardData.showRating && cardData.totalReviews > 0 && (
-                  <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-100">
+                  <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
                     <StarRating avg={cardData.avgRating} size="text-xs" />
-                    <span className="text-xs text-gray-500 ml-1">
+                    <span className="text-xs text-gray-600 ml-1 font-medium">
                       ({cardData.totalReviews} reviews)
                     </span>
                   </div>
                 )}
               </div>
 
-              {/* Footer Branding */}
+              {/* Footer Branding - improved visibility */}
               <div className="flex justify-center items-center mt-3">
-                <span className="text-white/80 text-xs font-medium tracking-wider">
+                <span
+                  className="text-white text-sm font-semibold tracking-wider"
+                  style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+                >
                   outceedo.com
                 </span>
               </div>
@@ -961,6 +1003,243 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
           </div>
         </div>
       </div>
+
+      {/* Preview Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-md w-full">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowPreviewModal(false)}
+              className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+            >
+              <FontAwesomeIcon icon={faTimes} className="text-2xl" />
+            </button>
+
+            {/* Card Preview */}
+            <div
+              className="w-full relative rounded-2xl shadow-2xl overflow-hidden"
+              style={{ aspectRatio: "9/16" }}
+            >
+              {/* Background Image */}
+              <img
+                src={businesscard}
+                alt="Business Card Background"
+                className="absolute inset-0 w-full h-full object-cover"
+              />
+
+              {/* Darker overlay for better text readability */}
+              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
+
+              {/* Card Content */}
+              <div className="relative h-full flex flex-col p-6">
+                {/* Top Section - Logo */}
+                <div className="flex justify-between items-start">
+                  <img
+                    src={logo}
+                    alt="Outceedo"
+                    className="h-8 object-contain"
+                  />
+                  <div className="bg-white px-3 py-1 rounded-full shadow-md">
+                    <span className="text-xs font-bold text-red-600">
+                      Verified Expert
+                    </span>
+                  </div>
+                </div>
+
+                {/* Middle Section - Profile */}
+                <div className="flex-1 flex flex-col items-center justify-center text-center mt-4">
+                  {/* Profile Image */}
+                  <div className="relative mb-4">
+                    {cardData.profileImage ? (
+                      <img
+                        src={cardData.profileImage}
+                        alt={cardData.name}
+                        className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-gray-200"
+                      />
+                    ) : (
+                      <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                        <span className="text-4xl font-bold text-white">
+                          {cardData.name.charAt(0).toUpperCase()}
+                        </span>
+                      </div>
+                    )}
+                    {/* Rating Badge */}
+                    {cardData.showRating && cardData.avgRating > 0 && (
+                      <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                        <FontAwesomeIcon
+                          icon={faStarSolid}
+                          className="text-xs"
+                        />
+                        <span className="text-xs font-bold">
+                          {cardData.avgRating.toFixed(1)}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Name & Profession */}
+                  <h2
+                    className="text-2xl font-bold text-white"
+                    style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+                  >
+                    {cardData.name}
+                  </h2>
+                  {cardData.profession && (
+                    <p
+                      className="text-white text-sm mt-1 font-semibold"
+                      style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+                    >
+                      {cardData.profession}
+                    </p>
+                  )}
+
+                  {/* Location & Certification */}
+                  <div className="flex flex-wrap justify-center gap-3 mt-4">
+                    {cardData.location && (
+                      <div className="bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                        <FontAwesomeIcon
+                          icon={faMapMarkerAlt}
+                          className="text-white text-xs"
+                        />
+                        <span className="text-white text-xs font-semibold">
+                          {cardData.location}
+                        </span>
+                      </div>
+                    )}
+                    {cardData.certificationLevel &&
+                      cardData.certificationLevel !== "N/A" && (
+                        <div className="bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                          <FontAwesomeIcon
+                            icon={faCertificate}
+                            className="text-white text-xs"
+                          />
+                          <span className="text-white text-xs font-semibold">
+                            {cardData.certificationLevel}
+                          </span>
+                        </div>
+                      )}
+                  </div>
+                </div>
+
+                {/* Bottom Section - Credentials */}
+                <div className="bg-white rounded-xl p-4 space-y-3 shadow-lg">
+                  {/* Certificates */}
+                  {cardData.showCertificates &&
+                    cardData.certificates.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <FontAwesomeIcon
+                            icon={faCertificate}
+                            className="text-blue-600 text-sm"
+                          />
+                          <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                            Certificates
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {cardData.certificates
+                            .slice(0, 3)
+                            .map((cert, idx) => (
+                              <span
+                                key={idx}
+                                className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
+                              >
+                                {cert}
+                              </span>
+                            ))}
+                          {cardData.certificates.length > 3 && (
+                            <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                              +{cardData.certificates.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                  {/* Awards */}
+                  {cardData.showAwards && cardData.awards.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <FontAwesomeIcon
+                          icon={faAward}
+                          className="text-amber-500 text-sm"
+                        />
+                        <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                          Awards
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {cardData.awards.slice(0, 3).map((award, idx) => (
+                          <span
+                            key={idx}
+                            className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
+                          >
+                            {award}
+                          </span>
+                        ))}
+                        {cardData.awards.length > 3 && (
+                          <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                            +{cardData.awards.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reviews Count */}
+                  {cardData.showRating && cardData.totalReviews > 0 && (
+                    <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
+                      <StarRating avg={cardData.avgRating} size="text-xs" />
+                      <span className="text-xs text-gray-600 ml-1 font-medium">
+                        ({cardData.totalReviews} reviews)
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer Branding */}
+                <div className="flex justify-center items-center mt-3">
+                  <span
+                    className="text-white text-sm font-semibold tracking-wider"
+                    style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+                  >
+                    outceedo.com
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Download buttons in modal */}
+            <div className="flex justify-center gap-3 mt-4">
+              <Button
+                variant="default"
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  downloadAsPNG();
+                }}
+                disabled={isExporting}
+                className="flex items-center gap-2 bg-white text-gray-900 hover:bg-gray-100"
+              >
+                <FontAwesomeIcon icon={faImage} />
+                Download PNG
+              </Button>
+              <Button
+                variant="default"
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  downloadAsPDF();
+                }}
+                disabled={isExporting}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+              >
+                <FontAwesomeIcon icon={faFilePdf} />
+                Download PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -970,16 +1249,19 @@ export const BusinessCardDownloadButton: React.FC<{
   expertData: ExpertDataType;
 }> = ({ expertData }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const hiddenCardRef = useRef<HTMLDivElement>(null);
 
   const certificates =
     expertData.documents
       ?.filter((doc) => doc.type === "certificate")
-      .map((cert) => cert.title) || [];
+      .map((cert) => cert.title)
+      .filter((title): title is string => title !== undefined) || [];
 
   const awards =
     expertData.documents
       ?.filter((doc) => doc.type === "award")
-      .map((award) => award.title) || [];
+      .map((award) => award.title)
+      .filter((title): title is string => title !== undefined) || [];
 
   const reviewsArray = expertData.reviewsReceived || [];
   const totalReviews = reviewsArray.length;
@@ -1001,29 +1283,236 @@ export const BusinessCardDownloadButton: React.FC<{
     profileImage: expertData.profileImage || "",
   };
 
-  const downloadAsPDF = async () => {
+  const downloadAsImage = async () => {
+    if (!hiddenCardRef.current) return;
     setIsExporting(true);
 
     try {
-      const blob = await pdf(<BusinessCardPDF data={cardData} />).toBlob();
-      saveAs(blob, `${cardData.name.replace(/\s+/g, "_")}_business_card.pdf`);
+      const canvas = await html2canvas(hiddenCardRef.current, {
+        scale: 3,
+        useCORS: true,
+        allowTaint: false,
+        backgroundColor: null,
+        logging: false,
+        imageTimeout: 15000,
+      });
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) {
+            saveAs(
+              blob,
+              `${cardData.name.replace(/\s+/g, "_")}_business_card.png`,
+            );
+          }
+        },
+        "image/png",
+        1.0,
+      );
     } catch (error) {
-      console.error("Error generating PDF:", error);
+      console.error("Error generating image:", error);
     } finally {
       setIsExporting(false);
     }
   };
 
   return (
-    <Button
-      variant="outline"
-      onClick={downloadAsPDF}
-      disabled={isExporting}
-      className="flex items-center gap-2"
-    >
-      <FontAwesomeIcon icon={faDownload} />
-      {isExporting ? "Generating..." : "Business Card"}
-    </Button>
+    <>
+      <Button
+        variant="outline"
+        onClick={downloadAsImage}
+        disabled={isExporting}
+        className="flex items-center gap-2"
+      >
+        <FontAwesomeIcon icon={faDownload} />
+        {isExporting ? "Generating..." : "Business Card"}
+      </Button>
+
+      {/* Hidden card for rendering */}
+      <div
+        ref={hiddenCardRef}
+        className="fixed -left-[9999px] w-[350px] h-[600px] rounded-2xl overflow-hidden"
+        style={{ zIndex: -1 }}
+      >
+        {/* Background Image */}
+        <img
+          src={businesscard}
+          alt="Business Card Background"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+
+        {/* Darker overlay for better text readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
+
+        {/* Card Content */}
+        <div className="relative h-full flex flex-col p-6">
+          {/* Top Section - Logo */}
+          <div className="flex justify-between items-start">
+            <img src={logo} alt="Outceedo" className="h-8 object-contain" />
+            <div className="bg-white px-3 py-1 rounded-full shadow-md">
+              <span className="text-xs font-bold text-red-600">
+                Verified Expert
+              </span>
+            </div>
+          </div>
+
+          {/* Middle Section - Profile */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center mt-4">
+            {/* Profile Image */}
+            <div className="relative mb-4">
+              {cardData.profileImage ? (
+                <img
+                  src={cardData.profileImage}
+                  alt={cardData.name}
+                  className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-gray-200"
+                />
+              ) : (
+                <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                  <span className="text-4xl font-bold text-white">
+                    {cardData.name.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+              {/* Rating Badge */}
+              {cardData.avgRating > 0 && (
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <FontAwesomeIcon icon={faStarSolid} className="text-xs" />
+                  <span className="text-xs font-bold">
+                    {cardData.avgRating.toFixed(1)}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            {/* Name & Profession */}
+            <h2
+              className="text-2xl font-bold text-white"
+              style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+            >
+              {cardData.name}
+            </h2>
+            {cardData.profession && (
+              <p
+                className="text-white text-sm mt-1 font-semibold"
+                style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+              >
+                {cardData.profession}
+              </p>
+            )}
+
+            {/* Location & Certification */}
+            <div className="flex flex-wrap justify-center gap-3 mt-4">
+              {cardData.location && (
+                <div className="bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                  <FontAwesomeIcon
+                    icon={faMapMarkerAlt}
+                    className="text-white text-xs"
+                  />
+                  <span className="text-white text-xs font-semibold">
+                    {cardData.location}
+                  </span>
+                </div>
+              )}
+              {cardData.certificationLevel &&
+                cardData.certificationLevel !== "N/A" && (
+                  <div className="bg-black/40 backdrop-blur-sm px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                    <FontAwesomeIcon
+                      icon={faCertificate}
+                      className="text-white text-xs"
+                    />
+                    <span className="text-white text-xs font-semibold">
+                      {cardData.certificationLevel}
+                    </span>
+                  </div>
+                )}
+            </div>
+          </div>
+
+          {/* Bottom Section - Credentials */}
+          <div className="bg-white rounded-xl p-4 space-y-3 shadow-lg">
+            {/* Certificates */}
+            {cardData.certificates.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faCertificate}
+                    className="text-blue-600 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Certificates
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cardData.certificates.slice(0, 3).map((cert, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
+                    >
+                      {cert}
+                    </span>
+                  ))}
+                  {cardData.certificates.length > 3 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.certificates.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Awards */}
+            {cardData.awards.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faAward}
+                    className="text-amber-500 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Awards
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cardData.awards.slice(0, 3).map((award, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
+                    >
+                      {award}
+                    </span>
+                  ))}
+                  {cardData.awards.length > 3 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.awards.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Reviews Count */}
+            {cardData.totalReviews > 0 && (
+              <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
+                <StarRating avg={cardData.avgRating} size="text-xs" />
+                <span className="text-xs text-gray-600 ml-1 font-medium">
+                  ({cardData.totalReviews} reviews)
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Footer Branding */}
+          <div className="flex justify-center items-center mt-3">
+            <span
+              className="text-white text-sm font-semibold tracking-wider"
+              style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+            >
+              outceedo.com
+            </span>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 
