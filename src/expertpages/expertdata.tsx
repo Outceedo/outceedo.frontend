@@ -17,6 +17,7 @@ import {
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import ExpertDetails from "./Expertdetails";
 import ExpertServices from "./Expertservices";
+import BusinessCard, { BusinessCardDownloadButton } from "./BusinessCard";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
@@ -89,7 +90,7 @@ const StarRating: React.FC<{
 
 const ExpertProfile = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "services"
+    "details" | "media" | "reviews" | "services" | "businessCard"
   >("details");
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -500,7 +501,7 @@ const ExpertProfile = () => {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white">
                 {expertData.name}
               </h1>
-              <div className="flex gap-2 sm:gap-3 lg:gap-4">
+              <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
                 {icons.map((item, index) =>
                   item.link ? (
                     <a
@@ -524,6 +525,7 @@ const ExpertProfile = () => {
                     </a>
                   ) : null
                 )}
+                <BusinessCardDownloadButton expertData={expertData} />
               </div>
             </div>
 
@@ -761,7 +763,7 @@ const ExpertProfile = () => {
         {/* Tabs Section */}
         <div className="mt-6 sm:mt-8">
           <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
-            {(["details", "media", "reviews", "services"] as const).map(
+            {(["details", "media", "reviews", "services", "businessCard"] as const).map(
               (tab) => (
                 <button
                   key={tab}
@@ -772,7 +774,7 @@ const ExpertProfile = () => {
                       : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
                   }`}
                 >
-                  {tab}
+                  {tab === "businessCard" ? "Business Card" : tab}
                 </button>
               )
             )}
@@ -785,6 +787,9 @@ const ExpertProfile = () => {
             {activeTab === "reviews" && <Reviewnoedit Data={expertData} />}
             {activeTab === "services" && (
               <ExpertServices expertData={expertData} />
+            )}
+            {activeTab === "businessCard" && (
+              <BusinessCard expertData={expertData} />
             )}
           </div>
         </div>
