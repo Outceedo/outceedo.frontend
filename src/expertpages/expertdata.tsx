@@ -108,7 +108,7 @@ const ExpertProfile = () => {
 
   // Get profile state from Redux store
   const { currentProfile, status, error } = useAppSelector(
-    (state) => state.profile
+    (state) => state.profile,
   );
   const navigate = useNavigate();
 
@@ -169,7 +169,7 @@ const ExpertProfile = () => {
   // Fetch followers list with pagination
   const fetchFollowers = async (
     limit = followersLimit,
-    page = followersPage
+    page = followersPage,
   ) => {
     if (!currentProfile?.id) return;
 
@@ -182,7 +182,7 @@ const ExpertProfile = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
       setFollowers(response.data?.users || []);
 
@@ -217,7 +217,7 @@ const ExpertProfile = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       setServiceCount(response.data?.count || 0);
@@ -305,7 +305,7 @@ const ExpertProfile = () => {
   };
 
   const handlePhotoChange = async (
-    event: React.ChangeEvent<HTMLInputElement>
+    event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -523,9 +523,9 @@ const ExpertProfile = () => {
                     >
                       <FontAwesomeIcon icon={item.icon} />
                     </a>
-                  ) : null
+                  ) : null,
                 )}
-                <BusinessCardDownloadButton expertData={expertData} />
+                {/* <BusinessCardDownloadButton expertData={expertData} /> */}
               </div>
             </div>
 
@@ -763,21 +763,27 @@ const ExpertProfile = () => {
         {/* Tabs Section */}
         <div className="mt-6 sm:mt-8">
           <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
-            {(["details", "media", "reviews", "services", "businessCard"] as const).map(
-              (tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
-                    activeTab === tab
-                      ? "text-red-600 border-red-600"
-                      : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
-                  }`}
-                >
-                  {tab === "businessCard" ? "Business Card" : tab}
-                </button>
-              )
-            )}
+            {(
+              [
+                "details",
+                "media",
+                "reviews",
+                "services",
+                "businessCard",
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
+                  activeTab === tab
+                    ? "text-red-600 border-red-600"
+                    : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
+                }`}
+              >
+                {tab === "businessCard" ? "Business Card" : tab}
+              </button>
+            ))}
           </div>
           <div className="mt-4">
             {activeTab === "details" && (
