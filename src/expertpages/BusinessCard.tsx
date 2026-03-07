@@ -23,7 +23,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import {
   pdf,
   Document as PDFDocument,
@@ -443,10 +443,69 @@ const BusinessCardPDF: React.FC<{
   </PDFDocument>
 );
 
+// Utility function to convert image URL to base64 with CORS handling
+const convertImageToBase64 = async (imageUrl: string): Promise<string> => {
+  if (!imageUrl) return "";
+
+  try {
+    // Method 1: Try direct fetch with CORS
+    const response = await fetch(imageUrl, {
+      mode: "cors",
+      credentials: "omit",
+      cache: "no-cache",
+    });
+
+    if (response.ok) {
+      const blob = await response.blob();
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      });
+    }
+  } catch {
+    // If CORS fails, try with an Image element approach
+  }
+
+  // Method 2: Use canvas to convert image (works for same-origin or CORS-enabled images)
+  return new Promise((resolve) => {
+    const img = new window.Image();
+    img.crossOrigin = "anonymous";
+
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.drawImage(img, 0, 0);
+        try {
+          const dataUrl = canvas.toDataURL("image/jpeg", 0.95);
+          resolve(dataUrl);
+        } catch {
+          resolve("");
+        }
+      } else {
+        resolve("");
+      }
+    };
+
+    img.onerror = () => {
+      resolve("");
+    };
+
+    // Add cache-busting to avoid cached non-CORS responses
+    const separator = imageUrl.includes("?") ? "&" : "?";
+    img.src = `${imageUrl}${separator}t=${Date.now()}`;
+  });
+};
+
 const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [profileImageBase64, setProfileImageBase64] = useState<string>("");
   const cardRef = useRef<HTMLDivElement>(null);
 
   // Extract certificates and awards from documents
@@ -523,282 +582,40 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
     }));
   }, [expertData]);
 
-  // Hidden ref for PNG download (uses inline styles to avoid oklch)
-  const hiddenPngRef = useRef<HTMLDivElement>(null);
+  // Preload and convert profile image to base64 for export
+  useEffect(() => {
+    const preloadProfileImage = async () => {
+      if (expertData.profileImage) {
+        const base64 = await convertImageToBase64(expertData.profileImage);
+        setProfileImageBase64(base64);
+      }
+    };
 
-  // Download as PNG using hidden element with inline styles
+    preloadProfileImage();
+  }, [expertData.profileImage]);
+
+  // Download as PNG using html-to-image
   const downloadAsPNG = async () => {
-    if (!hiddenPngRef.current) return;
+    if (!cardRef.current) return;
     setIsExporting(true);
 
     try {
-      const canvas = await html2canvas(hiddenPngRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#1a1a2e",
-        logging: false,
-        imageTimeout: 15000,
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1.0,
+        pixelRatio: 3,
+        cacheBust: true,
+        skipAutoScale: false,
+        includeQueryParams: true,
       });
 
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            saveAs(
-              blob,
-              `${cardData.name.replace(/\s+/g, "_")}_business_card.png`,
-            );
-          }
-        },
-        "image/png",
-        1.0,
-      );
+      // Convert data URL to blob and save
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      saveAs(blob, `${cardData.name.replace(/\s+/g, "_")}_business_card.png`);
     } catch (error) {
       console.error("Error generating PNG:", error);
     } finally {
       setIsExporting(false);
-    }
-  };
-
-  // Inline styles for hidden PNG element (avoids oklch color issues)
-  const pngStyles = {
-    container: {
-      position: "fixed" as const,
-      left: "-9999px",
-      width: "350px",
-      height: "600px",
-      borderRadius: "16px",
-      overflow: "hidden",
-      zIndex: -1,
-      fontFamily: "system-ui, -apple-system, sans-serif",
-    },
-    backgroundImage: {
-      position: "absolute" as const,
-      inset: 0,
-      width: "100%",
-      height: "100%",
-      objectFit: "cover" as const,
-    },
-    overlay: {
-      position: "absolute" as const,
-      inset: 0,
-      background: "linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.2), rgba(0,0,0,0.5))",
-    },
-    content: {
-      position: "relative" as const,
-      height: "100%",
-      display: "flex",
-      flexDirection: "column" as const,
-      padding: "24px",
-    },
-    topRow: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-    },
-    logo: {
-      height: "32px",
-      objectFit: "contain" as const,
-    },
-    verifiedBadge: {
-      backgroundColor: "#ffffff",
-      padding: "4px 12px",
-      borderRadius: "9999px",
-      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    },
-    verifiedText: {
-      fontSize: "12px",
-      fontWeight: "700",
-      color: "#dc2626",
-    },
-    profileSection: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column" as const,
-      alignItems: "center",
-      justifyContent: "center",
-      textAlign: "center" as const,
-      marginTop: "16px",
-    },
-    profileImageWrapper: {
-      position: "relative" as const,
-      marginBottom: "16px",
-    },
-    profileImage: {
-      width: "112px",
-      height: "112px",
-      borderRadius: "9999px",
-      border: "4px solid #ffffff",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-      objectFit: "cover" as const,
-      backgroundColor: "#e5e7eb",
-    },
-    profileInitial: {
-      width: "112px",
-      height: "112px",
-      borderRadius: "9999px",
-      border: "4px solid #ffffff",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-      background: "linear-gradient(135deg, #f87171, #dc2626)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    initialText: {
-      fontSize: "36px",
-      fontWeight: "700",
-      color: "#ffffff",
-    },
-    ratingBadge: {
-      position: "absolute" as const,
-      bottom: "-8px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      backgroundColor: "#facc15",
-      color: "#111827",
-      padding: "4px 12px",
-      borderRadius: "9999px",
-      display: "flex",
-      alignItems: "center",
-      gap: "4px",
-      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-    },
-    ratingText: {
-      fontSize: "12px",
-      fontWeight: "700",
-    },
-    name: {
-      fontSize: "24px",
-      fontWeight: "700",
-      color: "#ffffff",
-      textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-      margin: 0,
-    },
-    profession: {
-      color: "#ffffff",
-      fontSize: "14px",
-      marginTop: "4px",
-      fontWeight: "600",
-      textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
-    },
-    tagsRow: {
-      display: "flex",
-      flexWrap: "wrap" as const,
-      justifyContent: "center",
-      gap: "12px",
-      marginTop: "16px",
-    },
-    tag: {
-      backgroundColor: "rgba(0,0,0,0.4)",
-      padding: "6px 12px",
-      borderRadius: "9999px",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      border: "1px solid rgba(255,255,255,0.3)",
-    },
-    tagText: {
-      color: "#ffffff",
-      fontSize: "12px",
-      fontWeight: "600",
-    },
-    credentialsBox: {
-      backgroundColor: "#ffffff",
-      borderRadius: "12px",
-      padding: "16px",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-    },
-    sectionHeader: {
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      marginBottom: "8px",
-    },
-    sectionTitle: {
-      fontSize: "11px",
-      fontWeight: "700",
-      color: "#1f2937",
-      textTransform: "uppercase" as const,
-      letterSpacing: "0.5px",
-    },
-    credentialTags: {
-      display: "flex",
-      flexWrap: "wrap" as const,
-      gap: "4px",
-    },
-    certTag: {
-      fontSize: "11px",
-      backgroundColor: "#dbeafe",
-      color: "#1e40af",
-      padding: "4px 8px",
-      borderRadius: "6px",
-      fontWeight: "500",
-    },
-    awardTag: {
-      fontSize: "11px",
-      backgroundColor: "#fef3c7",
-      color: "#92400e",
-      padding: "4px 8px",
-      borderRadius: "6px",
-      fontWeight: "500",
-    },
-    moreTag: {
-      fontSize: "11px",
-      backgroundColor: "#e5e7eb",
-      color: "#4b5563",
-      padding: "4px 8px",
-      borderRadius: "6px",
-      fontWeight: "500",
-    },
-    footer: {
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      marginTop: "12px",
-    },
-    footerText: {
-      color: "#ffffff",
-      fontSize: "14px",
-      fontWeight: "600",
-      letterSpacing: "1px",
-      textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
-    },
-    divider: {
-      height: "1px",
-      backgroundColor: "#e5e7eb",
-      margin: "8px 0",
-    },
-    iconWhite: {
-      color: "#ffffff",
-      fontSize: "12px",
-    },
-    iconBlue: {
-      color: "#2563eb",
-      fontSize: "14px",
-    },
-    iconAmber: {
-      color: "#f59e0b",
-      fontSize: "14px",
-    },
-    iconYellow: {
-      color: "#facc15",
-      fontSize: "12px",
-    },
-  };
-
-  // Convert image URL to base64
-  const imageToBase64 = async (url: string): Promise<string> => {
-    try {
-      const response = await fetch(url, { mode: 'cors' });
-      const blob = await response.blob();
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.onerror = reject;
-        reader.readAsDataURL(blob);
-      });
-    } catch {
-      return "";
     }
   };
 
@@ -807,15 +624,15 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
     setIsExporting(true);
 
     try {
-      // Convert profile image to base64 for PDF
-      let profileImageBase64 = "";
-      if (cardData.profileImage) {
-        profileImageBase64 = await imageToBase64(cardData.profileImage);
+      // Use preloaded base64 profile image, or try to convert on-the-fly as fallback
+      let imageForPdf = profileImageBase64;
+      if (!imageForPdf && cardData.profileImage) {
+        imageForPdf = await convertImageToBase64(cardData.profileImage);
       }
 
       const pdfData = {
         ...cardData,
-        profileImage: profileImageBase64,
+        profileImage: imageForPdf,
       };
 
       const blob = await pdf(<BusinessCardPDF data={pdfData} />).toBlob();
@@ -1084,13 +901,14 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
 
               {/* Middle Section - Profile */}
               <div className="flex-1 flex flex-col items-center justify-center text-center mt-4">
-                {/* Profile Image */}
+                {/* Profile Image - use base64 for export reliability */}
                 <div className="relative mb-4">
-                  {cardData.profileImage ? (
+                  {profileImageBase64 || cardData.profileImage ? (
                     <img
-                      src={cardData.profileImage}
+                      src={profileImageBase64 || cardData.profileImage}
                       alt={cardData.name}
                       className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-gray-200"
+                      crossOrigin="anonymous"
                       onError={(e) => {
                         // Fallback to initial if image fails to load
                         const target = e.target as HTMLImageElement;
@@ -1491,124 +1309,6 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
           </div>
         </div>
       )}
-
-      {/* Hidden element for PNG download with inline styles */}
-      <div ref={hiddenPngRef} style={pngStyles.container}>
-        <img src={businesscard} alt="" style={pngStyles.backgroundImage} />
-        <div style={pngStyles.overlay} />
-        <div style={pngStyles.content}>
-          <div style={pngStyles.topRow}>
-            <img src={logo} alt="Outceedo" style={pngStyles.logo} />
-            <div style={pngStyles.verifiedBadge}>
-              <span style={pngStyles.verifiedText}>Verified Expert</span>
-            </div>
-          </div>
-
-          <div style={pngStyles.profileSection}>
-            <div style={pngStyles.profileImageWrapper}>
-              {cardData.profileImage ? (
-                <img
-                  src={cardData.profileImage}
-                  alt={cardData.name}
-                  style={pngStyles.profileImage}
-                />
-              ) : (
-                <div style={pngStyles.profileInitial}>
-                  <span style={pngStyles.initialText}>
-                    {cardData.name.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-              )}
-              {cardData.showRating && cardData.avgRating > 0 && (
-                <div style={pngStyles.ratingBadge}>
-                  <FontAwesomeIcon icon={faStarSolid} style={pngStyles.iconYellow} />
-                  <span style={pngStyles.ratingText}>
-                    {cardData.avgRating.toFixed(1)}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            <h2 style={pngStyles.name}>{cardData.name}</h2>
-            {cardData.profession && (
-              <p style={pngStyles.profession}>{cardData.profession}</p>
-            )}
-
-            <div style={pngStyles.tagsRow}>
-              {cardData.location && (
-                <div style={pngStyles.tag}>
-                  <FontAwesomeIcon icon={faMapMarkerAlt} style={pngStyles.iconWhite} />
-                  <span style={pngStyles.tagText}>{cardData.location}</span>
-                </div>
-              )}
-              {cardData.certificationLevel && cardData.certificationLevel !== "N/A" && (
-                <div style={pngStyles.tag}>
-                  <FontAwesomeIcon icon={faCertificate} style={pngStyles.iconWhite} />
-                  <span style={pngStyles.tagText}>{cardData.certificationLevel}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div style={pngStyles.credentialsBox}>
-            {cardData.showCertificates && cardData.certificates.length > 0 && (
-              <div style={{ marginBottom: "12px" }}>
-                <div style={pngStyles.sectionHeader}>
-                  <FontAwesomeIcon icon={faCertificate} style={pngStyles.iconBlue} />
-                  <span style={pngStyles.sectionTitle}>Certificates</span>
-                </div>
-                <div style={pngStyles.credentialTags}>
-                  {cardData.certificates.slice(0, 3).map((cert, idx) => (
-                    <span key={idx} style={pngStyles.certTag}>{cert}</span>
-                  ))}
-                  {cardData.certificates.length > 3 && (
-                    <span style={pngStyles.moreTag}>+{cardData.certificates.length - 3}</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {cardData.showAwards && cardData.awards.length > 0 && (
-              <div>
-                <div style={pngStyles.sectionHeader}>
-                  <FontAwesomeIcon icon={faAward} style={pngStyles.iconAmber} />
-                  <span style={pngStyles.sectionTitle}>Awards</span>
-                </div>
-                <div style={pngStyles.credentialTags}>
-                  {cardData.awards.slice(0, 3).map((award, idx) => (
-                    <span key={idx} style={pngStyles.awardTag}>{award}</span>
-                  ))}
-                  {cardData.awards.length > 3 && (
-                    <span style={pngStyles.moreTag}>+{cardData.awards.length - 3}</span>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {cardData.showRating && cardData.totalReviews > 0 && (
-              <>
-                <div style={pngStyles.divider} />
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "4px" }}>
-                  {[...Array(5)].map((_, i) => (
-                    <FontAwesomeIcon
-                      key={i}
-                      icon={i < Math.floor(cardData.avgRating) ? faStarSolid : farStar}
-                      style={{ color: "#facc15", fontSize: "12px" }}
-                    />
-                  ))}
-                  <span style={{ fontSize: "11px", color: "#4b5563", marginLeft: "4px" }}>
-                    ({cardData.totalReviews} reviews)
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div style={pngStyles.footer}>
-            <span style={pngStyles.footerText}>outceedo.com</span>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
@@ -1618,6 +1318,7 @@ export const BusinessCardDownloadButton: React.FC<{
   expertData: ExpertDataType;
 }> = ({ expertData }) => {
   const [isExporting, setIsExporting] = useState(false);
+  const [profileImageBase64, setProfileImageBase64] = useState<string>("");
   const hiddenCardRef = useRef<HTMLDivElement>(null);
 
   const certificates =
@@ -1652,263 +1353,38 @@ export const BusinessCardDownloadButton: React.FC<{
     profileImage: expertData.profileImage || "",
   };
 
+  // Preload profile image as base64
+  useEffect(() => {
+    const preloadImage = async () => {
+      if (expertData.profileImage) {
+        const base64 = await convertImageToBase64(expertData.profileImage);
+        setProfileImageBase64(base64);
+      }
+    };
+    preloadImage();
+  }, [expertData.profileImage]);
+
   const downloadAsImage = async () => {
     if (!hiddenCardRef.current) return;
     setIsExporting(true);
 
     try {
-      const canvas = await html2canvas(hiddenCardRef.current, {
-        scale: 3,
-        useCORS: true,
-        allowTaint: false,
-        backgroundColor: "#1a1a2e",
-        logging: false,
-        imageTimeout: 15000,
+      const dataUrl = await toPng(hiddenCardRef.current, {
+        quality: 1.0,
+        pixelRatio: 3,
+        cacheBust: true,
+        skipAutoScale: false,
+        includeQueryParams: true,
       });
 
-      canvas.toBlob(
-        (blob) => {
-          if (blob) {
-            saveAs(
-              blob,
-              `${cardData.name.replace(/\s+/g, "_")}_business_card.png`,
-            );
-          }
-        },
-        "image/png",
-        1.0,
-      );
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      saveAs(blob, `${cardData.name.replace(/\s+/g, "_")}_business_card.png`);
     } catch (error) {
       console.error("Error generating image:", error);
     } finally {
       setIsExporting(false);
     }
-  };
-
-  // Inline styles to avoid oklch color issues with html2canvas
-  const styles = {
-    container: {
-      position: "fixed" as const,
-      left: "-9999px",
-      width: "350px",
-      height: "600px",
-      borderRadius: "16px",
-      overflow: "hidden",
-      zIndex: -1,
-      fontFamily: "system-ui, -apple-system, sans-serif",
-    },
-    backgroundImage: {
-      position: "absolute" as const,
-      inset: 0,
-      width: "100%",
-      height: "100%",
-      objectFit: "cover" as const,
-    },
-    overlay: {
-      position: "absolute" as const,
-      inset: 0,
-      background: "linear-gradient(to bottom, rgba(0,0,0,0.4), rgba(0,0,0,0.2), rgba(0,0,0,0.5))",
-    },
-    content: {
-      position: "relative" as const,
-      height: "100%",
-      display: "flex",
-      flexDirection: "column" as const,
-      padding: "24px",
-    },
-    topRow: {
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "flex-start",
-    },
-    logo: {
-      height: "32px",
-      objectFit: "contain" as const,
-    },
-    verifiedBadge: {
-      backgroundColor: "#ffffff",
-      padding: "4px 12px",
-      borderRadius: "9999px",
-      boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-    },
-    verifiedText: {
-      fontSize: "12px",
-      fontWeight: "700",
-      color: "#dc2626",
-    },
-    profileSection: {
-      flex: 1,
-      display: "flex",
-      flexDirection: "column" as const,
-      alignItems: "center",
-      justifyContent: "center",
-      textAlign: "center" as const,
-      marginTop: "16px",
-    },
-    profileImageWrapper: {
-      position: "relative" as const,
-      marginBottom: "16px",
-    },
-    profileImage: {
-      width: "112px",
-      height: "112px",
-      borderRadius: "9999px",
-      border: "4px solid #ffffff",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-      objectFit: "cover" as const,
-      backgroundColor: "#e5e7eb",
-    },
-    profileInitial: {
-      width: "112px",
-      height: "112px",
-      borderRadius: "9999px",
-      border: "4px solid #ffffff",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
-      background: "linear-gradient(135deg, #f87171, #dc2626)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    initialText: {
-      fontSize: "36px",
-      fontWeight: "700",
-      color: "#ffffff",
-    },
-    ratingBadge: {
-      position: "absolute" as const,
-      bottom: "-8px",
-      left: "50%",
-      transform: "translateX(-50%)",
-      backgroundColor: "#facc15",
-      color: "#111827",
-      padding: "4px 12px",
-      borderRadius: "9999px",
-      display: "flex",
-      alignItems: "center",
-      gap: "4px",
-      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-    },
-    ratingText: {
-      fontSize: "12px",
-      fontWeight: "700",
-    },
-    name: {
-      fontSize: "24px",
-      fontWeight: "700",
-      color: "#ffffff",
-      textShadow: "2px 2px 4px rgba(0,0,0,0.8)",
-      margin: 0,
-    },
-    profession: {
-      color: "#ffffff",
-      fontSize: "14px",
-      marginTop: "4px",
-      fontWeight: "600",
-      textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
-    },
-    tagsRow: {
-      display: "flex",
-      flexWrap: "wrap" as const,
-      justifyContent: "center",
-      gap: "12px",
-      marginTop: "16px",
-    },
-    tag: {
-      backgroundColor: "rgba(0,0,0,0.4)",
-      padding: "6px 12px",
-      borderRadius: "9999px",
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      border: "1px solid rgba(255,255,255,0.3)",
-    },
-    tagText: {
-      color: "#ffffff",
-      fontSize: "12px",
-      fontWeight: "600",
-    },
-    credentialsBox: {
-      backgroundColor: "#ffffff",
-      borderRadius: "12px",
-      padding: "16px",
-      boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
-    },
-    sectionHeader: {
-      display: "flex",
-      alignItems: "center",
-      gap: "8px",
-      marginBottom: "8px",
-    },
-    sectionTitle: {
-      fontSize: "11px",
-      fontWeight: "700",
-      color: "#1f2937",
-      textTransform: "uppercase" as const,
-      letterSpacing: "0.5px",
-    },
-    credentialTags: {
-      display: "flex",
-      flexWrap: "wrap" as const,
-      gap: "4px",
-    },
-    certTag: {
-      fontSize: "11px",
-      backgroundColor: "#dbeafe",
-      color: "#1e40af",
-      padding: "4px 8px",
-      borderRadius: "6px",
-      fontWeight: "500",
-    },
-    awardTag: {
-      fontSize: "11px",
-      backgroundColor: "#fef3c7",
-      color: "#92400e",
-      padding: "4px 8px",
-      borderRadius: "6px",
-      fontWeight: "500",
-    },
-    moreTag: {
-      fontSize: "11px",
-      backgroundColor: "#e5e7eb",
-      color: "#4b5563",
-      padding: "4px 8px",
-      borderRadius: "6px",
-      fontWeight: "500",
-    },
-    footer: {
-      display: "flex",
-      justifyContent: "center",
-      alignItems: "center",
-      marginTop: "12px",
-    },
-    footerText: {
-      color: "#ffffff",
-      fontSize: "14px",
-      fontWeight: "600",
-      letterSpacing: "1px",
-      textShadow: "1px 1px 3px rgba(0,0,0,0.8)",
-    },
-    divider: {
-      height: "1px",
-      backgroundColor: "#e5e7eb",
-      margin: "8px 0",
-    },
-    iconWhite: {
-      color: "#ffffff",
-      fontSize: "12px",
-    },
-    iconBlue: {
-      color: "#2563eb",
-      fontSize: "14px",
-    },
-    iconAmber: {
-      color: "#f59e0b",
-      fontSize: "14px",
-    },
-    iconYellow: {
-      color: "#facc15",
-      fontSize: "12px",
-    },
   };
 
   return (
@@ -1923,85 +1399,129 @@ export const BusinessCardDownloadButton: React.FC<{
         {isExporting ? "Generating..." : "Business Card"}
       </Button>
 
-      {/* Hidden card for rendering - using inline styles to avoid oklch */}
-      <div ref={hiddenCardRef} style={styles.container}>
+      {/* Hidden card for rendering */}
+      <div
+        ref={hiddenCardRef}
+        className="fixed -left-[9999px] w-[350px] h-[600px] rounded-2xl overflow-hidden"
+        style={{ zIndex: -1 }}
+      >
         {/* Background Image */}
-        <img src={businesscard} alt="" style={styles.backgroundImage} />
+        <img
+          src={businesscard}
+          alt="Business Card Background"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
         {/* Overlay */}
-        <div style={styles.overlay} />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
 
         {/* Content */}
-        <div style={styles.content}>
+        <div className="relative h-full flex flex-col p-6">
           {/* Top Row */}
-          <div style={styles.topRow}>
-            <img src={logo} alt="Outceedo" style={styles.logo} />
-            <div style={styles.verifiedBadge}>
-              <span style={styles.verifiedText}>Verified Expert</span>
+          <div className="flex justify-between items-start">
+            <img src={logo} alt="Outceedo" className="h-8 object-contain" />
+            <div className="bg-white px-3 py-1 rounded-full shadow-md">
+              <span className="text-xs font-bold text-red-600">
+                Verified Expert
+              </span>
             </div>
           </div>
 
           {/* Profile Section */}
-          <div style={styles.profileSection}>
-            <div style={styles.profileImageWrapper}>
-              {cardData.profileImage ? (
+          <div className="flex-1 flex flex-col items-center justify-center text-center mt-4">
+            <div className="relative mb-4">
+              {profileImageBase64 || cardData.profileImage ? (
                 <img
-                  src={cardData.profileImage}
+                  src={profileImageBase64 || cardData.profileImage}
                   alt={cardData.name}
-                  style={styles.profileImage}
+                  crossOrigin="anonymous"
+                  className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-gray-200"
                 />
               ) : (
-                <div style={styles.profileInitial}>
-                  <span style={styles.initialText}>
+                <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                  <span className="text-4xl font-bold text-white">
                     {cardData.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
               )}
               {cardData.avgRating > 0 && (
-                <div style={styles.ratingBadge}>
-                  <FontAwesomeIcon icon={faStarSolid} style={styles.iconYellow} />
-                  <span style={styles.ratingText}>
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <FontAwesomeIcon icon={faStarSolid} className="text-xs" />
+                  <span className="text-xs font-bold">
                     {cardData.avgRating.toFixed(1)}
                   </span>
                 </div>
               )}
             </div>
 
-            <h2 style={styles.name}>{cardData.name}</h2>
+            <h2
+              className="text-2xl font-bold text-white"
+              style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+            >
+              {cardData.name}
+            </h2>
             {cardData.profession && (
-              <p style={styles.profession}>{cardData.profession}</p>
+              <p
+                className="text-white text-sm mt-1 font-semibold"
+                style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+              >
+                {cardData.profession}
+              </p>
             )}
 
-            <div style={styles.tagsRow}>
+            <div className="flex flex-wrap justify-center gap-3 mt-4">
               {cardData.location && (
-                <div style={styles.tag}>
-                  <FontAwesomeIcon icon={faMapMarkerAlt} style={styles.iconWhite} />
-                  <span style={styles.tagText}>{cardData.location}</span>
+                <div className="bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                  <FontAwesomeIcon
+                    icon={faMapMarkerAlt}
+                    className="text-white text-xs"
+                  />
+                  <span className="text-white text-xs font-semibold">
+                    {cardData.location}
+                  </span>
                 </div>
               )}
-              {cardData.certificationLevel && cardData.certificationLevel !== "N/A" && (
-                <div style={styles.tag}>
-                  <FontAwesomeIcon icon={faCertificate} style={styles.iconWhite} />
-                  <span style={styles.tagText}>{cardData.certificationLevel}</span>
-                </div>
-              )}
+              {cardData.certificationLevel &&
+                cardData.certificationLevel !== "N/A" && (
+                  <div className="bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                    <FontAwesomeIcon
+                      icon={faCertificate}
+                      className="text-white text-xs"
+                    />
+                    <span className="text-white text-xs font-semibold">
+                      {cardData.certificationLevel}
+                    </span>
+                  </div>
+                )}
             </div>
           </div>
 
           {/* Credentials Box */}
-          <div style={styles.credentialsBox}>
+          <div className="bg-white rounded-xl p-4 space-y-3 shadow-lg">
             {cardData.certificates.length > 0 && (
-              <div style={{ marginBottom: "12px" }}>
-                <div style={styles.sectionHeader}>
-                  <FontAwesomeIcon icon={faCertificate} style={styles.iconBlue} />
-                  <span style={styles.sectionTitle}>Certificates</span>
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faCertificate}
+                    className="text-blue-600 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Certificates
+                  </span>
                 </div>
-                <div style={styles.credentialTags}>
+                <div className="flex flex-wrap gap-1">
                   {cardData.certificates.slice(0, 3).map((cert, idx) => (
-                    <span key={idx} style={styles.certTag}>{cert}</span>
+                    <span
+                      key={idx}
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-medium"
+                    >
+                      {cert}
+                    </span>
                   ))}
                   {cardData.certificates.length > 3 && (
-                    <span style={styles.moreTag}>+{cardData.certificates.length - 3}</span>
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.certificates.length - 3}
+                    </span>
                   )}
                 </div>
               </div>
@@ -2009,43 +1529,51 @@ export const BusinessCardDownloadButton: React.FC<{
 
             {cardData.awards.length > 0 && (
               <div>
-                <div style={styles.sectionHeader}>
-                  <FontAwesomeIcon icon={faAward} style={styles.iconAmber} />
-                  <span style={styles.sectionTitle}>Awards</span>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faAward}
+                    className="text-amber-500 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Awards
+                  </span>
                 </div>
-                <div style={styles.credentialTags}>
+                <div className="flex flex-wrap gap-1">
                   {cardData.awards.slice(0, 3).map((award, idx) => (
-                    <span key={idx} style={styles.awardTag}>{award}</span>
+                    <span
+                      key={idx}
+                      className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-md font-medium"
+                    >
+                      {award}
+                    </span>
                   ))}
                   {cardData.awards.length > 3 && (
-                    <span style={styles.moreTag}>+{cardData.awards.length - 3}</span>
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.awards.length - 3}
+                    </span>
                   )}
                 </div>
               </div>
             )}
 
             {cardData.totalReviews > 0 && (
-              <>
-                <div style={styles.divider} />
-                <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "4px" }}>
-                  {[...Array(5)].map((_, i) => (
-                    <FontAwesomeIcon
-                      key={i}
-                      icon={i < Math.floor(cardData.avgRating) ? faStarSolid : farStar}
-                      style={{ color: "#facc15", fontSize: "12px" }}
-                    />
-                  ))}
-                  <span style={{ fontSize: "11px", color: "#4b5563", marginLeft: "4px" }}>
-                    ({cardData.totalReviews} reviews)
-                  </span>
-                </div>
-              </>
+              <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
+                <StarRating avg={cardData.avgRating} size="text-xs" />
+                <span className="text-xs text-gray-600 ml-1 font-medium">
+                  ({cardData.totalReviews} reviews)
+                </span>
+              </div>
             )}
           </div>
 
           {/* Footer */}
-          <div style={styles.footer}>
-            <span style={styles.footerText}>outceedo.com</span>
+          <div className="flex justify-center items-center mt-3">
+            <span
+              className="text-white text-sm font-semibold tracking-wider"
+              style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+            >
+              outceedo.com
+            </span>
           </div>
         </div>
       </div>

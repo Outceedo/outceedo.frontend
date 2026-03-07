@@ -34,7 +34,7 @@ const usersService = axios.create({
 
 // Add a request interceptor to handle the token
 const requestInterceptor = (
-  config: InternalAxiosRequestConfig
+  config: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
   const token = localStorage.getItem("accessToken");
   if (token) {
