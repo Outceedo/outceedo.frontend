@@ -37,6 +37,8 @@ import {
 import { saveAs } from "file-saver";
 import logo from "@/assets/images/outceedologo.png";
 import businesscard from "@/assets/images/businesscard.png";
+import { MapPin, Medal, Trophy } from "lucide-react";
+import { FaCertificate } from "react-icons/fa";
 
 interface ExpertDataType {
   id?: string;
@@ -409,14 +411,17 @@ const BusinessCardPDF: React.FC<{
                 <View style={pdfStyles.tagsRow}>
                   {data.location && (
                     <View style={pdfStyles.tag}>
-                      <Text style={pdfStyles.tagText}>📍 {data.location}</Text>
+                      <Text style={pdfStyles.tagText}>
+                        <MapPin />
+                        {data.location}
+                      </Text>
                     </View>
                   )}
                   {data.certificationLevel &&
                     data.certificationLevel !== "N/A" && (
                       <View style={pdfStyles.tag}>
                         <Text style={pdfStyles.tagText}>
-                          🏅 {data.certificationLevel}
+                          <Medal /> {data.certificationLevel}
                         </Text>
                       </View>
                     )}
@@ -441,7 +446,7 @@ const BusinessCardPDF: React.FC<{
                     >
                       <View style={pdfStyles.sectionHeader}>
                         <Text style={pdfStyles.sectionTitle}>
-                          📜 Certificates
+                          <FaCertificate /> Certificates
                         </Text>
                       </View>
                       <View style={pdfStyles.credentialTags}>
@@ -467,7 +472,9 @@ const BusinessCardPDF: React.FC<{
                       style={{ marginBottom: data.skills.length > 0 ? 8 : 0 }}
                     >
                       <View style={pdfStyles.sectionHeader}>
-                        <Text style={pdfStyles.sectionTitle}>🏆 Awards</Text>
+                        <Text style={pdfStyles.sectionTitle}>
+                          <Trophy /> Awards
+                        </Text>
                       </View>
                       <View style={pdfStyles.credentialTags}>
                         {data.awards.slice(0, 3).map((award, index) => (
@@ -490,7 +497,7 @@ const BusinessCardPDF: React.FC<{
                   {data.skills.length > 0 && (
                     <View>
                       <View style={pdfStyles.sectionHeader}>
-                        <Text style={pdfStyles.sectionTitle}>💡 Skills</Text>
+                        <Text style={pdfStyles.sectionTitle}>Skills</Text>
                       </View>
                       <View style={pdfStyles.credentialTags}>
                         {data.skills.slice(0, 4).map((skill, index) => (
@@ -1299,7 +1306,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
 
             {/* Card Preview */}
             <div
-              className="w-full relative rounded-2xl shadow-2xl overflow-hidden"
+              className="w-full relative shadow-2xl overflow-hidden"
               style={{ aspectRatio: "9/16" }}
             >
               {/* Background Image */}
