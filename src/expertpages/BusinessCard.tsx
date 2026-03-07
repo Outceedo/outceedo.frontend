@@ -13,6 +13,7 @@ import {
   faCertificate,
   faAward,
   faTimes,
+  faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import {
@@ -44,6 +45,7 @@ interface ExpertDataType {
   location: string;
   certificationLevel: string;
   profileImage?: string;
+  skills?: string[];
   documents?: Array<{ type?: string; title?: string; [key: string]: unknown }>;
   reviewsReceived?: Array<{ rating?: number; [key: string]: unknown }>;
   [key: string]: unknown;
@@ -89,7 +91,7 @@ const StarRating: React.FC<{ avg: number; total?: number; size?: string }> = ({
   );
 };
 
-// PDF Styles
+// PDF Styles - optimized for proper layout
 const pdfStyles = StyleSheet.create({
   page: {
     flexDirection: "column",
@@ -111,27 +113,28 @@ const pdfStyles = StyleSheet.create({
     position: "absolute",
     width: "100%",
     height: "100%",
-    backgroundColor: "rgba(0,0,0,0.3)",
+    backgroundColor: "rgba(0,0,0,0.35)",
   },
   content: {
     flex: 1,
-    padding: 24,
+    padding: 20,
     position: "relative",
+    justifyContent: "space-between",
   },
   topRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 20,
   },
   logo: {
-    height: 24,
+    height: 22,
+    width: 100,
     objectFit: "contain",
   },
   verifiedBadge: {
-    backgroundColor: "rgba(255,255,255,0.9)",
+    backgroundColor: "#ffffff",
     paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingVertical: 5,
     borderRadius: 12,
   },
   verifiedText: {
@@ -141,95 +144,104 @@ const pdfStyles = StyleSheet.create({
   },
   profileSection: {
     alignItems: "center",
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 15,
+    marginBottom: 10,
   },
   profileImageContainer: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     backgroundColor: "#ffffff",
-    marginBottom: 12,
+    marginBottom: 10,
     overflow: "hidden",
-    borderWidth: 3,
+    borderWidth: 4,
     borderColor: "#ffffff",
-  },
-  profileImage: {
-    width: 90,
-    height: 90,
-  },
-  profileInitial: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: "#e5e7eb",
     alignItems: "center",
     justifyContent: "center",
-    borderWidth: 3,
+  },
+  profileImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    objectFit: "cover",
+  },
+  profileInitial: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: "#ef4444",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 4,
     borderColor: "#ffffff",
   },
   initialText: {
-    fontSize: 36,
+    fontSize: 40,
     fontWeight: "bold",
-    color: "#6b7280",
+    color: "#ffffff",
   },
   ratingBadge: {
     backgroundColor: "#fbbf24",
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 12,
     flexDirection: "row",
     alignItems: "center",
-    marginTop: -8,
+    marginTop: -12,
+    marginBottom: 8,
   },
   ratingBadgeText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: "bold",
     color: "#1f2937",
   },
   name: {
-    fontSize: 22,
+    fontSize: 24,
     fontWeight: "bold",
     color: "#ffffff",
-    marginTop: 8,
+    marginTop: 6,
     textAlign: "center",
   },
   profession: {
-    fontSize: 12,
-    color: "rgba(255,255,255,0.9)",
-    marginTop: 4,
+    fontSize: 13,
+    color: "#ffffff",
+    marginTop: 3,
     textAlign: "center",
+    fontWeight: "medium",
   },
   tagsRow: {
     flexDirection: "row",
     justifyContent: "center",
     flexWrap: "wrap",
     gap: 8,
-    marginTop: 12,
+    marginTop: 10,
   },
   tag: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    paddingHorizontal: 10,
+    backgroundColor: "rgba(0,0,0,0.4)",
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.3)",
   },
   tagText: {
-    fontSize: 9,
+    fontSize: 10,
     color: "#ffffff",
+    fontWeight: "medium",
   },
   credentialsBox: {
-    backgroundColor: "rgba(255,255,255,0.95)",
+    backgroundColor: "#ffffff",
     borderRadius: 12,
-    padding: 16,
-    marginTop: "auto",
+    padding: 14,
+    marginTop: 15,
   },
   sectionHeader: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sectionTitle: {
-    fontSize: 9,
+    fontSize: 10,
     fontWeight: "bold",
     color: "#374151",
     textTransform: "uppercase",
@@ -241,24 +253,30 @@ const pdfStyles = StyleSheet.create({
     gap: 4,
   },
   certTag: {
-    backgroundColor: "#eff6ff",
+    backgroundColor: "#dbeafe",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    marginRight: 4,
+    marginBottom: 4,
   },
   certTagText: {
-    fontSize: 8,
+    fontSize: 9,
     color: "#1d4ed8",
+    fontWeight: "medium",
   },
   awardTag: {
-    backgroundColor: "#fffbeb",
+    backgroundColor: "#fef3c7",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
+    marginRight: 4,
+    marginBottom: 4,
   },
   awardTagText: {
-    fontSize: 8,
+    fontSize: 9,
     color: "#b45309",
+    fontWeight: "medium",
   },
   moreTag: {
     backgroundColor: "#f3f4f6",
@@ -267,20 +285,20 @@ const pdfStyles = StyleSheet.create({
     borderRadius: 6,
   },
   moreTagText: {
-    fontSize: 8,
+    fontSize: 9,
     color: "#6b7280",
   },
   reviewsRow: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    marginTop: 12,
-    paddingTop: 12,
+    marginTop: 10,
+    paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: "#e5e7eb",
   },
   reviewsText: {
-    fontSize: 9,
+    fontSize: 10,
     color: "#6b7280",
   },
   footer: {
@@ -288,14 +306,31 @@ const pdfStyles = StyleSheet.create({
     marginTop: 12,
   },
   footerText: {
-    fontSize: 10,
-    color: "rgba(255,255,255,0.8)",
+    fontSize: 11,
+    color: "#ffffff",
     letterSpacing: 1,
+    fontWeight: "medium",
   },
   divider: {
     height: 1,
     backgroundColor: "#e5e7eb",
-    marginVertical: 10,
+    marginVertical: 8,
+  },
+  sectionDivider: {
+    marginTop: 8,
+  },
+  skillTag: {
+    backgroundColor: "#f0fdf4",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 4,
+    marginBottom: 4,
+  },
+  skillTagText: {
+    fontSize: 9,
+    color: "#166534",
+    fontWeight: "medium",
   },
 });
 
@@ -308,140 +343,195 @@ const BusinessCardPDF: React.FC<{
     certificationLevel: string;
     certificates: string[];
     awards: string[];
+    skills: string[];
     avgRating: number;
     totalReviews: number;
     profileImage: string;
   };
-}> = ({ data }) => (
-  <PDFDocument>
-    <Page size={[350, 600]} style={pdfStyles.page}>
-      <View style={pdfStyles.card}>
-        {/* Background */}
-        <Image src={businesscard} style={pdfStyles.backgroundImage} />
-        <View style={pdfStyles.overlay} />
+}> = ({ data }) => {
+  // Check if we have any credentials to show
+  const hasCredentials =
+    data.certificates.length > 0 ||
+    data.awards.length > 0 ||
+    data.skills.length > 0 ||
+    data.totalReviews > 0;
 
-        {/* Content */}
-        <View style={pdfStyles.content}>
-          {/* Top Row - Logo & Badge */}
-          <View style={pdfStyles.topRow}>
-            <Image src={logo} style={pdfStyles.logo} />
-            <View style={pdfStyles.verifiedBadge}>
-              <Text style={pdfStyles.verifiedText}>Verified Expert</Text>
+  return (
+    <PDFDocument>
+      <Page size={[350, 550]} style={pdfStyles.page}>
+        <View style={pdfStyles.card}>
+          {/* Background */}
+          <Image src={businesscard} style={pdfStyles.backgroundImage} />
+          <View style={pdfStyles.overlay} />
+
+          {/* Content */}
+          <View style={pdfStyles.content}>
+            {/* Top Section - Logo & Badge */}
+            <View style={pdfStyles.topRow}>
+              <Image src={logo} style={pdfStyles.logo} />
+              <View style={pdfStyles.verifiedBadge}>
+                <Text style={pdfStyles.verifiedText}>Verified Expert</Text>
+              </View>
             </View>
-          </View>
 
-          {/* Profile Section */}
-          <View style={pdfStyles.profileSection}>
-            {data.profileImage ? (
-              <View style={pdfStyles.profileImageContainer}>
-                <Image src={data.profileImage} style={pdfStyles.profileImage} />
-              </View>
-            ) : (
-              <View style={pdfStyles.profileInitial}>
-                <Text style={pdfStyles.initialText}>
-                  {data.name.charAt(0).toUpperCase()}
-                </Text>
-              </View>
-            )}
+            {/* Middle Section - Profile Info (centered) */}
+            <View style={{ flex: 1, justifyContent: "center" }}>
+              <View style={pdfStyles.profileSection}>
+                {data.profileImage ? (
+                  <View style={pdfStyles.profileImageContainer}>
+                    <Image
+                      src={data.profileImage}
+                      style={pdfStyles.profileImage}
+                    />
+                  </View>
+                ) : (
+                  <View style={pdfStyles.profileInitial}>
+                    <Text style={pdfStyles.initialText}>
+                      {data.name.charAt(0).toUpperCase()}
+                    </Text>
+                  </View>
+                )}
 
-            {data.avgRating > 0 && (
-              <View style={pdfStyles.ratingBadge}>
-                <Text style={pdfStyles.ratingBadgeText}>
-                  {data.avgRating.toFixed(1)}
-                </Text>
-              </View>
-            )}
+                {data.avgRating > 0 && (
+                  <View style={pdfStyles.ratingBadge}>
+                    <Text style={pdfStyles.ratingBadgeText}>
+                      ★ {data.avgRating.toFixed(1)}
+                    </Text>
+                  </View>
+                )}
 
-            <Text style={pdfStyles.name}>{data.name}</Text>
-            {data.profession && (
-              <Text style={pdfStyles.profession}>{data.profession}</Text>
-            )}
+                <Text style={pdfStyles.name}>{data.name}</Text>
+                {data.profession && (
+                  <Text style={pdfStyles.profession}>{data.profession}</Text>
+                )}
 
-            {/* Location & Certification Tags */}
-            <View style={pdfStyles.tagsRow}>
-              {data.location && (
-                <View style={pdfStyles.tag}>
-                  <Text style={pdfStyles.tagText}>{data.location}</Text>
-                </View>
-              )}
-              {data.certificationLevel && data.certificationLevel !== "N/A" && (
-                <View style={pdfStyles.tag}>
-                  <Text style={pdfStyles.tagText}>
-                    {data.certificationLevel}
-                  </Text>
-                </View>
-              )}
-            </View>
-          </View>
-
-          {/* Credentials Box */}
-          <View style={pdfStyles.credentialsBox}>
-            {/* Certificates */}
-            {data.certificates.length > 0 && (
-              <View style={{ marginBottom: 10 }}>
-                <View style={pdfStyles.sectionHeader}>
-                  <Text style={pdfStyles.sectionTitle}>Certificates</Text>
-                </View>
-                <View style={pdfStyles.credentialTags}>
-                  {data.certificates.slice(0, 3).map((cert, index) => (
-                    <View key={index} style={pdfStyles.certTag}>
-                      <Text style={pdfStyles.certTagText}>{cert}</Text>
+                {/* Location & Certification Tags */}
+                <View style={pdfStyles.tagsRow}>
+                  {data.location && (
+                    <View style={pdfStyles.tag}>
+                      <Text style={pdfStyles.tagText}>📍 {data.location}</Text>
                     </View>
-                  ))}
-                  {data.certificates.length > 3 && (
-                    <View style={pdfStyles.moreTag}>
-                      <Text style={pdfStyles.moreTagText}>
-                        +{data.certificates.length - 3}
+                  )}
+                  {data.certificationLevel &&
+                    data.certificationLevel !== "N/A" && (
+                      <View style={pdfStyles.tag}>
+                        <Text style={pdfStyles.tagText}>
+                          🏅 {data.certificationLevel}
+                        </Text>
+                      </View>
+                    )}
+                </View>
+              </View>
+            </View>
+
+            {/* Bottom Section */}
+            <View>
+              {/* Credentials Box - only show if there are credentials */}
+              {hasCredentials && (
+                <View style={pdfStyles.credentialsBox}>
+                  {/* Certificates */}
+                  {data.certificates.length > 0 && (
+                    <View
+                      style={{
+                        marginBottom:
+                          data.awards.length > 0 || data.skills.length > 0
+                            ? 8
+                            : 0,
+                      }}
+                    >
+                      <View style={pdfStyles.sectionHeader}>
+                        <Text style={pdfStyles.sectionTitle}>
+                          📜 Certificates
+                        </Text>
+                      </View>
+                      <View style={pdfStyles.credentialTags}>
+                        {data.certificates.slice(0, 3).map((cert, index) => (
+                          <View key={index} style={pdfStyles.certTag}>
+                            <Text style={pdfStyles.certTagText}>{cert}</Text>
+                          </View>
+                        ))}
+                        {data.certificates.length > 3 && (
+                          <View style={pdfStyles.moreTag}>
+                            <Text style={pdfStyles.moreTagText}>
+                              +{data.certificates.length - 3}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Awards */}
+                  {data.awards.length > 0 && (
+                    <View
+                      style={{ marginBottom: data.skills.length > 0 ? 8 : 0 }}
+                    >
+                      <View style={pdfStyles.sectionHeader}>
+                        <Text style={pdfStyles.sectionTitle}>🏆 Awards</Text>
+                      </View>
+                      <View style={pdfStyles.credentialTags}>
+                        {data.awards.slice(0, 3).map((award, index) => (
+                          <View key={index} style={pdfStyles.awardTag}>
+                            <Text style={pdfStyles.awardTagText}>{award}</Text>
+                          </View>
+                        ))}
+                        {data.awards.length > 3 && (
+                          <View style={pdfStyles.moreTag}>
+                            <Text style={pdfStyles.moreTagText}>
+                              +{data.awards.length - 3}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Skills */}
+                  {data.skills.length > 0 && (
+                    <View>
+                      <View style={pdfStyles.sectionHeader}>
+                        <Text style={pdfStyles.sectionTitle}>💡 Skills</Text>
+                      </View>
+                      <View style={pdfStyles.credentialTags}>
+                        {data.skills.slice(0, 4).map((skill, index) => (
+                          <View key={index} style={pdfStyles.skillTag}>
+                            <Text style={pdfStyles.skillTagText}>{skill}</Text>
+                          </View>
+                        ))}
+                        {data.skills.length > 4 && (
+                          <View style={pdfStyles.moreTag}>
+                            <Text style={pdfStyles.moreTagText}>
+                              +{data.skills.length - 4}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Reviews */}
+                  {data.totalReviews > 0 && (
+                    <View style={pdfStyles.reviewsRow}>
+                      <Text style={pdfStyles.reviewsText}>
+                        ★ {data.avgRating.toFixed(1)} / 5.0 ({data.totalReviews}{" "}
+                        reviews)
                       </Text>
                     </View>
                   )}
                 </View>
-              </View>
-            )}
+              )}
 
-            {/* Awards */}
-            {data.awards.length > 0 && (
-              <View>
-                <View style={pdfStyles.sectionHeader}>
-                  <Text style={pdfStyles.sectionTitle}>Awards</Text>
-                </View>
-                <View style={pdfStyles.credentialTags}>
-                  {data.awards.slice(0, 3).map((award, index) => (
-                    <View key={index} style={pdfStyles.awardTag}>
-                      <Text style={pdfStyles.awardTagText}>{award}</Text>
-                    </View>
-                  ))}
-                  {data.awards.length > 3 && (
-                    <View style={pdfStyles.moreTag}>
-                      <Text style={pdfStyles.moreTagText}>
-                        +{data.awards.length - 3}
-                      </Text>
-                    </View>
-                  )}
-                </View>
+              {/* Footer */}
+              <View style={pdfStyles.footer}>
+                <Text style={pdfStyles.footerText}>outceedo.com</Text>
               </View>
-            )}
-
-            {/* Reviews */}
-            {data.totalReviews > 0 && (
-              <View style={pdfStyles.reviewsRow}>
-                <Text style={pdfStyles.reviewsText}>
-                  {data.avgRating.toFixed(1)} / 5.0 ({data.totalReviews}{" "}
-                  reviews)
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Footer */}
-          <View style={pdfStyles.footer}>
-            <Text style={pdfStyles.footerText}>outceedo.com</Text>
+            </View>
           </View>
         </View>
-      </View>
-    </Page>
-  </PDFDocument>
-);
+      </Page>
+    </PDFDocument>
+  );
+};
 
 // Utility function to convert image URL to base64 with CORS handling
 const convertImageToBase64 = async (imageUrl: string): Promise<string> => {
@@ -530,6 +620,9 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
       : reviewsArray.reduce((sum, r) => sum + (r.rating || 0), 0) /
         totalReviews;
 
+  // Extract skills
+  const skills = expertData.skills || [];
+
   // Editable card data
   const [cardData, setCardData] = useState({
     name: expertData.name,
@@ -538,11 +631,13 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
     certificationLevel: expertData.certificationLevel,
     certificates: certificates,
     awards: awards,
+    skills: skills,
     avgRating: avgRating,
     totalReviews: totalReviews,
     profileImage: expertData.profileImage || "",
     showCertificates: true,
     showAwards: true,
+    showSkills: true,
     showRating: true,
   });
 
@@ -576,6 +671,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
       certificationLevel: expertData.certificationLevel,
       certificates: newCertificates,
       awards: newAwards,
+      skills: expertData.skills || [],
       avgRating: newAvgRating,
       totalReviews: newTotalReviews,
       profileImage: expertData.profileImage || "",
@@ -679,6 +775,67 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
       "_blank",
     );
   };
+  // Generate the image as a File object instead of downloading it immediately
+  const generateImageFile = async (): Promise<File | null> => {
+    if (!cardRef.current) return null;
+    setIsExporting(true);
+
+    try {
+      const dataUrl = await toPng(cardRef.current, {
+        quality: 1.0,
+        pixelRatio: 3,
+        cacheBust: true,
+        skipAutoScale: false,
+        includeQueryParams: true,
+      });
+
+      const response = await fetch(dataUrl);
+      const blob = await response.blob();
+      return new File(
+        [blob],
+        `${cardData.name.replace(/\s+/g, "_")}_business_card.png`,
+        { type: "image/png" },
+      );
+    } catch (error) {
+      console.error("Error generating image file:", error);
+      return null;
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  // Trigger the native Web Share API with the image payload
+  const handleNativeShare = async () => {
+    const file = await generateImageFile();
+    if (!file) {
+      alert("Could not generate the business card image for sharing.");
+      return;
+    }
+
+    const shareData = {
+      title: `${cardData.name}'s Business Card`,
+      text: generateShareText(),
+      // Omitting the URL here is sometimes necessary to force apps like Instagram
+      // to prioritize the image attachment rather than the link preview.
+      // url: shareUrl,
+      files: [file],
+    };
+
+    try {
+      // Check if the browser supports sharing files
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share(shareData);
+      } else {
+        // Fallback for browsers (mostly desktop) that don't support file sharing
+        alert(
+          "Your browser doesn't support direct image sharing. Please use the Download PNG button and attach it manually!",
+        );
+      }
+    } catch (error) {
+      // User cancelled the share or another error occurred
+      console.log("Sharing cancelled or failed:", error);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -731,24 +888,37 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
           </Button>
 
           <div className="flex items-center gap-1 ml-2">
-            <span className="text-sm text-gray-500 mr-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNativeShare}
+              disabled={isExporting}
+              className="flex items-center gap-2 text-gray-700 mr-2 border-gray-300 hover:bg-gray-100"
+              title="Share Image natively"
+            >
               <FontAwesomeIcon icon={faShareAlt} />
-            </span>
+              {isExporting ? "Preparing..." : "Share Card"}
+            </Button>
+
+            {/* Standard link sharing fallbacks (No auto-image attachment possible here) */}
             <Button
               variant="ghost"
               size="icon"
               onClick={shareOnTwitter}
               className="hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Share on X"
+              title="Share Link on X"
             >
-              <FontAwesomeIcon icon={faXTwitter} className="text-black" />
+              <FontAwesomeIcon
+                icon={faXTwitter}
+                className="text-black dark:text-white"
+              />
             </Button>
             <Button
               variant="ghost"
               size="icon"
               onClick={shareOnFacebook}
               className="hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Share on Facebook"
+              title="Share Link on Facebook"
             >
               <FontAwesomeIcon icon={faFacebook} className="text-blue-600" />
             </Button>
@@ -757,7 +927,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
               size="icon"
               onClick={shareOnLinkedIn}
               className="hover:bg-gray-100 dark:hover:bg-gray-800"
-              title="Share on LinkedIn"
+              title="Share Link on LinkedIn"
             >
               <FontAwesomeIcon icon={faLinkedin} className="text-blue-700" />
             </Button>
@@ -852,6 +1022,18 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                   className="rounded border-gray-300"
                 />
                 <span className="text-sm dark:text-gray-300">Show Awards</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={cardData.showSkills}
+                  onChange={(e) =>
+                    setCardData({ ...cardData, showSkills: e.target.checked })
+                  }
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm dark:text-gray-300">Show Skills</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer">
@@ -1042,6 +1224,36 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                       {cardData.awards.length > 3 && (
                         <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
                           +{cardData.awards.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Skills */}
+                {cardData.showSkills && cardData.skills.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <FontAwesomeIcon
+                        icon={faCheckCircle}
+                        className="text-green-600 text-sm"
+                      />
+                      <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                        Skills
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {cardData.skills.slice(0, 4).map((skill, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
+                        >
+                          {skill}
+                        </span>
+                      ))}
+                      {cardData.skills.length > 4 && (
+                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                          +{cardData.skills.length - 4}
                         </span>
                       )}
                     </div>
@@ -1256,6 +1468,36 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                     </div>
                   )}
 
+                  {/* Skills */}
+                  {cardData.showSkills && cardData.skills.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <FontAwesomeIcon
+                          icon={faCheckCircle}
+                          className="text-green-600 text-sm"
+                        />
+                        <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                          Skills
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {cardData.skills.slice(0, 4).map((skill, idx) => (
+                          <span
+                            key={idx}
+                            className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
+                          >
+                            {skill}
+                          </span>
+                        ))}
+                        {cardData.skills.length > 4 && (
+                          <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                            +{cardData.skills.length - 4}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Reviews Count */}
                   {cardData.showRating && cardData.totalReviews > 0 && (
                     <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
@@ -1348,6 +1590,7 @@ export const BusinessCardDownloadButton: React.FC<{
     certificationLevel: expertData.certificationLevel,
     certificates: certificates,
     awards: awards,
+    skills: expertData.skills || [],
     avgRating: avgRating,
     totalReviews: totalReviews,
     profileImage: expertData.profileImage || "",
@@ -1550,6 +1793,35 @@ export const BusinessCardDownloadButton: React.FC<{
                   {cardData.awards.length > 3 && (
                     <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
                       +{cardData.awards.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {cardData.skills.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-green-600 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Skills
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cardData.skills.slice(0, 4).map((skill, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                  {cardData.skills.length > 4 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.skills.length - 4}
                     </span>
                   )}
                 </div>
