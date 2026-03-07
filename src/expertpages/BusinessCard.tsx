@@ -1619,12 +1619,16 @@ export const BusinessCardDownloadButton: React.FC<{
     setIsExporting(true);
 
     try {
+      // Small delay to ensure all images and styles are loaded
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
       const dataUrl = await toPng(hiddenCardRef.current, {
         quality: 1.0,
         pixelRatio: 3,
         cacheBust: true,
         skipAutoScale: false,
         includeQueryParams: true,
+        backgroundColor: "#1a1a2e",
       });
 
       const response = await fetch(dataUrl);
@@ -1649,12 +1653,27 @@ export const BusinessCardDownloadButton: React.FC<{
         {isExporting ? "Generating..." : "Business Card"}
       </Button>
 
-      {/* Hidden card for rendering */}
+      {/* Hidden card for rendering - visually hidden but fully rendered for html-to-image */}
       <div
-        ref={hiddenCardRef}
-        className="fixed -left-[9999px] w-[350px] h-[600px] rounded-2xl overflow-hidden"
-        style={{ zIndex: -1 }}
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          width: "350px",
+          height: "600px",
+          pointerEvents: "none",
+          visibility: "hidden",
+          zIndex: -9999,
+        }}
+        aria-hidden="true"
       >
+        <div
+          ref={hiddenCardRef}
+          className="w-[350px] h-[600px] rounded-2xl overflow-hidden"
+          style={{
+            visibility: "visible",
+          }}
+        >
         {/* Background Image */}
         <img
           src={businesscard}
@@ -1854,6 +1873,7 @@ export const BusinessCardDownloadButton: React.FC<{
               outceedo.com
             </span>
           </div>
+        </div>
         </div>
       </div>
     </>
