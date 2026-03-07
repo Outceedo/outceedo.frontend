@@ -6,7 +6,7 @@ import axios, {
 } from "axios";
 
 const AUTH_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/auth`;
-const USER_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/user`;
+const USER_SERVICE_URL = `${import.meta.env.VITE_USER}/api/v1/user`;
 const USERS_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/users`;
 
 // Create an instance of axios for the auth service
