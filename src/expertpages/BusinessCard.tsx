@@ -14,6 +14,7 @@ import {
   faAward,
   faTimes,
   faCheckCircle,
+  faBriefcase,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import {
@@ -37,8 +38,26 @@ import {
 import { saveAs } from "file-saver";
 import logo from "@/assets/images/outceedologo.png";
 import businesscard from "@/assets/images/businesscard.png";
-import { MapPin, Medal, Trophy } from "lucide-react";
+import { MapPin, Medal, Trophy, Briefcase } from "lucide-react";
 import { FaCertificate } from "react-icons/fa";
+
+// Service name mapping for platform services
+const SERVICE_NAME_MAP: Record<string, string> = {
+  "1": "RECORDED VIDEO ASSESSMENT",
+  "2": "ONLINE TRAINING",
+  "3": "ON GROUND ASSESSMENT",
+  "4": "ONLINE ASSESSMENT",
+};
+
+// Helper function to get service name from ID
+const getServiceNameById = (
+  serviceId: string | number | undefined,
+  customName?: string,
+): string => {
+  if (!serviceId) return customName || "Unknown Service";
+  const id = String(serviceId);
+  return SERVICE_NAME_MAP[id] || customName || "Custom Service";
+};
 
 interface ExpertDataType {
   id?: string;
@@ -50,6 +69,14 @@ interface ExpertDataType {
   skills?: string[];
   documents?: Array<{ type?: string; title?: string; [key: string]: unknown }>;
   reviewsReceived?: Array<{ rating?: number; [key: string]: unknown }>;
+  rawProfile?: {
+    services?: Array<{
+      name?: string;
+      serviceId?: string;
+      [key: string]: unknown;
+    }>;
+    [key: string]: unknown;
+  };
   [key: string]: unknown;
 }
 
@@ -334,6 +361,19 @@ const pdfStyles = StyleSheet.create({
     color: "#166534",
     fontWeight: "medium",
   },
+  serviceTag: {
+    backgroundColor: "#f3e8ff",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    marginRight: 4,
+    marginBottom: 4,
+  },
+  serviceTagText: {
+    fontSize: 9,
+    color: "#7c3aed",
+    fontWeight: "medium",
+  },
 });
 
 // PDF Document Component
@@ -346,6 +386,7 @@ const BusinessCardPDF: React.FC<{
     certificates: string[];
     awards: string[];
     skills: string[];
+    services: string[];
     avgRating: number;
     totalReviews: number;
     profileImage: string;
@@ -356,6 +397,7 @@ const BusinessCardPDF: React.FC<{
     data.certificates.length > 0 ||
     data.awards.length > 0 ||
     data.skills.length > 0 ||
+    data.services.length > 0 ||
     data.totalReviews > 0;
 
   return (
@@ -495,7 +537,9 @@ const BusinessCardPDF: React.FC<{
 
                   {/* Skills */}
                   {data.skills.length > 0 && (
-                    <View>
+                    <View
+                      style={{ marginBottom: data.services.length > 0 ? 8 : 0 }}
+                    >
                       <View style={pdfStyles.sectionHeader}>
                         <Text style={pdfStyles.sectionTitle}>Skills</Text>
                       </View>
@@ -509,6 +553,31 @@ const BusinessCardPDF: React.FC<{
                           <View style={pdfStyles.moreTag}>
                             <Text style={pdfStyles.moreTagText}>
                               +{data.skills.length - 4}
+                            </Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Services */}
+                  {data.services.length > 0 && (
+                    <View>
+                      <View style={pdfStyles.sectionHeader}>
+                        <Text style={pdfStyles.sectionTitle}>Services</Text>
+                      </View>
+                      <View style={pdfStyles.credentialTags}>
+                        {data.services.slice(0, 3).map((service, index) => (
+                          <View key={index} style={pdfStyles.serviceTag}>
+                            <Text style={pdfStyles.serviceTagText}>
+                              {service}
+                            </Text>
+                          </View>
+                        ))}
+                        {data.services.length > 3 && (
+                          <View style={pdfStyles.moreTag}>
+                            <Text style={pdfStyles.moreTagText}>
+                              +{data.services.length - 3}
                             </Text>
                           </View>
                         )}
@@ -630,6 +699,12 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
   // Extract skills
   const skills = expertData.skills || [];
 
+  // Extract service titles
+  const servicesTitles =
+    expertData.rawProfile?.services?.map((service) =>
+      getServiceNameById(service.serviceId, service.name),
+    ) || [];
+
   // Editable card data
   const [cardData, setCardData] = useState({
     name: expertData.name,
@@ -639,12 +714,14 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
     certificates: certificates,
     awards: awards,
     skills: skills,
+    services: servicesTitles,
     avgRating: avgRating,
     totalReviews: totalReviews,
     profileImage: expertData.profileImage || "",
     showCertificates: true,
     showAwards: true,
     showSkills: true,
+    showServices: true,
     showRating: true,
   });
 
@@ -670,6 +747,11 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
         : newReviewsArray.reduce((sum, r) => sum + (r.rating || 0), 0) /
           newTotalReviews;
 
+    const newServicesTitles =
+      expertData.rawProfile?.services?.map((service) =>
+        getServiceNameById(service.serviceId, service.name),
+      ) || [];
+
     setCardData((prev) => ({
       ...prev,
       name: expertData.name,
@@ -679,6 +761,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
       certificates: newCertificates,
       awards: newAwards,
       skills: expertData.skills || [],
+      services: newServicesTitles,
       avgRating: newAvgRating,
       totalReviews: newTotalReviews,
       profileImage: expertData.profileImage || "",
@@ -1046,6 +1129,20 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
               <label className="flex items-center gap-2 cursor-pointer">
                 <input
                   type="checkbox"
+                  checked={cardData.showServices}
+                  onChange={(e) =>
+                    setCardData({ ...cardData, showServices: e.target.checked })
+                  }
+                  className="rounded border-gray-300"
+                />
+                <span className="text-sm dark:text-gray-300">
+                  Show Services
+                </span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
                   checked={cardData.showRating}
                   onChange={(e) =>
                     setCardData({ ...cardData, showRating: e.target.checked })
@@ -1064,7 +1161,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
             ref={cardRef}
             data-card-ref="true"
             className="w-full max-w-md relative rounded-2xl shadow-2xl overflow-hidden"
-            style={{ aspectRatio: "9/16", maxHeight: "600px" }}
+            style={{ aspectRatio: "9/16", maxHeight: "700px" }}
           >
             {/* Background Image */}
             <img
@@ -1074,7 +1171,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
             />
 
             {/* Darker overlay for better text readability */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/30" />
 
             {/* Card Content */}
             <div className="relative h-full flex flex-col p-6">
@@ -1267,6 +1364,36 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                   </div>
                 )}
 
+                {/* Services */}
+                {cardData.showServices && cardData.services.length > 0 && (
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <FontAwesomeIcon
+                        icon={faBriefcase}
+                        className="text-purple-600 text-sm"
+                      />
+                      <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                        Services
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {cardData.services.slice(0, 3).map((service, idx) => (
+                        <span
+                          key={idx}
+                          className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-md  max-w-[140px] font-medium"
+                        >
+                          {service}
+                        </span>
+                      ))}
+                      {cardData.services.length > 3 && (
+                        <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                          +{cardData.services.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {/* Reviews Count */}
                 {cardData.showRating && cardData.totalReviews > 0 && (
                   <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
@@ -1317,7 +1444,7 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
               />
 
               {/* Darker overlay for better text readability */}
-              <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
+              <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/30" />
 
               {/* Card Content */}
               <div className="relative h-full flex flex-col p-6">
@@ -1505,6 +1632,36 @@ const BusinessCard: React.FC<BusinessCardProps> = ({ expertData }) => {
                     </div>
                   )}
 
+                  {/* Services */}
+                  {cardData.showServices && cardData.services.length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <FontAwesomeIcon
+                          icon={faBriefcase}
+                          className="text-purple-600 text-sm"
+                        />
+                        <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                          Services
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {cardData.services.slice(0, 3).map((service, idx) => (
+                          <span
+                            key={idx}
+                            className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-md truncate max-w-[140px] font-medium"
+                          >
+                            {service}
+                          </span>
+                        ))}
+                        {cardData.services.length > 3 && (
+                          <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                            +{cardData.services.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   {/* Reviews Count */}
                   {cardData.showRating && cardData.totalReviews > 0 && (
                     <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
@@ -1590,6 +1747,11 @@ export const BusinessCardDownloadButton: React.FC<{
       : reviewsArray.reduce((sum, r) => sum + (r.rating || 0), 0) /
         totalReviews;
 
+  const servicesTitles =
+    expertData.rawProfile?.services?.map((service) =>
+      getServiceNameById(service.serviceId, service.name),
+    ) || [];
+
   const cardData = {
     name: expertData.name,
     profession: expertData.profession || "",
@@ -1598,6 +1760,7 @@ export const BusinessCardDownloadButton: React.FC<{
     certificates: certificates,
     awards: awards,
     skills: expertData.skills || [],
+    services: servicesTitles,
     avgRating: avgRating,
     totalReviews: totalReviews,
     profileImage: expertData.profileImage || "",
@@ -1667,208 +1830,237 @@ export const BusinessCardDownloadButton: React.FC<{
         }}
         aria-hidden="true"
       >
-          {/* Background Image */}
-          <img
-            src={businesscard}
-            alt="Business Card Background"
-            className="absolute inset-0 w-full h-full object-cover"
-          />
+        {/* Background Image */}
+        <img
+          src={businesscard}
+          alt="Business Card Background"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
 
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/20 to-black/50" />
+        {/* Overlay */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/10 to-black/30" />
 
-          {/* Content */}
-          <div className="relative h-full flex flex-col p-6">
-            {/* Top Row */}
-            <div className="flex justify-between items-start">
-              <img src={logo} alt="Outceedo" className="h-8 object-contain" />
-              <div className="bg-white px-3 py-1 rounded-full shadow-md">
-                <span className="text-xs font-bold text-red-600">
-                  Verified Expert
-                </span>
-              </div>
+        {/* Content */}
+        <div className="relative h-full flex flex-col p-6">
+          {/* Top Row */}
+          <div className="flex justify-between items-start">
+            <img src={logo} alt="Outceedo" className="h-8 object-contain" />
+            <div className="bg-white px-3 py-1 rounded-full shadow-md">
+              <span className="text-xs font-bold text-red-600">
+                Verified Expert
+              </span>
             </div>
+          </div>
 
-            {/* Profile Section */}
-            <div className="flex-1 flex flex-col items-center justify-center text-center mt-4">
-              <div className="relative mb-4">
-                {profileImageBase64 || cardData.profileImage ? (
-                  <img
-                    src={profileImageBase64 || cardData.profileImage}
-                    alt={cardData.name}
-                    crossOrigin="anonymous"
-                    className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-gray-200"
-                  />
-                ) : (
-                  <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
-                    <span className="text-4xl font-bold text-white">
-                      {cardData.name.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                )}
-                {cardData.avgRating > 0 && (
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                    <FontAwesomeIcon icon={faStarSolid} className="text-xs" />
-                    <span className="text-xs font-bold">
-                      {cardData.avgRating.toFixed(1)}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <h2
-                className="text-2xl font-bold text-white"
-                style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
-              >
-                {cardData.name}
-              </h2>
-              {cardData.profession && (
-                <p
-                  className="text-white text-sm mt-1 font-semibold"
-                  style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
-                >
-                  {cardData.profession}
-                </p>
-              )}
-
-              <div className="flex flex-wrap justify-center gap-3 mt-4">
-                {cardData.location && (
-                  <div className="bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
-                    <FontAwesomeIcon
-                      icon={faMapMarkerAlt}
-                      className="text-white text-xs"
-                    />
-                    <span className="text-white text-xs font-semibold">
-                      {cardData.location}
-                    </span>
-                  </div>
-                )}
-                {cardData.certificationLevel &&
-                  cardData.certificationLevel !== "N/A" && (
-                    <div className="bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
-                      <FontAwesomeIcon
-                        icon={faCertificate}
-                        className="text-white text-xs"
-                      />
-                      <span className="text-white text-xs font-semibold">
-                        {cardData.certificationLevel}
-                      </span>
-                    </div>
-                  )}
-              </div>
-            </div>
-
-            {/* Credentials Box */}
-            <div className="bg-white rounded-xl p-4 space-y-3 shadow-lg">
-              {cardData.certificates.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <FontAwesomeIcon
-                      icon={faCertificate}
-                      className="text-blue-600 text-sm"
-                    />
-                    <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-                      Certificates
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {cardData.certificates.slice(0, 3).map((cert, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-medium"
-                      >
-                        {cert}
-                      </span>
-                    ))}
-                    {cardData.certificates.length > 3 && (
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
-                        +{cardData.certificates.length - 3}
-                      </span>
-                    )}
-                  </div>
+          {/* Profile Section */}
+          <div className="flex-1 flex flex-col items-center justify-center text-center mt-4">
+            <div className="relative mb-4">
+              {profileImageBase64 || cardData.profileImage ? (
+                <img
+                  src={profileImageBase64 || cardData.profileImage}
+                  alt={cardData.name}
+                  crossOrigin="anonymous"
+                  className="w-28 h-28 rounded-full border-4 border-white shadow-xl object-cover bg-gray-200"
+                />
+              ) : (
+                <div className="w-28 h-28 rounded-full border-4 border-white shadow-xl bg-gradient-to-br from-red-400 to-red-600 flex items-center justify-center">
+                  <span className="text-4xl font-bold text-white">
+                    {cardData.name.charAt(0).toUpperCase()}
+                  </span>
                 </div>
               )}
-
-              {cardData.awards.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <FontAwesomeIcon
-                      icon={faAward}
-                      className="text-amber-500 text-sm"
-                    />
-                    <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-                      Awards
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {cardData.awards.slice(0, 3).map((award, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-md font-medium"
-                      >
-                        {award}
-                      </span>
-                    ))}
-                    {cardData.awards.length > 3 && (
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
-                        +{cardData.awards.length - 3}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {cardData.skills.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-2 mb-2">
-                    <FontAwesomeIcon
-                      icon={faCheckCircle}
-                      className="text-green-600 text-sm"
-                    />
-                    <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-                      Skills
-                    </span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {cardData.skills.slice(0, 4).map((skill, idx) => (
-                      <span
-                        key={idx}
-                        className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium"
-                      >
-                        {skill}
-                      </span>
-                    ))}
-                    {cardData.skills.length > 4 && (
-                      <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
-                        +{cardData.skills.length - 4}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {cardData.totalReviews > 0 && (
-                <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
-                  <StarRating avg={cardData.avgRating} size="text-xs" />
-                  <span className="text-xs text-gray-600 ml-1 font-medium">
-                    ({cardData.totalReviews} reviews)
+              {cardData.avgRating > 0 && (
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 bg-yellow-400 text-gray-900 px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                  <FontAwesomeIcon icon={faStarSolid} className="text-xs" />
+                  <span className="text-xs font-bold">
+                    {cardData.avgRating.toFixed(1)}
                   </span>
                 </div>
               )}
             </div>
 
-            {/* Footer */}
-            <div className="flex justify-center items-center mt-3">
-              <span
-                className="text-white text-sm font-semibold tracking-wider"
+            <h2
+              className="text-2xl font-bold text-white"
+              style={{ textShadow: "2px 2px 4px rgba(0,0,0,0.8)" }}
+            >
+              {cardData.name}
+            </h2>
+            {cardData.profession && (
+              <p
+                className="text-white text-sm mt-1 font-semibold"
                 style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
               >
-                outceedo.com
-              </span>
+                {cardData.profession}
+              </p>
+            )}
+
+            <div className="flex flex-wrap justify-center gap-3 mt-4">
+              {cardData.location && (
+                <div className="bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                  <FontAwesomeIcon
+                    icon={faMapMarkerAlt}
+                    className="text-white text-xs"
+                  />
+                  <span className="text-white text-xs font-semibold">
+                    {cardData.location}
+                  </span>
+                </div>
+              )}
+              {cardData.certificationLevel &&
+                cardData.certificationLevel !== "N/A" && (
+                  <div className="bg-black/40 px-3 py-1.5 rounded-full flex items-center gap-2 border border-white/30">
+                    <FontAwesomeIcon
+                      icon={faCertificate}
+                      className="text-white text-xs"
+                    />
+                    <span className="text-white text-xs font-semibold">
+                      {cardData.certificationLevel}
+                    </span>
+                  </div>
+                )}
             </div>
           </div>
+
+          {/* Credentials Box */}
+          <div className="bg-white rounded-xl p-4 space-y-3 shadow-lg">
+            {cardData.certificates.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faCertificate}
+                    className="text-blue-600 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Certificates
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cardData.certificates.slice(0, 3).map((cert, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-md font-medium"
+                    >
+                      {cert}
+                    </span>
+                  ))}
+                  {cardData.certificates.length > 3 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.certificates.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {cardData.awards.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faAward}
+                    className="text-amber-500 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Awards
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cardData.awards.slice(0, 3).map((award, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-md font-medium"
+                    >
+                      {award}
+                    </span>
+                  ))}
+                  {cardData.awards.length > 3 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.awards.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {cardData.skills.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faCheckCircle}
+                    className="text-green-600 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Skills
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cardData.skills.slice(0, 4).map((skill, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                  {cardData.skills.length > 4 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.skills.length - 4}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {cardData.services.length > 0 && (
+              <div>
+                <div className="flex items-center gap-2 mb-2">
+                  <FontAwesomeIcon
+                    icon={faBriefcase}
+                    className="text-purple-600 text-sm"
+                  />
+                  <span className="text-xs font-bold text-gray-800 uppercase tracking-wide">
+                    Services
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {cardData.services.slice(0, 3).map((service, idx) => (
+                    <span
+                      key={idx}
+                      className="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-md font-medium"
+                    >
+                      {service}
+                    </span>
+                  ))}
+                  {cardData.services.length > 3 && (
+                    <span className="text-xs bg-gray-200 text-gray-600 px-2 py-1 rounded-md font-medium">
+                      +{cardData.services.length - 3}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {cardData.totalReviews > 0 && (
+              <div className="flex items-center justify-center gap-1 pt-2 border-t border-gray-200">
+                <StarRating avg={cardData.avgRating} size="text-xs" />
+                <span className="text-xs text-gray-600 ml-1 font-medium">
+                  ({cardData.totalReviews} reviews)
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="flex justify-center items-center mt-3">
+            <span
+              className="text-white text-sm font-semibold tracking-wider"
+              style={{ textShadow: "1px 1px 3px rgba(0,0,0,0.8)" }}
+            >
+              outceedo.com
+            </span>
+          </div>
         </div>
-      </>
+      </div>
+    </>
   );
 };
 
