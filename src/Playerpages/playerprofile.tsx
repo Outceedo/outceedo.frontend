@@ -28,6 +28,7 @@ import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
 import FollowList from "../components/follower/followerlist";
 import axios from "axios";
 import Settings from "./settings";
+import PlayerBusinessCard from "./businessCard";
 
 interface Stat {
   name: string;
@@ -117,7 +118,7 @@ const StarRating: React.FC<{
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "account"
+    "details" | "media" | "reviews" | "account" | "businessCard"
   >("details");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
@@ -730,18 +731,18 @@ const Profile: React.FC = () => {
           {/* Tabs Section */}
           <div className="mt-8">
             <div className="flex gap-5 sm:gap-4 border-b overflow-x-auto">
-              {(["details", "media", "reviews", "account"] as const).map(
+              {(["details", "media", "reviews", "account", "businessCard"] as const).map(
                 (tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
-                    className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+                    className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
                       activeTab === tab
                         ? "text-red-600 border-red-600"
                         : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
                     }`}
                   >
-                    {tab}
+                    {tab === "businessCard" ? "Business Card" : tab}
                   </button>
                 ),
               )}
@@ -776,6 +777,9 @@ const Profile: React.FC = () => {
                     <Reviewnoedit Data={playerData} />
                   )}
                   {activeTab === "account" && <Settings />}
+                  {activeTab === "businessCard" && (
+                    <PlayerBusinessCard playerData={playerData} playerStats={playerStats} />
+                  )}
                 </>
               )}
             </div>
