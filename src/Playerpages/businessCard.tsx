@@ -381,7 +381,7 @@ const PlayerBusinessCardPDF: React.FC<{
             <View style={pdfStyles.topRow}>
               <Image src={logo} style={pdfStyles.logo} />
               <View style={pdfStyles.verifiedBadge}>
-                <Text style={pdfStyles.verifiedText}>Player Profile</Text>
+                <Text style={pdfStyles.verifiedText}>Verified Player</Text>
               </View>
             </View>
 
@@ -483,7 +483,9 @@ const PlayerBusinessCardPDF: React.FC<{
 
                   {/* Certificates */}
                   {data.certificates.length > 0 && (
-                    <View style={{ marginBottom: data.awards.length > 0 ? 8 : 0 }}>
+                    <View
+                      style={{ marginBottom: data.awards.length > 0 ? 8 : 0 }}
+                    >
                       <View style={pdfStyles.sectionHeader}>
                         <Text style={pdfStyles.sectionTitle}>Certificates</Text>
                       </View>
@@ -768,7 +770,7 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
 
   // Generate share text
   const generateShareText = () => {
-    let text = `Check out ${cardData.name}'s player profile on Outceedo!`;
+    let text = `Check out ${cardData.name}'s My verified profile on Outceedo!`;
     if (cardData.club) text += ` | ${cardData.club}`;
     if (cardData.location) text += ` | ${cardData.location}`;
     if (cardData.ovrScore > 0) text += ` | OVR ${cardData.ovrScore}`;
@@ -776,28 +778,28 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
   };
 
   const shareUrl = encodeURIComponent(
-    `${window.location.origin}/player/${playerData.id}`
+    `${window.location.origin}/player/${playerData.id}`,
   );
 
   // Share functions
   const shareOnTwitter = () => {
     window.open(
       `https://twitter.com/intent/tweet?text=${generateShareText()}&url=${shareUrl}`,
-      "_blank"
+      "_blank",
     );
   };
 
   const shareOnFacebook = () => {
     window.open(
       `https://www.facebook.com/sharer/sharer.php?u=${shareUrl}&quote=${generateShareText()}`,
-      "_blank"
+      "_blank",
     );
   };
 
   const shareOnLinkedIn = () => {
     window.open(
       `https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}`,
-      "_blank"
+      "_blank",
     );
   };
 
@@ -820,7 +822,7 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
       return new File(
         [blob],
         `${cardData.name.replace(/\s+/g, "_")}_player_card.png`,
-        { type: "image/png" }
+        { type: "image/png" },
       );
     } catch (error) {
       console.error("Error generating image file:", error);
@@ -849,7 +851,7 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
         await navigator.share(shareData);
       } else {
         alert(
-          "Your browser doesn't support direct image sharing. Please use the Download PNG button and attach it manually!"
+          "Your browser doesn't support direct image sharing. Please use the Download PNG button and attach it manually!",
         );
       }
     } catch (error) {
@@ -1098,7 +1100,7 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
                 <img src={logo} alt="Outceedo" className="h-8 object-contain" />
                 <div className="bg-white px-3 py-1 rounded-full shadow-md">
                   <span className="text-xs font-bold text-red-600">
-                    Player Profile
+                   Verified Player
                   </span>
                 </div>
               </div>
@@ -1204,19 +1206,28 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
                     <div className="flex flex-wrap gap-1">
                       {cardData.height && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium flex items-center gap-1">
-                          <FontAwesomeIcon icon={faRulerVertical} className="text-[10px]" />
+                          <FontAwesomeIcon
+                            icon={faRulerVertical}
+                            className="text-[10px]"
+                          />
                           {cardData.height}
                         </span>
                       )}
                       {cardData.weight && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium flex items-center gap-1">
-                          <FontAwesomeIcon icon={faWeight} className="text-[10px]" />
+                          <FontAwesomeIcon
+                            icon={faWeight}
+                            className="text-[10px]"
+                          />
                           {cardData.weight}
                         </span>
                       )}
                       {cardData.languages.length > 0 && (
                         <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium flex items-center gap-1">
-                          <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
+                          <FontAwesomeIcon
+                            icon={faGlobe}
+                            className="text-[10px]"
+                          />
                           {cardData.languages.slice(0, 2).join(", ")}
                         </span>
                       )}
@@ -1377,7 +1388,7 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
                   />
                   <div className="bg-white px-3 py-1 rounded-full shadow-md">
                     <span className="text-xs font-bold text-red-600">
-                      Player Profile
+                      Verified Player 
                     </span>
                   </div>
                 </div>
@@ -1470,19 +1481,28 @@ const PlayerBusinessCard: React.FC<PlayerBusinessCardProps> = ({
                       <div className="flex flex-wrap gap-1">
                         {cardData.height && (
                           <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium flex items-center gap-1">
-                            <FontAwesomeIcon icon={faRulerVertical} className="text-[10px]" />
+                            <FontAwesomeIcon
+                              icon={faRulerVertical}
+                              className="text-[10px]"
+                            />
                             {cardData.height}
                           </span>
                         )}
                         {cardData.weight && (
                           <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium flex items-center gap-1">
-                            <FontAwesomeIcon icon={faWeight} className="text-[10px]" />
+                            <FontAwesomeIcon
+                              icon={faWeight}
+                              className="text-[10px]"
+                            />
                             {cardData.weight}
                           </span>
                         )}
                         {cardData.languages.length > 0 && (
                           <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-md font-medium flex items-center gap-1">
-                            <FontAwesomeIcon icon={faGlobe} className="text-[10px]" />
+                            <FontAwesomeIcon
+                              icon={faGlobe}
+                              className="text-[10px]"
+                            />
                             {cardData.languages.slice(0, 2).join(", ")}
                           </span>
                         )}
