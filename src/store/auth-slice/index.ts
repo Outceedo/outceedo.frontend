@@ -66,10 +66,10 @@ export const registerUser = createAsyncThunk<any, any, ThunkApiConfig>(
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
       return rejectWithValue(
-        (error.response?.data as string) || "Registration failed"
+        (error.response?.data as string) || "Registration failed",
       );
     }
-  }
+  },
 );
 
 // Login User
@@ -90,19 +90,18 @@ export const loginUser = createAsyncThunk<any, any, ThunkApiConfig>(
           if (user.firstName) localStorage.setItem("firstName", user.firstName);
           if (user.lastName) localStorage.setItem("lastName", user.lastName);
         }
-        authService.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${token}`;
+        authService.defaults.headers.common["Authorization"] =
+          `Bearer ${token}`;
       }
       return response.data;
     } catch (err) {
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
       return rejectWithValue(
-        (error.response?.data as string) || "Login failed"
+        (error.response?.data as string) || "Login failed",
       );
     }
-  }
+  },
 );
 
 // Verify User
@@ -116,10 +115,10 @@ export const verifyEmail = createAsyncThunk<any, any, ThunkApiConfig>(
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
       return rejectWithValue(
-        (error.response?.data as string) || "Email verification failed"
+        (error.response?.data as string) || "Email verification failed",
       );
     }
-  }
+  },
 );
 
 // Resend OTP
@@ -133,10 +132,10 @@ export const resendOtp = createAsyncThunk<any, any, ThunkApiConfig>(
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
       return rejectWithValue(
-        (error.response?.data as string) || "Resend OTP failed"
+        (error.response?.data as string) || "Resend OTP failed",
       );
     }
-  }
+  },
 );
 
 // Change Password
@@ -150,10 +149,10 @@ export const changePassword = createAsyncThunk<any, any, ThunkApiConfig>(
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
       return rejectWithValue(
-        (error.response?.data as string) || "Change password failed"
+        (error.response?.data as string) || "Change password failed",
       );
     }
-  }
+  },
 );
 
 // Validate Token
@@ -169,6 +168,7 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
 
       authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
+      // 1. Retrieve all existing and new fields from localStorage
       const username = localStorage.getItem("username");
       const role = localStorage.getItem("role");
       const userId = localStorage.getItem("userId");
@@ -176,31 +176,69 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
       const firstName = localStorage.getItem("firstName");
       const lastName = localStorage.getItem("lastName");
 
-      if (username && role) {
+      // Parse booleans and complex types from local storage strings
+      const isBan = localStorage.getItem("isBan") === "true";
+      const isSuspended = localStorage.getItem("isSuspended") === "true";
+      const suspend_till = localStorage.getItem("suspendTill") || null;
+
+      let permissions = [];
+      try {
+        const storedPerms = localStorage.getItem("permissions");
+        if (storedPerms) permissions = JSON.parse(storedPerms);
+      } catch (e) {
+        console.error("Could not parse permissions from local storage");
+      }
+
+      // 2. Hydrate the Redux store immediately to prevent UI flicker
+      if (userId && role) {
         dispatch(
           setUser({
             user: {
-              username,
-              role,
               id: userId,
+              username,
               email,
               firstName,
               lastName,
+              role,
+              isBan,
+              isSuspended,
+              suspend_till,
+              permissions,
             },
-          })
+          }),
         );
       }
 
       const response = await authService.get("/validate");
 
+      // 3. Update localStorage with fresh data from the backend
       if (response.data && response.data.user) {
         const user = response.data.user;
+
         localStorage.setItem("username", user.username || "");
-        localStorage.setItem("role", user.role || "");
+        // Adjusting role to handle if backend sends `role.name` or just a string
+        localStorage.setItem("role", user.role?.name || user.role || "");
+
         if (user.id) localStorage.setItem("userId", user.id);
         if (user.email) localStorage.setItem("email", user.email);
         if (user.firstName) localStorage.setItem("firstName", user.firstName);
         if (user.lastName) localStorage.setItem("lastName", user.lastName);
+
+        // Save new fields
+        localStorage.setItem("isBan", String(!!user.isBan));
+        localStorage.setItem("isSuspended", String(!!user.isSuspended));
+
+        // Handle suspend_till/suspendTill depending on exactly what the backend returns
+        const suspendDate = user.suspendTill || user.suspend_till;
+        if (suspendDate) {
+          localStorage.setItem("suspendTill", suspendDate);
+        } else {
+          localStorage.removeItem("suspendTill");
+        }
+
+        if (user.permissions) {
+          localStorage.setItem("permissions", JSON.stringify(user.permissions));
+        }
       }
 
       return response.data;
@@ -210,21 +248,30 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
 
       const status = error.response?.status;
       if (status === 401 || status === 403) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("username");
-        localStorage.removeItem("role");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("email");
-        localStorage.removeItem("firstName");
-        localStorage.removeItem("lastName");
+        // 4. Clear everything out on auth failure
+        const keysToRemove = [
+          "token",
+          "username",
+          "role",
+          "userId",
+          "email",
+          "firstName",
+          "lastName",
+          "isBan",
+          "isSuspended",
+          "suspendTill",
+          "permissions",
+        ];
+
+        keysToRemove.forEach((key) => localStorage.removeItem(key));
         delete authService.defaults.headers.common["Authorization"];
       }
 
       return rejectWithValue(
-        (error.response?.data as string) || "Token validation failed"
+        (error.response?.data as string) || "Token validation failed",
       );
     }
-  }
+  },
 );
 
 export const reconstructUserFromStorage = createAsyncThunk<
@@ -268,10 +315,11 @@ export const forgotPassword = createAsyncThunk<any, any, ThunkApiConfig>(
     } catch (err) {
       const error = err as AxiosError<{ error?: string }>;
       console.error("Error in API call:", error.response?.data);
-      const errorMessage = error.response?.data?.error || "Forgot password failed";
+      const errorMessage =
+        error.response?.data?.error || "Forgot password failed";
       return rejectWithValue(errorMessage);
     }
-  }
+  },
 );
 
 // Validate Reset Token
@@ -285,10 +333,10 @@ export const validateResetToken = createAsyncThunk<any, string, ThunkApiConfig>(
       const error = err as AxiosError;
       console.error("Error in API call:", error.response?.data);
       return rejectWithValue(
-        (error.response?.data as string) || "Reset token validation failed"
+        (error.response?.data as string) || "Reset token validation failed",
       );
     }
-  }
+  },
 );
 
 // Reset Password
@@ -306,7 +354,7 @@ export const resetPassword = createAsyncThunk<
     const error = err as AxiosError;
     console.error("Error in API call:", error.response?.data);
     return rejectWithValue(
-      (error.response?.data as string) || "Reset password failed"
+      (error.response?.data as string) || "Reset password failed",
     );
   }
 });
@@ -348,9 +396,8 @@ const authSlice = createSlice({
       const lastName = localStorage.getItem("lastName");
 
       if (token) {
-        authService.defaults.headers.common[
-          "Authorization"
-        ] = `Bearer ${token}`;
+        authService.defaults.headers.common["Authorization"] =
+          `Bearer ${token}`;
 
         state.isAuthenticated = true;
         state.user = {

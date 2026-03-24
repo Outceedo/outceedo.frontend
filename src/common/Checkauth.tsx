@@ -3,6 +3,8 @@ import { Navigate, useLocation } from "react-router-dom";
 
 interface User {
   role?: string;
+  isBan?: boolean;
+  isSuspended?: boolean;
 }
 
 interface CheckAuthProps {
@@ -26,6 +28,11 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
 
   const effectivelyAuthenticated = isAuthenticated || tokenExists;
   const effectiveRole = user?.role || roleFromStorage;
+
+  // Check if user is banned or suspended
+  const isBan = user?.isBan || localStorage.getItem("isBan") === "true";
+  const isSuspended =
+    user?.isSuspended || localStorage.getItem("isSuspended") === "true";
 
   useEffect(() => {
     if (tokenExists && !user && onAuthCheck) {
@@ -52,6 +59,11 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     }
 
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  // Redirect banned or suspended users to /banned page
+  if ((isBan || isSuspended) && location.pathname !== "/banned") {
+    return <Navigate to="/banned" replace />;
   }
 
   // Handle authenticated users

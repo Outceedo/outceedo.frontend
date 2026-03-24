@@ -75,6 +75,7 @@ import Fanprofile from "./fanpages/FanProfile";
 import Fandetailsform from "./fanpages/Fandetailsform";
 
 import NotFound from "./common/notfound";
+import Banned from "./common/banned";
 import AssessmentEvaluationForm from "./expertpages/evaluation";
 import Success from "./common/Success";
 import PricingPlans from "./Pages/Home/Pricing";
@@ -129,7 +130,18 @@ const AppContent: React.FC = () => {
       try {
         dispatch(initializeFromLocalStorage());
         if (hasToken) {
-          await dispatch(validateToken()).unwrap();
+          const result = await dispatch(validateToken()).unwrap();
+          // Check if user is banned or suspended and redirect
+          const userData = result?.user;
+          const isBan =
+            userData?.isBan || localStorage.getItem("isBan") === "true";
+          const isSuspended =
+            userData?.isSuspended ||
+            localStorage.getItem("isSuspended") === "true";
+
+          if (isBan || isSuspended) {
+            navigate("/banned");
+          }
         }
       } catch (error) {
         console.error("Failed to validate token:", error);
@@ -138,7 +150,7 @@ const AppContent: React.FC = () => {
       }
     };
     initApp();
-  }, [dispatch, hasToken]);
+  }, [dispatch, hasToken, navigate]);
 
   if (isInitializing) {
     return (
@@ -361,6 +373,8 @@ const AppContent: React.FC = () => {
             </div>
           }
         />
+
+        <Route path="/banned" element={<Banned />} />
 
         <Route path="/plans" element={<PricingPlans />} />
         <Route path="/about" element={<Aboutus />} />
