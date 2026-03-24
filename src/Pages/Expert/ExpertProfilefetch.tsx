@@ -46,23 +46,27 @@ interface Review {
 interface Expert {
   id: string;
   username: string;
-  firstName?: string;
-  lastName?: string;
-  profession?: string;
-  bio?: string;
-  city?: string;
-  country?: string;
-  gender?: string;
-  language?: string[];
-  sports?: string[];
-  sport?: string;
-  photo?: string;
-  verified?: boolean;
-  role?: string;
-  rating?: number;
-  reviews?: number;
-  subProfession?: string;
+  firstName?: string | null;
+  lastName?: string | null;
+  profession?: string | null;
+  bio?: string | null;
+  city?: string | null;
+  country?: string | null;
+  gender?: string | null;
+  language?: string[] | null;
+  sports?: string[] | null;
+  sport?: string | null;
+  photo?: string | null;
+  verified?: boolean | null;
+  role?: string | null;
+  rating?: number | null;
+  reviews?: number | null;
+  subProfession?: string | null;
   reviewsReceived?: Review[];
+  club?: string | null;
+  certificationLevel?: string | null;
+  responseTime?: string | null;
+  travelLimit?: string | null;
   [key: string]: any;
 }
 
@@ -256,20 +260,38 @@ const ExpertProfiles: React.FC = () => {
     [],
   );
 
+  // Helper function to check if expert profile is complete (has all required fields)
+  const isProfileComplete = useCallback((expert: Expert): boolean => {
+    if (!expert.photo) return false;
+    if (!expert.bio) return false;
+    if (!expert.profession) return false;
+    if (!expert.club) return false;
+    if (!expert.language || expert.language.length === 0) return false;
+    if (!expert.city || !expert.country) return false;
+    if (!expert.certificationLevel) return false;
+    if (!expert.responseTime) return false;
+    if (!expert.travelLimit) return false;
+    return true;
+  }, []);
+
   // Store all experts when data is fetched - for client-side filtering
+  // Filter out experts with incomplete profiles (missing required fields)
   useEffect(() => {
     if (expertsArray.length > 0) {
       const hasClientSideFilters =
         searchQuery.trim() !== "" ||
         Object.values(filters).some((value) => value !== "");
 
+      // Filter to only include complete profiles
+      const completeProfiles = expertsArray.filter(isProfileComplete);
+
       if (!hasClientSideFilters) {
-        setAllExperts(expertsArray);
+        setAllExperts(completeProfiles);
       } else if (allExperts.length === 0) {
-        setAllExperts(expertsArray);
+        setAllExperts(completeProfiles);
       }
     }
-  }, [expertsArray, searchQuery, filters, allExperts.length]);
+  }, [expertsArray, searchQuery, filters, allExperts.length, isProfileComplete]);
 
   const extractFilterOptions = useCallback(
     (key: keyof Expert, dataArray: Expert[]): string[] => {

@@ -33,6 +33,7 @@ interface SponsorProfile {
   photo?: string;
   country?: string;
   city?: string;
+  profession?: string;
   sponsorshipType?: string;
   budgetRange?: string;
   reviewsReceived?: any[];
@@ -212,14 +213,28 @@ export default function SponsorProfiles() {
     budgetRange: "",
   });
 
+  // Helper function to check if sponsor profile is complete (has all required fields)
+  const isProfileComplete = useCallback((sponsor: SponsorProfile): boolean => {
+    if (!sponsor.photo) return false;
+    if (!sponsor.bio) return false;
+    if (!sponsor.profession) return false;
+    if (!sponsor.country) return false;
+    if (!sponsor.city) return false;
+    if (!sponsor.sponsorType) return false;
+    if (!sponsor.sponsorshipType) return false;
+    return true;
+  }, []);
+
   // Store all sponsors when data is fetched
+  // Filter out sponsors with incomplete required fields
   useEffect(() => {
     if (sponsorsArray.length > 0) {
-      setAllSponsors(sponsorsArray);
+      const completeProfiles = sponsorsArray.filter(isProfileComplete);
+      setAllSponsors(completeProfiles);
     } else if (sponsorsArray.length === 0 && status === "succeeded") {
       setAllSponsors([]);
     }
-  }, [sponsorsArray, status]);
+  }, [sponsorsArray, status, isProfileComplete]);
 
   // Memoized function to extract filter options
   const extractFilterOptions = useCallback((key, dataArray) => {
