@@ -162,6 +162,13 @@ const AppContent: React.FC = () => {
 
   const effectivelyAuthenticated = isAuthenticated || hasToken;
 
+  // Check if user is banned or suspended
+  const isBannedOrSuspended =
+    user?.isBan ||
+    user?.isSuspended ||
+    localStorage.getItem("isBan") === "true" ||
+    localStorage.getItem("isSuspended") === "true";
+
   // Helper function to get user role
   const getUserRole = () => {
     return user?.role || localStorage.getItem("role");
@@ -214,7 +221,11 @@ const AppContent: React.FC = () => {
           path="/"
           element={
             effectivelyAuthenticated ? (
-              <Navigate to={getProfileRedirectPath()} replace />
+              isBannedOrSuspended ? (
+                <Navigate to="/banned" replace />
+              ) : (
+                <Navigate to={getProfileRedirectPath()} replace />
+              )
             ) : (
               <HomePage />
             )
@@ -250,9 +261,13 @@ const AppContent: React.FC = () => {
         <Route
           path="/player"
           element={
-            <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-              <PlayerLayout />
-            </CheckAuth>
+            isBannedOrSuspended ? (
+              <Navigate to="/banned" replace />
+            ) : (
+              <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+                <PlayerLayout />
+              </CheckAuth>
+            )
           }
         >
           <Route path="matches" element={<Matches />} />
@@ -272,9 +287,13 @@ const AppContent: React.FC = () => {
         <Route
           path="/expert"
           element={
-            <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-              <ExpertLayout />
-            </CheckAuth>
+            isBannedOrSuspended ? (
+              <Navigate to="/banned" replace />
+            ) : (
+              <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+                <ExpertLayout />
+              </CheckAuth>
+            )
           }
         >
           <Route path="matches" element={<ExpertMatches />} />
@@ -294,9 +313,13 @@ const AppContent: React.FC = () => {
         <Route
           path="/sponsor"
           element={
-            <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-              <SponserLayout />
-            </CheckAuth>
+            isBannedOrSuspended ? (
+              <Navigate to="/banned" replace />
+            ) : (
+              <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+                <SponserLayout />
+              </CheckAuth>
+            )
           }
         >
           <Route path="players" element={<Sponsorplayer />} />
@@ -314,9 +337,13 @@ const AppContent: React.FC = () => {
         <Route
           path="/team"
           element={
-            <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-              <TeamLayout />
-            </CheckAuth>
+            isBannedOrSuspended ? (
+              <Navigate to="/banned" replace />
+            ) : (
+              <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+                <TeamLayout />
+              </CheckAuth>
+            )
           }
         >
           <Route path="players" element={<TeamPlayer />} />
@@ -337,9 +364,13 @@ const AppContent: React.FC = () => {
         <Route
           path="/fan"
           element={
-            <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
-              <FanLayout />
-            </CheckAuth>
+            isBannedOrSuspended ? (
+              <Navigate to="/banned" replace />
+            ) : (
+              <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+                <FanLayout />
+              </CheckAuth>
+            )
           }
         >
           <Route path="players" element={<FanPlayers />} />
