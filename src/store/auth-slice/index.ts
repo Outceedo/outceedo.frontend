@@ -29,6 +29,9 @@ const initialUser =
         email: localStorage.getItem("email") || undefined,
         firstName: localStorage.getItem("firstName") || undefined,
         lastName: localStorage.getItem("lastName") || undefined,
+        isBan: localStorage.getItem("isBan") === "true",
+        isSuspended: localStorage.getItem("isSuspended") === "true",
+        suspendTill: localStorage.getItem("suspendTill") || undefined,
       }
     : null;
 
@@ -89,6 +92,14 @@ export const loginUser = createAsyncThunk<any, any, ThunkApiConfig>(
           if (user.email) localStorage.setItem("email", user.email);
           if (user.firstName) localStorage.setItem("firstName", user.firstName);
           if (user.lastName) localStorage.setItem("lastName", user.lastName);
+          localStorage.setItem("isBan", String(!!user.isBan));
+          localStorage.setItem("isSuspended", String(!!user.isSuspended));
+          const suspendDate = user.suspendTill || user.suspend_till;
+          if (suspendDate) {
+            localStorage.setItem("suspendTill", suspendDate);
+          } else {
+            localStorage.removeItem("suspendTill");
+          }
         }
         authService.defaults.headers.common["Authorization"] =
           `Bearer ${token}`;
@@ -286,6 +297,9 @@ export const reconstructUserFromStorage = createAsyncThunk<
   const email = localStorage.getItem("email");
   const firstName = localStorage.getItem("firstName");
   const lastName = localStorage.getItem("lastName");
+  const isBan = localStorage.getItem("isBan") === "true";
+  const isSuspended = localStorage.getItem("isSuspended") === "true";
+  const suspendTill = localStorage.getItem("suspendTill") || undefined;
 
   if (token) {
     authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -298,6 +312,9 @@ export const reconstructUserFromStorage = createAsyncThunk<
         email,
         firstName,
         lastName,
+        isBan,
+        isSuspended,
+        suspendTill,
       },
     };
   }
@@ -368,6 +385,10 @@ export const logout = createAsyncThunk<void, void>("auth/logout", async () => {
   localStorage.removeItem("email");
   localStorage.removeItem("firstName");
   localStorage.removeItem("lastName");
+  localStorage.removeItem("isBan");
+  localStorage.removeItem("isSuspended");
+  localStorage.removeItem("suspendTill");
+  localStorage.removeItem("permissions");
   delete authService.defaults.headers.common["Authorization"];
 });
 
@@ -394,6 +415,9 @@ const authSlice = createSlice({
       const email = localStorage.getItem("email");
       const firstName = localStorage.getItem("firstName");
       const lastName = localStorage.getItem("lastName");
+      const isBan = localStorage.getItem("isBan") === "true";
+      const isSuspended = localStorage.getItem("isSuspended") === "true";
+      const suspendTill = localStorage.getItem("suspendTill");
 
       if (token) {
         authService.defaults.headers.common["Authorization"] =
@@ -407,6 +431,9 @@ const authSlice = createSlice({
           email: email || undefined,
           firstName: firstName || undefined,
           lastName: lastName || undefined,
+          isBan,
+          isSuspended,
+          suspendTill: suspendTill || undefined,
         };
       } else {
         state.isAuthenticated = false;
@@ -421,6 +448,10 @@ const authSlice = createSlice({
       localStorage.removeItem("email");
       localStorage.removeItem("firstName");
       localStorage.removeItem("lastName");
+      localStorage.removeItem("isBan");
+      localStorage.removeItem("isSuspended");
+      localStorage.removeItem("suspendTill");
+      localStorage.removeItem("permissions");
       delete authService.defaults.headers.common["Authorization"];
 
       state.isAuthenticated = false;
