@@ -78,7 +78,7 @@ export const registerUser = createAsyncThunk<any, any, ThunkApiConfig>(
 // Login User
 export const loginUser = createAsyncThunk<any, any, ThunkApiConfig>(
   "auth/login",
-  async (formData, { rejectWithValue }) => {
+  async (formData, { rejectWithValue, dispatch }) => {
     try {
       const response = await authService.post("/login", formData);
       const { token, user } = response.data;
@@ -92,17 +92,12 @@ export const loginUser = createAsyncThunk<any, any, ThunkApiConfig>(
           if (user.email) localStorage.setItem("email", user.email);
           if (user.firstName) localStorage.setItem("firstName", user.firstName);
           if (user.lastName) localStorage.setItem("lastName", user.lastName);
-          localStorage.setItem("isBan", String(!!user.isBan));
-          localStorage.setItem("isSuspended", String(!!user.isSuspended));
-          const suspendDate = user.suspendTill || user.suspend_till;
-          if (suspendDate) {
-            localStorage.setItem("suspendTill", suspendDate);
-          } else {
-            localStorage.removeItem("suspendTill");
-          }
         }
         authService.defaults.headers.common["Authorization"] =
           `Bearer ${token}`;
+
+        // Dispatch validateToken to fetch isBan, isSuspended, etc. from backend
+        dispatch(validateToken());
       }
       return response.data;
     } catch (err) {
