@@ -84,7 +84,7 @@ const mapStatsToDisplay = (apiStats: any[]): Stat[] => {
   // Map API stats to display format
   const mappedStats = defaultStats.map((defaultStat) => {
     const apiStat = apiStats.find(
-      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase()
+      (stat) => stat.name.toLowerCase() === defaultStat.name.toLowerCase(),
     );
 
     return {
@@ -140,7 +140,7 @@ const StarRating: React.FC<{
 
 const Playerview: React.FC = () => {
   const [activeTab, setActiveTab] = useState<"details" | "media" | "reviews">(
-    "details"
+    "details",
   );
   const [profileData, setProfileData] = useState<Profile | null>(null);
   const [playerStats, setPlayerStats] = useState<Stat[]>([]);
@@ -247,7 +247,7 @@ const Playerview: React.FC = () => {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       // Map the API response to the correct format
@@ -273,7 +273,7 @@ const Playerview: React.FC = () => {
         `${API_FOLLOW_URL}/${viewedProfile.id}/isfollowing`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setIsFollowing(response.data?.isFollowing || false);
     } catch {
@@ -283,7 +283,7 @@ const Playerview: React.FC = () => {
 
   const fetchFollowers = async (
     limit = followersLimit,
-    page = followersPage
+    page = followersPage,
   ) => {
     if (!profileData?.id) return;
     setLoadingFollowers(true);
@@ -293,7 +293,7 @@ const Playerview: React.FC = () => {
         `${API_FOLLOW_URL}/${profileData.id}/followers?limit=${limit}&page=${page}`,
         {
           headers: { Authorization: `Bearer ${token}` },
-        }
+        },
       );
       setFollowers(response.data?.users || []);
       setFollowersCount(response.data?.users.length);
@@ -394,7 +394,7 @@ const Playerview: React.FC = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         newFollowStatus = false;
       } else {
@@ -406,7 +406,7 @@ const Playerview: React.FC = () => {
               "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         newFollowStatus = true;
       }

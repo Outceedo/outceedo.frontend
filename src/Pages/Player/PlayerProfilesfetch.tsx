@@ -270,27 +270,12 @@ const PlayerProfiles: React.FC = () => {
   const backendTotalPages = profiles?.totalPages || 1;
   const backendPage = profiles?.page || 1;
 
-  // Helper function to check if player profile is complete (has all required fields)
-  const isProfileComplete = useCallback((profile: Profile): boolean => {
-    if (!profile.photo) return false;
-    if (!profile.bio) return false;
-    if (!profile.birthYear && !profile.age) return false;
-    if (!profile.height) return false;
-    if (!profile.weight) return false;
-    if (!profile.city || !profile.country) return false;
-    if (!profile.club) return false;
-    if (!profile.language || profile.language.length === 0) return false;
-    return true;
-  }, []);
-
   // Store all profiles when data is fetched
-  // Filter out profiles with incomplete required fields
   useEffect(() => {
     if (usersArray.length > 0) {
-      const completeProfiles = usersArray.filter(isProfileComplete);
-      setAllProfiles(completeProfiles);
+      setAllProfiles(usersArray);
     }
-  }, [usersArray, isProfileComplete]);
+  }, [usersArray]);
 
   // Determine user type to fetch opposite profiles
   const userRole = localStorage.getItem("role") as Role;

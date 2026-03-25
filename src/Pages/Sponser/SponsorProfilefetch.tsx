@@ -213,28 +213,14 @@ export default function SponsorProfiles() {
     budgetRange: "",
   });
 
-  // Helper function to check if sponsor profile is complete (has all required fields)
-  const isProfileComplete = useCallback((sponsor: SponsorProfile): boolean => {
-    if (!sponsor.photo) return false;
-    if (!sponsor.bio) return false;
-    if (!sponsor.profession) return false;
-    if (!sponsor.country) return false;
-    if (!sponsor.city) return false;
-    if (!sponsor.sponsorType) return false;
-    if (!sponsor.sponsorshipType) return false;
-    return true;
-  }, []);
-
   // Store all sponsors when data is fetched
-  // Filter out sponsors with incomplete required fields
   useEffect(() => {
     if (sponsorsArray.length > 0) {
-      const completeProfiles = sponsorsArray.filter(isProfileComplete);
-      setAllSponsors(completeProfiles);
+      setAllSponsors(sponsorsArray);
     } else if (sponsorsArray.length === 0 && status === "succeeded") {
       setAllSponsors([]);
     }
-  }, [sponsorsArray, status, isProfileComplete]);
+  }, [sponsorsArray, status]);
 
   // Memoized function to extract filter options
   const extractFilterOptions = useCallback((key, dataArray) => {

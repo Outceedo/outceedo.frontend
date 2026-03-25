@@ -36,7 +36,6 @@ interface Stat {
   color: string;
 }
 
-
 const calculateOVR = (stats: Stat[]) => {
   if (!stats.length) return 0;
   const total = stats.reduce((sum, stat) => sum + stat.averageScore, 0);
@@ -731,21 +730,27 @@ const Profile: React.FC = () => {
           {/* Tabs Section */}
           <div className="mt-8">
             <div className="flex gap-5 sm:gap-4 border-b overflow-x-auto">
-              {(["details", "media", "reviews", "account", "businessCard"] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => setActiveTab(tab)}
-                    className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
-                      activeTab === tab
-                        ? "text-red-600 border-red-600"
-                        : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
-                    }`}
-                  >
-                    {tab === "businessCard" ? "Business Card" : tab}
-                  </button>
-                ),
-              )}
+              {(
+                [
+                  "details",
+                  "media",
+                  "reviews",
+                  "account",
+                  "businessCard",
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
+                    activeTab === tab
+                      ? "text-red-600 border-red-600"
+                      : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
+                  }`}
+                >
+                  {tab === "businessCard" ? "Business Card" : tab}
+                </button>
+              ))}
             </div>
             <div className="mt-4">
               {playerData && (
@@ -778,7 +783,10 @@ const Profile: React.FC = () => {
                   )}
                   {activeTab === "account" && <Settings />}
                   {activeTab === "businessCard" && (
-                    <PlayerBusinessCard playerData={playerData} playerStats={playerStats} />
+                    <PlayerBusinessCard
+                      playerData={playerData}
+                      playerStats={playerStats}
+                    />
                   )}
                 </>
               )}

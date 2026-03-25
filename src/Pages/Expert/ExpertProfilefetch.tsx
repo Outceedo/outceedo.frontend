@@ -260,38 +260,20 @@ const ExpertProfiles: React.FC = () => {
     [],
   );
 
-  // Helper function to check if expert profile is complete (has all required fields)
-  const isProfileComplete = useCallback((expert: Expert): boolean => {
-    if (!expert.photo) return false;
-    if (!expert.bio) return false;
-    if (!expert.profession) return false;
-    if (!expert.club) return false;
-    if (!expert.language || expert.language.length === 0) return false;
-    if (!expert.city || !expert.country) return false;
-    if (!expert.certificationLevel) return false;
-    if (!expert.responseTime) return false;
-    if (!expert.travelLimit) return false;
-    return true;
-  }, []);
-
   // Store all experts when data is fetched - for client-side filtering
-  // Filter out experts with incomplete profiles (missing required fields)
   useEffect(() => {
     if (expertsArray.length > 0) {
       const hasClientSideFilters =
         searchQuery.trim() !== "" ||
         Object.values(filters).some((value) => value !== "");
 
-      // Filter to only include complete profiles
-      const completeProfiles = expertsArray.filter(isProfileComplete);
-
       if (!hasClientSideFilters) {
-        setAllExperts(completeProfiles);
+        setAllExperts(expertsArray);
       } else if (allExperts.length === 0) {
-        setAllExperts(completeProfiles);
+        setAllExperts(expertsArray);
       }
     }
-  }, [expertsArray, searchQuery, filters, allExperts.length, isProfileComplete]);
+  }, [expertsArray, searchQuery, filters, allExperts.length]);
 
   const extractFilterOptions = useCallback(
     (key: keyof Expert, dataArray: Expert[]): string[] => {

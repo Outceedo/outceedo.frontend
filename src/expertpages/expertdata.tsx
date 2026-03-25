@@ -385,7 +385,7 @@ const ExpertProfile = () => {
       missingFields.push("Location");
     }
     if (!currentProfile.certificationLevel) {
-      missingFields.push("Certification Level");
+      +missingFields.push("Certification Level");
     }
     if (!currentProfile.responseTime) {
       missingFields.push("Response Time");
