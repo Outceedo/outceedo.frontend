@@ -133,11 +133,8 @@ const AppContent: React.FC = () => {
           const result = await dispatch(validateToken()).unwrap();
           // Check if user is banned or suspended and redirect
           const userData = result?.user;
-          const isBan =
-            userData?.isBan || localStorage.getItem("isBan") === "true";
-          const isSuspended =
-            userData?.isSuspended ||
-            localStorage.getItem("isSuspended") === "true";
+          const isBan = userData?.isBan;
+          const isSuspended = userData?.isSuspended;
 
           if (isBan || isSuspended) {
             navigate("/banned");
@@ -163,12 +160,7 @@ const AppContent: React.FC = () => {
   const effectivelyAuthenticated = isAuthenticated || hasToken;
 
   // Check if user is banned or suspended
-  const isBannedOrSuspended =
-    user?.isBan ||
-    user?.isSuspended ||
-    localStorage.getItem("isBan") === "true" ||
-    localStorage.getItem("isSuspended") === "true";
-
+  const isBannedOrSuspended = user?.isBan || user?.isSuspended;
   // Helper function to get user role
   const getUserRole = () => {
     return user?.role || localStorage.getItem("role");

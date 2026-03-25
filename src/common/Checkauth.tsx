@@ -24,22 +24,22 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
 
   const token = localStorage.getItem("token");
   const tokenExists = !!token;
-  const roleFromStorage = localStorage.getItem("role");
 
+  // ✅ ONLY trust Redux (user)
   const effectivelyAuthenticated = isAuthenticated || tokenExists;
-  const effectiveRole = user?.role || roleFromStorage;
+  const effectiveRole = user?.role;
 
-  // Check if user is banned or suspended
-  const isBan = user?.isBan || localStorage.getItem("isBan") === "true";
-  const isSuspended =
-    user?.isSuspended || localStorage.getItem("isSuspended") === "true";
+  const isBan = user?.isBan;
+  const isSuspended = user?.isSuspended;
 
+  // ✅ Trigger validation if token exists but user not loaded
   useEffect(() => {
     if (tokenExists && !user && onAuthCheck) {
       onAuthCheck();
     }
   }, [tokenExists, user, onAuthCheck]);
 
+  // ✅ WAIT until user is loaded (prevents flicker + wrong redirects)
   if (tokenExists && !user) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -48,6 +48,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     );
   }
 
+  // ❌ Not authenticated → allow public routes or redirect
   if (!effectivelyAuthenticated) {
     if (
       location.pathname === "/login" ||
@@ -61,14 +62,14 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Redirect banned or suspended users to /banned page
+  // 🚨 CRITICAL: Ban/Suspend check (NOW RELIABLE)
   if ((isBan || isSuspended) && location.pathname !== "/banned") {
     return <Navigate to="/banned" replace />;
   }
 
-  // Handle authenticated users
-  else {
-    // If authenticated user is on root path, redirect to their profile
+  // ✅ Authenticated users logic
+  if (effectiveRole) {
+    // Redirect root → profile
     if (location.pathname === "/") {
       switch (effectiveRole) {
         case "expert":
@@ -81,13 +82,13 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
           return <Navigate to="/team/profile" replace />;
         case "user":
         case "fan":
-          return <Navigate to="/fan/profile" replace />; // Changed to dashboard since that's what you have for admin
+          return <Navigate to="/fan/profile" replace />;
         default:
           return <Navigate to="/" replace />;
       }
     }
 
-    // If authenticated user is on login or signup, redirect to their profile
+    // Redirect login/signup → profile
     if (location.pathname === "/login" || location.pathname === "/signup") {
       switch (effectiveRole) {
         case "expert":
@@ -101,16 +102,12 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
         case "user":
         case "fan":
           return <Navigate to="/fan/profile" replace />;
-
         default:
           return <Navigate to="/" replace />;
       }
     }
 
-    // Handle role-based route restrictions
-    const userRole = effectiveRole || "";
-
-    // Define allowed path prefixes for each role
+    // ✅ Role-based route protection
     const rolePathMap: Record<string, string[]> = {
       expert: ["/expert", "/", "/public"],
       player: ["/player", "/", "/public"],
@@ -120,15 +117,14 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       fan: ["/fan", "/", "/public"],
     };
 
-    // Check if current path is allowed for the user's role
-    const allowedPaths = rolePathMap[userRole] || [];
+    const allowedPaths = rolePathMap[effectiveRole] || [];
+
     const isPathAllowed = allowedPaths.some(
       (path) =>
-        location.pathname === path || location.pathname.startsWith(`${path}/`)
+        location.pathname === path || location.pathname.startsWith(`${path}/`),
     );
 
     if (!isPathAllowed) {
-      // Redirect to unauthorized page
       return <Navigate to="/unauthorized" replace />;
     }
   }

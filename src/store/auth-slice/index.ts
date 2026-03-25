@@ -92,11 +92,38 @@ export const loginUser = createAsyncThunk<any, any, ThunkApiConfig>(
           if (user.email) localStorage.setItem("email", user.email);
           if (user.firstName) localStorage.setItem("firstName", user.firstName);
           if (user.lastName) localStorage.setItem("lastName", user.lastName);
+
+          // Store ban/suspend data from login response
+          // Backend returns isSuspend, we normalize to isSuspended
+          const isBan = !!user.isBan;
+          const isSuspended = !!user.isSuspend;
+          localStorage.setItem("isBan", String(isBan));
+          localStorage.setItem("isSuspended", String(isSuspended));
+          if (user.suspendTill) {
+            localStorage.setItem("suspendTill", user.suspendTill);
+          } else {
+            localStorage.removeItem("suspendTill");
+          }
+
+          // Update Redux state immediately with ban/suspend data
+          dispatch(
+            setUser({
+              user: {
+                id: user.id,
+                username: user.username || "",
+                email: user.email || "",
+                role: user.role || "",
+                isBan,
+                isSuspended,
+                suspendTill: user.suspendTill || null,
+              },
+            }),
+          );
         }
         authService.defaults.headers.common["Authorization"] =
           `Bearer ${token}`;
 
-        // Dispatch validateToken to fetch isBan, isSuspended, etc. from backend
+        // Dispatch validateToken to fetch complete user data from backend
         dispatch(validateToken());
       }
       return response.data;
@@ -166,7 +193,7 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
   "auth/validateToken",
   async (_, { rejectWithValue, dispatch }) => {
     try {
-      // Get token from localStorage
+      // 1. Get token
       const token = localStorage.getItem("token");
       if (!token) {
         return rejectWithValue("No token found");
@@ -174,77 +201,87 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
 
       authService.defaults.headers.common["Authorization"] = `Bearer ${token}`;
 
-      // 1. Retrieve all existing and new fields from localStorage
-      const username = localStorage.getItem("username");
-      const role = localStorage.getItem("role");
+      // 2. Hydrate from localStorage (FAST UI)
       const userId = localStorage.getItem("userId");
-      const email = localStorage.getItem("email");
-      const firstName = localStorage.getItem("firstName");
-      const lastName = localStorage.getItem("lastName");
+      const role = localStorage.getItem("role");
 
-      // Parse booleans and complex types from local storage strings
-      const isBan = localStorage.getItem("isBan") === "true";
-      const isSuspended = localStorage.getItem("isSuspended") === "true";
-      const suspend_till = localStorage.getItem("suspendTill") || null;
-
-      let permissions = [];
-      try {
-        const storedPerms = localStorage.getItem("permissions");
-        if (storedPerms) permissions = JSON.parse(storedPerms);
-      } catch (e) {
-        console.error("Could not parse permissions from local storage");
-      }
-
-      // 2. Hydrate the Redux store immediately to prevent UI flicker
       if (userId && role) {
         dispatch(
           setUser({
             user: {
               id: userId,
-              username,
-              email,
-              firstName,
-              lastName,
+              username: localStorage.getItem("username") || "",
+              email: localStorage.getItem("email") || "",
+              firstName: localStorage.getItem("firstName") || "",
+              lastName: localStorage.getItem("lastName") || "",
               role,
-              isBan,
-              isSuspended,
-              suspend_till,
-              permissions,
+              isBan: localStorage.getItem("isBan") === "true",
+              isSuspended: localStorage.getItem("isSuspended") === "true",
+              suspend_till: localStorage.getItem("suspendTill") || null,
+              permissions: JSON.parse(
+                localStorage.getItem("permissions") || "[]",
+              ),
             },
           }),
         );
       }
 
+      // 3. Call backend (REAL SOURCE OF TRUTH)
       const response = await authService.get("/validate");
 
-      // 3. Update localStorage with fresh data from the backend
-      if (response.data && response.data.user) {
-        const user = response.data.user;
+      // Handle both cases: user at response.data.user or directly at response.data
+      const user = response.data?.user || response.data;
 
-        localStorage.setItem("username", user.username || "");
-        // Adjusting role to handle if backend sends `role.name` or just a string
-        localStorage.setItem("role", user.role?.name || user.role || "");
+      if (user && user.id) {
 
-        if (user.id) localStorage.setItem("userId", user.id);
-        if (user.email) localStorage.setItem("email", user.email);
-        if (user.firstName) localStorage.setItem("firstName", user.firstName);
-        if (user.lastName) localStorage.setItem("lastName", user.lastName);
+        // Normalize role
+        const normalizedRole = user.role?.name || user.role || "";
 
-        // Save new fields
-        localStorage.setItem("isBan", String(!!user.isBan));
-        localStorage.setItem("isSuspended", String(!!user.isSuspended));
+        // Normalize values
+        // Backend may return isSuspend or isSuspended, handle both
+        const normalizedUser = {
+          id: user.id || "",
+          username: user.username || "",
+          email: user.email || "",
+          firstName: user.firstName || "",
+          lastName: user.lastName || "",
+          role: normalizedRole,
+          isBan: !!user.isBan,
+          isSuspended: !!(user.isSuspended || user.isSuspend),
+          suspend_till: user.suspendTill || user.suspend_till || null,
+          permissions: user.permissions || [],
+        };
 
-        // Handle suspend_till/suspendTill depending on exactly what the backend returns
-        const suspendDate = user.suspendTill || user.suspend_till;
-        if (suspendDate) {
-          localStorage.setItem("suspendTill", suspendDate);
+        // 4. Update localStorage (CACHE ONLY)
+        localStorage.setItem("username", normalizedUser.username);
+        localStorage.setItem("role", normalizedUser.role);
+        localStorage.setItem("userId", normalizedUser.id);
+        localStorage.setItem("email", normalizedUser.email);
+        localStorage.setItem("firstName", normalizedUser.firstName);
+        localStorage.setItem("lastName", normalizedUser.lastName);
+        localStorage.setItem("isBan", String(normalizedUser.isBan));
+        localStorage.setItem("isSuspended", String(normalizedUser.isSuspended));
+
+        if (normalizedUser.suspend_till) {
+          localStorage.setItem("suspendTill", normalizedUser.suspend_till);
         } else {
           localStorage.removeItem("suspendTill");
         }
 
-        if (user.permissions) {
-          localStorage.setItem("permissions", JSON.stringify(user.permissions));
-        }
+        localStorage.setItem(
+          "permissions",
+          JSON.stringify(normalizedUser.permissions),
+        );
+
+        // 🚨 5. CRITICAL FIX — Update Redux AGAIN with backend data
+        dispatch(
+          setUser({
+            user: normalizedUser,
+          }),
+        );
+
+        // Return consistent structure
+        return { user: normalizedUser };
       }
 
       return response.data;
@@ -253,8 +290,9 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
       console.error("Error in API call:", error.response?.data);
 
       const status = error.response?.status;
+
       if (status === 401 || status === 403) {
-        // 4. Clear everything out on auth failure
+        // Clear everything
         const keysToRemove = [
           "token",
           "username",
@@ -271,6 +309,9 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
 
         keysToRemove.forEach((key) => localStorage.removeItem(key));
         delete authService.defaults.headers.common["Authorization"];
+
+        // Optional: also clear redux
+        dispatch(setUser({ user: null }));
       }
 
       return rejectWithValue(
@@ -279,12 +320,11 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
     }
   },
 );
-
 export const reconstructUserFromStorage = createAsyncThunk<
   any,
   void,
   ThunkApiConfig
->("auth/reconstructUserFromStorage", async (_, { dispatch }) => {
+>("auth/reconstructUserFromStorage", async () => {
   const token = localStorage.getItem("token");
   const username = localStorage.getItem("username");
   const role = localStorage.getItem("role");
