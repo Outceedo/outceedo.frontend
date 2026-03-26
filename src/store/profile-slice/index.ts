@@ -456,10 +456,20 @@ const profileSlice = createSlice({
         getProfile.fulfilled,
         (state, action: PayloadAction<Profile>) => {
           state.status = "succeeded";
-          state.viewedProfile = action.payload;
+          // Handle both direct profile response and nested response
+          const profileData = (action.payload as any)?.user || action.payload;
+          state.viewedProfile = profileData;
+
           const currentUsername = localStorage.getItem("username");
-          if (currentUsername && action.payload.username === currentUsername) {
-            state.currentProfile = action.payload;
+          const fetchedUsername = profileData?.username;
+
+          // Compare usernames (case-insensitive, trimmed) to set currentProfile
+          if (
+            currentUsername &&
+            fetchedUsername &&
+            currentUsername.trim().toLowerCase() === fetchedUsername.trim().toLowerCase()
+          ) {
+            state.currentProfile = profileData;
           }
         },
       )

@@ -46,14 +46,11 @@ const Login: React.FC = () => {
   }, [error]);
 
   useEffect(() => {
-    if (user && !isRedirecting && user.token) {
-      localStorage.setItem("token", user.token);
-      localStorage.setItem("username", user.username);
-      localStorage.setItem("role", user.role);
-      localStorage.setItem("userid", user.id);
+    // Auth-slice thunk already handles localStorage operations
+    // Just check if user is authenticated and redirect
+    if (user && !isRedirecting && user.id) {
       setLoginSuccess(true);
       setIsRedirecting(true);
-      // Actual navigation usually happens here or via a redirect component
     }
   }, [user, isRedirecting]);
 
