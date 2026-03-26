@@ -239,13 +239,14 @@ export const validateToken = createAsyncThunk<any, void, ThunkApiConfig>(
 
         // Normalize values
         // Backend may return isSuspend or isSuspended, handle both
+        // Preserve existing localStorage values if API doesn't return them
         const normalizedUser = {
-          id: user.id || "",
-          username: user.username || "",
-          email: user.email || "",
-          firstName: user.firstName || "",
-          lastName: user.lastName || "",
-          role: normalizedRole,
+          id: user.id || localStorage.getItem("userId") || "",
+          username: user.username || localStorage.getItem("username") || "",
+          email: user.email || localStorage.getItem("email") || "",
+          firstName: user.firstName || localStorage.getItem("firstName") || "",
+          lastName: user.lastName || localStorage.getItem("lastName") || "",
+          role: normalizedRole || localStorage.getItem("role") || "",
           isBan: !!user.isBan,
           isSuspended: !!(user.isSuspended || user.isSuspend),
           suspend_till: user.suspendTill || user.suspend_till || null,
