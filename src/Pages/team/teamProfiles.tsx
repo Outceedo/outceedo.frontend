@@ -1,22 +1,11 @@
-import React, {
-  useState,
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-} from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { getProfiles } from "../../store/profile-slice";
+import { getProfiles, searchProfiles } from "../../store/profile-slice";
 import avatar from "../../assets/images/avatar.png";
-
-// UI Components
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faStar } from "@fortawesome/free-solid-svg-icons";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -26,19 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-// Icons
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faStar } from "@fortawesome/free-solid-svg-icons";
-import {
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-} from "lucide-react";
-
-// --- Types ---
+import { Search, X, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 
 interface Review {
   id: string;
@@ -51,7 +28,8 @@ interface Profile {
   username: string;
   firstName?: string;
   lastName?: string;
-  company?: string; // Often used as Team Name
+  teamName?: string;
+  company?: string;
   bio?: string;
   photo?: string;
   city?: string;
@@ -59,217 +37,188 @@ interface Profile {
   sport?: string;
   sports?: string[];
   language?: string[];
-  gender?: string; // Men's / Women's / Mixed
-  teamType?: string; // Grassroot, Club, Academy, League, Premier League, Championship
-  teamCategory?: string; // Men's, Women's, Others
+  gender?: string;
+  teamType?: string;
+  teamCategory?: string;
   reviewsReceived?: Review[];
   verified?: boolean;
   [key: string]: any;
 }
 
-interface PaginationProps {
+const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
+  <div className="flex items-center gap-1">
+    <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-sm" />
+    <span className="text-sm text-gray-600 dark:text-gray-300 ml-1 font-medium">
+      {rating > 0 ? rating.toFixed(1) : "New"}
+    </span>
+  </div>
+);
+
+const Pagination: React.FC<{
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
-}
+}> = React.memo(({ totalPages, currentPage, onPageChange }) => {
+  const getVisiblePages = useCallback(() => {
+    const delta = window.innerWidth < 768 ? 1 : 2;
+    const range: number[] = [];
+    const rangeWithDots: (number | string)[] = [];
 
-// --- Helper Components ---
+    if (totalPages === 1) return [1];
 
-// Star Rating Component
-const StarRating: React.FC<{ rating: number }> = ({ rating }) => {
+    for (
+      let i = Math.max(2, currentPage - delta);
+      i <= Math.min(totalPages - 1, currentPage + delta);
+      i++
+    ) {
+      range.push(i);
+    }
+
+    if (currentPage - delta > 2) {
+      rangeWithDots.push(1, "...");
+    } else {
+      rangeWithDots.push(1);
+    }
+
+    rangeWithDots.push(...range);
+
+    if (currentPage + delta < totalPages - 1) {
+      rangeWithDots.push("...", totalPages);
+    } else if (totalPages > 1) {
+      rangeWithDots.push(totalPages);
+    }
+
+    return [...new Set(rangeWithDots)];
+  }, [totalPages, currentPage]);
+
   return (
-    <div className="flex items-center gap-1">
-      <div className="flex text-yellow-400">
-        <FontAwesomeIcon icon={faStar} className="text-sm" />
+    <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
+      <button
+        onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
+        disabled={currentPage === 1}
+        className="px-2 sm:px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
+      >
+        <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
+      </button>
+      <div className="flex space-x-1 sm:space-x-2">
+        {getVisiblePages().map((page, index) => (
+          <button
+            key={typeof page === "number" ? `page-${page}` : `ellipsis-${index}`}
+            className={`px-2 py-1 sm:px-3 sm:py-1 rounded-md cursor-pointer text-sm ${
+              typeof page === "number" && currentPage === page
+                ? "bg-red-600 text-white"
+                : typeof page === "number"
+                  ? "bg-gray-200 dark:bg-slate-700 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-600"
+                  : "bg-transparent cursor-default dark:text-gray-400"
+            }`}
+            onClick={() => typeof page === "number" && onPageChange(page)}
+            disabled={typeof page !== "number"}
+          >
+            {page}
+          </button>
+        ))}
       </div>
-      <span className="text-sm text-gray-600 dark:text-gray-300 ml-1 font-medium">
-        {rating > 0 ? rating.toFixed(1) : "New"}
-      </span>
+      <button
+        onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        className="px-2 sm:px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
+      >
+        <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
+      </button>
     </div>
   );
-};
-
-// Enhanced Pagination Component
-const Pagination = React.memo(
-  ({ totalPages, currentPage, onPageChange }: PaginationProps) => {
-    const handlePrev = useCallback(() => {
-      if (currentPage > 1) {
-        onPageChange(currentPage - 1);
-      }
-    }, [currentPage, onPageChange]);
-
-    const handleNext = useCallback(() => {
-      if (currentPage < totalPages) {
-        onPageChange(currentPage + 1);
-      }
-    }, [currentPage, totalPages, onPageChange]);
-
-    const getVisiblePages = useCallback(() => {
-      const delta = window.innerWidth < 768 ? 1 : 2;
-      const range = [];
-      const rangeWithDots = [];
-
-      if (totalPages === 1) return [1];
-
-      for (
-        let i = Math.max(2, currentPage - delta);
-        i <= Math.min(totalPages - 1, currentPage + delta);
-        i++
-      ) {
-        range.push(i);
-      }
-
-      if (currentPage - delta > 2) {
-        rangeWithDots.push(1, "...");
-      } else {
-        rangeWithDots.push(1);
-      }
-
-      rangeWithDots.push(...range);
-
-      if (currentPage + delta < totalPages - 1) {
-        rangeWithDots.push("...", totalPages);
-      } else if (totalPages > 1) {
-        rangeWithDots.push(totalPages);
-      }
-
-      return [...new Set(rangeWithDots)];
-    }, [totalPages, currentPage]);
-
-    const visiblePages = useMemo(() => getVisiblePages(), [getVisiblePages]);
-
-    return (
-      <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
-        <button
-          onClick={handlePrev}
-          disabled={currentPage === 1}
-          className="px-2 sm:px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
-        >
-          <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4" />
-        </button>
-        <div className="flex space-x-1 sm:space-x-2">
-          {visiblePages.map((page, index) => (
-            <button
-              key={
-                typeof page === "number" ? `page-${page}` : `ellipsis-${index}`
-              }
-              className={`px-2 py-1 sm:px-3 sm:py-1 rounded-md cursor-pointer text-sm ${
-                typeof page === "number" && currentPage === page
-                  ? "bg-red-600 text-white"
-                  : typeof page === "number"
-                    ? "bg-gray-200 dark:bg-slate-700 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-600"
-                    : "bg-transparent cursor-default dark:text-gray-400"
-              }`}
-              onClick={() => typeof page === "number" && onPageChange(page)}
-              disabled={typeof page !== "number"}
-            >
-              {page}
-            </button>
-          ))}
-        </div>
-        <button
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-          className="px-2 sm:px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 dark:border-gray-600 dark:text-white"
-        >
-          <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-        </button>
-      </div>
-    );
-  },
-);
+});
 
 Pagination.displayName = "Pagination";
-
-// --- Main Component ---
 
 export default function TeamProfiles() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-
-  // Redux State
   const { profiles, status, error } = useAppSelector((state) => state.profile);
 
-  // Constants
-  const dispatchRef = useRef(dispatch);
-  const targetProfileType = "team"; // We are fetching TEAMS
-
-  // Data Extraction
-  const usersArray = profiles?.users || [];
+  const usersArray = (profiles?.users || []) as Profile[];
   const backendTotalPages = profiles?.totalPages || 1;
   const backendPage = profiles?.page || 1;
-  const totalCount = profiles?.totalCount || usersArray.length;
 
-  // Local State
   const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
 
   const [filters, setFilters] = useState({
     sport: "",
     city: "",
     country: "",
-    gender: "",
-    language: "",
     teamType: "",
     teamCategory: "",
   });
 
-  // Sync data
-  useEffect(() => {
-    if (usersArray.length > 0) {
-      setAllProfiles(usersArray);
-    } else if (usersArray.length === 0 && status === "succeeded") {
-      setAllProfiles([]);
-    }
-  }, [usersArray, status]);
-
   // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 300);
+      setDebouncedSearch(searchTerm);
+    }, 400);
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Fetch Logic
-  const fetchProfiles = useCallback(() => {
-    const params: Record<string, any> = {
-      page: currentPage,
-      limit,
-      userType: targetProfileType,
-    };
-    if (debouncedSearchTerm.trim()) {
-      params.search = debouncedSearchTerm.trim();
-    }
-    dispatchRef.current(getProfiles(params));
-  }, [currentPage, limit, debouncedSearchTerm]);
-
+  // Fetch teams - use search API when there's a search query
   useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
+    if (debouncedSearch.trim()) {
+      dispatch(
+        searchProfiles({
+          q: debouncedSearch.trim(),
+          page: currentPage,
+          limit,
+          role: "team",
+        })
+      );
+    } else {
+      dispatch(getProfiles({ page: currentPage, limit, userType: "team" }));
+    }
+  }, [dispatch, currentPage, limit, debouncedSearch]);
 
-  // --- Filtering Logic ---
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
+  const calculateAverageRating = useCallback((reviews: Review[] = []): number => {
+    if (!reviews?.length) return 0;
+    return reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
+  }, []);
+
+  // Client-side filtering for dropdown filters
+  const filteredProfiles = useMemo(() => {
+    let filtered = [...usersArray];
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        filtered = filtered.filter((profile) => {
+          if (key === "sport") {
+            if (Array.isArray(profile.sports)) {
+              return profile.sports.some((s) => s?.trim() === value);
+            }
+            return profile.sport?.trim() === value;
+          }
+          if (key === "teamType") {
+            return profile.teamType?.trim().toLowerCase() === value.toLowerCase();
+          }
+          return profile[key]?.trim() === value;
+        });
+      }
+    });
+
+    return filtered;
+  }, [usersArray, filters]);
 
   const extractFilterOptions = useCallback(
     (key: keyof Profile, dataArray: Profile[]): string[] => {
       const options = new Set<string>();
-      dataArray.forEach((profile: Profile) => {
-        if (key === "language" && profile.language) {
-          const langs = Array.isArray(profile.language)
-            ? profile.language
-            : [profile.language];
-          langs.forEach((lang) => {
-            if (lang) options.add(lang.trim());
-          });
-        } else if (key === "sports" || key === "sport") {
-          if (profile.sports && Array.isArray(profile.sports)) {
-            profile.sports.forEach((sport) => {
-              if (sport) options.add(sport.trim());
-            });
-          } else if (profile.sport && typeof profile.sport === "string") {
+      dataArray.forEach((profile) => {
+        if (key === "sports" || key === "sport") {
+          if (Array.isArray(profile.sports)) {
+            profile.sports.forEach((s) => s && options.add(s.trim()));
+          } else if (profile.sport) {
             options.add(profile.sport.trim());
           }
         } else {
@@ -279,133 +228,49 @@ export default function TeamProfiles() {
       });
       return Array.from(options).sort();
     },
-    [],
+    []
   );
 
-  const filteredProfiles = useMemo(() => {
-    let filtered = [...allProfiles];
+  const defaultSports = ["Football", "Basketball", "Cricket", "Hockey"];
+  const defaultTeamTypes = ["Grassroot", "Club", "Academy", "League", "Premier League", "Championship"];
+  const defaultTeamCategories = ["Men's", "Women's", "Others"];
 
-    // Search
-    if (searchTerm.trim()) {
-      const query = searchTerm.toLowerCase().trim();
-      filtered = filtered.filter((profile) => {
-        const teamName = profile.company?.toLowerCase() || "";
-        const username = profile.username?.toLowerCase() || "";
-        const bio = profile.bio?.toLowerCase() || "";
-        return (
-          teamName.includes(query) ||
-          username.includes(query) ||
-          bio.includes(query)
-        );
-      });
-    }
+  const sportOptions = useMemo(() => {
+    const opts = [
+      ...extractFilterOptions("sports", usersArray),
+      ...extractFilterOptions("sport", usersArray),
+    ];
+    return opts.length ? [...new Set(opts)].sort() : defaultSports;
+  }, [usersArray, extractFilterOptions]);
 
-    // Filters
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        filtered = filtered.filter((profile) => {
-          if (key === "sport") {
-            if (profile.sports && Array.isArray(profile.sports)) {
-              return profile.sports.some((s) => s?.trim() === value);
-            }
-            return profile.sport?.trim() === value;
-          } else if (key === "language") {
-            const langs = Array.isArray(profile.language)
-              ? profile.language
-              : [profile.language];
-            return langs.some((l) => l?.trim() === value);
-          } else if (key === "teamType") {
-            return (
-              profile.teamType?.trim().toLowerCase() === value.toLowerCase()
-            );
-          } else {
-            return profile[key as keyof Profile]?.trim() === value;
-          }
-        });
-      }
-    });
-
-    return filtered;
-  }, [allProfiles, searchTerm, filters]);
-
-  // Filter Options Generation
-  const sportOptions = useMemo(
-    () => [
-      ...extractFilterOptions("sports", allProfiles),
-      ...extractFilterOptions("sport", allProfiles),
-    ],
-    [allProfiles, extractFilterOptions],
-  );
   const cityOptions = useMemo(
-    () => extractFilterOptions("city", allProfiles),
-    [allProfiles, extractFilterOptions],
+    () => extractFilterOptions("city", usersArray).length ? extractFilterOptions("city", usersArray) : ["London", "Manchester"],
+    [usersArray, extractFilterOptions]
   );
   const countryOptions = useMemo(
-    () => extractFilterOptions("country", allProfiles),
-    [allProfiles, extractFilterOptions],
-  );
-  const genderOptions = useMemo(
-    () => extractFilterOptions("gender", allProfiles),
-    [allProfiles, extractFilterOptions],
+    () => extractFilterOptions("country", usersArray).length ? extractFilterOptions("country", usersArray) : ["UK", "USA"],
+    [usersArray, extractFilterOptions]
   );
   const teamTypeOptions = useMemo(
-    () => extractFilterOptions("teamType", allProfiles),
-    [allProfiles, extractFilterOptions],
+    () => extractFilterOptions("teamType", usersArray).length ? extractFilterOptions("teamType", usersArray) : defaultTeamTypes,
+    [usersArray, extractFilterOptions]
   );
   const teamCategoryOptions = useMemo(
-    () => extractFilterOptions("teamCategory", allProfiles),
-    [allProfiles, extractFilterOptions],
+    () => extractFilterOptions("teamCategory", usersArray).length ? extractFilterOptions("teamCategory", usersArray) : defaultTeamCategories,
+    [usersArray, extractFilterOptions]
   );
 
-  // Default Fallbacks
-  const defaultSports = ["Football", "Basketball", "Cricket", "Hockey"];
-  const finalSportOptions =
-    sportOptions.length > 0 ? [...new Set(sportOptions)].sort() : defaultSports;
-
-  const defaultTeamTypes = [
-    "Grassroot",
-    "Club",
-    "Academy",
-    "League",
-    "Premier League",
-    "Championship",
-  ];
-  const finalTeamTypeOptions =
-    teamTypeOptions.length > 0
-      ? [...new Set(teamTypeOptions)].sort()
-      : defaultTeamTypes;
-
-  const defaultTeamCategories = ["Men's", "Women's", "Others"];
-  const finalTeamCategoryOptions =
-    teamCategoryOptions.length > 0
-      ? [...new Set(teamCategoryOptions)].sort()
-      : defaultTeamCategories;
-
-  // Handlers
   const handleFilterChange = (value: string, filterType: string) => {
     setFilters((prev) => ({ ...prev, [filterType]: value }));
   };
 
   const clearAllFilters = () => {
-    setFilters({
-      sport: "",
-      city: "",
-      country: "",
-      gender: "",
-      language: "",
-      teamType: "",
-      teamCategory: "",
-    });
+    setFilters({ sport: "", city: "", country: "", teamType: "", teamCategory: "" });
     setSearchTerm("");
-    setDebouncedSearchTerm("");
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = useMemo(() => {
-    return (
-      searchTerm !== "" || Object.values(filters).some((value) => value !== "")
-    );
-  }, [searchTerm, filters]);
+  const hasActiveFilters = searchTerm !== "" || Object.values(filters).some((v) => v !== "");
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -417,32 +282,16 @@ export default function TeamProfiles() {
     setCurrentPage(1);
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1);
-  };
-
   const handleViewProfile = (profile: Profile) => {
     localStorage.setItem("viewteamusername", profile.username);
-    // Assuming you have a route for viewing a specific team profile
-    // Determine current user role to route correctly
     const role = localStorage.getItem("role");
-    if (role === "player") navigate("/player/teaminfo");
-    else if (role === "team") navigate("/team/teaminfo");
-    else if (role === "sponsor") navigate("/sponsor/teaminfo");
-    else navigate("/expert/teaminfo");
+    const routes: Record<string, string> = {
+      player: "/player/teaminfo",
+      team: "/team/teaminfo",
+      sponsor: "/sponsor/teaminfo",
+    };
+    navigate(routes[role || ""] || "/expert/teaminfo");
   };
-
-  const calculateAverageRating = (reviews: Review[] = []) => {
-    if (!reviews || reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, r) => acc + (r.rating || 0), 0);
-    return sum / reviews.length;
-  };
-
-  // Pagination display calculation
-  const displayedProfiles = filteredProfiles;
-  const startIndex = (backendPage - 1) * limit;
-  const endIndex = startIndex + displayedProfiles.length;
 
   return (
     <div className="px-3 sm:px-6 py-2 w-full mx-auto dark:bg-gray-900">
@@ -455,7 +304,7 @@ export default function TeamProfiles() {
             placeholder="Search teams by name, sport, or city..."
             className="pl-9 w-full bg-white dark:bg-slate-700 text-sm sm:text-base rounded-xl"
             value={searchTerm}
-            onChange={handleSearchChange}
+            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
       </div>
@@ -464,116 +313,73 @@ export default function TeamProfiles() {
       <div className="w-full mb-4 sm:mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 pt-1">
           {/* Sport Filter */}
-          <div className="w-full">
-            <Select
-              value={filters.sport}
-              onValueChange={(val) => handleFilterChange(val, "sport")}
-            >
-              <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
-                <SelectValue placeholder="Sport" />
-              </SelectTrigger>
-              <SelectContent>
-                {finalSportOptions.map((opt, i) => (
-                  <SelectItem key={`sport-${i}`} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filters.sport} onValueChange={(val) => handleFilterChange(val, "sport")}>
+            <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
+              <SelectValue placeholder="Sport" />
+            </SelectTrigger>
+            <SelectContent>
+              {sportOptions.map((opt, i) => (
+                <SelectItem key={`sport-${i}`} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* City Filter */}
-          <div className="w-full">
-            <Select
-              value={filters.city}
-              onValueChange={(val) => handleFilterChange(val, "city")}
-            >
-              <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
-                <SelectValue placeholder="City" />
-              </SelectTrigger>
-              <SelectContent>
-                {(cityOptions.length > 0
-                  ? cityOptions
-                  : ["London", "Manchester"]
-                ).map((opt, i) => (
-                  <SelectItem key={`city-${i}`} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filters.city} onValueChange={(val) => handleFilterChange(val, "city")}>
+            <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
+              <SelectValue placeholder="City" />
+            </SelectTrigger>
+            <SelectContent>
+              {cityOptions.map((opt, i) => (
+                <SelectItem key={`city-${i}`} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Country Filter */}
-          <div className="w-full">
-            <Select
-              value={filters.country}
-              onValueChange={(val) => handleFilterChange(val, "country")}
-            >
-              <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
-                <SelectValue placeholder="Country" />
-              </SelectTrigger>
-              <SelectContent>
-                {(countryOptions.length > 0
-                  ? countryOptions
-                  : ["UK", "USA"]
-                ).map((opt, i) => (
-                  <SelectItem key={`country-${i}`} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filters.country} onValueChange={(val) => handleFilterChange(val, "country")}>
+            <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
+              <SelectValue placeholder="Country" />
+            </SelectTrigger>
+            <SelectContent>
+              {countryOptions.map((opt, i) => (
+                <SelectItem key={`country-${i}`} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Team Type Filter */}
-          <div className="w-full">
-            <Select
-              value={filters.teamType}
-              onValueChange={(val) => handleFilterChange(val, "teamType")}
-            >
-              <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
-                <SelectValue placeholder="Team Type" />
-              </SelectTrigger>
-              <SelectContent>
-                {finalTeamTypeOptions.map((opt, i) => (
-                  <SelectItem key={`teamType-${i}`} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filters.teamType} onValueChange={(val) => handleFilterChange(val, "teamType")}>
+            <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
+              <SelectValue placeholder="Team Type" />
+            </SelectTrigger>
+            <SelectContent>
+              {teamTypeOptions.map((opt, i) => (
+                <SelectItem key={`teamType-${i}`} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Team Category Filter */}
-          <div className="w-full">
-            <Select
-              value={filters.teamCategory}
-              onValueChange={(val) => handleFilterChange(val, "teamCategory")}
-            >
-              <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
-                <SelectValue placeholder="Team Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {finalTeamCategoryOptions.map((opt, i) => (
-                  <SelectItem key={`teamCategory-${i}`} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={filters.teamCategory} onValueChange={(val) => handleFilterChange(val, "teamCategory")}>
+            <SelectTrigger className="w-full bg-white border border-gray-200 rounded-xl min-h-[48px]">
+              <SelectValue placeholder="Team Category" />
+            </SelectTrigger>
+            <SelectContent>
+              {teamCategoryOptions.map((opt, i) => (
+                <SelectItem key={`teamCategory-${i}`} value={opt}>{opt}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Clear Filters Button */}
           {hasActiveFilters && (
-            <div className="w-full flex items-center">
-              <button
-                onClick={clearAllFilters}
-                className="w-full flex items-center justify-center gap-1 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-600 rounded-xl min-h-[48px] text-base px-4 py-2"
-              >
-                <X size={18} /> Clear Filters
-              </button>
-            </div>
+            <button
+              onClick={clearAllFilters}
+              className="w-full flex items-center justify-center gap-1 bg-red-50 border border-red-200 text-red-600 hover:bg-red-100 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 rounded-xl min-h-[48px] text-base px-4 py-2"
+            >
+              <X size={18} /> Clear Filters
+            </button>
           )}
         </div>
       </div>
@@ -588,50 +394,28 @@ export default function TeamProfiles() {
       {/* Error State */}
       {status === "failed" && error && (
         <div className="text-center p-4 sm:p-6 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
-          <p className="text-base sm:text-lg font-semibold">
-            Failed to load teams
-          </p>
-          <button
-            className="mt-4 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded"
-            onClick={fetchProfiles}
-          >
-            Try Again
-          </button>
+          <p className="text-base sm:text-lg font-semibold">Failed to load teams</p>
         </div>
       )}
 
-      {/* No Results States */}
-      {status === "succeeded" &&
-        displayedProfiles.length === 0 &&
-        allProfiles.length > 0 && (
-          <div className="text-center p-6 sm:p-10">
-            <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-              No teams found matching your criteria.
-            </p>
-          </div>
-        )}
-
-      {status === "succeeded" && allProfiles.length === 0 && (
+      {/* No Results */}
+      {status === "succeeded" && filteredProfiles.length === 0 && (
         <div className="text-center p-6 sm:p-10">
           <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-            No teams available.
+            No teams found matching your criteria.
           </p>
         </div>
       )}
 
       {/* Team List Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-        {status === "succeeded" &&
-          displayedProfiles.map((profile) => {
-            // For teams, 'company' is often the Team Name. Fallback to username.
-            const displayName =
-              profile.teamName?.trim() || profile.firstName?.trim();
+      {status === "succeeded" && filteredProfiles.length > 0 && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {filteredProfiles.map((profile) => {
+            const displayName = profile.teamName?.trim() || profile.firstName?.trim() || profile.username;
             const avgRating = calculateAverageRating(profile.reviewsReceived);
             const reviewCount = profile.reviewsReceived?.length || 0;
-            const teamSports = profile.sports
-              ? Array.isArray(profile.sports)
-                ? profile.sports.join(", ")
-                : profile.sports
+            const teamSports = Array.isArray(profile.sports)
+              ? profile.sports.join(", ")
               : profile.sport || "";
 
             return (
@@ -645,8 +429,7 @@ export default function TeamProfiles() {
                     alt={displayName}
                     className="w-full h-52 sm:h-56 p-2 rounded-lg object-contain bg-gray-50 dark:bg-gray-900"
                     onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = avatar;
+                      (e.target as HTMLImageElement).src = avatar;
                     }}
                   />
                   {profile.verified && (
@@ -661,12 +444,10 @@ export default function TeamProfiles() {
                     {displayName}
                   </h3>
                   <p className="text-gray-500 text-xs sm:text-sm dark:text-gray-400 line-clamp-1">
-                    Team{" "}
+                    Team
                   </p>
                   <p className="text-gray-500 text-xs sm:text-sm dark:text-gray-400 line-clamp-1">
-                    {profile.city && profile.country
-                      ? `${profile.city}, ${profile.country}`
-                      : "Location N/A"}
+                    {profile.city && profile.country ? `${profile.city}, ${profile.country}` : "Location N/A"}
                   </p>
                   {teamSports && (
                     <p className="text-blue-600 text-xs sm:text-sm font-medium dark:text-blue-300 my-1 line-clamp-1">
@@ -695,25 +476,24 @@ export default function TeamProfiles() {
               </Card>
             );
           })}
-      </div>
+        </div>
+      )}
 
       {/* Pagination Footer */}
       {status === "succeeded" && backendTotalPages >= 1 && (
         <div className="flex flex-col items-center mt-8 space-y-4 pb-6">
-          <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-4">
             <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
               Items per page:
             </span>
             <select
               value={limit}
               onChange={handleLimitChange}
-              className="border rounded-lg px-3 py-2 text-xs sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 min-w-[80px] focus:outline-none focus:ring-2 focus:ring-red-500"
+              className="border rounded-lg px-3 py-2 text-xs sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 min-w-[80px]"
             >
-              <option value="4">4</option>
-              <option value="8">8</option>
-              <option value="12">12</option>
-              <option value="16">16</option>
-              <option value="20">20</option>
+              {[4, 8, 12, 16, 20].map((n) => (
+                <option key={n} value={n}>{n}</option>
+              ))}
             </select>
           </div>
 
@@ -724,14 +504,7 @@ export default function TeamProfiles() {
           />
 
           <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
-            <span>
-              Showing {Math.min(startIndex + 1, totalCount)} to{" "}
-              {Math.min(endIndex, totalCount)} of {totalCount} teams
-            </span>
-            <span className="mx-2 hidden sm:inline">•</span>
-            <span>
-              Page {backendPage} of {backendTotalPages}
-            </span>
+            Page {backendPage} of {backendTotalPages}
           </div>
         </div>
       )}

@@ -1,20 +1,12 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
-import { getProfiles } from "../../store/profile-slice";
+import { getProfiles, searchProfiles } from "../../store/profile-slice";
 import avatar from "../../assets/images/avatar.png";
-
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faStar } from "@fortawesome/free-solid-svg-icons";
-
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-
 import {
   Select,
   SelectContent,
@@ -23,157 +15,53 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import {
-  Search,
-  X,
-  ChevronLeft,
-  ChevronRight,
-  CheckCircle,
-} from "lucide-react";
-
-type Role = "player" | "expert" | "sponsor";
-
-export interface DocumentItem {
-  id: string;
-  title: string;
-  issuedBy?: string;
-  issuedDate?: string;
-  imageUrl?: string;
-  type?: string;
-  description?: string;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface UploadItem {
-  id: string;
-  title: string;
-  url: string;
-  type?: string;
-  userId?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface SocialLinks {
-  linkedin?: string;
-  facebook?: string;
-  instagram?: string;
-  twitter?: string;
-}
+import { Search, X, ChevronLeft, ChevronRight, CheckCircle } from "lucide-react";
 
 interface Review {
   id: string;
-  reviewerId: string;
-  revieweeId: string;
   rating: number;
   comment: string;
   bookingId?: string;
-  createdAt: string;
-  updatedAt: string;
-  reviewer?: {
-    id: string;
-    username: string;
-    firstName?: string;
-    lastName?: string;
-  };
 }
 
-export interface Profile {
+interface Profile {
   id: string;
   username: string;
   firstName?: string;
   lastName?: string;
-  age?: number;
-  birthYear?: number;
   bio?: string;
-  gender?: string;
   photo?: string;
   city?: string;
   country?: string;
-  height?: number;
-  weight?: number;
-  skinColor?: string | null;
-  company?: string;
   profession?: string;
   subProfession?: string;
-  role?: "player" | "expert" | "admin";
-  language?: string[];
-  interests?: string[];
   sports?: string[];
   sport?: string;
-  club?: string;
-  services?: any[];
-  documents?: DocumentItem[];
-  uploads?: UploadItem[];
-  socialLinks?: SocialLinks;
-  createdAt?: string;
-  updatedAt?: string;
-  rating?: number;
-  reviews?: number;
+  language?: string[];
+  gender?: string;
   reviewsReceived?: Review[];
   verified?: boolean;
   [key: string]: any;
 }
 
-// Star Rating Component
-const StarRating: React.FC<{
-  rating: number;
-  totalStars?: number;
-  showRating?: boolean;
-  size?: "sm" | "md" | "lg";
-}> = ({ rating, totalStars = 5, showRating = true, size = "sm" }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating - fullStars >= 0.5;
-  const emptyStars = totalStars - fullStars - (hasHalfStar ? 1 : 0);
+const StarRating: React.FC<{ rating: number }> = ({ rating }) => (
+  <div className="flex items-center gap-1">
+    <FontAwesomeIcon icon={faStar} className="text-yellow-400 text-sm" />
+    <span className="text-sm text-gray-600 dark:text-gray-300 ml-1">
+      {rating > 0 ? `${rating.toFixed(1)}/5` : "No reviews yet"}
+    </span>
+  </div>
+);
 
-  const sizeClasses = {
-    sm: "text-sm",
-    md: "text-base",
-    lg: "text-lg",
-  };
-
-  return (
-    <div className="flex items-center gap-1">
-      <div className="flex">
-        {/* Full Stars */}
-
-        <FontAwesomeIcon
-          icon={faStar}
-          className={`text-yellow-400 ${sizeClasses[size]}`}
-        />
-      </div>
-
-      {showRating && (
-        <span
-          className={`text-gray-600 dark:text-gray-300 ${sizeClasses[size]} ml-1`}
-        >
-          ({rating.toFixed(1)})
-        </span>
-      )}
-    </div>
-  );
-};
-
-// Pagination Component updated to always show controls
 const Pagination: React.FC<{
   totalPages: number;
   currentPage: number;
   onPageChange: (page: number) => void;
 }> = ({ totalPages, currentPage, onPageChange }) => {
-  const handlePrev = () => {
-    if (currentPage > 1) onPageChange(currentPage - 1);
-  };
-
-  const handleNext = () => {
-    if (currentPage < totalPages) onPageChange(currentPage + 1);
-  };
-
-  const getVisiblePages = () => {
+  const getVisiblePages = useCallback(() => {
     const delta = window.innerWidth < 768 ? 1 : 2;
-    const range = [];
-    const rangeWithDots = [];
+    const range: number[] = [];
+    const rangeWithDots: (number | string)[] = [];
 
     if (totalPages === 1) return [1];
 
@@ -200,15 +88,14 @@ const Pagination: React.FC<{
     }
 
     return [...new Set(rangeWithDots)];
-  };
+  }, [totalPages, currentPage]);
 
-  // Always show pagination even if only 1 page
   return (
     <div className="flex justify-center mt-6 space-x-1 sm:space-x-2">
       <Button
         variant="outline"
         size="sm"
-        onClick={handlePrev}
+        onClick={() => currentPage > 1 && onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
         className="px-2 sm:px-3"
       >
@@ -222,8 +109,8 @@ const Pagination: React.FC<{
               typeof page === "number" && currentPage === page
                 ? "bg-red-500 text-white"
                 : typeof page === "number"
-                ? "bg-gray-200 dark:bg-slate-600 dark:text-white hover:bg-gray-300 dark:hover:bg-slate-500"
-                : "bg-transparent cursor-default"
+                  ? "bg-gray-200 dark:bg-slate-600 dark:text-white hover:bg-gray-300"
+                  : "bg-transparent cursor-default"
             }`}
             onClick={() => typeof page === "number" && onPageChange(page)}
           >
@@ -234,7 +121,7 @@ const Pagination: React.FC<{
       <Button
         variant="outline"
         size="sm"
-        onClick={handleNext}
+        onClick={() => currentPage < totalPages && onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
         className="px-2 sm:px-3"
       >
@@ -245,8 +132,8 @@ const Pagination: React.FC<{
 };
 
 const PlayerProfiles: React.FC = () => {
-  // State
   const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [filters, setFilters] = useState({
     sport: "",
     profession: "",
@@ -257,71 +144,88 @@ const PlayerProfiles: React.FC = () => {
   });
   const [currentPage, setCurrentPage] = useState(1);
   const [limit, setLimit] = useState(8);
-  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
 
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
-  // Get profiles and pagination from Redux store
   const { profiles, status, error } = useAppSelector((state) => state.profile);
 
-  // Backend pagination info
-  const usersArray = profiles?.users || [];
-  const backendTotalPages = profiles?.totalPages || 1;
-  const backendPage = profiles?.page || 1;
+  const usersArray = (profiles?.users || []) as Profile[];
+  const totalPages = profiles?.totalPages || 1;
 
-  // Store all profiles when data is fetched
+  // Debounce search query
   useEffect(() => {
-    if (usersArray.length > 0) {
-      setAllProfiles(usersArray);
-    }
-  }, [usersArray]);
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
-  // Determine user type to fetch opposite profiles
-  const userRole = localStorage.getItem("role") as Role;
-  const profileType: Role =
-    userRole === "expert"
-      ? "player"
-      : userRole === "sponsor"
-      ? "player"
-      : "player";
-
-  // Helper function to calculate average rating from reviews
-  const calculateAverageRating = useCallback(
-    (reviews: Review[] = []): number => {
-      if (!reviews || reviews.length === 0) return 0;
-
-      const totalRating = reviews.reduce(
-        (sum, review) => sum + (review.rating || 0),
-        0
+  // Fetch profiles - use search API when there's a search query
+  useEffect(() => {
+    if (debouncedSearch.trim()) {
+      dispatch(
+        searchProfiles({
+          q: debouncedSearch.trim(),
+          page: currentPage,
+          limit,
+          role: "player",
+        })
       );
-      return totalRating / reviews.length;
-    },
-    []
-  );
+    } else {
+      dispatch(getProfiles({ page: currentPage, limit, userType: "player" }));
+    }
+  }, [dispatch, currentPage, limit, debouncedSearch]);
 
-  // Helper function to get total reviews count
-  const getTotalReviewsCount = useCallback((reviews: Review[] = []): number => {
-    return reviews?.length || 0;
+  // Reset page when search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [debouncedSearch]);
+
+  const calculateAverageRating = useCallback((reviews: Review[] = []): number => {
+    if (!reviews?.length) return 0;
+    return reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviews.length;
   }, []);
+
+  // Client-side filtering for dropdown filters
+  const filteredProfiles = useMemo(() => {
+    let filtered = [...usersArray];
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value) {
+        filtered = filtered.filter((profile) => {
+          if (key === "sport") {
+            if (Array.isArray(profile.sports)) {
+              return profile.sports.some((s) => s?.trim() === value);
+            }
+            return profile.sport?.trim() === value;
+          }
+          if (key === "language") {
+            const langs = Array.isArray(profile.language)
+              ? profile.language
+              : [profile.language];
+            return langs.some((l) => l?.trim() === value);
+          }
+          return profile[key]?.trim() === value;
+        });
+      }
+    });
+
+    return filtered;
+  }, [usersArray, filters]);
 
   const extractFilterOptions = useCallback(
     (key: keyof Profile, dataArray: Profile[]): string[] => {
       const options = new Set<string>();
-      dataArray.forEach((profile: Profile) => {
+      dataArray.forEach((profile) => {
         if (key === "language" && profile.language) {
           const langs = Array.isArray(profile.language)
             ? profile.language
             : [profile.language];
-          langs.forEach((lang) => {
-            if (lang) options.add(lang.trim());
-          });
+          langs.forEach((l) => l && options.add(l.trim()));
         } else if (key === "sports" || key === "sport") {
-          if (profile.sports && Array.isArray(profile.sports)) {
-            profile.sports.forEach((sport) => {
-              if (sport) options.add(sport.trim());
-            });
-          } else if (profile.sport && typeof profile.sport === "string") {
+          if (Array.isArray(profile.sports)) {
+            profile.sports.forEach((s) => s && options.add(s.trim()));
+          } else if (profile.sport) {
             options.add(profile.sport.trim());
           }
         } else {
@@ -334,180 +238,45 @@ const PlayerProfiles: React.FC = () => {
     []
   );
 
-  // Fetch profiles from backend with pagination params
-  const fetchProfiles = useCallback(() => {
-    const params: any = {
-      page: currentPage,
-      limit,
-      userType: profileType,
-    };
-    dispatch(getProfiles(params));
-  }, [currentPage, limit, profileType, dispatch]);
+  const filterConfig = useMemo(() => {
+    const defaultSports = ["Football", "Basketball", "Tennis", "Cricket", "Rugby", "Swimming"];
+    const sportOpts = [
+      ...extractFilterOptions("sports", usersArray),
+      ...extractFilterOptions("sport", usersArray),
+    ];
 
-  useEffect(() => {
-    fetchProfiles();
-  }, [fetchProfiles]);
-
-  // Client-side filtering and searching (only on current page for backend paging)
-  const filteredAndSearchedProfiles = useMemo(() => {
-    let filtered = [...allProfiles];
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter((profile) => {
-        const fullName = `${profile.firstName || ""} ${
-          profile.lastName || ""
-        }`.toLowerCase();
-        const username = profile.username?.toLowerCase() || "";
-        const bio = profile.bio?.toLowerCase() || "";
-        const profession = profile.profession?.toLowerCase() || "";
-        const subProfession = profile.subProfession?.toLowerCase() || "";
-
-        return (
-          fullName.includes(query) ||
-          username.includes(query) ||
-          bio.includes(query) ||
-          profession.includes(query) ||
-          subProfession.includes(query)
-        );
-      });
-    }
-
-    // Apply filters
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        filtered = filtered.filter((profile) => {
-          if (key === "sport") {
-            if (profile.sports && Array.isArray(profile.sports)) {
-              return profile.sports.some((sport) => sport?.trim() === value);
-            } else if (profile.sport) {
-              return profile.sport.trim() === value;
-            }
-            return false;
-          } else if (key === "language") {
-            if (profile.language) {
-              const langs = Array.isArray(profile.language)
-                ? profile.language
-                : [profile.language];
-              return langs.some((lang) => lang?.trim() === value);
-            }
-            return false;
-          } else {
-            return profile[key]?.trim() === value;
-          }
-        });
-      }
-    });
-
-    return filtered;
-  }, [allProfiles, searchQuery, filters]);
-
-  // For backend paging, show only the profiles returned for the current page
-  const displayedProfiles = filteredAndSearchedProfiles;
-
-  // Filter options from all current loaded profiles
-  const sportOptions = [
-    ...extractFilterOptions("sports", allProfiles),
-    ...extractFilterOptions("sport", allProfiles),
-  ];
-  const professionOptions = extractFilterOptions("profession", allProfiles);
-  const cityOptions = extractFilterOptions("city", allProfiles);
-  const countryOptions = extractFilterOptions("country", allProfiles);
-  const genderOptions = extractFilterOptions("gender", allProfiles);
-  const languageOptions = extractFilterOptions("language", allProfiles);
-
-  const defaultSports = [
-    "Football",
-    "Basketball",
-    "Tennis",
-    "Cricket",
-    "Rugby",
-    "Swimming",
-    "Athletics",
-    "Volleyball",
-  ];
-  const finalSportOptions =
-    sportOptions.length > 0 ? [...new Set(sportOptions)].sort() : defaultSports;
-
-  const filterConfig = [
-    {
-      name: "Sport",
-      options: finalSportOptions,
-    },
-    {
-      name: "Profession",
-      options:
-        professionOptions.length > 0
-          ? professionOptions
-          : ["Footballer", "Basketball Player", "Tennis Player"],
-    },
-    {
-      name: "City",
-      options:
-        cityOptions.length > 0
-          ? cityOptions
-          : ["London", "Manchester", "Liverpool"],
-    },
-    {
-      name: "Country",
-      options:
-        countryOptions.length > 0 ? countryOptions : ["UK", "Spain", "Germany"],
-    },
-    {
-      name: "Gender",
-      options:
-        genderOptions.length > 0 ? genderOptions : ["Male", "Female", "Other"],
-    },
-    {
-      name: "Language",
-      options:
-        languageOptions.length > 0
-          ? languageOptions
-          : ["English", "Spanish", "French"],
-    },
-  ];
+    return [
+      { name: "Sport", options: sportOpts.length ? [...new Set(sportOpts)].sort() : defaultSports },
+      { name: "Profession", options: extractFilterOptions("profession", usersArray).length ? extractFilterOptions("profession", usersArray) : ["Footballer", "Basketball Player"] },
+      { name: "City", options: extractFilterOptions("city", usersArray).length ? extractFilterOptions("city", usersArray) : ["London", "Manchester"] },
+      { name: "Country", options: extractFilterOptions("country", usersArray).length ? extractFilterOptions("country", usersArray) : ["UK", "Spain", "Germany"] },
+      { name: "Gender", options: extractFilterOptions("gender", usersArray).length ? extractFilterOptions("gender", usersArray) : ["Male", "Female", "Other"] },
+      { name: "Language", options: extractFilterOptions("language", usersArray).length ? extractFilterOptions("language", usersArray) : ["English", "Spanish", "French"] },
+    ];
+  }, [usersArray, extractFilterOptions]);
 
   const handleFilterChange = (value: string, filterType: string) => {
-    setFilters({
-      ...filters,
-      [filterType.toLowerCase()]: value,
-    });
+    setFilters((prev) => ({ ...prev, [filterType.toLowerCase()]: value }));
   };
 
   const clearAllFilters = () => {
-    setFilters({
-      sport: "",
-      profession: "",
-      city: "",
-      country: "",
-      gender: "",
-      language: "",
-    });
     setSearchQuery("");
+    setFilters({ sport: "", profession: "", city: "", country: "", gender: "", language: "" });
     setCurrentPage(1);
   };
 
-  const hasActiveFilters = () => {
-    return (
-      searchQuery !== "" || Object.values(filters).some((value) => value !== "")
-    );
-  };
+  const hasActiveFilters = searchQuery !== "" || Object.values(filters).some((v) => v !== "");
 
   const handleViewProfile = (profile: Profile) => {
     localStorage.setItem("viewplayerusername", profile.username);
-
-    if (localStorage.getItem("role") === "player") {
-      navigate(`/player/playerinfo`);
-    } else if (localStorage.getItem("role") === "expert") {
-      navigate(`/expert/playerinfo`);
-    } else if (localStorage.getItem("role") === "team") {
-      navigate(`/team/playerinfo`);
-    } else if (localStorage.getItem("role") === "sponsor") {
-      navigate(`/sponsor/playerinfo`);
-    } else {
-      navigate("/fan/playerinfo");
-    }
+    const role = localStorage.getItem("role");
+    const routes: Record<string, string> = {
+      player: "/player/playerinfo",
+      expert: "/expert/playerinfo",
+      team: "/team/playerinfo",
+      sponsor: "/sponsor/playerinfo",
+    };
+    navigate(routes[role || ""] || "/fan/playerinfo");
   };
 
   const handlePageChange = (page: number) => {
@@ -520,12 +289,6 @@ const PlayerProfiles: React.FC = () => {
     setCurrentPage(1);
   };
 
-  // Info for results display (for current page only, since backend does paging)
-  const totalFilteredProfiles =
-    profiles?.totalCount || displayedProfiles.length;
-  const startIndex = (backendPage - 1) * limit;
-  const endIndex = startIndex + displayedProfiles.length;
-
   return (
     <div className="flex bg">
       <main className="flex-1 dark:bg-gray-900 dark:text-white">
@@ -536,9 +299,7 @@ const PlayerProfiles: React.FC = () => {
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-gray-500 dark:text-gray-400" />
               <Input
                 type="text"
-                placeholder={`Search ${
-                  profileType === "player" ? "players" : "experts"
-                } by name, skills, or any keyword...`}
+                placeholder="Search players by name or username..."
                 className="pl-9 w-full bg-white dark:bg-slate-700 text-sm sm:text-base"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -546,30 +307,21 @@ const PlayerProfiles: React.FC = () => {
             </div>
           </div>
 
-          {/* Responsive Filters Section */}
+          {/* Filters Section */}
           <div className="w-full mb-4 sm:mb-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 pt-1">
               {filterConfig.map((filter) => (
                 <div key={filter.name} className="w-full">
                   <Select
-                    onValueChange={(value) =>
-                      handleFilterChange(value, filter.name)
-                    }
-                    value={
-                      filters[
-                        filter.name.toLowerCase() as keyof typeof filters
-                      ] || ""
-                    }
+                    onValueChange={(value) => handleFilterChange(value, filter.name)}
+                    value={filters[filter.name.toLowerCase() as keyof typeof filters] || ""}
                   >
                     <SelectTrigger className="w-full bg-white dark:bg-slate-600 border border-gray-200 rounded-xl min-h-[48px]">
                       <SelectValue placeholder={filter.name} />
                     </SelectTrigger>
                     <SelectContent>
                       {filter.options.map((option, index) => (
-                        <SelectItem
-                          key={`${filter.name}-${index}`}
-                          value={option}
-                        >
+                        <SelectItem key={`${filter.name}-${index}`} value={option}>
                           {option}
                         </SelectItem>
                       ))}
@@ -578,12 +330,12 @@ const PlayerProfiles: React.FC = () => {
                 </div>
               ))}
 
-              {hasActiveFilters() && (
+              {hasActiveFilters && (
                 <div className="w-full flex items-center">
                   <Button
                     variant="outline"
                     onClick={clearAllFilters}
-                    className="w-full flex items-center justify-center gap-1 bg-red-50 border-red-200 text-red-600 hover:bg-red-100 hover:text-red-700 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 dark:hover:bg-slate-600 rounded-xl min-h-[48px] text-sm sm:text-base"
+                    className="w-full flex items-center justify-center gap-1 bg-red-50 border-red-200 text-red-600 hover:bg-red-100 dark:bg-slate-700 dark:border-slate-600 dark:text-red-400 rounded-xl min-h-[48px]"
                   >
                     <X size={16} /> Clear Filters
                   </Button>
@@ -592,144 +344,80 @@ const PlayerProfiles: React.FC = () => {
             </div>
           </div>
 
+          {/* Loading State */}
           {status === "loading" && (
             <div className="flex justify-center items-center h-32 sm:h-64">
               <div className="animate-spin rounded-full h-8 w-8 sm:h-16 sm:w-16 border-t-2 border-b-2 border-red-600"></div>
             </div>
           )}
 
+          {/* Error State */}
           {status === "failed" && error && (
             <div className="text-center p-4 sm:p-6 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 rounded-lg">
-              <p className="text-base sm:text-lg font-semibold">
-                Failed to load profiles
-              </p>
+              <p className="text-base sm:text-lg font-semibold">Failed to load profiles</p>
               <p className="text-sm sm:text-base">{error}</p>
-              <Button
-                className="mt-4 bg-red-600 hover:bg-red-700"
-                onClick={fetchProfiles}
-              >
-                Try Again
-              </Button>
             </div>
           )}
 
-          {status === "succeeded" &&
-            displayedProfiles.length === 0 &&
-            allProfiles.length > 0 && (
-              <div className="text-center p-6 sm:p-10">
-                <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-                  No {profileType}s found matching your criteria.
-                </p>
-              </div>
-            )}
-
-          {status === "succeeded" && allProfiles.length === 0 && (
+          {/* No Results */}
+          {status === "succeeded" && filteredProfiles.length === 0 && (
             <div className="text-center p-6 sm:p-10">
               <p className="text-base sm:text-lg text-gray-500 dark:text-gray-400">
-                No {profileType}s available.
+                No players found matching your criteria.
               </p>
             </div>
           )}
 
-          {status === "succeeded" && displayedProfiles.length > 0 && (
+          {/* Players Grid */}
+          {status === "succeeded" && filteredProfiles.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
-              {displayedProfiles.map((profile: Profile, index: number) => {
-                const displayName = `${profile.firstName || ""} ${
-                  profile.lastName || ""
-                }`.trim();
-
-                // Calculate average rating from reviewsReceived
-                const avgRating = calculateAverageRating(
-                  profile.reviewsReceived
-                );
-                const totalReviews = getTotalReviewsCount(
-                  profile.reviewsReceived
-                );
-
-                const profileImage = profile.photo || avatar;
-                const isVerified = profile.verified || false;
-                const playerSports = profile.sports
-                  ? Array.isArray(profile.sports)
-                    ? profile.sports.join(", ")
-                    : profile.sports
+              {filteredProfiles.map((profile) => {
+                const displayName = `${profile.firstName || ""} ${profile.lastName || ""}`.trim();
+                const avgRating = calculateAverageRating(profile.reviewsReceived);
+                const playerSports = Array.isArray(profile.sports)
+                  ? profile.sports.join(", ")
                   : profile.sport || "";
 
                 return (
                   <Card
                     key={profile.id}
-                    className="overflow-hidden dark:bg-gray-800 hover:shadow-lg transition-shadow duration-200"
+                    className="overflow-hidden dark:bg-gray-800 hover:shadow-lg transition-shadow"
                   >
                     <div className="relative">
                       <img
                         className="w-full h-50 sm:h-56 p-2 rounded-lg object-contain"
-                        src={profileImage || avatar}
+                        src={profile.photo || avatar}
                         alt={displayName}
                         onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = avatar;
+                          (e.target as HTMLImageElement).src = avatar;
                         }}
                       />
-                      {isVerified && (
-                        <div className="absolute top-4 right-4 bg-green-500 rounded-full p-1 w-6 h-6 sm:w-8 sm:h-8 flex items-center justify-center">
-                          <CheckCircle className="h-3 w-3 sm:h-5 sm:w-5 text-white" />
+                      {profile.verified && (
+                        <div className="absolute top-4 right-4 bg-green-500 rounded-full p-1 w-6 h-6 flex items-center justify-center">
+                          <CheckCircle className="h-3 w-3 text-white" />
                         </div>
                       )}
                     </div>
                     <CardHeader className="px-3 sm:px-4 pb-0">
                       <h3 className="text-base sm:text-lg font-semibold line-clamp-1">
-                        {displayName}
+                        {displayName || profile.username}
                       </h3>
                       <p className="text-gray-500 text-xs sm:text-sm dark:text-gray-400 line-clamp-1">
-                        {profile.profession ||
-                          (profileType === "player" ? "Player" : "Expert")}
-                        {profile.city && profile.country
-                          ? ` • ${profile.city}, ${profile.country}`
-                          : ""}
+                        {profile.profession || "Player"}
+                        {profile.city && profile.country ? ` - ${profile.city}, ${profile.country}` : ""}
                       </p>
                       {playerSports && (
                         <p className="text-blue-600 text-xs sm:text-sm font-medium dark:text-blue-300 my-1 line-clamp-1">
                           {playerSports.toUpperCase()}
                         </p>
                       )}
-                      <p className="text-gray-600 text-xs sm:text-sm dark:text-gray-300 line-clamp-1">
-                        {profile.subProfession
-                          ? profile.subProfession.charAt(0).toUpperCase() +
-                            profile.subProfession.slice(1)
-                          : ""}
-                      </p>
                     </CardHeader>
                     <CardContent className="px-2 sm:px-3 -mt-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex flex-col">
-                          {totalReviews > 0 ? (
-                            <>
-                              <StarRating
-                                rating={avgRating}
-                                size="sm"
-                                showRating={false}
-                              />
-                              <span className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-                                {avgRating.toFixed(1)}/5
-                              </span>
-                            </>
-                          ) : (
-                            <>
-                              <StarRating
-                                rating={0}
-                                size="sm"
-                                showRating={false}
-                              />
-                              <span className="text-xs text-gray-600 dark:text-gray-300 mt-1">
-                                No reviews yet
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
+                      <StarRating rating={avgRating} />
                     </CardContent>
                     <CardFooter className="px-3 sm:px-4 pt-0">
                       <Button
-                        className="w-full bg-red-600 hover:bg-red-700 text-white cursor-pointer text-xs sm:text-sm py-2"
+                        className="w-full bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm py-2"
                         onClick={() => handleViewProfile(profile)}
                       >
                         View Profile
@@ -741,44 +429,32 @@ const PlayerProfiles: React.FC = () => {
             </div>
           )}
 
-          {/* Pagination Section - always show if there is at least one page */}
-          {status === "succeeded" && backendTotalPages >= 1 && (
+          {/* Pagination */}
+          {status === "succeeded" && totalPages >= 1 && (
             <div className="flex flex-col items-center mt-8 space-y-4 pb-6">
-              <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+              <div className="flex items-center gap-4">
                 <span className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                   Items per page:
                 </span>
                 <select
                   value={limit}
                   onChange={(e) => handleLimitChange(parseInt(e.target.value))}
-                  className="border rounded-lg px-3 py-2 text-xs sm:text-sm dark:bg-gray-700 dark:text-white dark:border-gray-600 min-w-[80px] focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="border rounded-lg px-3 py-2 text-sm dark:bg-gray-700 dark:text-white"
                 >
-                  <option value="4">4</option>
-                  <option value="8">8</option>
-                  <option value="12">12</option>
-                  <option value="16">16</option>
-                  <option value="20">20</option>
+                  {[4, 8, 12, 16, 20].map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
                 </select>
               </div>
 
               <Pagination
-                totalPages={backendTotalPages}
-                currentPage={backendPage}
+                totalPages={totalPages}
+                currentPage={currentPage}
                 onPageChange={handlePageChange}
               />
 
-              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
-                <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2">
-                  <span>
-                    Showing {Math.min(startIndex + 1, totalFilteredProfiles)} to{" "}
-                    {Math.min(endIndex, totalFilteredProfiles)} of{" "}
-                    {totalFilteredProfiles} {profileType}s
-                  </span>
-                  <span className="hidden sm:inline">•</span>
-                  <span>
-                    Page {backendPage} of {backendTotalPages}
-                  </span>
-                </div>
+              <div className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+                Page {currentPage} of {totalPages}
               </div>
             </div>
           )}

@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { userService } from "../apiConfig";
 
-type Role = "player" | "expert" | "admin" | "sponsor";
+type Role = "player" | "expert" | "admin" | "sponsor" | "team";
 
 interface SocialLinks {
   linkedin?: string;
@@ -228,6 +228,34 @@ export const getProfiles = createAsyncThunk(
     } catch (error: any) {
       return rejectWithValue(
         error.response?.data?.error || "Failed to get profiles",
+      );
+    }
+  },
+);
+
+export const searchProfiles = createAsyncThunk(
+  "profile/searchProfiles",
+  async (
+    {
+      q,
+      page,
+      limit,
+      role,
+    }: { q: string; page: number; limit: number; role?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const token = getAuthToken();
+      const response = await userService.get("/profiles/search", {
+        params: { q, page, limit, ...(role && { role }) },
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return { ...response.data, userType: role };
+    } catch (error: any) {
+      return rejectWithValue(
+        error.response?.data?.error || "Failed to search profiles",
       );
     }
   },
@@ -493,6 +521,20 @@ const profileSlice = createSlice({
         state.lastFetchedUserType = action.payload.userType;
       })
       .addCase(getProfiles.rejected, (state, action) => {
+        state.status = "failed";
+        state.error = action.payload as string;
+      })
+      .addCase(searchProfiles.pending, (state) => {
+        state.status = "loading";
+      })
+      .addCase(searchProfiles.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.profiles = action.payload;
+        if (action.payload.userType) {
+          state.lastFetchedUserType = action.payload.userType;
+        }
+      })
+      .addCase(searchProfiles.rejected, (state, action) => {
         state.status = "failed";
         state.error = action.payload as string;
       })
