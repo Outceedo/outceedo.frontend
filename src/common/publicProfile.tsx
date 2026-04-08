@@ -104,7 +104,7 @@ export default function PublicProfile() {
 
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_PORT}/api/v1/user/profile/${username}`
+          `${import.meta.env.VITE_PORT}/api/v1/user/profile/${username}`,
         );
         setExpert(response.data);
       } catch (err: any) {
@@ -301,7 +301,7 @@ export default function PublicProfile() {
                     transition={{ delay: index * 0.1 }}
                     className="bg-white rounded-[2rem] p-8 shadow-xl border border-gray-100 hover:shadow-2xl transition-shadow"
                   >
-                    <div className="h-14 w-14 rounded-xl bg-red-500 flex items-center justify-center text-white mb-6">
+                    <div className="h-14 w-14 rounded-xl bg-gray-800 flex items-center justify-center text-white mb-6">
                       {serviceInfo.icon}
                     </div>
                     <h3 className="text-xl font-black text-gray-900 mb-2">
@@ -322,17 +322,15 @@ export default function PublicProfile() {
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">
                           Price
                         </p>
-                        <p className="text-3xl font-black text-gray-900">
-                          ${service.price}
-                          <span className="text-sm font-medium text-gray-400">
-                            /session
-                          </span>
+                        <p className="text-3xl font-black text-gray-300 select-none">
+                          $***
                         </p>
                       </div>
                       <button
                         onClick={() => navigate("/login")}
-                        className="px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors"
+                        className="flex items-center gap-2 px-6 py-3 bg-red-500 hover:bg-red-600 text-white font-bold rounded-xl transition-colors"
                       >
+                        {/* <Lock size={18} /> */}
                         Book Now
                       </button>
                     </div>
@@ -390,7 +388,9 @@ export default function PublicProfile() {
                 <h3 className="text-gray-500 font-black text-[10px] uppercase tracking-widest mb-2">
                   Sport
                 </h3>
-                <p className="text-xl font-bold text-gray-900">{expert.sport}</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {expert.sport}
+                </p>
               </motion.div>
             )}
 
@@ -460,9 +460,9 @@ export default function PublicProfile() {
               Want to see more?
             </h2>
             <p className="text-gray-400 max-w-xl mx-auto mb-8">
-              Unlock full profile details including contact information, complete
-              skills & interests, documents, social links, and direct messaging
-              with {expert.firstName}.
+              Unlock full profile details including contact information,
+              complete skills & interests, documents, social links, and direct
+              messaging with {expert.firstName}.
             </p>
 
             {/* Preview of locked content */}
