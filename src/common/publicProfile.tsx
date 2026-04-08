@@ -247,9 +247,18 @@ export default function PublicProfile() {
               <h2 className="text-3xl font-black tracking-tighter text-gray-900 uppercase italic mb-6">
                 About
               </h2>
-              <p className="text-lg text-gray-600 leading-relaxed border-l-4 border-red-500 pl-6 whitespace-pre-line">
-                {expert.bio}
-              </p>
+              <div className="relative">
+                <p className="text-lg text-gray-600 leading-relaxed border-l-4 border-red-500 pl-6 whitespace-pre-line line-clamp-4">
+                  {expert.bio}
+                </p>
+                <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-white to-transparent"></div>
+              </div>
+              <button
+                onClick={() => navigate("/login")}
+                className="mt-4 ml-6 flex items-center gap-2 text-red-500 hover:text-red-600 font-bold text-sm uppercase tracking-widest transition-colors"
+              >
+                <Lock size={14} /> Read More
+              </button>
             </motion.div>
           </div>
         </section>
