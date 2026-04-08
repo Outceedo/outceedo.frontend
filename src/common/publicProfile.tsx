@@ -307,16 +307,14 @@ export default function PublicProfile() {
                     <h3 className="text-xl font-black text-gray-900 mb-2">
                       {serviceInfo.name}
                     </h3>
-                    {service.additionalDetails && (
-                      <div className="text-gray-500 text-sm mb-4">
-                        {service.additionalDetails.duration && (
-                          <p>Duration: {service.additionalDetails.duration}</p>
-                        )}
-                        {service.additionalDetails.description && (
-                          <p>{service.additionalDetails.description}</p>
-                        )}
-                      </div>
-                    )}
+                    <div className="text-gray-500 text-sm mb-4">
+                      {service.serviceId !== "1" && (
+                        <p>Duration: 30 mins - 2 hrs</p>
+                      )}
+                      {service.additionalDetails?.description && (
+                        <p>{service.additionalDetails.description}</p>
+                      )}
+                    </div>
                     <div className="flex items-end justify-between mt-6 pt-6 border-t border-gray-100">
                       <div>
                         <p className="text-gray-500 text-xs font-bold uppercase tracking-widest mb-1">

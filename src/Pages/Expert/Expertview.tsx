@@ -522,6 +522,13 @@ const Expertview = () => {
     "4": "ON GROUND TRAINING",
   };
 
+  const SERVICE_DEFAULT_DESCRIPTIONS: Record<string, string> = {
+    "1": "Submit a recorded video for remote assessment by coach.",
+    "2": "Live or recorded online training sessions and technical guidance.",
+    "3": "In-person performance evaluation conducted at training facilities.",
+    "4": "In-person physical training sessions delivered by certified coaches.",
+  };
+
   const getServiceNameById = (
     serviceId: string | number | undefined,
   ): string => {
@@ -559,6 +566,7 @@ const Expertview = () => {
   const services =
     expertData.services?.map((service: any) => {
       const serviceName = getServiceNameById(service.serviceId);
+      const serviceId = String(service.serviceId);
       let displayDescription;
       if (typeof service.additionalDetails === "object") {
         displayDescription = formatServiceDescription(
@@ -568,7 +576,11 @@ const Expertview = () => {
         displayDescription =
           service.description ||
           service.additionalDetails ||
-          "No description available";
+          null;
+      }
+      // Use default description if none available
+      if (!displayDescription || displayDescription === "No description available") {
+        displayDescription = SERVICE_DEFAULT_DESCRIPTIONS[serviceId] || "No description available";
       }
       return {
         id: service.id || service.serviceId,
