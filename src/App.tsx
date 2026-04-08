@@ -91,6 +91,7 @@ import TeamView from "./Pages/team/teamProfile";
 import ReferralPage from "./Pages/common/referral";
 import SubscriptionCancel from "./Pages/common/subscriptionCancel";
 import Advisors from "./Pages/Home/Advisors";
+import PublicProfile from "./common/publicProfile";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -409,6 +410,7 @@ const AppContent: React.FC = () => {
 
         <Route path="/subscription/success" element={<Success />} />
         <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
+        <Route path="/:username" element={<PublicProfile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </>

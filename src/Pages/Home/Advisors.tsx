@@ -67,6 +67,7 @@ const experts = [
     position: "Football Manager/Director",
     location: "Sweden, Denmark, Liberia & Hungary",
     img: johanImg,
+    username: "johankarlsonsandahl",
   },
   {
     name: "Marko",
@@ -75,6 +76,7 @@ const experts = [
     position: "Manager & Coach",
     location: "Malta",
     img: markoImg,
+    username: "marko_glumac",
   },
   {
     name: "Paul",
@@ -83,6 +85,7 @@ const experts = [
     position: "Coach & Scout",
     location: "Romania",
     img: paulImg,
+    username: "ceusanpaul",
   },
   {
     name: "Ajithkumar B.",
@@ -91,6 +94,7 @@ const experts = [
     position: "Coach",
     location: "India",
     img: ajitImg,
+    username: "ajithkumar_balasubramaniam",
   },
 ];
 
@@ -292,7 +296,8 @@ export default function NetworkAndStaff() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1 }}
-                className="flex-1 min-w-[280px] max-h-[350px] relative group overflow-hidden rounded-[2rem] bg-black aspect-square shadow-xl"
+                onClick={() => expert.username && nav(`/${expert.username}`)}
+                className="flex-1 min-w-[280px] max-h-[350px] relative group overflow-hidden rounded-[2rem] bg-black aspect-square shadow-xl cursor-pointer"
               >
                 <img
                   src={expert.img}
@@ -343,6 +348,14 @@ export default function NetworkAndStaff() {
                       </p>
                     </div>
                   </div>
+
+                  {expert.username && (
+                    <div className="mt-6 pt-4 border-t border-gray-700">
+                      <span className="text-red-500 font-black text-xs uppercase tracking-widest flex items-center gap-2">
+                        View Profile <ChevronRight size={16} />
+                      </span>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             ))}
