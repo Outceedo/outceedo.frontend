@@ -701,11 +701,15 @@ const Expertview = () => {
       case "3":
       case "4":
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
-        navigate("/player/book");
+        localStorage.role === "player"
+          ? navigate("/player/book")
+          : navigate("/team/book");
         break;
       default:
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
-        navigate("/player/book");
+        localStorage.role === "player"
+          ? navigate("/player/book")
+          : navigate("/team/book");
     }
   };
 
@@ -808,7 +812,11 @@ const Expertview = () => {
         timer: 3000,
         showConfirmButton: false,
       });
-      navigate("/player/mybooking");
+      {
+        localStorage.role === "player"
+          ? navigate("/player/mybooking")
+          : navigate("/team/bookings");
+      }
     } catch (error: any) {
       const errorMessage =
         error.response?.data?.message ||
