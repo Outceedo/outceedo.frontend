@@ -26,12 +26,18 @@ const adminSidebarMenuItems: MenuItem[] = [
   //   icon: "fas fa-user",
   //   path: "/team/players",
   // },
-  // {
-  //   id: 3,
-  //   name: "Experts",
-  //   icon: "fas fa-user-tie",
-  //   path: "/team/experts",
-  // },
+  {
+    id: 2,
+    name: "Experts",
+    icon: "fas fa-user-tie",
+    path: "/team/experts",
+  },
+  {
+    id: 3,
+    name: "bookings",
+    icon: "fas fa-user-tie",
+    path: "/team/bookings",
+  },
   {
     id: 3,
     name: "Matches",

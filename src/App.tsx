@@ -351,6 +351,7 @@ const AppContent: React.FC = () => {
           <Route path="book" element={<BookingCalendar />} />
           <Route path="matches" element={<Matches />} />
           <Route path="referral" element={<ReferralPage />} />
+          <Route path="bookings" element={<MyBooking />} />
         </Route>
 
         {/* Fan routes */}
