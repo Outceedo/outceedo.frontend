@@ -92,6 +92,7 @@ import ReferralPage from "./Pages/common/referral";
 import SubscriptionCancel from "./Pages/common/subscriptionCancel";
 import Advisors from "./Pages/Home/Advisors";
 import PublicProfile from "./common/publicProfile";
+import TeamBooking from "./teampages/bookings/mybooking";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -351,7 +352,7 @@ const AppContent: React.FC = () => {
           <Route path="book" element={<BookingCalendar />} />
           <Route path="matches" element={<Matches />} />
           <Route path="referral" element={<ReferralPage />} />
-          <Route path="bookings" element={<MyBooking />} />
+          <Route path="bookings" element={<TeamBooking />} />
         </Route>
 
         {/* Fan routes */}

@@ -1,0 +1,2187 @@
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from "react";
+import AgoraRTC, {
+  IAgoraRTCClient,
+  ICameraVideoTrack,
+  IMicrophoneAudioTrack,
+  IRemoteVideoTrack,
+  IRemoteAudioTrack,
+  UID,
+  NetworkQuality,
+  ConnectionState,
+  ConnectionDisconnectedReason,
+} from "agora-rtc-sdk-ng";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faMicrophone,
+  faMicrophoneSlash,
+  faVideo,
+  faVideoSlash,
+  faPhone,
+  faExpand,
+  faCompress,
+  faVolumeUp,
+  faVolumeDown,
+  faDesktop,
+  faUsers,
+  faComments,
+  faPaperPlane,
+  faTimes,
+  faExclamationTriangle,
+  faRefresh,
+  faWifi,
+  faCheckCircle,
+  faGraduationCap,
+  faChalkboardTeacher,
+  faClock,
+  faSignal,
+  faSpinner,
+  faStar,
+} from "@fortawesome/free-solid-svg-icons";
+
+interface Booking {
+  id: string;
+  team: {
+    username: string;
+    photo: string;
+  };
+  expert: {
+    username: string;
+    photo: string;
+  };
+  service: {
+    service: {
+      name: string;
+    };
+  };
+  startTime: string;
+  endTime: string;
+  date: string;
+  startAt: string;
+  endAt: string;
+}
+
+interface Agora {
+  channel: string;
+  token: string;
+  uid: number;
+}
+
+interface AgoraVideoModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  booking: Booking;
+  agora?: Agora;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: string;
+  message: string;
+  timestamp: Date;
+  isOwn: boolean;
+  type?: "system" | "user";
+}
+
+interface RemoteUser {
+  uid: UID;
+  videoTrack?: IRemoteVideoTrack;
+  audioTrack?: IRemoteAudioTrack;
+  hasVideo: boolean;
+  hasAudio: boolean;
+  username?: string;
+  photo?: string;
+  isScreenShare?: boolean;
+}
+
+interface NetworkStats {
+  quality: NetworkQuality;
+  rtt: number;
+  uplinkLoss: number;
+  downlinkLoss: number;
+  timestamp: number;
+}
+
+interface VideoQuality {
+  width: number;
+  height: number;
+  frameRate: number;
+  bitrateMin: number;
+  bitrateMax: number;
+}
+
+const VIDEO_PROFILES: Record<string, VideoQuality> = {
+  "720p": {
+    width: 1280,
+    height: 720,
+    frameRate: 30,
+    bitrateMin: 1500,
+    bitrateMax: 3000,
+  },
+  "480p": {
+    width: 854,
+    height: 480,
+    frameRate: 30,
+    bitrateMin: 800,
+    bitrateMax: 1500,
+  },
+  "360p": {
+    width: 640,
+    height: 360,
+    frameRate: 24,
+    bitrateMin: 400,
+    bitrateMax: 800,
+  },
+};
+
+// Configure Agora SDK for better quality
+AgoraRTC.setLogLevel(3); // Warnings only
+AgoraRTC.enableLogUpload(); // Enable for debugging
+
+const useAgoraConnection = (agora?: Agora) => {
+  const [client, setClient] = useState<IAgoraRTCClient | null>(null);
+  const [isJoined, setIsJoined] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [networkStats, setNetworkStats] = useState<NetworkStats | null>(null);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+
+  const isInitializingRef = useRef(false);
+  const myUIDRef = useRef<number | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const statsIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const clientRef = useRef<IAgoraRTCClient | null>(null);
+  const hasJoinedRef = useRef(false);
+
+  const createAgoraClient = useCallback(() => {
+    try {
+      const client = AgoraRTC.createClient({
+        mode: "rtc",
+        codec: "h264", // H264 is more widely supported and efficient
+      });
+      return client;
+    } catch (error) {
+      console.error("Failed to create Agora client:", error);
+      throw error;
+    }
+  }, []);
+
+  const startStatsMonitoring = useCallback((client: IAgoraRTCClient) => {
+    if (statsIntervalRef.current) return;
+
+    statsIntervalRef.current = setInterval(async () => {
+      try {
+        const stats = await client.getRTCStats();
+        setNetworkStats({
+          quality: 1,
+          rtt: stats.RTT || 0,
+          uplinkLoss: stats.OutgoingAvailableBandwidth || 0,
+          downlinkLoss: stats.RecvBitrate || 0,
+          timestamp: Date.now(),
+        });
+      } catch (error) {
+        console.warn("Failed to get RTC stats:", error);
+      }
+    }, 5000);
+  }, []);
+
+  const stopStatsMonitoring = useCallback(() => {
+    if (statsIntervalRef.current) {
+      clearInterval(statsIntervalRef.current);
+      statsIntervalRef.current = null;
+    }
+  }, []);
+
+  const handleAutoReconnect = useCallback(async () => {
+    if (!agora || reconnectAttempts >= 3) {
+      setConnectionError(
+        "Maximum reconnection attempts reached. Please refresh the page."
+      );
+      return;
+    }
+
+    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 10000);
+    setConnectionError(
+      `Connection lost. Reconnecting in ${Math.ceil(delay / 1000)}s...`
+    );
+
+    reconnectTimeoutRef.current = setTimeout(async () => {
+      setReconnectAttempts((prev) => prev + 1);
+      setIsConnecting(true);
+
+      try {
+        if (client) {
+          await client.leave();
+        }
+
+        const newClient = createAgoraClient();
+        await newClient.join(
+          import.meta.env.VITE_AGORA_APP_ID,
+          agora.channel,
+          agora.token,
+          agora.uid
+        );
+
+        setClient(newClient);
+        setIsJoined(true);
+        setConnectionError(null);
+        setReconnectAttempts(0);
+        startStatsMonitoring(newClient);
+      } catch (error: any) {
+        console.error("Reconnection failed:", error);
+        handleAutoReconnect();
+      } finally {
+        setIsConnecting(false);
+      }
+    }, delay);
+  }, [
+    agora,
+    reconnectAttempts,
+    client,
+    createAgoraClient,
+    startStatsMonitoring,
+  ]);
+
+  const cleanup = useCallback(async () => {
+    console.log("Team: Agora connection cleanup starting...");
+    isInitializingRef.current = false;
+    hasJoinedRef.current = false;
+    setIsConnecting(false);
+    setIsJoined(false);
+    setConnectionError(null);
+    setReconnectAttempts(0);
+
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    stopStatsMonitoring();
+
+    // Use clientRef for cleanup to avoid stale closure issues
+    const clientToClean = clientRef.current || client;
+    if (clientToClean) {
+      try {
+        // Remove all event listeners first
+        clientToClean.removeAllListeners();
+        await clientToClean.leave();
+        console.log("Team: Agora client left successfully");
+      } catch (error) {
+        console.warn("Team: Error leaving client:", error);
+      }
+      clientRef.current = null;
+      setClient(null);
+    }
+
+    myUIDRef.current = null;
+    console.log("Team: Agora connection cleanup completed");
+  }, [client, stopStatsMonitoring]);
+
+  return {
+    client,
+    setClient,
+    isJoined,
+    setIsJoined,
+    isConnecting,
+    setIsConnecting,
+    connectionError,
+    setConnectionError,
+    networkStats,
+    myUIDRef,
+    isInitializingRef,
+    createAgoraClient,
+    startStatsMonitoring,
+    handleAutoReconnect,
+    cleanup,
+  };
+};
+
+const useLocalTracks = () => {
+  const [localVideoTrack, setLocalVideoTrack] =
+    useState<ICameraVideoTrack | null>(null);
+  const [localAudioTrack, setLocalAudioTrack] =
+    useState<IMicrophoneAudioTrack | null>(null);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [isVideoMuted, setIsVideoMuted] = useState(false);
+  const [currentVideoQuality, setCurrentVideoQuality] =
+    useState<string>("720p");
+  const [hasPermissions, setHasPermissions] = useState(false);
+  const localVideoContainerRef = useRef<HTMLDivElement | null>(null);
+  const isPlayingRef = useRef(false);
+
+  const requestPermissions = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: true,
+      });
+      stream.getTracks().forEach((track) => track.stop());
+      setHasPermissions(true);
+      return true;
+    } catch (error) {
+      console.error("Permission denied:", error);
+      setHasPermissions(false);
+      return false;
+    }
+  }, []);
+
+  const createLocalTracks = useCallback(async () => {
+    const tracks: (ICameraVideoTrack | IMicrophoneAudioTrack)[] = [];
+
+    try {
+      // Create audio track with echo cancellation, noise suppression, and auto gain control
+      const audioTrack = await AgoraRTC.createMicrophoneAudioTrack({
+        AEC: true, // Acoustic Echo Cancellation
+        ANS: true, // Automatic Noise Suppression
+        AGC: true, // Automatic Gain Control
+        encoderConfig: "high_quality_stereo",
+      });
+      tracks.push(audioTrack);
+      setLocalAudioTrack(audioTrack);
+      console.log("Audio track created with AEC, ANS, AGC enabled");
+    } catch (error) {
+      console.error("Failed to create audio track:", error);
+    }
+
+    try {
+      const profile = VIDEO_PROFILES[currentVideoQuality];
+      const videoTrack = await AgoraRTC.createCameraVideoTrack({
+        encoderConfig: {
+          width: { ideal: profile.width, max: profile.width },
+          height: { ideal: profile.height, max: profile.height },
+          frameRate: { ideal: profile.frameRate, max: profile.frameRate },
+          bitrateMin: profile.bitrateMin,
+          bitrateMax: profile.bitrateMax,
+        },
+        optimizationMode: "detail", // Prioritize clarity over smoothness
+      });
+      tracks.push(videoTrack);
+      setLocalVideoTrack(videoTrack);
+      console.log("Video track created:", profile);
+    } catch (error) {
+      console.error("Failed to create video track:", error);
+    }
+
+    return tracks;
+  }, [currentVideoQuality]);
+
+  const playLocalVideo = useCallback(
+    (container: HTMLDivElement | null) => {
+      if (!container || !localVideoTrack || isVideoMuted) return;
+
+      // Avoid re-playing if already playing in the same container
+      if (localVideoContainerRef.current === container && isPlayingRef.current) {
+        return;
+      }
+
+      try {
+        // Stop playing in previous container if different
+        if (localVideoContainerRef.current && localVideoContainerRef.current !== container) {
+          localVideoTrack.stop();
+          isPlayingRef.current = false;
+        }
+
+        localVideoContainerRef.current = container;
+        localVideoTrack.play(container, { fit: "cover", mirror: true });
+        isPlayingRef.current = true;
+        console.log("Local video playing in container");
+      } catch (error) {
+        console.error("Failed to play local video:", error);
+        isPlayingRef.current = false;
+      }
+    },
+    [localVideoTrack, isVideoMuted]
+  );
+
+  const stopLocalVideo = useCallback(() => {
+    if (localVideoTrack && isPlayingRef.current) {
+      try {
+        localVideoTrack.stop();
+        isPlayingRef.current = false;
+        localVideoContainerRef.current = null;
+      } catch (error) {
+        console.warn("Error stopping local video:", error);
+      }
+    }
+  }, [localVideoTrack]);
+
+  const toggleAudio = useCallback(async () => {
+    if (!localAudioTrack) return isAudioMuted;
+
+    try {
+      await localAudioTrack.setEnabled(isAudioMuted);
+      setIsAudioMuted(!isAudioMuted);
+      return !isAudioMuted;
+    } catch (error) {
+      console.error("Failed to toggle audio:", error);
+      return isAudioMuted;
+    }
+  }, [localAudioTrack, isAudioMuted]);
+
+  const toggleVideo = useCallback(async () => {
+    if (!localVideoTrack) return isVideoMuted;
+
+    try {
+      await localVideoTrack.setEnabled(isVideoMuted);
+      setIsVideoMuted(!isVideoMuted);
+      return !isVideoMuted;
+    } catch (error) {
+      console.error("Failed to toggle video:", error);
+      return isVideoMuted;
+    }
+  }, [localVideoTrack, isVideoMuted]);
+
+  const changeVideoQuality = useCallback(
+    async (quality: string) => {
+      if (!localVideoTrack || !VIDEO_PROFILES[quality]) return;
+
+      try {
+        const profile = VIDEO_PROFILES[quality];
+        await localVideoTrack.setEncoderConfiguration({
+          width: profile.width,
+          height: profile.height,
+          frameRate: profile.frameRate,
+          bitrateMin: profile.bitrateMin,
+          bitrateMax: profile.bitrateMax,
+        });
+        setCurrentVideoQuality(quality);
+      } catch (error) {
+        console.error("Failed to change video quality:", error);
+      }
+    },
+    [localVideoTrack]
+  );
+
+  const cleanup = useCallback(async () => {
+    isPlayingRef.current = false;
+    localVideoContainerRef.current = null;
+
+    if (localAudioTrack) {
+      try {
+        await localAudioTrack.setEnabled(false);
+        localAudioTrack.stop();
+        localAudioTrack.close();
+      } catch (error) {
+        console.warn("Error cleaning up audio track:", error);
+      }
+      setLocalAudioTrack(null);
+    }
+
+    if (localVideoTrack) {
+      try {
+        await localVideoTrack.setEnabled(false);
+        localVideoTrack.stop();
+        localVideoTrack.close();
+      } catch (error) {
+        console.warn("Error cleaning up video track:", error);
+      }
+      setLocalVideoTrack(null);
+    }
+
+    setIsAudioMuted(false);
+    setIsVideoMuted(false);
+  }, [localAudioTrack, localVideoTrack]);
+
+  return {
+    localVideoTrack,
+    localAudioTrack,
+    isAudioMuted,
+    isVideoMuted,
+    currentVideoQuality,
+    hasPermissions,
+    requestPermissions,
+    createLocalTracks,
+    toggleAudio,
+    toggleVideo,
+    changeVideoQuality,
+    playLocalVideo,
+    stopLocalVideo,
+    cleanup,
+  };
+};
+
+const useRemoteUsers = () => {
+  const [remoteUsers, setRemoteUsers] = useState<RemoteUser[]>([]);
+  const [volume, setVolume] = useState(100); // Default to full volume
+  const [remoteScreenShareUid, setRemoteScreenShareUid] = useState<UID | null>(null);
+  const remoteVideoRefs = useRef<{ [uid: string]: HTMLDivElement | null }>({});
+  const playingVideosRef = useRef<{ [uid: string]: boolean }>({});
+  const screenShareVideoRef = useRef<HTMLDivElement | null>(null);
+
+  // Detect if a video track is likely a screen share based on dimensions
+  const isScreenShareTrack = useCallback((videoTrack: IRemoteVideoTrack): boolean => {
+    try {
+      const settings = videoTrack.getMediaStreamTrack().getSettings();
+      const width = settings.width || 0;
+      const height = settings.height || 0;
+
+      const aspectRatio = width / height;
+      const isHighRes = width >= 1280;
+      const isWideAspect = aspectRatio >= 1.5;
+
+      const trackLabel = videoTrack.getMediaStreamTrack().label?.toLowerCase() || '';
+      const hasScreenLabel = trackLabel.includes('screen') || trackLabel.includes('window') || trackLabel.includes('monitor');
+
+      return (isHighRes && isWideAspect) || hasScreenLabel;
+    } catch {
+      return false;
+    }
+  }, []);
+
+  const addRemoteUser = useCallback(
+    (
+      uid: UID,
+      mediaType: "video" | "audio",
+      track: IRemoteVideoTrack | IRemoteAudioTrack
+    ) => {
+      console.log(`Team: Adding remote user ${uid} with ${mediaType}`);
+
+      let isScreenShare = false;
+      if (mediaType === "video") {
+        isScreenShare = isScreenShareTrack(track as IRemoteVideoTrack);
+        if (isScreenShare) {
+          console.log(`Team: Detected screen share from user ${uid}`);
+          setRemoteScreenShareUid(uid);
+        }
+      }
+
+      setRemoteUsers((prev) => {
+        const existingIndex = prev.findIndex((user) => user.uid === uid);
+
+        if (existingIndex !== -1) {
+          const updated = [...prev];
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            [mediaType === "video" ? "videoTrack" : "audioTrack"]: track,
+            [mediaType === "video" ? "hasVideo" : "hasAudio"]: true,
+            ...(mediaType === "video" ? { isScreenShare } : {}),
+          };
+          return updated;
+        } else {
+          return [
+            ...prev,
+            {
+              uid,
+              videoTrack:
+                mediaType === "video"
+                  ? (track as IRemoteVideoTrack)
+                  : undefined,
+              audioTrack:
+                mediaType === "audio"
+                  ? (track as IRemoteAudioTrack)
+                  : undefined,
+              hasVideo: mediaType === "video",
+              hasAudio: mediaType === "audio",
+              isScreenShare: mediaType === "video" ? isScreenShare : false,
+            },
+          ];
+        }
+      });
+
+      // Play audio immediately with current volume
+      if (mediaType === "audio") {
+        const audioTrack = track as IRemoteAudioTrack;
+        try {
+          audioTrack.play();
+          audioTrack.setVolume(volume);
+          console.log(`Team: Remote audio playing for user ${uid} at volume ${volume}`);
+        } catch (error) {
+          console.error("Team: Failed to play remote audio:", error);
+        }
+      }
+    },
+    [volume, isScreenShareTrack]
+  );
+
+  const removeRemoteUser = useCallback(
+    (uid: UID, mediaType?: "video" | "audio") => {
+      console.log(`Team: Removing remote user ${uid} ${mediaType || 'completely'}`);
+
+      if (mediaType === "video" || !mediaType) {
+        playingVideosRef.current[uid.toString()] = false;
+        setRemoteScreenShareUid((prev) => (prev === uid ? null : prev));
+      }
+
+      setRemoteUsers((prev) => {
+        if (mediaType) {
+          return prev.map((user) =>
+            user.uid === uid
+              ? {
+                  ...user,
+                  [mediaType === "video" ? "videoTrack" : "audioTrack"]:
+                    undefined,
+                  [mediaType === "video" ? "hasVideo" : "hasAudio"]: false,
+                  ...(mediaType === "video" ? { isScreenShare: false } : {}),
+                }
+              : user
+          );
+        } else {
+          return prev.filter((user) => user.uid !== uid);
+        }
+      });
+    },
+    []
+  );
+
+  const playRemoteVideo = useCallback(
+    (uid: UID, videoTrack: IRemoteVideoTrack) => {
+      const uidStr = uid.toString();
+      const container = remoteVideoRefs.current[uidStr];
+
+      if (!container || !videoTrack) {
+        console.log(`Cannot play remote video - container: ${!!container}, track: ${!!videoTrack}`);
+        return;
+      }
+
+      // Check if already playing in this container
+      if (playingVideosRef.current[uidStr]) {
+        console.log(`Remote video already playing for ${uid}`);
+        return;
+      }
+
+      try {
+        videoTrack.play(container, { fit: "cover" });
+        playingVideosRef.current[uidStr] = true;
+        console.log(`Remote video playing for user ${uid}`);
+      } catch (error) {
+        console.error("Failed to play remote video:", error);
+        playingVideosRef.current[uidStr] = false;
+      }
+    },
+    []
+  );
+
+  const setRemoteVideoRef = useCallback(
+    (uid: UID, videoTrack: IRemoteVideoTrack | undefined, isScreenShare?: boolean) => {
+      return (ref: HTMLDivElement | null) => {
+        const uidStr = uid.toString();
+
+        if (isScreenShare) {
+          screenShareVideoRef.current = ref;
+        } else {
+          remoteVideoRefs.current[uidStr] = ref;
+        }
+
+        if (ref && videoTrack && !playingVideosRef.current[uidStr]) {
+          requestAnimationFrame(() => {
+            try {
+              videoTrack.play(ref, { fit: isScreenShare ? "contain" : "cover" });
+              playingVideosRef.current[uidStr] = true;
+              console.log(`Team: Remote ${isScreenShare ? 'screen share' : 'video'} playing for user ${uid}`);
+            } catch (error) {
+              console.error("Team: Failed to play remote video:", error);
+              playingVideosRef.current[uidStr] = false;
+            }
+          });
+        }
+      };
+    },
+    []
+  );
+
+  const updateVolume = useCallback(
+    (newVolume: number) => {
+      setVolume(newVolume);
+      remoteUsers.forEach((user) => {
+        if (user.audioTrack) {
+          try {
+            user.audioTrack.setVolume(newVolume);
+          } catch (error) {
+            console.warn("Error setting volume:", error);
+          }
+        }
+      });
+    },
+    [remoteUsers]
+  );
+
+  const cleanup = useCallback(() => {
+    console.log("Cleaning up remote users...");
+    remoteUsers.forEach((user) => {
+      if (user.audioTrack) {
+        try {
+          user.audioTrack.stop();
+        } catch (error) {
+          console.warn("Error stopping remote audio:", error);
+        }
+      }
+      if (user.videoTrack) {
+        try {
+          user.videoTrack.stop();
+        } catch (error) {
+          console.warn("Error stopping remote video:", error);
+        }
+      }
+    });
+
+    setRemoteUsers([]);
+    remoteVideoRefs.current = {};
+    playingVideosRef.current = {};
+  }, [remoteUsers]);
+
+  return {
+    remoteUsers,
+    volume,
+    remoteVideoRefs,
+    remoteScreenShareUid,
+    addRemoteUser,
+    removeRemoteUser,
+    playRemoteVideo,
+    setRemoteVideoRef,
+    updateVolume,
+    cleanup,
+  };
+};
+
+const useScreenShare = () => {
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  const [screenTrack, setScreenTrack] = useState<any>(null);
+  const currentScreenTrackRef = useRef<any>(null);
+  const screenVideoContainerRef = useRef<HTMLDivElement | null>(null);
+
+  const startScreenShare = useCallback(
+    async (
+      client: IAgoraRTCClient | null,
+      localVideoTrack: ICameraVideoTrack | null
+    ) => {
+      if (!client || isScreenSharing) return false;
+
+      try {
+        const newScreenTrack = await AgoraRTC.createScreenVideoTrack({
+          encoderConfig: "1080p_1",
+          optimizationMode: "detail",
+        });
+
+        currentScreenTrackRef.current = newScreenTrack;
+        setScreenTrack(newScreenTrack);
+
+        if (localVideoTrack) {
+          await client.unpublish([localVideoTrack]);
+        }
+
+        await client.publish([newScreenTrack]);
+        setIsScreenSharing(true);
+
+        newScreenTrack.on("track-ended", async () => {
+          try {
+            await client.unpublish([newScreenTrack]);
+            newScreenTrack.stop();
+            newScreenTrack.close();
+            currentScreenTrackRef.current = null;
+            setScreenTrack(null);
+            setIsScreenSharing(false);
+
+            if (localVideoTrack) {
+              await client.publish([localVideoTrack]);
+            }
+          } catch (error) {
+            console.error("Error ending screen share:", error);
+          }
+        });
+
+        return true;
+      } catch (error) {
+        console.error("Screen share error:", error);
+        return false;
+      }
+    },
+    [isScreenSharing]
+  );
+
+  const stopScreenShare = useCallback(
+    async (
+      client: IAgoraRTCClient | null,
+      localVideoTrack: ICameraVideoTrack | null
+    ) => {
+      if (!client || !isScreenSharing || !currentScreenTrackRef.current) return;
+
+      try {
+        await client.unpublish([currentScreenTrackRef.current]);
+        currentScreenTrackRef.current.stop();
+        currentScreenTrackRef.current.close();
+        currentScreenTrackRef.current = null;
+        setScreenTrack(null);
+        setIsScreenSharing(false);
+
+        if (localVideoTrack) {
+          await client.publish([localVideoTrack]);
+        }
+      } catch (error) {
+        console.error("Error stopping screen share:", error);
+      }
+    },
+    [isScreenSharing]
+  );
+
+  const toggleScreenShare = useCallback(
+    async (
+      client: IAgoraRTCClient | null,
+      localVideoTrack: ICameraVideoTrack | null
+    ) => {
+      if (isScreenSharing) {
+        await stopScreenShare(client, localVideoTrack);
+      } else {
+        await startScreenShare(client, localVideoTrack);
+      }
+    },
+    [isScreenSharing, startScreenShare, stopScreenShare]
+  );
+
+  const playScreenShare = useCallback(
+    (container: HTMLDivElement | null) => {
+      if (!container || !screenTrack) return;
+
+      if (screenVideoContainerRef.current === container) return;
+
+      try {
+        if (screenVideoContainerRef.current) {
+          screenTrack.stop();
+        }
+        screenVideoContainerRef.current = container;
+        screenTrack.play(container, { fit: "contain" });
+      } catch (error) {
+        console.error("Failed to play screen share:", error);
+      }
+    },
+    [screenTrack]
+  );
+
+  const cleanup = useCallback(async () => {
+    console.log("Team: Screen share cleanup starting...");
+    if (currentScreenTrackRef.current) {
+      try {
+        currentScreenTrackRef.current.stop();
+        currentScreenTrackRef.current.close();
+        console.log("Team: Screen track stopped and closed");
+      } catch (error) {
+        console.error("Error stopping screen track:", error);
+      }
+      currentScreenTrackRef.current = null;
+    }
+    setScreenTrack(null);
+    setIsScreenSharing(false);
+    screenVideoContainerRef.current = null;
+    console.log("Team: Screen share cleanup completed");
+  }, []);
+
+  return {
+    isScreenSharing,
+    screenTrack,
+    startScreenShare,
+    stopScreenShare,
+    toggleScreenShare,
+    playScreenShare,
+    cleanup,
+  };
+};
+
+const useChat = () => {
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+  const [isMessageSending, setIsMessageSending] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement>(null);
+
+  const addChatMessage = useCallback(
+    (
+      sender: string,
+      message: string,
+      isOwn: boolean,
+      type: "system" | "user" = "user"
+    ) => {
+      const newMsg: ChatMessage = {
+        id: Date.now().toString() + Math.random(),
+        sender,
+        message,
+        timestamp: new Date(),
+        isOwn,
+        type,
+      };
+      setChatMessages((prev) => [...prev, newMsg]);
+    },
+    []
+  );
+
+  const sendMessage = useCallback(
+    async (client: IAgoraRTCClient | null, senderName: string) => {
+      if (!newMessage.trim() || !client || isMessageSending) return false;
+
+      const messageToSend = newMessage.trim();
+      setIsMessageSending(true);
+
+      try {
+        const messageData = {
+          type: "chat",
+          sender: senderName,
+          message: messageToSend,
+          timestamp: Date.now(),
+        };
+
+        const encoder = new TextEncoder();
+        const messageBuffer = encoder.encode(JSON.stringify(messageData));
+
+        await client.sendStreamMessage(messageBuffer);
+        addChatMessage("You", messageToSend, true);
+        setNewMessage("");
+        return true;
+      } catch (error) {
+        console.error("Failed to send message:", error);
+        addChatMessage("You", messageToSend, true);
+        setNewMessage("");
+        return true;
+      } finally {
+        setIsMessageSending(false);
+      }
+    },
+    [newMessage, isMessageSending, addChatMessage]
+  );
+
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages]);
+
+  return {
+    chatMessages,
+    newMessage,
+    setNewMessage,
+    isMessageSending,
+    chatEndRef,
+    addChatMessage,
+    sendMessage,
+  };
+};
+
+const TeamAgoraVideoModal: React.FC<AgoraVideoModalProps> = ({
+  isOpen,
+  onClose,
+  booking,
+  agora,
+}) => {
+  const agoraConnection = useAgoraConnection(agora);
+  const localTracks = useLocalTracks();
+  const remoteUsers = useRemoteUsers();
+  const chat = useChat();
+  const screenShare = useScreenShare();
+
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [callDuration, setCallDuration] = useState(0);
+  const [networkStatus, setNetworkStatus] = useState<
+    "online" | "offline" | "poor"
+  >("online");
+  const [localVideoContainer, setLocalVideoContainer] = useState<
+    "waiting" | "grid" | "thumbnail" | null
+  >(null);
+
+  const localVideoRef = useRef<HTMLDivElement>(null);
+  const waitingLocalVideoRef = useRef<HTMLDivElement>(null);
+  const screenShareRef = useRef<HTMLDivElement>(null);
+  const callStartTime = useRef<number>(0);
+  const durationInterval = useRef<NodeJS.Timeout | null>(null);
+
+  // Determine if anyone is screen sharing
+  const isAnyoneScreenSharing = screenShare.isScreenSharing || remoteUsers.remoteScreenShareUid !== null;
+  const screenShareUser = screenShare.isScreenSharing
+    ? { uid: agoraConnection.myUIDRef.current || 0, isLocal: true, username: "You (Team)" }
+    : remoteUsers.remoteScreenShareUid
+    ? {
+        uid: remoteUsers.remoteScreenShareUid,
+        isLocal: false,
+        username: booking.expert.username || "Expert",
+      }
+    : null;
+
+  const initializeAgora = useCallback(async () => {
+    // Prevent double initialization
+    if (!agora || agoraConnection.isInitializingRef.current) {
+      console.log("Team: Skipping initialization - already initializing or no agora config");
+      return;
+    }
+
+    // Check if already joined
+    if (agoraConnection.client && agoraConnection.isJoined) {
+      console.log("Team: Already joined, skipping initialization");
+      return;
+    }
+
+    console.log("Initializing Team Agora with:", {
+      appId: import.meta.env.VITE_AGORA_APP_ID,
+      channel: agora.channel,
+      token: agora.token ? "present" : "missing",
+      tokenLength: agora.token?.length || 0,
+      uid: agora.uid,
+    });
+
+    // Validate required fields
+    if (!agora.token || agora.token.trim() === "") {
+      agoraConnection.setConnectionError(
+        "Invalid session token. Please refresh the page and try again."
+      );
+      return;
+    }
+
+    if (!agora.channel || agora.channel.trim() === "") {
+      agoraConnection.setConnectionError(
+        "Invalid channel configuration. Please refresh the page and try again."
+      );
+      return;
+    }
+
+    if (!agora.uid || agora.uid <= 0) {
+      agoraConnection.setConnectionError(
+        "Invalid user ID. Please refresh the page and try again."
+      );
+      return;
+    }
+
+    agoraConnection.isInitializingRef.current = true;
+    agoraConnection.setIsConnecting(true);
+    agoraConnection.setConnectionError(null);
+
+    try {
+      if (!import.meta.env.VITE_AGORA_APP_ID) {
+        throw new Error("Agora App ID is not configured");
+      }
+
+      const hasPermission = await localTracks.requestPermissions();
+      if (!hasPermission) {
+        throw new Error("Camera and microphone permissions are required");
+      }
+
+      // Clean up any existing client before creating a new one
+      if (agoraConnection.client) {
+        console.log("Team: Cleaning up existing client before reinitializing");
+        try {
+          agoraConnection.client.removeAllListeners();
+          await agoraConnection.client.leave();
+        } catch (cleanupError) {
+          console.warn("Team: Error cleaning up existing client:", cleanupError);
+        }
+      }
+
+      const agoraClient = agoraConnection.createAgoraClient();
+      setupAgoraEventHandlers(agoraClient);
+
+      try {
+        console.log("Team join attempt with UID:", agora.uid);
+
+        const uid = await agoraClient.join(
+          import.meta.env.VITE_AGORA_APP_ID,
+          agora.channel,
+          agora.token,
+          agora.uid
+        );
+
+        console.log("Team successfully joined with UID:", uid);
+        agoraConnection.myUIDRef.current = uid as number;
+
+        // Enable dual stream AFTER successful join
+        try {
+          await agoraClient.enableDualStream();
+          console.log("Team: Dual stream enabled for adaptive quality");
+        } catch (dualStreamError) {
+          console.warn("Team: Failed to enable dual stream:", dualStreamError);
+        }
+
+      } catch (joinError: any) {
+        console.error("Team join failed:", joinError);
+
+        if (
+          joinError.code === "INVALID_TOKEN" ||
+          joinError.code === "TOKEN_EXPIRED"
+        ) {
+          agoraConnection.setConnectionError(
+            "Session token is invalid or expired. Please refresh the page."
+          );
+          agoraConnection.isInitializingRef.current = false;
+          agoraConnection.setIsConnecting(false);
+          return;
+        } else if (joinError.code === "CAN_NOT_GET_GATEWAY_SERVER") {
+          agoraConnection.setConnectionError(
+            "Invalid token - authorization failed. Please refresh the page."
+          );
+          agoraConnection.isInitializingRef.current = false;
+          agoraConnection.setIsConnecting(false);
+          return;
+        } else if (joinError.code === "UID_CONFLICT") {
+          agoraConnection.setConnectionError(
+            "You are already connected in another tab or window. Please close other sessions and try again."
+          );
+          agoraConnection.isInitializingRef.current = false;
+          agoraConnection.setIsConnecting(false);
+          return;
+        } else {
+          throw joinError;
+        }
+      }
+
+      const tracks = await localTracks.createLocalTracks();
+      if (tracks.length > 0) {
+        console.log(
+          "Team publishing tracks:",
+          tracks.map((t) => t.trackMediaType)
+        );
+        await agoraClient.publish(tracks);
+      }
+
+      agoraConnection.setClient(agoraClient);
+      agoraConnection.setIsJoined(true);
+      agoraConnection.setIsConnecting(false);
+      agoraConnection.startStatsMonitoring(agoraClient);
+
+      console.log("Team Agora initialization completed successfully");
+    } catch (error: any) {
+      console.error("Failed to initialize Team Agora:", error);
+      agoraConnection.setConnectionError(
+        error.message || "Failed to connect. Please try again."
+      );
+      agoraConnection.setIsConnecting(false);
+    } finally {
+      agoraConnection.isInitializingRef.current = false;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agora, agoraConnection, localTracks]);
+
+  const setupAgoraEventHandlers = useCallback(
+    (client: IAgoraRTCClient) => {
+      client.on("user-published", async (user, mediaType) => {
+        if (user.uid === agoraConnection.myUIDRef.current) return;
+
+        console.log(`User ${user.uid} published ${mediaType}`);
+
+        try {
+          await client.subscribe(user, mediaType);
+          console.log(`Subscribed to user ${user.uid} ${mediaType}`);
+
+          if (mediaType === "video" && user.videoTrack) {
+            try {
+              await client.setRemoteVideoStreamType(user.uid, 0);
+              console.log(`Set high quality stream for user ${user.uid}`);
+            } catch (streamError) {
+              console.warn("Failed to set stream type:", streamError);
+            }
+          }
+
+          const track = user[`${mediaType}Track`];
+          if (track) {
+            remoteUsers.addRemoteUser(user.uid, mediaType, track);
+          }
+        } catch (error) {
+          console.error("Error subscribing to user:", error);
+        }
+      });
+
+      client.on("user-unpublished", (user, mediaType) => {
+        if (user.uid === agoraConnection.myUIDRef.current) return;
+        console.log(`User ${user.uid} unpublished ${mediaType}`);
+        remoteUsers.removeRemoteUser(user.uid, mediaType);
+      });
+
+      client.on("user-joined", (user) => {
+        if (user.uid !== agoraConnection.myUIDRef.current) {
+          console.log("User joined:", user.uid);
+        }
+      });
+
+      client.on("user-left", (user) => {
+        if (user.uid !== agoraConnection.myUIDRef.current) {
+          remoteUsers.removeRemoteUser(user.uid);
+          console.log("User left:", user.uid);
+        }
+      });
+
+      client.on(
+        "connection-state-change",
+        (
+          curState: ConnectionState,
+          revState: ConnectionState,
+          reason?: ConnectionDisconnectedReason
+        ) => {
+          console.log("Connection state change:", {
+            curState,
+            revState,
+            reason,
+          });
+
+          if (curState === "CONNECTED") {
+            agoraConnection.setConnectionError(null);
+            setNetworkStatus("online");
+          } else if (curState === "DISCONNECTED") {
+            if (reason === "NETWORK_ERROR") {
+              setNetworkStatus("poor");
+              agoraConnection.handleAutoReconnect();
+            }
+          }
+        }
+      );
+
+      client.on("network-quality", (stats) => {
+        const quality = Math.max(
+          stats.downlinkNetworkQuality,
+          stats.uplinkNetworkQuality
+        );
+
+        if (quality >= 4) {
+          setNetworkStatus("poor");
+          if (quality >= 5 && localTracks.currentVideoQuality !== "360p") {
+            localTracks.changeVideoQuality("360p");
+            console.log("Network quality very poor, switching to 360p");
+          } else if (quality === 4 && localTracks.currentVideoQuality === "720p") {
+            localTracks.changeVideoQuality("480p");
+            console.log("Network quality poor, switching to 480p");
+          }
+        } else if (quality <= 2) {
+          setNetworkStatus("online");
+          if (localTracks.currentVideoQuality === "360p") {
+            localTracks.changeVideoQuality("480p");
+            console.log("Network quality good, upgrading to 480p");
+          } else if (quality === 1 && localTracks.currentVideoQuality === "480p") {
+            localTracks.changeVideoQuality("720p");
+            console.log("Network quality excellent, upgrading to 720p");
+          }
+        } else {
+          setNetworkStatus("online");
+        }
+      });
+
+      client.on("stream-message", (uid, stream) => {
+        try {
+          const decoder = new TextDecoder();
+          const messageString = decoder.decode(stream);
+          const messageData = JSON.parse(messageString);
+
+          if (
+            messageData.type === "chat" &&
+            uid !== agoraConnection.myUIDRef.current
+          ) {
+            chat.addChatMessage(messageData.sender, messageData.message, false);
+          }
+        } catch (error) {
+          console.error("Error parsing chat message:", error);
+        }
+      });
+
+      client.on("exception", (evt) => {
+        console.warn("Agora exception:", evt);
+        if (evt.code === "NETWORK_ERROR") {
+          setNetworkStatus("poor");
+        }
+      });
+    },
+    [agoraConnection, remoteUsers, chat, localTracks]
+  );
+
+  // Handle local video rendering
+  useEffect(() => {
+    if (!localTracks.localVideoTrack || localTracks.isVideoMuted) {
+      localTracks.stopLocalVideo();
+      setLocalVideoContainer(null);
+      return;
+    }
+
+    let targetContainer: HTMLDivElement | null = null;
+    let expectedContainer: "waiting" | "grid" | "thumbnail" | null = null;
+
+    if (isAnyoneScreenSharing && remoteUsers.remoteUsers.length > 0) {
+      targetContainer = localVideoRef.current;
+      expectedContainer = "thumbnail";
+    } else if (remoteUsers.remoteUsers.length === 0) {
+      targetContainer = waitingLocalVideoRef.current;
+      expectedContainer = "waiting";
+    } else {
+      targetContainer = localVideoRef.current;
+      expectedContainer = "grid";
+    }
+
+    if (targetContainer && localVideoContainer !== expectedContainer) {
+      requestAnimationFrame(() => {
+        localTracks.playLocalVideo(targetContainer);
+        setLocalVideoContainer(expectedContainer);
+      });
+    }
+  }, [
+    localTracks.localVideoTrack,
+    localTracks.isVideoMuted,
+    remoteUsers.remoteUsers.length,
+    localVideoContainer,
+    localTracks.playLocalVideo,
+    localTracks.stopLocalVideo,
+    screenShare.isScreenSharing,
+    isAnyoneScreenSharing,
+  ]);
+
+  // Handle local screen share playback
+  useEffect(() => {
+    if (screenShare.isScreenSharing && screenShare.screenTrack && screenShareRef.current) {
+      screenShare.playScreenShare(screenShareRef.current);
+    }
+  }, [screenShare.isScreenSharing, screenShare.screenTrack, screenShare.playScreenShare]);
+
+  useEffect(() => {
+    if (agoraConnection.isJoined && !durationInterval.current) {
+      callStartTime.current = Date.now();
+      durationInterval.current = setInterval(() => {
+        setCallDuration(
+          Math.floor((Date.now() - callStartTime.current) / 1000)
+        );
+      }, 1000);
+    }
+
+    return () => {
+      if (durationInterval.current) {
+        clearInterval(durationInterval.current);
+        durationInterval.current = null;
+      }
+    };
+  }, [agoraConnection.isJoined]);
+
+  // Main initialization effect
+  useEffect(() => {
+    let mounted = true;
+
+    const init = async () => {
+      if (isOpen && agora && !agoraConnection.isInitializingRef.current && !agoraConnection.isJoined) {
+        if (!agora.token || !agora.channel || !agora.uid) {
+          agoraConnection.setConnectionError(
+            "Missing session configuration. Please refresh the page and try again."
+          );
+          return;
+        }
+        if (mounted) {
+          await initializeAgora();
+        }
+      }
+    };
+
+    init();
+
+    return () => {
+      mounted = false;
+      if (!isOpen) {
+        console.log(
+          "Team modal closed or component unmounting, running cleanup..."
+        );
+        cleanup().catch(console.error);
+      }
+    };
+  }, [isOpen, agora?.channel]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setNetworkStatus("online");
+      if (agoraConnection.connectionError?.includes("offline")) {
+        agoraConnection.setConnectionError(null);
+        if (agora && !agoraConnection.isJoined) {
+          setTimeout(() => initializeAgora(), 1000);
+        }
+      }
+    };
+
+    const handleOffline = () => {
+      setNetworkStatus("offline");
+      agoraConnection.setConnectionError(
+        "You are offline. Please check your internet connection."
+      );
+    };
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [agora, agoraConnection, initializeAgora]);
+
+  const cleanup = useCallback(async () => {
+    if (durationInterval.current) {
+      clearInterval(durationInterval.current);
+      durationInterval.current = null;
+    }
+
+    await Promise.all([
+      screenShare.cleanup(),
+      agoraConnection.cleanup(),
+      localTracks.cleanup(),
+      remoteUsers.cleanup(),
+    ]);
+
+    setLocalVideoContainer(null);
+    setCallDuration(0);
+  }, [agoraConnection, localTracks, remoteUsers, screenShare]);
+
+  const getUsername = useCallback(
+    (uid: UID): string => {
+      if (uid === agoraConnection.myUIDRef.current) {
+        return "You";
+      }
+      return booking.expert.username || "Expert";
+    },
+    [agoraConnection.myUIDRef, booking]
+  );
+
+  const getAllParticipants = useMemo(() => {
+    const participants = [];
+
+    participants.push({
+      uid: agoraConnection.myUIDRef.current || 0,
+      isLocal: true,
+      username: "You",
+      hasVideo: !localTracks.isVideoMuted && !!localTracks.localVideoTrack,
+      hasAudio: !localTracks.isAudioMuted && !!localTracks.localAudioTrack,
+      videoTrack: localTracks.localVideoTrack ?? undefined,
+      audioTrack: localTracks.localAudioTrack ?? undefined,
+      photo: booking.team.photo,
+    });
+
+    remoteUsers.remoteUsers.forEach((user) => {
+      participants.push({
+        uid: user.uid,
+        isLocal: false,
+        username: getUsername(user.uid),
+        hasVideo: user.hasVideo,
+        hasAudio: user.hasAudio,
+        videoTrack: user.videoTrack,
+        audioTrack: user.audioTrack,
+        photo: booking.expert.photo,
+      });
+    });
+
+    return participants;
+  }, [
+    agoraConnection.myUIDRef,
+    localTracks,
+    remoteUsers.remoteUsers,
+    booking,
+    getUsername,
+  ]);
+
+
+  const formatDuration = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours.toString().padStart(2, "0")}:${minutes
+        .toString()
+        .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+    }
+    return `${minutes.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  const handleToggleAudio = async () => {
+    await localTracks.toggleAudio();
+  };
+
+  const handleToggleVideo = async () => {
+    await localTracks.toggleVideo();
+  };
+
+  const handleScreenShare = () => {
+    screenShare.toggleScreenShare(
+      agoraConnection.client,
+      localTracks.localVideoTrack
+    );
+  };
+
+  const handleSendMessage = () => {
+    chat.sendMessage(agoraConnection.client, booking.team.username);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
+  const retryConnection = () => {
+    cleanup();
+    setTimeout(() => {
+      if (agora) {
+        initializeAgora();
+      }
+    }, 1000);
+  };
+
+  const handleEndCall = () => {
+    setTimeout(() => {
+      cleanup();
+      onClose();
+    }, 1000);
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm">
+      <div
+        className={`${
+          isFullscreen
+            ? "w-screen h-screen"
+            : "w-[95vw] h-[90vh] max-w-7xl rounded-2xl shadow-2xl"
+        } bg-white overflow-hidden flex flex-col`}
+      >
+        <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b border-blue-100">
+          <div className="flex items-center space-x-4">
+            <div className="relative">
+              <img
+                src={booking.expert.photo}
+                alt={booking.expert.username}
+                className="w-10 h-10 rounded-full object-cover border-2 border-blue-200 shadow-sm"
+              />
+              <div
+                className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-white ${
+                  remoteUsers.remoteUsers.length > 0
+                    ? "bg-green-400"
+                    : "bg-gray-400"
+                }`}
+              />
+            </div>
+            <div>
+              <h3 className="font-semibold text-gray-800 text-lg flex items-center">
+                <FontAwesomeIcon
+                  icon={faGraduationCap}
+                  className="mr-2 text-blue-600"
+                />
+                Training Session: {booking.service.service.name}
+              </h3>
+              <p className="text-sm text-blue-600 font-medium flex items-center">
+                <FontAwesomeIcon icon={faChalkboardTeacher} className="mr-1" />
+                with Expert {booking.expert.username}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-3">
+            <div
+              className={`flex items-center space-x-1 text-xs ${
+                networkStatus === "offline"
+                  ? "text-red-500"
+                  : networkStatus === "poor"
+                  ? "text-yellow-500"
+                  : "text-green-500"
+              }`}
+            >
+              <FontAwesomeIcon
+                icon={
+                  networkStatus === "offline"
+                    ? faSignal
+                    : networkStatus === "poor"
+                    ? faExclamationTriangle
+                    : faWifi
+                }
+              />
+              <span className="capitalize font-medium">{networkStatus}</span>
+            </div>
+
+            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full font-medium flex items-center space-x-1">
+              {agoraConnection.isConnecting && (
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin" />
+              )}
+              <span>
+                {agoraConnection.isConnecting
+                  ? "Connecting..."
+                  : agoraConnection.isJoined
+                  ? "Connected"
+                  : "Disconnected"}
+              </span>
+            </div>
+
+            {agoraConnection.isJoined && (
+              <div className="bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-xs font-medium flex items-center space-x-1">
+                <div className="w-1.5 h-1.5 bg-blue-500 rounded-full animate-pulse" />
+                <FontAwesomeIcon icon={faClock} className="text-xs" />
+                <span>{formatDuration(callDuration)}</span>
+              </div>
+            )}
+
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={() => setShowChat(!showChat)}
+                className={`p-2 rounded-xl transition-colors shadow-sm border text-sm ${
+                  showChat
+                    ? "bg-blue-500 text-white border-blue-500"
+                    : "bg-white text-blue-600 hover:bg-blue-50 border-blue-100"
+                }`}
+              >
+                <FontAwesomeIcon icon={faComments} />
+              </button>
+
+              <button
+                onClick={() => setIsFullscreen(!isFullscreen)}
+                className="p-2 rounded-xl bg-white text-blue-600 hover:bg-blue-50 transition-colors shadow-sm border border-blue-100 text-sm"
+              >
+                <FontAwesomeIcon icon={isFullscreen ? faCompress : faExpand} />
+              </button>
+
+              <button
+                onClick={onClose}
+                className="p-2 rounded-xl bg-white text-gray-500 hover:bg-gray-50 transition-colors shadow-sm border border-gray-200 text-sm"
+              >
+                <FontAwesomeIcon icon={faTimes} />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {agoraConnection.connectionError && (
+          <div className="p-3 bg-red-50 border-b border-red-100">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-red-600 text-sm">
+                <FontAwesomeIcon icon={faExclamationTriangle} />
+                <span className="font-medium">
+                  {agoraConnection.connectionError}
+                </span>
+              </div>
+              <button
+                onClick={retryConnection}
+                className="px-3 py-1 bg-red-500 text-white rounded-lg text-xs hover:bg-red-600 transition-colors flex items-center space-x-1"
+              >
+                <FontAwesomeIcon icon={faRefresh} />
+                <span>Retry</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 flex bg-gray-50 overflow-hidden">
+          <div
+            className={`${
+              showChat ? "flex-1" : "w-full"
+            } flex flex-col relative`}
+          >
+            <div className="flex-1 relative bg-gradient-to-br from-blue-100 to-indigo-100 p-2 sm:p-4">
+              {/* Screen Share Layout */}
+              {isAnyoneScreenSharing && remoteUsers.remoteUsers.length > 0 ? (
+                <div className="w-full h-full flex flex-col lg:flex-row gap-2 sm:gap-4">
+                  <div className="flex-1 relative bg-black rounded-xl overflow-hidden shadow-2xl min-h-0">
+                    {screenShare.isScreenSharing ? (
+                      <div
+                        ref={screenShareRef}
+                        className="w-full h-full"
+                        style={{ backgroundColor: "#1a1a1a" }}
+                      />
+                    ) : (
+                      remoteUsers.remoteUsers
+                        .filter((u) => u.isScreenShare && u.videoTrack)
+                        .map((user) => (
+                          <div
+                            key={`screen-${user.uid}`}
+                            ref={remoteUsers.setRemoteVideoRef(user.uid, user.videoTrack, true)}
+                            className="w-full h-full"
+                            style={{ backgroundColor: "#1a1a1a" }}
+                          />
+                        ))
+                    )}
+                    <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-blue-500 text-white px-2 sm:px-3 py-1 rounded-lg text-xs sm:text-sm font-medium shadow-lg flex items-center space-x-1 sm:space-x-2">
+                      <FontAwesomeIcon icon={faDesktop} />
+                      <span className="hidden sm:inline">
+                        {screenShareUser?.isLocal ? "You are sharing" : `${screenShareUser?.username} is sharing`}
+                      </span>
+                      <span className="sm:hidden">Screen</span>
+                    </div>
+                  </div>
+
+                  <div className="lg:w-48 xl:w-56 flex lg:flex-col gap-2 overflow-x-auto lg:overflow-y-auto lg:overflow-x-hidden pb-2 lg:pb-0 shrink-0">
+                    <div className="relative bg-black rounded-xl overflow-hidden shadow-lg shrink-0 w-32 h-24 sm:w-40 sm:h-28 lg:w-full lg:h-32 xl:h-36">
+                      {localTracks.localVideoTrack && !localTracks.isVideoMuted ? (
+                        <div
+                          ref={localVideoRef}
+                          className="w-full h-full"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-blue-200 to-indigo-200">
+                          <img
+                            src={booking.team.photo}
+                            alt="You"
+                            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white shadow"
+                          />
+                        </div>
+                      )}
+                      <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs flex items-center space-x-1">
+                        <FontAwesomeIcon icon={faGraduationCap} className="text-blue-400" />
+                        <span className="hidden sm:inline">You</span>
+                        {localTracks.isAudioMuted && (
+                          <FontAwesomeIcon icon={faMicrophoneSlash} className="text-red-400" />
+                        )}
+                      </div>
+                      <div className="absolute top-1 right-1 bg-blue-500 text-white px-1.5 py-0.5 rounded text-[10px]">
+                        Team
+                      </div>
+                    </div>
+
+                    {remoteUsers.remoteUsers
+                      .filter((u) => !u.isScreenShare)
+                      .map((user) => (
+                        <div
+                          key={user.uid}
+                          className="relative bg-black rounded-xl overflow-hidden shadow-lg shrink-0 w-32 h-24 sm:w-40 sm:h-28 lg:w-full lg:h-32 xl:h-36"
+                        >
+                          {user.hasVideo && user.videoTrack ? (
+                            <div
+                              ref={remoteUsers.setRemoteVideoRef(user.uid, user.videoTrack)}
+                              className="w-full h-full"
+                              style={{ backgroundColor: "#1a1a1a" }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-green-200 to-emerald-200">
+                              <img
+                                src={booking.expert.photo}
+                                alt={booking.expert.username}
+                                className="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 border-white shadow"
+                              />
+                            </div>
+                          )}
+                          <div className="absolute bottom-1 left-1 bg-black bg-opacity-60 text-white px-1.5 py-0.5 rounded text-[10px] sm:text-xs flex items-center space-x-1">
+                            <FontAwesomeIcon icon={faChalkboardTeacher} className="text-green-400" />
+                            <span className="hidden sm:inline truncate max-w-16">{booking.expert.username}</span>
+                            {!user.hasAudio && (
+                              <FontAwesomeIcon icon={faMicrophoneSlash} className="text-red-400" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </div>
+              ) : remoteUsers.remoteUsers.length === 0 ? (
+                /* Waiting State */
+                <div className="w-full h-full flex flex-col sm:flex-row gap-6 sm:gap-12 lg:gap-24 items-center justify-center p-4">
+                  {localTracks.localVideoTrack && !localTracks.isVideoMuted ? (
+                    <div className="w-full max-w-xs sm:w-64 md:w-72 lg:w-80 aspect-[4/3] bg-black rounded-xl overflow-hidden shadow-lg relative shrink-0">
+                      <div
+                        ref={waitingLocalVideoRef}
+                        className="w-full h-full"
+                      />
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs flex items-center space-x-1">
+                        <FontAwesomeIcon
+                          icon={faGraduationCap}
+                          className="text-blue-400"
+                        />
+                        <span className="font-medium">You (Team)</span>
+                        {(!localTracks.localAudioTrack ||
+                          localTracks.isAudioMuted) && (
+                          <FontAwesomeIcon
+                            icon={faMicrophoneSlash}
+                            className="text-red-400"
+                          />
+                        )}
+                      </div>
+                      <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded-lg text-xs font-medium">
+                        Preview
+                      </div>
+                      <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs">
+                        {localTracks.currentVideoQuality}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full max-w-xs sm:w-64 md:w-72 lg:w-80 aspect-[4/3] bg-gradient-to-br from-blue-200 to-indigo-200 rounded-xl flex items-center justify-center shadow-lg shrink-0">
+                      <div className="text-center">
+                        <img
+                          src={booking.team.photo}
+                          alt={booking.team.username}
+                          className="w-12 h-12 sm:w-16 sm:h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
+                        />
+                        <p className="text-xs sm:text-sm text-gray-700 font-medium">
+                          {!localTracks.localVideoTrack
+                            ? "Camera Access Denied"
+                            : "Camera Off"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="text-center shrink-0">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white shadow-lg flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                      <FontAwesomeIcon
+                        icon={faChalkboardTeacher}
+                        className="text-2xl sm:text-3xl text-blue-500"
+                      />
+                    </div>
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-700 mb-2">
+                      Waiting for {booking.expert.username}
+                    </h3>
+                    <p className="text-gray-500 text-xs sm:text-sm mb-3 sm:mb-4">
+                      Your expert will join shortly...
+                    </p>
+
+                    <div className="bg-white bg-opacity-90 backdrop-blur rounded-lg p-3 sm:p-4 max-w-md mx-auto shadow-lg">
+                      <div className="text-xs text-gray-600 space-y-2">
+                        <p className="flex items-center justify-center">
+                          <FontAwesomeIcon
+                            icon={faGraduationCap}
+                            className="mr-2 text-blue-500"
+                          />
+                          <span className="font-medium">Session:</span>
+                          <span className="ml-1 truncate">
+                            {booking.service.service.name}
+                          </span>
+                        </p>
+                        <p className="flex items-center justify-center">
+                          <FontAwesomeIcon
+                            icon={faClock}
+                            className="mr-2 text-green-500"
+                          />
+                          <span className="font-medium">Time:</span>
+                          <span className="ml-1">
+                            {new Date(booking.startAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                            {" - "}
+                            {new Date(booking.endAt).toLocaleTimeString([], {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                        </p>
+                        {agoraConnection.isJoined && (
+                          <p className="text-blue-600 mt-2 sm:mt-3 flex items-center justify-center font-medium">
+                            <FontAwesomeIcon
+                              icon={faCheckCircle}
+                              className="mr-1"
+                            />
+                            Ready for training
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                /* Normal Grid Layout */
+                <div
+                  className={`w-full h-full grid gap-2 sm:gap-4 auto-rows-fr ${
+                    getAllParticipants.length === 1
+                      ? "grid-cols-1"
+                      : "grid-cols-1 sm:grid-cols-2"
+                  }`}
+                >
+                  {getAllParticipants.map((participant) => (
+                    <div
+                      key={participant.uid}
+                      className="relative bg-black rounded-xl overflow-hidden shadow-lg min-h-[200px] sm:min-h-0"
+                    >
+                      {participant.isLocal ? (
+                        <div
+                          ref={localVideoRef}
+                          className="w-full h-full relative bg-gradient-to-br from-blue-200 to-indigo-200"
+                        >
+                          {(localTracks.isVideoMuted ||
+                            !localTracks.localVideoTrack) && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75">
+                              <div className="text-center">
+                                <img
+                                  src={participant.photo}
+                                  alt={participant.username}
+                                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
+                                />
+                                <p className="text-xs sm:text-sm text-white font-medium">
+                                  {!localTracks.localVideoTrack
+                                    ? "Camera Access Denied"
+                                    : "Camera Off"}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="w-full h-full relative">
+                          {participant.hasVideo && participant.videoTrack ? (
+                            <div
+                              ref={remoteUsers.setRemoteVideoRef(
+                                participant.uid,
+                                participant.videoTrack
+                              )}
+                              className="w-full h-full"
+                              style={{ backgroundColor: "#1a1a1a" }}
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-100">
+                              <div className="text-center">
+                                <img
+                                  src={participant.photo}
+                                  alt={participant.username}
+                                  className="w-12 h-12 sm:w-16 sm:h-16 rounded-full mx-auto mb-2 border-3 border-white shadow-lg"
+                                />
+                                <p className="text-xs sm:text-sm text-gray-700 font-medium">
+                                  Camera is off
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="absolute bottom-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs flex items-center space-x-1">
+                        <FontAwesomeIcon
+                          icon={
+                            participant.isLocal
+                              ? faGraduationCap
+                              : faChalkboardTeacher
+                          }
+                          className={
+                            participant.isLocal
+                              ? "text-blue-400"
+                              : "text-green-400"
+                          }
+                        />
+                        <span className="font-medium truncate max-w-24 sm:max-w-none">
+                          {participant.username}
+                        </span>
+                        {!participant.hasAudio && (
+                          <FontAwesomeIcon
+                            icon={faMicrophoneSlash}
+                            className="text-red-400"
+                          />
+                        )}
+                      </div>
+
+                      <div
+                        className={`absolute top-2 right-2 px-2 py-1 rounded-lg text-xs font-medium ${
+                          participant.isLocal
+                            ? "bg-blue-500 text-white"
+                            : "bg-green-500 text-white"
+                        }`}
+                      >
+                        {participant.isLocal ? "You" : "Expert"}
+                      </div>
+
+                      {participant.isLocal &&
+                        localTracks.localVideoTrack &&
+                        !localTracks.isVideoMuted && (
+                          <div className="absolute top-2 left-2 bg-black bg-opacity-60 text-white px-2 py-1 rounded-lg text-xs">
+                            {localTracks.currentVideoQuality}
+                          </div>
+                        )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Participants Badge */}
+              <div className="absolute top-2 sm:top-4 left-2 sm:left-4">
+                <div className="bg-white bg-opacity-90 backdrop-blur text-gray-700 px-2 sm:px-3 py-1 sm:py-2 rounded-full shadow-lg border border-blue-100 text-xs sm:text-sm">
+                  <FontAwesomeIcon
+                    icon={faUsers}
+                    className="mr-1 sm:mr-2 text-blue-500"
+                  />
+                  <span className="font-medium">
+                    {getAllParticipants.length}
+                    <span className="hidden sm:inline"> participant{getAllParticipants.length !== 1 ? "s" : ""}</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Team View Badge */}
+              <div className="absolute top-2 sm:top-4 right-2 sm:right-4">
+                <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium shadow-lg flex items-center space-x-1 sm:space-x-2">
+                  <FontAwesomeIcon icon={faStar} />
+                  <span className="hidden sm:inline">Team View</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-2 sm:p-4 bg-white border-t border-gray-200">
+              <div className="flex items-center justify-center space-x-2 sm:space-x-4 flex-wrap gap-y-2 sm:gap-y-0">
+                <button
+                  onClick={handleToggleAudio}
+                  disabled={!localTracks.localAudioTrack}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
+                    localTracks.isAudioMuted || !localTracks.localAudioTrack
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
+                  }`}
+                >
+                  <FontAwesomeIcon
+                    icon={
+                      localTracks.isAudioMuted || !localTracks.localAudioTrack
+                        ? faMicrophoneSlash
+                        : faMicrophone
+                    }
+                  />
+                </button>
+
+                <button
+                  onClick={handleToggleVideo}
+                  disabled={!localTracks.localVideoTrack}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
+                    localTracks.isVideoMuted || !localTracks.localVideoTrack
+                      ? "bg-red-500 hover:bg-red-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
+                  }`}
+                >
+                  <FontAwesomeIcon
+                    icon={
+                      localTracks.isVideoMuted || !localTracks.localVideoTrack
+                        ? faVideoSlash
+                        : faVideo
+                    }
+                  />
+                </button>
+
+                <button
+                  onClick={handleScreenShare}
+                  disabled={!agoraConnection.isJoined}
+                  className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full transition-all duration-200 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base ${
+                    screenShare.isScreenSharing
+                      ? "bg-blue-500 hover:bg-blue-600 text-white"
+                      : "bg-white hover:bg-gray-50 text-gray-700 border-2 border-gray-200"
+                  }`}
+                  title={screenShare.isScreenSharing ? "Stop sharing" : "Share screen"}
+                >
+                  <FontAwesomeIcon icon={faDesktop} />
+                </button>
+
+                <div className="hidden sm:flex items-center space-x-2 bg-white rounded-full px-3 py-2 shadow-lg border-2 border-gray-200">
+                  <FontAwesomeIcon
+                    icon={faVolumeDown}
+                    className="text-gray-500 text-sm"
+                  />
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={remoteUsers.volume}
+                    onChange={(e) =>
+                      remoteUsers.updateVolume(parseInt(e.target.value))
+                    }
+                    className="w-16 h-1.5 bg-gray-200 rounded-full appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #3B82F6 0%, #3B82F6 ${remoteUsers.volume}%, #E5E7EB ${remoteUsers.volume}%, #E5E7EB 100%)`,
+                    }}
+                  />
+                  <FontAwesomeIcon
+                    icon={faVolumeUp}
+                    className="text-gray-500 text-sm"
+                  />
+                </div>
+
+                <button
+                  onClick={handleEndCall}
+                  className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-red-500 hover:bg-red-600 text-white transition-all duration-200 shadow-lg text-sm sm:text-base"
+                >
+                  <FontAwesomeIcon
+                    icon={faPhone}
+                    className="transform rotate-135"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {showChat && (
+            <div className="w-80 bg-white border-l border-gray-200 flex flex-col">
+              <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <div className="flex items-center justify-between">
+                  <h4 className="font-semibold text-gray-800 flex items-center">
+                    <FontAwesomeIcon
+                      icon={faComments}
+                      className="mr-2 text-blue-600"
+                    />
+                    Training Session Chat
+                  </h4>
+                  <button
+                    onClick={() => setShowChat(false)}
+                    className="p-1 rounded-lg text-gray-500 hover:bg-white transition-colors"
+                  >
+                    <FontAwesomeIcon icon={faTimes} />
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex-1 p-3 overflow-y-auto space-y-3 bg-gray-50">
+                {chat.chatMessages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${
+                      msg.isOwn ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-xs px-3 py-2 rounded-2xl shadow-sm text-sm ${
+                        msg.isOwn
+                          ? "bg-blue-500 text-white rounded-br-sm"
+                          : msg.type === "system"
+                          ? "bg-gray-200 text-gray-700 rounded-bl-sm"
+                          : "bg-white text-gray-800 border border-gray-200 rounded-bl-sm"
+                      }`}
+                    >
+                      {!msg.isOwn && msg.type !== "system" && (
+                        <p className="text-xs font-medium mb-1 opacity-75 flex items-center">
+                          <FontAwesomeIcon
+                            icon={faChalkboardTeacher}
+                            className="mr-1"
+                          />
+                          {msg.sender}
+                        </p>
+                      )}
+                      <p className="leading-relaxed">{msg.message}</p>
+                      <p className="text-xs opacity-75 mt-1">
+                        {msg.timestamp.toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={chat.chatEndRef} />
+              </div>
+
+              <div className="p-3 border-t border-gray-200 bg-white">
+                <div className="flex space-x-2">
+                  <input
+                    value={chat.newMessage}
+                    onChange={(e) => chat.setNewMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask a question or share your thoughts..."
+                    className="flex-1 px-3 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 text-sm"
+                    disabled={
+                      !agoraConnection.isJoined || chat.isMessageSending
+                    }
+                  />
+                  <button
+                    onClick={handleSendMessage}
+                    disabled={
+                      !chat.newMessage.trim() ||
+                      !agoraConnection.isJoined ||
+                      chat.isMessageSending
+                    }
+                    className="px-3 py-2 bg-blue-500 hover:bg-blue-600 disabled:bg-gray-300 text-white rounded-xl transition-colors shadow-sm disabled:cursor-not-allowed"
+                  >
+                    {chat.isMessageSending ? (
+                      <FontAwesomeIcon
+                        icon={faSpinner}
+                        className="animate-spin text-sm"
+                      />
+                    ) : (
+                      <FontAwesomeIcon
+                        icon={faPaperPlane}
+                        className="text-sm"
+                      />
+                    )}
+                  </button>
+                </div>
+                {chat.isMessageSending && (
+                  <p className="text-xs text-gray-500 mt-1">Sending...</p>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default TeamAgoraVideoModal;

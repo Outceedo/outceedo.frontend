@@ -1,0 +1,2540 @@
+import React, { useState, useEffect } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {
+  faVideo,
+  faFileAlt,
+  faEye,
+  faEyeSlash,
+  faSearch,
+  faUser,
+  faCalendarAlt,
+  faMoneyBill,
+  faClock,
+  faMapMarkerAlt,
+  faLink,
+  faInfoCircle,
+  faCreditCard,
+  faStar,
+  faExclamationTriangle,
+  faTrash,
+  faLaptop,
+  faVideoCamera,
+  faChalkboardTeacher,
+  faPlay,
+  faCheckCircle,
+} from "@fortawesome/free-solid-svg-icons";
+import "react-circular-progressbar/dist/styles.css";
+import AssessmentReport from "../../Pages/common/AssessmentReport";
+import { Loader2, Star, X } from "lucide-react";
+import profile from "../../assets/images/avatar.png";
+import axios from "axios";
+import Swal from "sweetalert2";
+import BookingsTable from "./Table";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { loadStripe } from "@stripe/stripe-js";
+import StripePaymentModal from "../StripePaymentModal";
+import AgoraVideoModal from "./AgoraVideoModal";
+import { DialogDescription } from "@radix-ui/react-dialog";
+import { Textarea } from "@/components/ui/textarea";
+
+interface Expert {
+  id: string;
+  username: string;
+  photo: string | null;
+}
+interface Team {
+  id: string;
+  username: string;
+  photo: string | null;
+}
+interface ServiceDetails {
+  id: string;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+}
+interface Service {
+  id: string;
+  serviceId: string;
+  price: number;
+  service: ServiceDetails;
+}
+interface Agora {
+  channel: string;
+  token: string;
+  uid: number;
+}
+interface Booking {
+  id: string;
+  teamId: string;
+  expertId: string;
+  serviceId: string;
+  status: string;
+  startAt: string;
+  endAt: string;
+  timezone: string;
+  expertTimeZone: string;
+  location: string | null;
+  meetLink: string | null;
+  recordedVideo: string | null;
+  meetingRecording: string | null;
+  createdAt: string;
+  updatedAt: string;
+  expert: Expert;
+  team: Team;
+  service: Service;
+  review?: string;
+  description?: string | null;
+  isPaid?: boolean;
+  paymentIntentId?: string;
+  paymentIntentClientSecret?: string;
+  expertMarkedComplete?: boolean;
+  teamMarkedComplete?: boolean;
+  price?: number;
+  agora?: any;
+}
+
+const TIMEZONES = [
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Berlin",
+  "Europe/Paris",
+  "Europe/Madrid",
+  "Europe/Rome",
+  "Europe/Amsterdam",
+  "Europe/Zurich",
+  "Europe/Istanbul",
+  "Europe/Moscow",
+  "Asia/Dubai",
+  "Asia/Jerusalem",
+  "Asia/Riyadh",
+  "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Asia/Kuala_Lumpur",
+  "Asia/Jakarta",
+  "Asia/Manila",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Colombo",
+  "Australia/Sydney",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Pacific/Auckland",
+  "Africa/Johannesburg",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "America/Mexico_City",
+  "America/Bogota",
+  "America/Lima",
+  "America/Argentina/Buenos_Aires",
+  "America/Santiago",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Pacific/Fiji",
+  "Pacific/Guam",
+];
+
+const TeamBooking: React.FC = () => {
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [bookingStatus, setBookingStatus] = useState("all");
+  const [actionFilter, setActionFilter] = useState("all");
+  const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [dateFilter, setDateFilter] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [filtersApplied, setFiltersApplied] = useState(false);
+
+  const [isVideoOpen, setIsVideoOpen] = useState(false);
+  const [isReportOpen, setIsReportOpen] = useState(false);
+  const [reviewText, setReviewText] = useState("");
+  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(
+    null,
+  );
+  const [visibilityMap, setVisibilityMap] = useState<{ [id: string]: boolean }>(
+    {},
+  );
+
+  const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [selectedBookingForPayment, setSelectedBookingForPayment] =
+    useState<Booking | null>(null);
+
+  const [isAgoraModalOpen, setIsAgoraModalOpen] = useState(false);
+  const [booking, setBooking] = useState<Booking | null>(null);
+  const [agora, setAgora] = useState<Agora>();
+
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [newRating, setNewRating] = useState<number>(0);
+  const [acceptingReschedule, setAcceptingReschedule] = useState(false);
+
+  const [reportData, setReportData] = useState<any[]>([]);
+  const [reportLoading, setReportLoading] = useState(false);
+
+  const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1/booking`;
+  const API_BASE_URL2 = `${import.meta.env.VITE_PORT}/api/v1`;
+  const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUB);
+
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const ITEMS_PER_PAGE = 10;
+
+  // ==================== TIMEZONE CONVERSION HELPERS ====================
+
+  const convertTimeToTimezone = (
+    isoString: string,
+    timezone: string,
+  ): string => {
+    if (!isoString) return "Invalid Time";
+
+    try {
+      const date = new Date(isoString);
+      const options: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: timezone,
+      };
+      return date.toLocaleTimeString("en-US", options);
+    } catch (error) {
+      console.warn("Error converting time to timezone:", error);
+      return "Invalid Time";
+    }
+  };
+
+  const formatTimeRangeInTimezone = (
+    startAt: string,
+    endAt: string,
+    timezone: string,
+  ): string => {
+    const startTime = convertTimeToTimezone(startAt, timezone);
+    const endTime = convertTimeToTimezone(endAt, timezone);
+    return `${startTime} - ${endTime}`;
+  };
+
+  const formatDateTimeInTimezone = (
+    isoString: string,
+    timezone: string,
+  ): string => {
+    if (!isoString) return "Invalid Date";
+
+    try {
+      const date = new Date(isoString);
+
+      const dateOptions: Intl.DateTimeFormatOptions = {
+        month: "long",
+        day: "numeric",
+        year: "numeric",
+        timeZone: timezone,
+      };
+
+      const timeOptions: Intl.DateTimeFormatOptions = {
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+        timeZone: timezone,
+      };
+
+      const formattedDate = date.toLocaleDateString("en-US", dateOptions);
+      const formattedTime = date.toLocaleTimeString("en-US", timeOptions);
+
+      return `${formattedDate} at ${formattedTime}`;
+    } catch (error) {
+      console.warn("Error formatting date time in timezone:", error);
+      return "Invalid Date";
+    }
+  };
+
+  const formatShortDateInTimezone = (
+    isoString: string,
+    timezone: string,
+  ): string => {
+    if (!isoString) return "Invalid Date";
+
+    try {
+      const date = new Date(isoString);
+      const options: Intl.DateTimeFormatOptions = {
+        month: "short",
+        day: "numeric",
+        timeZone: timezone,
+      };
+      return date.toLocaleDateString("en-US", options);
+    } catch (error) {
+      console.warn("Error formatting short date:", error);
+      return "Invalid Date";
+    }
+  };
+
+  const getTimesForBothParties = (
+    booking: Booking,
+  ): {
+    teamTime: string;
+    expertTime: string;
+    teamTimeRange: string;
+    expertTimeRange: string;
+    teamDateTime: string;
+    expertDateTime: string;
+  } => {
+    const teamTimezone = booking.timezone || "UTC";
+    const expertTimezone = booking.expertTimeZone || "UTC";
+
+    return {
+      teamTime: convertTimeToTimezone(booking.startAt, teamTimezone),
+      expertTime: convertTimeToTimezone(booking.startAt, expertTimezone),
+      teamTimeRange: formatTimeRangeInTimezone(
+        booking.startAt,
+        booking.endAt,
+        teamTimezone,
+      ),
+      expertTimeRange: formatTimeRangeInTimezone(
+        booking.startAt,
+        booking.endAt,
+        expertTimezone,
+      ),
+      teamDateTime: formatDateTimeInTimezone(booking.startAt, teamTimezone),
+      expertDateTime: formatDateTimeInTimezone(booking.startAt, expertTimezone),
+    };
+  };
+
+  const calculateDurationMinutes = (startAt: string, endAt: string): number => {
+    try {
+      const start = new Date(startAt);
+      const end = new Date(endAt);
+      return Math.round((end.getTime() - start.getTime()) / (1000 * 60));
+    } catch {
+      return 0;
+    }
+  };
+
+  const formatDuration = (startAt: string, endAt: string): string => {
+    const minutes = calculateDurationMinutes(startAt, endAt);
+    if (minutes <= 0) return "N/A";
+
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+
+    if (hours === 0) return `${remainingMinutes} min`;
+    if (remainingMinutes === 0) return `${hours} hour${hours > 1 ? "s" : ""}`;
+    return `${hours}h ${remainingMinutes}m`;
+  };
+
+  const getLocalDateString = (iso: string, timezone?: string): string => {
+    if (!iso) return "";
+
+    try {
+      const date = new Date(iso);
+      const tz = timezone || "UTC";
+
+      return date.toLocaleDateString("en-CA", {
+        timeZone: tz,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+    } catch (error) {
+      console.warn("Error getting local date string:", error);
+      return "";
+    }
+  };
+
+  // ==================== END TIMEZONE HELPERS ====================
+
+  const formatDate = (iso: string, timezone?: string): string => {
+    const tz = timezone || "UTC";
+    return formatDateTimeInTimezone(iso, tz);
+  };
+
+  const formatShortDate = (iso: string, timezone?: string): string => {
+    const tz = timezone || "UTC";
+    return formatShortDateInTimezone(iso, tz);
+  };
+
+  const formatTime = (iso: string, timezone?: string): string => {
+    const tz = timezone || "UTC";
+    return convertTimeToTimezone(iso, tz);
+  };
+
+  const formatTimeRange = (
+    startAt: string,
+    endAt: string,
+    timezone?: string,
+  ): string => {
+    const tz = timezone || "UTC";
+    return formatTimeRangeInTimezone(startAt, endAt, tz);
+  };
+
+  useEffect(() => {
+    setFiltersApplied(
+      bookingStatus !== "all" ||
+        actionFilter !== "all" ||
+        serviceTypeFilter !== "all" ||
+        dateFilter !== "" ||
+        search !== "",
+    );
+  }, [bookingStatus, actionFilter, serviceTypeFilter, dateFilter, search]);
+
+  const clearAllFilters = () => {
+    setBookingStatus("all");
+    setActionFilter("all");
+    setServiceTypeFilter("all");
+    setDateFilter("");
+    setSearch("");
+  };
+
+  const hasPaymentIntent = (booking: Booking) => {
+    return (
+      booking.paymentIntentId &&
+      booking.paymentIntentId.trim() !== "" &&
+      booking.paymentIntentClientSecret &&
+      booking.paymentIntentClientSecret.trim() !== ""
+    );
+  };
+
+  const needsPayment = (booking: Booking) => {
+    return (
+      hasPaymentIntent(booking) &&
+      booking.status === "ACCEPTED" &&
+      !booking.isPaid
+    );
+  };
+
+  const isPaid = (booking: Booking) => {
+    return booking.status === "SCHEDULED" || booking.status === "COMPLETED";
+  };
+
+  const isSessionOver = (booking: Booking) => {
+    try {
+      const now = new Date();
+      const sessionEnd = new Date(booking.endAt);
+      return now.getTime() > sessionEnd.getTime();
+    } catch (error) {
+      console.warn("Error checking if session is over:", error);
+      return false;
+    }
+  };
+
+  const canGoLive = (booking: Booking) => {
+    if (booking.service?.serviceId !== "2") return false;
+    if (booking.status !== "SCHEDULED") return false;
+
+    try {
+      const now = new Date();
+      const sessionStart = new Date(booking.startAt);
+      const sessionEnd = new Date(booking.endAt);
+
+      const goLiveTime = new Date(sessionStart.getTime() - 10 * 60 * 1000);
+
+      const isOver = now.getTime() > sessionEnd.getTime();
+      const isTooEarly = now.getTime() < goLiveTime.getTime();
+
+      return !isTooEarly && !isOver;
+    } catch (error) {
+      console.warn("Error checking if can go live:", error);
+      return false;
+    }
+  };
+
+  const isUpcomingSession = (booking: Booking) => {
+    if (!isPaid(booking)) return false;
+
+    try {
+      const now = new Date();
+      const start = new Date(booking.startAt);
+      const next7Days = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      return (
+        start.getTime() >= now.getTime() &&
+        start.getTime() <= next7Days.getTime() &&
+        !isSessionOver(booking)
+      );
+    } catch (error) {
+      console.warn("Error checking if upcoming session:", error);
+      return false;
+    }
+  };
+
+  const handleCompleteSession = async (bookingId: string) => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem("token");
+
+      await axios.patch(
+        `${API_BASE_URL}/${bookingId}/complete`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, status: "COMPLETED" }
+            : booking,
+        ),
+      );
+
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "COMPLETED" });
+      }
+
+      closeBookingDetails();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Session Marked Complete! ",
+        text: "Thank you for confirming the session completion.",
+        confirmButtonColor: "#10B981",
+        timer: 2500,
+      });
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to mark session as complete.  Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAcceptReschedule = async (bookingId: string) => {
+    try {
+      setAcceptingReschedule(true);
+      const token = localStorage.getItem("token");
+
+      await axios.patch(
+        `${API_BASE_URL}/${bookingId}/reschedule/accept`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setBookings((prevBookings) =>
+        prevBookings.map((booking) =>
+          booking.id === bookingId
+            ? { ...booking, status: "SCHEDULED" }
+            : booking,
+        ),
+      );
+
+      if (selectedBooking && selectedBooking.id === bookingId) {
+        setSelectedBooking({ ...selectedBooking, status: "SCHEDULED" });
+      }
+
+      closeBookingDetails();
+
+      await Swal.fire({
+        icon: "success",
+        title: "Reschedule Accepted!",
+        text: "You have accepted the new schedule. The expert has been notified.",
+        confirmButtonColor: "#10B981",
+        timer: 2500,
+      });
+    } catch (error) {
+      await Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to accept reschedule. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+    } finally {
+      setAcceptingReschedule(false);
+    }
+  };
+
+  const sessionsToComplete = bookings.filter((booking) => {
+    const isOverAndPaid = isPaid(booking) && isSessionOver(booking);
+    const isScheduled = booking.status === "SCHEDULED";
+
+    return (
+      (isOverAndPaid || isScheduled) &&
+      booking.status !== "COMPLETED" &&
+      booking.status !== "REJECTED" &&
+      booking.status !== "CANCELLED" &&
+      !booking.teamMarkedComplete
+    );
+  });
+
+  const isSessionToday = (booking: Booking) => {
+    try {
+      const now = new Date();
+      const teamTimezone = booking.timezone || "UTC";
+
+      const todayInTz = new Date(
+        now.toLocaleString("en-US", { timeZone: teamTimezone }),
+      );
+      const sessionInTz = new Date(
+        new Date(booking.startAt).toLocaleString("en-US", {
+          timeZone: teamTimezone,
+        }),
+      );
+
+      return (
+        todayInTz.getFullYear() === sessionInTz.getFullYear() &&
+        todayInTz.getMonth() === sessionInTz.getMonth() &&
+        todayInTz.getDate() === sessionInTz.getDate()
+      );
+    } catch (error) {
+      console.warn("Error checking if session is today:", error);
+      return false;
+    }
+  };
+
+  const getTimeUntilGoLive = (booking: Booking) => {
+    try {
+      const now = new Date();
+      const start = new Date(booking.startAt);
+      const goLiveTime = new Date(start.getTime() - 10 * 60 * 1000);
+      const timeDiff = goLiveTime.getTime() - now.getTime();
+
+      if (timeDiff <= 0) return null;
+
+      const hours = Math.floor(timeDiff / (1000 * 60 * 60));
+      const minutes = Math.floor((timeDiff % (1000 * 60 * 60)) / (1000 * 60));
+
+      if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+      }
+      return `${minutes}m`;
+    } catch (error) {
+      console.warn("Error calculating time until go live:", error);
+      return null;
+    }
+  };
+
+  const truncateText = (text: string, maxLength: number = 15) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return `${text.substring(0, maxLength)}...`;
+  };
+
+  const handleVideoError = () => {
+    setVideoError(
+      "Failed to load video. The URL might be invalid or the video may no longer be available.",
+    );
+  };
+
+  const getServiceType = (booking: Booking): string => {
+    if (booking.service?.serviceId === "1") {
+      return "recorded-video";
+    } else if (booking.service?.serviceId === "2") {
+      return "online";
+    } else if (booking.service?.serviceId === "3") {
+      return "in-person";
+    }
+    return "other";
+  };
+
+  const getServiceTypeName = (type: string): string => {
+    switch (type) {
+      case "recorded-video":
+        return "RECORDED VIDEO ASSESSMENT";
+      case "online":
+        return "ONLINE TRAINING";
+      case "in-person":
+        return "ON GROUND ASSESSMENT";
+      case "other":
+      default:
+        return "ON GROUND TRAINING";
+    }
+  };
+
+  const getServiceTypeIcon = (type: string) => {
+    switch (type) {
+      case "recorded-video":
+        return faVideoCamera;
+      case "online":
+        return faLaptop;
+      case "in-person":
+        return faChalkboardTeacher;
+      default:
+        return faInfoCircle;
+    }
+  };
+
+  const fetchBookingsData = async (
+    pageNumber: number,
+    isLoadMore: boolean = false,
+  ) => {
+    if (isLoadMore) {
+      setLoadingMore(true);
+    } else {
+      setLoading(true);
+    }
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(API_BASE_URL, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          page: pageNumber,
+          limit: ITEMS_PER_PAGE,
+        },
+      });
+
+      const newBookings = response.data.bookings || [];
+      const total = response.data.totalPages || 1;
+
+      setTotalPages(total);
+
+      if (isLoadMore) {
+        setBookings((prev) => [...prev, ...newBookings]);
+      } else {
+        setBookings(newBookings);
+      }
+    } catch (err) {
+      setError("Could not connect to server. Please try refreshing the page.");
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchBookingsData(1, false);
+  }, []);
+
+  const handleLoadMore = () => {
+    const nextPage = page + 1;
+    setPage(nextPage);
+    fetchBookingsData(nextPage, true);
+  };
+
+  const openBookingDetails = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setVideoError(null);
+    setIsBookingDetailsOpen(true);
+  };
+
+  const closeBookingDetails = () => {
+    setIsBookingDetailsOpen(false);
+    setSelectedBooking(null);
+    setVideoError(null);
+  };
+
+  const handlePayment = async (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
+    if (!booking) {
+      setError("Booking not found");
+      return;
+    }
+
+    if (!hasPaymentIntent(booking)) {
+      setError(
+        "Payment not available for this booking. Please contact support.",
+      );
+      return;
+    }
+
+    setSelectedBookingForPayment(booking);
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentSuccess = async (
+    bookingId: string,
+    paymentResult: any,
+  ) => {
+    setBookings((prevBookings) =>
+      prevBookings.map((booking) =>
+        booking.id === bookingId
+          ? {
+              ...booking,
+              isPaid: true,
+              status: "SCHEDULED",
+            }
+          : booking,
+      ),
+    );
+
+    if (selectedBooking?.id === bookingId) {
+      setSelectedBooking({
+        ...selectedBooking,
+        isPaid: true,
+        status: "SCHEDULED",
+      });
+    }
+
+    setError(null);
+
+    await Swal.fire({
+      icon: "success",
+      title: "Payment Successful! ",
+      text: "Your booking has been confirmed. You will receive a confirmation email shortly.",
+      confirmButtonText: "Great!",
+      confirmButtonColor: "#10B981",
+      timer: 3000,
+      timerProgressBar: true,
+    });
+  };
+
+  const handlePaymentError = (errorMessage: string) => {
+    setError(`Payment failed: ${errorMessage}`);
+
+    Swal.fire({
+      icon: "error",
+      title: "Payment Failed",
+      text: errorMessage,
+      confirmButtonText: "Try Again",
+      confirmButtonColor: "#EF4444",
+      timer: 3000,
+    });
+  };
+
+  const handleGoLive = async (booking: Booking) => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${API_BASE_URL}/${booking.id}/agora-token`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const agoraCredentials = response.data;
+
+      if (
+        !agoraCredentials ||
+        !agoraCredentials.token ||
+        !agoraCredentials.channel ||
+        !agoraCredentials.uid
+      ) {
+        Swal.fire({
+          icon: "error",
+          title: "Meeting Setup Error",
+          text: "Meeting credentials are not available. Please contact support.",
+          confirmButtonColor: "#EF4444",
+        });
+        return;
+      }
+
+      if (!canGoLive(booking)) {
+        if (isSessionOver(booking)) {
+          Swal.fire({
+            icon: "info",
+            title: "Session Ended",
+            text: "This session has already ended. Please book a new session if you need further assistance.",
+            confirmButtonColor: "#6B7280",
+          });
+          return;
+        }
+
+        const timeUntil = getTimeUntilGoLive(booking);
+        Swal.fire({
+          icon: "info",
+          title: "Meeting Not Available Yet",
+          text: timeUntil
+            ? `You can join the meeting in ${timeUntil}. The meeting will be available 10 minutes before the session starts. `
+            : "This meeting is no longer available.",
+          confirmButtonColor: "#3B82F6",
+        });
+        return;
+      }
+
+      const agoraConfig: Agora = {
+        channel: agoraCredentials.channel,
+        token: agoraCredentials.token,
+        uid: agoraCredentials.uid,
+      };
+      setAgora(agoraConfig);
+      setBooking(booking);
+      setIsAgoraModalOpen(true);
+      setIsBookingDetailsOpen(false);
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Connection Error",
+        text: "Failed to get meeting credentials. Please try again.",
+        confirmButtonColor: "#EF4444",
+      });
+    }
+  };
+
+  const handleEndCall = () => {
+    setIsAgoraModalOpen(false);
+    setBooking(null);
+  };
+
+  const openVideoModal = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedBookingId(id);
+    setIsVideoOpen(true);
+  };
+
+  const closeVideoModal = () => {
+    setIsVideoOpen(false);
+    setSelectedBookingId(null);
+  };
+
+  const fetchReportData = async (bookingId: string) => {
+    setReportLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await axios.get(
+        `${import.meta.env.VITE_PORT}/api/v1/user/reports/booking/${bookingId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.status === 200 && response.data) {
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          setReportData(response.data);
+          return true;
+        } else {
+          setReportData([]);
+          return false;
+        }
+      }
+      return false;
+    } catch (error) {
+      setReportData([]);
+      return false;
+    } finally {
+      setReportLoading(false);
+    }
+  };
+
+  const handleReportClick = async (bookingId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedBookingId(bookingId);
+    setIsBookingDetailsOpen(false);
+
+    const success = await fetchReportData(bookingId);
+    if (success) {
+      setIsReportOpen(true);
+    } else {
+      Swal.fire({
+        icon: "info",
+        title: "No Report Available",
+        text: "There is no assessment report available for this booking yet.",
+      });
+    }
+  };
+
+  const openReportModal = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setSelectedBookingId(id);
+    setIsReportOpen(true);
+  };
+
+  const closeReportModal = () => {
+    setIsReportOpen(false);
+    setSelectedBookingId(null);
+  };
+
+  const toggleVisibility = (id: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setVisibilityMap((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
+  };
+
+  const openReviewModal = (bookingId: string) => {
+    const booking = bookings.find((b) => b.id === bookingId);
+    setSelectedBookingId(bookingId);
+    setReviewText(booking?.review || "");
+    setIsReviewModalOpen(true);
+    setIsBookingDetailsOpen(false);
+  };
+
+  const closeReviewModal = () => {
+    setIsReviewModalOpen(false);
+    setSelectedBookingId(null);
+    setReviewText("");
+  };
+
+  const handleSubmitReview = async () => {
+    if (!selectedBookingId || !reviewText.trim()) return;
+    setSubmittingReview(true);
+    try {
+      const token = localStorage.getItem("token");
+      const selectedBooking = bookings.find((b) => b.id === selectedBookingId);
+
+      if (!selectedBooking) {
+        throw new Error("Selected booking not found");
+      }
+
+      const response = await axios.post(
+        `${API_BASE_URL2}/user/profile/review/${selectedBooking.expertId}`,
+        {
+          rating: newRating || 5,
+          comment: reviewText.trim(),
+          bookingId: selectedBookingId,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      setBookings((prev) =>
+        prev.map((b) =>
+          b.id === selectedBookingId
+            ? {
+                ...b,
+                review: {
+                  rating: newRating || 5,
+                  comment: reviewText.trim(),
+                  createdAt: new Date().toISOString(),
+                  id: response.data?.reviewId || `review_${Date.now()}`,
+                },
+              }
+            : b,
+        ),
+      );
+
+      closeReviewModal();
+
+      Swal.fire({
+        icon: "success",
+        title: "Review Submitted",
+        text: "Your review has been saved successfully.",
+        confirmButtonColor: "#10B981",
+        timer: 2000,
+        showConfirmButton: false,
+      });
+    } catch (err) {
+      console.error("Error submitting review:", err);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to submit review. Please try again.",
+        confirmButtonColor: "#EF4444",
+        timer: 3000,
+      });
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const getActionBadgeStyle = (status: string) => {
+    switch (status) {
+      case "ACCEPTED":
+      case "SCHEDULED":
+        return "bg-green-100 text-green-800 hover:bg-green-100";
+      case "REJECTED":
+      case "CANCELLED":
+        return "bg-red-100 text-red-800 hover:bg-red-100";
+      case "WAITING_EXPERT_APPROVAL":
+      case "PENDING":
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      case "RESCHEDULE_REQUESTED":
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
+      case "COMPLETED":
+        return "bg-purple-100 text-purple-800 hover:bg-purple-100";
+      default:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    }
+  };
+
+  const getPaymentBadgeStyle = (booking: Booking) => {
+    if (isPaid(booking)) {
+      return "bg-green-100 text-green-800 hover:bg-green-100";
+    }
+
+    switch (booking.status) {
+      case "REJECTED":
+      case "CANCELLED":
+        return "bg-red-100 text-red-800 hover:bg-red-100";
+      case "WAITING_EXPERT_APPROVAL":
+        return "bg-blue-100 text-blue-800 hover: bg-blue-100";
+      case "ACCEPTED":
+        return needsPayment(booking)
+          ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+          : "bg-blue-100 text-blue-800 hover:bg-blue-100";
+      default:
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
+    }
+  };
+
+  const getPaymentStatusText = (booking: Booking) => {
+    if (isPaid(booking)) {
+      return "Paid";
+    }
+
+    switch (booking.status) {
+      case "REJECTED":
+      case "CANCELLED":
+        return "Not Paid";
+      case "WAITING_EXPERT_APPROVAL":
+        return "Awaiting Approval";
+      case "ACCEPTED":
+        return needsPayment(booking) ? "Pay Now" : "Awaiting Payment Setup";
+      default:
+        return "Pending";
+    }
+  };
+
+  const formatStatus = (status: string) => {
+    return status
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  const matchesDateFilter = (booking: Booking, dateFilter: string) => {
+    if (!dateFilter) return true;
+
+    try {
+      const teamTimezone = booking.timezone || "UTC";
+      const bookingDate = getLocalDateString(booking.startAt, teamTimezone);
+      return bookingDate === dateFilter;
+    } catch (error) {
+      console.warn("Error matching date filter:", error);
+      return false;
+    }
+  };
+
+  const matchesActionFilter = (booking: Booking) => {
+    if (actionFilter === "all") return true;
+
+    if (
+      actionFilter === "accepted" &&
+      (booking.status === "ACCEPTED" || booking.status === "CONFIRMED")
+    )
+      return true;
+    if (actionFilter === "rejected" && booking.status === "REJECTED")
+      return true;
+    if (
+      actionFilter === "waiting" &&
+      booking.status === "WAITING_EXPERT_APPROVAL"
+    )
+      return true;
+    if (
+      actionFilter === "rescheduled" &&
+      booking.status === "RESCHEDULE_REQUESTED"
+    )
+      return true;
+    if (actionFilter === "scheduled" && booking.status === "SCHEDULED")
+      return true;
+    if (actionFilter === "completed" && booking.status === "COMPLETED")
+      return true;
+
+    return false;
+  };
+
+  const matchesServiceTypeFilter = (booking: Booking) => {
+    if (serviceTypeFilter === "all") return true;
+    return getServiceType(booking) === serviceTypeFilter;
+  };
+
+  const filteredBookings = bookings.filter((booking) => {
+    const expertName = booking.expert?.username || "";
+    const matchesSearch = expertName
+      .toLowerCase()
+      .includes(search.toLowerCase());
+    const matchesStatus =
+      bookingStatus === "all" ||
+      (bookingStatus === "PAID" && isPaid(booking)) ||
+      (bookingStatus === "NOT_PAID" &&
+        booking.status === "WAITING_EXPERT_APPROVAL") ||
+      (bookingStatus === "PENDING" &&
+        ["ACCEPTED", "CONFIRMED"].includes(booking.status));
+
+    return (
+      matchesSearch &&
+      matchesStatus &&
+      matchesDateFilter(booking, dateFilter) &&
+      matchesActionFilter(booking) &&
+      matchesServiceTypeFilter(booking)
+    );
+  });
+
+  const upcomingPaidSessions = bookings
+    .filter((booking) => {
+      return (
+        isPaid(booking) &&
+        isUpcomingSession(booking) &&
+        booking.status !== "REJECTED" &&
+        booking.status !== "CANCELLED" &&
+        booking.status !== "COMPLETED"
+      );
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.startAt);
+      const dateB = new Date(b.startAt);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+  const handleReviewClick = (bookingId: string) => {
+    openReviewModal(bookingId);
+  };
+
+  const navigate = useNavigate();
+
+  return (
+    <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
+      <>
+        <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
+
+        {/* FILTERS */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
+          <div className="relative w-full sm:w-1/5">
+            <FontAwesomeIcon
+              icon={faSearch}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            />
+            <Input
+              type="text"
+              placeholder="Search by Expert Name"
+              className="pl-10 w-full"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+          </div>
+          <div className="relative w-full sm:w-auto min-w-[180px]">
+            <FontAwesomeIcon
+              icon={faCalendarAlt}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"
+            />
+            <Input
+              type="date"
+              className="pl-10"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              max="2030-12-31"
+              min="2020-01-01"
+            />
+          </div>
+          <Select value={bookingStatus} onValueChange={setBookingStatus}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Payment Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Payments</SelectItem>
+              <SelectItem value="PAID">Paid</SelectItem>
+              <SelectItem value="NOT_PAID">Not Paid</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={actionFilter} onValueChange={setActionFilter}>
+            <SelectTrigger className="w-full sm: w-[180px]">
+              <SelectValue placeholder="Booking Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="accepted">Accepted</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="waiting">Waiting Approval</SelectItem>
+              <SelectItem value="rescheduled">Reschedule Requested</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select
+            value={serviceTypeFilter}
+            onValueChange={setServiceTypeFilter}
+          >
+            <SelectTrigger className="sm:w-[180px]">
+              <SelectValue placeholder="Service Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Service Types</SelectItem>
+              <SelectItem value="recorded-video">
+                RECORDED VIDEO ASSESSMENT
+              </SelectItem>
+              <SelectItem value="online">ONLINE TRAINING</SelectItem>
+              <SelectItem value="in-person">ON GROUND ASSESSMENT</SelectItem>
+              <SelectItem value="other">ONLINE ASSESSMENT</SelectItem>
+            </SelectContent>
+          </Select>
+          {filtersApplied && (
+            <Button
+              variant="outline"
+              className="flex items-center gap-2 text-red-600 border-red-600 hover:text-red-600"
+              onClick={clearAllFilters}
+            >
+              <FontAwesomeIcon icon={faTrash} />
+              <span>Clear Filters</span>
+            </Button>
+          )}
+        </div>
+
+        {/* ERROR */}
+        {error && (
+          <div className="mb-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md">
+            {error}
+          </div>
+        )}
+
+        {/* BOOKINGS TABLE */}
+        {loading ? (
+          <div className="text-center py-8">Loading bookings...</div>
+        ) : (
+          <BookingsTable
+            bookings={filteredBookings}
+            visibilityMap={visibilityMap}
+            onOpenBookingDetails={openBookingDetails}
+            onOpenVideoModal={openVideoModal}
+            onOpenReportModal={openReportModal}
+            onToggleVisibility={toggleVisibility}
+            onReviewClick={handleReviewClick}
+          />
+        )}
+        {!loading && page < totalPages && (
+          <div className="flex justify-center mt-6 mb-4">
+            <Button
+              variant="outline"
+              onClick={handleLoadMore}
+              disabled={loadingMore}
+              className="min-w-[200px] border-blue-200 text-blue-700 hover:bg-blue-50"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading older bookings...
+                </>
+              ) : (
+                <>
+                  <FontAwesomeIcon icon={faCalendarAlt} className="mr-2" />
+                  Load Older Bookings
+                </>
+              )}
+            </Button>
+          </div>
+        )}
+
+        {/* UPCOMING PAID SESSIONS */}
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Upcoming Paid Sessions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {upcomingPaidSessions.slice(0, 6).map((booking) => {
+              const isRecorded = booking.service?.serviceId === "1";
+              const times = getTimesForBothParties(booking);
+
+              return (
+                <div
+                  key={`upcoming-${booking.id}`}
+                  className="bg-white border rounded-lg p-4 shadow-sm hover: shadow-md cursor-pointer transition-shadow"
+                  onClick={() => openBookingDetails(booking)}
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <div className="max-w-[70%]">
+                      <div className="flex items-center gap-2 mb-1">
+                        <FontAwesomeIcon
+                          icon={getServiceTypeIcon(getServiceType(booking))}
+                          className="text-gray-500"
+                        />
+                        <h3
+                          className="font-medium truncate"
+                          title={booking.service?.service?.name || "Service"}
+                        >
+                          {booking.service?.service?.name || "Service"}
+                        </h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <img
+                          src={booking.expert?.photo || profile}
+                          alt={booking.expert?.username}
+                          className="w-6 h-6 rounded-full object-cover"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = profile;
+                          }}
+                        />
+                        <p
+                          className="text-sm text-gray-500 truncate cursor-pointer hover:text-blue-600"
+                          title={`with ${booking.expert?.username || "Expert"}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const expert = booking.expert?.username;
+                            localStorage.setItem(
+                              "viewexpertusername",
+                              expert || "",
+                            );
+                            navigate("/team/exdetails");
+                          }}
+                        >
+                          with{" "}
+                          {truncateText(
+                            booking.expert?.username || "Expert",
+                            15,
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <Badge className="bg-green-100 text-green-800 text-xs mb-1">
+                        Paid ✓
+                      </Badge>
+                      {!isRecorded && (
+                        <div className="text-xs text-gray-500">
+                          {formatShortDateInTimezone(
+                            booking.startAt,
+                            booking.timezone,
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {!isRecorded && (
+                    <div className="mb-3">
+                      <div className="text-sm text-gray-600 flex items-center gap-1 mb-1">
+                        <FontAwesomeIcon icon={faClock} className="w-3 h-3" />
+                        {times.teamTimeRange}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isSessionToday(booking) && (
+                          <Badge className="bg-blue-100 text-blue-800 text-xs">
+                            Today
+                          </Badge>
+                        )}
+                        {canGoLive(booking) && (
+                          <Badge className="bg-green-100 text-green-800 text-xs animate-pulse">
+                            Live Now
+                          </Badge>
+                        )}
+                        {isSessionOver(booking) && (
+                          <Badge className="bg-gray-100 text-gray-800 text-xs">
+                            Session Ended
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600 font-medium">
+                      £{booking.price || "N/A"}
+                    </span>
+
+                    {isRecorded ? (
+                      <span className="text-xs text-gray-500 italic bg-gray-100 px-2 py-1 rounded">
+                        Available anytime
+                      </span>
+                    ) : isSessionOver(booking) ? (
+                      <Button
+                        className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                        disabled
+                      >
+                        Session Ended
+                      </Button>
+                    ) : canGoLive(booking) ? (
+                      <Button
+                        className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 h-auto flex items-center gap-1"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleGoLive(booking);
+                        }}
+                      >
+                        <FontAwesomeIcon icon={faPlay} className="w-3 h-3" />
+                        Go Live
+                      </Button>
+                    ) : booking.service?.serviceId === "2" &&
+                      booking.status === "SCHEDULED" ? (
+                      <div className="text-right">
+                        <Button
+                          className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                          disabled
+                        >
+                          <FontAwesomeIcon
+                            icon={faClock}
+                            className="w-3 h-3 mr-1"
+                          />
+                          {getTimeUntilGoLive(booking) || "Not Available"}
+                        </Button>
+                        {getTimeUntilGoLive(booking) && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Available in {getTimeUntilGoLive(booking)}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <Button
+                        className="bg-gray-300 text-gray-600 text-sm px-3 py-1 h-auto cursor-not-allowed"
+                        disabled
+                      >
+                        {booking.status === "SCHEDULED"
+                          ? "View Details"
+                          : "Setup Pending"}
+                      </Button>
+                    )}
+                  </div>
+
+                  {!isRecorded &&
+                    isSessionToday(booking) &&
+                    !canGoLive(booking) &&
+                    !isSessionOver(booking) &&
+                    booking.status === "SCHEDULED" && (
+                      <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded">
+                        <FontAwesomeIcon icon={faInfoCircle} className="mr-1" />
+                        Meeting will be available 10 minutes before session
+                        starts
+                      </div>
+                    )}
+                </div>
+              );
+            })}
+            {upcomingPaidSessions.length === 0 && (
+              <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-8 text-gray-500">
+                <FontAwesomeIcon
+                  icon={faCalendarAlt}
+                  className="w-12 h-12 mb-3 text-gray-300"
+                />
+                <p className="text-lg">No upcoming paid sessions</p>
+                <p className="text-sm">
+                  Your confirmed sessions will appear here
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* SESSIONS TO COMPLETE */}
+        <div className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Sessions to Complete</h2>
+          <div className="space-y-2">
+            {sessionsToComplete.map((booking) => {
+              const isRecorded = booking.service?.serviceId === "1";
+              const times = getTimesForBothParties(booking);
+
+              return (
+                <div
+                  key={`complete-${booking.id}`}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 border rounded-md bg-gray-50 hover:bg-gray-100 cursor-pointer"
+                  onClick={() => openBookingDetails(booking)}
+                >
+                  <div className="flex items-center gap-3 mb-2 sm:mb-0">
+                    <img
+                      src={booking.expert?.photo || profile}
+                      alt="Expert"
+                      className="w-8 h-8 rounded-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = profile;
+                      }}
+                    />
+                    <div>
+                      <p
+                        className="font-medium cursor-pointer hover:text-blue-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const expert = booking.expert?.username;
+                          localStorage.setItem(
+                            "viewexpertusername",
+                            expert || "",
+                          );
+                          navigate("/team/exdetails");
+                        }}
+                      >
+                        {booking.expert?.username || "Unknown Expert"}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {booking.service?.service?.name}
+                        {!isRecorded && (
+                          <>
+                            {" - "}
+                            {times.teamDateTime}
+                            {isSessionOver(booking) && (
+                              <span className="ml-2 text-red-600 font-medium">
+                                (Session Ended)
+                              </span>
+                            )}
+                          </>
+                        )}
+                        {isRecorded && (
+                          <span className="ml-2 text-blue-600 font-medium">
+                            (Assessment Ready)
+                          </span>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    className="bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCompleteSession(booking.id);
+                    }}
+                  >
+                    <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                    Mark as Completed
+                  </Button>
+                </div>
+              );
+            })}
+            {sessionsToComplete.length === 0 && (
+              <p className="text-gray-500 text-center py-2">
+                No sessions to complete
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* BOOKING DETAILS MODAL */}
+        {selectedBooking && (
+          <Dialog
+            open={isBookingDetailsOpen}
+            onOpenChange={setIsBookingDetailsOpen}
+          >
+            <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="text-xl">Booking Details</DialogTitle>
+              </DialogHeader>
+
+              <div className="py-4">
+                {(() => {
+                  const isRecorded = selectedBooking.service?.serviceId === "1";
+                  const times = getTimesForBothParties(selectedBooking);
+                  const duration = formatDuration(
+                    selectedBooking.startAt,
+                    selectedBooking.endAt,
+                  );
+
+                  return (
+                    <>
+                      <div className="flex justify-between items-center mb-4">
+                        <Badge
+                          variant="outline"
+                          className={getActionBadgeStyle(
+                            selectedBooking.status,
+                          )}
+                        >
+                          {formatStatus(selectedBooking.status)}
+                        </Badge>
+                        <Badge
+                          variant="outline"
+                          className={getPaymentBadgeStyle(selectedBooking)}
+                        >
+                          {getPaymentStatusText(selectedBooking)}
+                        </Badge>
+                      </div>
+
+                      {/* Status & warnings */}
+                      {!isRecorded &&
+                        isSessionOver(selectedBooking) &&
+                        selectedBooking.status !== "COMPLETED" && (
+                          <div className="mb-5 p-4 rounded-lg border bg-amber-50 border-amber-200">
+                            <div className="flex items-start">
+                              <FontAwesomeIcon
+                                icon={faExclamationTriangle}
+                                className="mr-2 mt-1 flex-shrink-0 text-amber-600"
+                              />
+                              <div className="flex-1">
+                                <p className="font-medium text-amber-800">
+                                  Session Needs Completion
+                                </p>
+                                <p className="text-sm mt-1 text-amber-700">
+                                  This session has ended. Please mark it as
+                                  complete to finalize your booking.
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Live session info */}
+                      {!isRecorded &&
+                        isPaid(selectedBooking) &&
+                        selectedBooking.status === "SCHEDULED" &&
+                        !isSessionOver(selectedBooking) && (
+                          <div
+                            className={`mb-5 p-4 rounded-lg border ${
+                              canGoLive(selectedBooking)
+                                ? "bg-green-50 border-green-200"
+                                : isSessionToday(selectedBooking)
+                                  ? "bg-blue-50 border-blue-200"
+                                  : "bg-gray-50 border-gray-200"
+                            }`}
+                          >
+                            <div className="flex items-start">
+                              <FontAwesomeIcon
+                                icon={
+                                  canGoLive(selectedBooking)
+                                    ? faPlay
+                                    : isSessionToday(selectedBooking)
+                                      ? faInfoCircle
+                                      : faClock
+                                }
+                                className={`mr-2 mt-1 flex-shrink-0 ${
+                                  canGoLive(selectedBooking)
+                                    ? "text-green-600"
+                                    : isSessionToday(selectedBooking)
+                                      ? "text-blue-600"
+                                      : "text-gray-600"
+                                }`}
+                              />
+                              <div className="flex-1">
+                                <p
+                                  className={`font-medium ${
+                                    canGoLive(selectedBooking)
+                                      ? "text-green-800"
+                                      : isSessionToday(selectedBooking)
+                                        ? "text-blue-800"
+                                        : "text-gray-800"
+                                  }`}
+                                >
+                                  {canGoLive(selectedBooking)
+                                    ? "Session is Live Now!"
+                                    : isSessionToday(selectedBooking)
+                                      ? "Session Today"
+                                      : "Upcoming Session"}
+                                </p>
+                                <p
+                                  className={`text-sm mt-1 ${
+                                    canGoLive(selectedBooking)
+                                      ? "text-green-700"
+                                      : isSessionToday(selectedBooking)
+                                        ? "text-blue-700"
+                                        : "text-gray-700"
+                                  }`}
+                                >
+                                  {canGoLive(selectedBooking)
+                                    ? "Your session is currently live.  You can join the video call now."
+                                    : isSessionToday(selectedBooking)
+                                      ? `Your session starts at ${times.teamTimeRange}. Video call will be available 10 minutes before the session. `
+                                      : `Session scheduled for ${times.teamDateTime}`}
+                                </p>
+                                <div className="mt-3">
+                                  {canGoLive(selectedBooking) ? (
+                                    <Button
+                                      className="bg-red-500 hover:bg-red-600 text-white text-sm px-4 py-2 h-auto flex items-center gap-2"
+                                      onClick={() =>
+                                        handleGoLive(selectedBooking)
+                                      }
+                                    >
+                                      <FontAwesomeIcon
+                                        icon={faPlay}
+                                        className="w-4 h-4"
+                                      />
+                                      Go Live Now
+                                    </Button>
+                                  ) : getTimeUntilGoLive(selectedBooking) ? (
+                                    <Button
+                                      className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                                      disabled
+                                    >
+                                      <FontAwesomeIcon
+                                        icon={faClock}
+                                        className="w-4 h-4 mr-2"
+                                      />
+                                      Available in{" "}
+                                      {getTimeUntilGoLive(selectedBooking)}
+                                    </Button>
+                                  ) : (
+                                    <Button
+                                      className="bg-gray-300 text-gray-600 text-sm px-4 py-2 h-auto cursor-not-allowed"
+                                      disabled
+                                    >
+                                      Session Not Available
+                                    </Button>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                      {/* Special message for recorded video assessments */}
+                      {isRecorded && isPaid(selectedBooking) && (
+                        <div className="mb-5 p-4 rounded-lg border bg-blue-50 border-blue-200">
+                          <div className="flex items-start">
+                            <FontAwesomeIcon
+                              icon={faVideo}
+                              className="mr-2 mt-1 flex-shrink-0 text-blue-600"
+                            />
+                            <div className="flex-1">
+                              <p className="font-medium text-blue-800">
+                                Recorded Video Assessment
+                              </p>
+                              <p className="text-sm mt-1 text-blue-700">
+                                This assessment can be evaluated at any time.
+                                The expert will review your submission and
+                                provide feedback.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Expert info */}
+                      <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2 flex items-center">
+                          <FontAwesomeIcon
+                            icon={faUser}
+                            className="mr-2 text-gray-600"
+                          />
+                          Expert Information
+                        </h3>
+                        <div className="flex items-start gap-4">
+                          <img
+                            src={selectedBooking.expert?.photo || profile}
+                            alt="Expert"
+                            className="w-16 h-16 rounded-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src = profile;
+                            }}
+                          />
+                          <div>
+                            <h4 className="font-medium text-lg mb-1 break-words">
+                              {selectedBooking.expert?.username}
+                            </h4>
+                            <p className="text-gray-600 text-sm mb-1">
+                              Professional Coach
+                            </p>
+                            <p className="text-gray-600 text-sm">
+                              <FontAwesomeIcon
+                                icon={faStar}
+                                className="text-yellow-500 mr-1"
+                              />
+                              <FontAwesomeIcon
+                                icon={faStar}
+                                className="text-yellow-500 mr-1"
+                              />
+                              <FontAwesomeIcon
+                                icon={faStar}
+                                className="text-yellow-500 mr-1"
+                              />
+                              <FontAwesomeIcon
+                                icon={faStar}
+                                className="text-yellow-500 mr-1"
+                              />
+                              <FontAwesomeIcon
+                                icon={faStar}
+                                className="text-gray-300 mr-1"
+                              />
+                              (4.0)
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Service info */}
+                      <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-lg font-semibold flex items-center">
+                            <FontAwesomeIcon
+                              icon={getServiceTypeIcon(
+                                getServiceType(selectedBooking),
+                              )}
+                              className="mr-2 text-gray-600"
+                            />
+                            Service Details
+                          </h3>
+                          <div className="text-lg font-bold text-green-700">
+                            <FontAwesomeIcon
+                              icon={faMoneyBill}
+                              className="mr-1"
+                            />
+                            £{selectedBooking.price || "N/A"}
+                          </div>
+                        </div>
+                        <h4 className="font-medium mb-2 break-words">
+                          {selectedBooking.service?.service?.name || "N/A"}
+                        </h4>
+                        <p className="text-sm text-gray-600 mb-2">
+                          Type:{" "}
+                          {getServiceTypeName(getServiceType(selectedBooking))}
+                        </p>
+                        <p className="text-gray-600 mb-4">
+                          {selectedBooking.service?.service?.description ||
+                            "No description available"}
+                        </p>
+                      </div>
+
+                      {/* Session info */}
+                      {!isRecorded && (
+                        <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-3 flex items-center">
+                            <FontAwesomeIcon
+                              icon={faCalendarAlt}
+                              className="mr-2 text-gray-600"
+                            />
+                            Session Information
+                          </h3>
+
+                          {/* Duration */}
+                          <div className="mb-3 p-3 bg-white rounded border">
+                            <p className="text-sm text-gray-500 mb-1">
+                              Duration
+                            </p>
+                            <p className="font-semibold text-lg">{duration}</p>
+                          </div>
+
+                          {/* Team Time (Your Time) */}
+                          <div className="mb-3 p-3 bg-green-50 rounded border border-green-200">
+                            <p className="text-sm text-green-600 mb-1 font-medium">
+                              Your Time ({selectedBooking.timezone || "UTC"})
+                            </p>
+                            <p className="font-semibold text-green-800">
+                              {times.teamDateTime}
+                            </p>
+                            <p className="text-sm text-green-700 mt-1">
+                              {times.teamTimeRange}
+                            </p>
+                          </div>
+
+                          {/* Expert Time */}
+                          <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
+                            <p className="text-sm text-blue-600 mb-1 font-medium">
+                              Expert's Time (
+                              {selectedBooking.expertTimeZone || "UTC"})
+                            </p>
+                            <p className="font-semibold text-blue-800">
+                              {times.expertDateTime}
+                            </p>
+                            <p className="text-sm text-blue-700 mt-1">
+                              {times.expertTimeRange}
+                            </p>
+                          </div>
+
+                          {/* Timezone Info */}
+                          <div className="grid grid-cols-2 gap-3 mt-3">
+                            <div className="p-2 bg-gray-100 rounded">
+                              <p className="text-xs text-gray-500">
+                                Your Timezone
+                              </p>
+                              <p className="text-sm font-medium text-gray-800">
+                                {selectedBooking.timezone || "UTC"}
+                              </p>
+                            </div>
+                            <div className="p-2 bg-gray-100 rounded">
+                              <p className="text-xs text-gray-500">
+                                Expert's Timezone
+                              </p>
+                              <p className="text-sm font-medium text-gray-800">
+                                {selectedBooking.expertTimeZone || "UTC"}
+                              </p>
+                            </div>
+                          </div>
+
+                          {isSessionToday(selectedBooking) && (
+                            <Badge className="bg-blue-100 text-blue-800 text-xs mt-3">
+                              Today
+                            </Badge>
+                          )}
+
+                          {selectedBooking.location && (
+                            <div className="flex items-start mt-3">
+                              <FontAwesomeIcon
+                                icon={faMapMarkerAlt}
+                                className="mr-2 mt-1 text-gray-600 flex-shrink-0"
+                              />
+                              <div>
+                                <p className="font-medium">Location:</p>
+                                <p className="text-gray-600 break-words">
+                                  {selectedBooking.location}
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Assessment info for recorded video */}
+                      {isRecorded && (
+                        <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-2 flex items-center">
+                            <FontAwesomeIcon
+                              icon={faVideo}
+                              className="mr-2 text-gray-600"
+                            />
+                            Assessment Information
+                          </h3>
+                          <p className="text-gray-600 mb-2">
+                            This is a recorded video assessment that can be
+                            completed at your convenience.
+                          </p>
+                          {selectedBooking.description && (
+                            <>
+                              <p className="font-medium mt-2">Instructions:</p>
+                              <p className="text-gray-600 mb-4 break-words">
+                                {selectedBooking.description}
+                              </p>
+                            </>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Description */}
+                      {!isRecorded && selectedBooking.description && (
+                        <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-2">
+                            Description
+                          </h3>
+                          <p className="text-gray-600 break-words">
+                            {selectedBooking.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Approval waiting info */}
+                      {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
+                        <div className="mb-5 bg-amber-50 p-4 rounded-lg border border-amber-200">
+                          <div className="flex items-start">
+                            <FontAwesomeIcon
+                              icon={faExclamationTriangle}
+                              className="mr-2 mt-1 text-amber-600 flex-shrink-0"
+                            />
+                            <div>
+                              <p className="font-medium text-amber-800">
+                                Waiting for Expert Approval
+                              </p>
+                              <p className="text-amber-700 text-sm mt-1">
+                                Your booking request is pending approval from
+                                the expert. You will be able to make payment
+                                once approved.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Reschedule requested info */}
+                      {selectedBooking.status === "RESCHEDULE_REQUESTED" && (
+                        <div className="mb-5 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                          <div className="flex items-start">
+                            <FontAwesomeIcon
+                              icon={faCalendarAlt}
+                              className="mr-2 mt-1 text-yellow-600 flex-shrink-0"
+                            />
+                            <div>
+                              <p className="font-medium text-yellow-800">
+                                Reschedule Requested
+                              </p>
+                              <p className="text-yellow-700 text-sm mt-1">
+                                The expert has requested to reschedule this
+                                booking to a new date and time. Please review
+                                the new schedule below and accept if it works
+                                for you.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Video recording */}
+                      {(selectedBooking.recordedVideo ||
+                        selectedBooking.meetingRecording) && (
+                        <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                          <h3 className="text-lg font-semibold mb-2 flex items-center">
+                            <FontAwesomeIcon
+                              icon={faVideo}
+                              className="mr-2 text-gray-600"
+                            />
+                            Recording
+                          </h3>
+                          {selectedBooking.recordedVideo && (
+                            <div className="mb-2">
+                              <p className="font-medium mb-2">
+                                Recorded Video:
+                              </p>
+                              {selectedBooking.service &&
+                              selectedBooking.service?.serviceId === "1" ? (
+                                <div className="w-full rounded-lg overflow-hidden border border-gray-200">
+                                  {videoError ? (
+                                    <div className="bg-red-50 p-4 rounded border border-red-200 text-red-700 flex items-center">
+                                      <FontAwesomeIcon
+                                        icon={faExclamationTriangle}
+                                        className="mr-2"
+                                      />
+                                      <span>{videoError}</span>
+                                    </div>
+                                  ) : (
+                                    <video
+                                      src={selectedBooking.recordedVideo}
+                                      controls
+                                      className="w-full h-auto"
+                                      preload="metadata"
+                                      onError={handleVideoError}
+                                    >
+                                      Your browser does not support the video
+                                      tag.
+                                    </video>
+                                  )}
+                                  <div className="mt-2 text-sm text-gray-500">
+                                    <p>
+                                      If the video doesn't play, you can also{" "}
+                                      <a
+                                        href={selectedBooking.recordedVideo}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline"
+                                      >
+                                        open it directly
+                                      </a>
+                                      .
+                                    </p>
+                                  </div>
+                                  <div className="mt-3 text-sm text-gray-600">
+                                    <p>
+                                      Uploaded:{" "}
+                                      {new Date(
+                                        selectedBooking.createdAt,
+                                      ).toLocaleDateString()}
+                                    </p>
+                                    {selectedBooking.description && (
+                                      <div className="mt-2">
+                                        <p className="font-medium">
+                                          Description:
+                                        </p>
+                                        <p className="italic break-words">
+                                          {selectedBooking.description}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  className="text-blue-600 hover:bg-blue-50"
+                                  onClick={() =>
+                                    openVideoModal(selectedBooking.id)
+                                  }
+                                >
+                                  <FontAwesomeIcon
+                                    icon={faVideo}
+                                    className="mr-2"
+                                  />
+                                  View Recorded Video
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          {selectedBooking.meetingRecording && (
+                            <div>
+                              <p className="font-medium mb-2">
+                                Meeting Recording:
+                              </p>
+                              <Button
+                                variant="outline"
+                                className="text-blue-600 hover:bg-blue-50"
+                                onClick={() =>
+                                  openVideoModal(selectedBooking.id)
+                                }
+                              >
+                                <FontAwesomeIcon
+                                  icon={faVideo}
+                                  className="mr-2"
+                                />
+                                View Meeting Recording
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Booking info */}
+                      <div className="mb-5 bg-gray-50 p-4 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-2">
+                          Booking Information
+                        </h3>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Booking ID:</span>{" "}
+                          {selectedBooking.id}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Created:</span>{" "}
+                          {new Date(selectedBooking.createdAt).toLocaleString()}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <span className="font-medium">Last Updated:</span>{" "}
+                          {new Date(selectedBooking.updatedAt).toLocaleString()}
+                        </p>
+                        {selectedBooking.paymentIntentId && (
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium">Payment ID:</span>{" "}
+                            {selectedBooking.paymentIntentId}
+                          </p>
+                        )}
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {/* Footer actions */}
+              <DialogFooter className="flex flex-wrap gap-3 justify-end">
+                {(() => {
+                  const isRecorded =
+                    selectedBooking?.service?.serviceId === "1";
+
+                  return (
+                    <>
+                      {/* Go Live button */}
+                      {!isRecorded &&
+                        isPaid(selectedBooking) &&
+                        canGoLive(selectedBooking) &&
+                        selectedBooking.status === "SCHEDULED" &&
+                        selectedBooking.service?.serviceId === "2" &&
+                        !isSessionOver(selectedBooking) && (
+                          <Button
+                            className="bg-red-500 hover:bg-red-600 text-white flex items-center gap-2"
+                            onClick={() => handleGoLive(selectedBooking)}
+                          >
+                            <FontAwesomeIcon icon={faPlay} />
+                            Go Live Now
+                          </Button>
+                        )}
+
+                      {/* Mark as completed button */}
+                      {(selectedBooking.status === "SCHEDULED" ||
+                        (!isRecorded && isSessionOver(selectedBooking))) &&
+                        selectedBooking.status !== "COMPLETED" && (
+                          <Button
+                            variant="outline"
+                            className="bg-purple-50 text-purple-700 hover:bg-purple-100 hover:text-purple-800 border-purple-200"
+                            onClick={() =>
+                              handleCompleteSession(selectedBooking.id)
+                            }
+                          >
+                            <FontAwesomeIcon
+                              icon={faCheckCircle}
+                              className="mr-2"
+                            />
+                            Mark as Completed
+                          </Button>
+                        )}
+
+                      {/* Payment button */}
+                      {needsPayment(selectedBooking) && (
+                        <Button
+                          className="bg-red-500 hover:bg-red-600 text-white"
+                          onClick={() => handlePayment(selectedBooking.id)}
+                        >
+                          <FontAwesomeIcon
+                            icon={faCreditCard}
+                            className="mr-2"
+                          />
+                          Pay Now (£{selectedBooking.price})
+                        </Button>
+                      )}
+
+                      {/* Waiting for approval button */}
+                      {selectedBooking.status === "WAITING_EXPERT_APPROVAL" && (
+                        <Button
+                          className="bg-gray-300 text-gray-600 cursor-not-allowed"
+                          disabled
+                        >
+                          <FontAwesomeIcon
+                            icon={faCreditCard}
+                            className="mr-2"
+                          />
+                          Awaiting Expert Approval
+                        </Button>
+                      )}
+
+                      {/* Accept Reschedule button */}
+                      {selectedBooking.status === "RESCHEDULE_REQUESTED" && (
+                        <Button
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                          onClick={() =>
+                            handleAcceptReschedule(selectedBooking.id)
+                          }
+                          disabled={acceptingReschedule}
+                        >
+                          {acceptingReschedule ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Accepting...
+                            </>
+                          ) : (
+                            <>
+                              <FontAwesomeIcon
+                                icon={faCheckCircle}
+                                className="mr-2"
+                              />
+                              Accept Reschedule
+                            </>
+                          )}
+                        </Button>
+                      )}
+
+                      {/* Report and Review buttons */}
+                      <Button
+                        variant="outline"
+                        onClick={(e) =>
+                          handleReportClick(selectedBooking.id, e)
+                        }
+                      >
+                        <FontAwesomeIcon icon={faFileAlt} className="mr-2" />
+                        View Report
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => openReviewModal(selectedBooking.id)}
+                      >
+                        <FontAwesomeIcon icon={faStar} className="mr-2" />
+                        Review
+                      </Button>
+                      <Button variant="outline" onClick={closeBookingDetails}>
+                        Close
+                      </Button>
+                    </>
+                  );
+                })()}
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {/* VIDEO MODAL */}
+        {isVideoOpen && (
+          <div className="fixed inset-0 bg-blur ml-[260px] bg-opacity-50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-lg p-4 sm:p-6 w-[95%] max-w-3xl relative">
+              <button
+                onClick={closeVideoModal}
+                className="absolute top-2 right-2 text-gray-500 hover:text-black text-2xl sm:text-4xl cursor-pointer"
+              >
+                ×
+              </button>
+              {selectedBookingId && (
+                <div className="mt-6">
+                  <h2 className="text-lg sm:text-xl font-semibold mb-4">
+                    Recorded Session
+                  </h2>
+                  {bookings.find((b) => b.id === selectedBookingId)
+                    ?.recordedVideo ? (
+                    <div className="w-full rounded-lg overflow-hidden">
+                      <video
+                        src={
+                          bookings.find((b) => b.id === selectedBookingId)
+                            ?.recordedVideo || ""
+                        }
+                        controls
+                        className="w-full h-auto"
+                        preload="metadata"
+                        autoPlay
+                        onError={() => {
+                          setError(
+                            "Failed to load video. Please try again later.",
+                          );
+                        }}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  ) : bookings.find((b) => b.id === selectedBookingId)
+                      ?.meetingRecording ? (
+                    <div className="w-full rounded-lg overflow-hidden">
+                      <video
+                        src={
+                          bookings.find((b) => b.id === selectedBookingId)
+                            ?.meetingRecording || ""
+                        }
+                        controls
+                        className="w-full h-auto"
+                        preload="metadata"
+                        autoPlay
+                        onError={() => {
+                          setError(
+                            "Failed to load video. Please try again later.",
+                          );
+                        }}
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500">
+                      No video recording available for this session.
+                    </p>
+                  )}
+                  {error && (
+                    <div className="mt-4 p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-md">
+                      {error}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* REPORT MODAL */}
+        {isReportOpen && (
+          <div className="fixed inset-0 z-50 bg-white flex flex-col">
+            <div className="flex justify-between items-center p-4 border-b">
+              <h2 className="text-lg font-semibold">Assessment Report</h2>
+              <button onClick={closeReportModal}>
+                <X className="w-6 h-6 cursor-pointer text-gray-800 hover:text-black" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-auto p-4">
+              {reportLoading ? (
+                <div className="text-center py-8">Loading report...</div>
+              ) : (
+                <AssessmentReport
+                  bookingId={selectedBookingId}
+                  reportData={reportData}
+                />
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* PAYMENT MODAL */}
+        {selectedBookingForPayment && (
+          <StripePaymentModal
+            isOpen={isPaymentModalOpen}
+            onClose={() => {
+              setIsPaymentModalOpen(false);
+              setSelectedBookingForPayment(null);
+            }}
+            booking={selectedBookingForPayment}
+            onSuccess={handlePaymentSuccess}
+            onError={handlePaymentError}
+            stripePromise={stripePromise}
+          />
+        )}
+
+        {/* AGORA VIDEO MODAL */}
+        {booking && (
+          <AgoraVideoModal
+            isOpen={isAgoraModalOpen}
+            onClose={handleEndCall}
+            booking={booking}
+            agora={agora}
+          />
+        )}
+
+        {/* REVIEW MODAL */}
+        <Dialog open={isReviewModalOpen} onOpenChange={setIsReviewModalOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>
+                {bookings.find((b) => b.id === selectedBookingId)?.review
+                  ? "Edit Review"
+                  : "Add Review for the Expert"}
+              </DialogTitle>
+              <DialogDescription>
+                Add your feedback about the Expert during this session. This
+                review will be visible to the Expert.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-1">Session Details:</p>
+                {selectedBookingId && (
+                  <p className="text-sm text-gray-500">
+                    {bookings.find((b) => b.id === selectedBookingId)?.service
+                      ?.service?.name || "Service"}{" "}
+                    with{" "}
+                    {bookings.find((b) => b.id === selectedBookingId)?.expert
+                      ?.username || "Expert"}{" "}
+                    on{" "}
+                    {(() => {
+                      const booking = bookings.find(
+                        (b) => b.id === selectedBookingId,
+                      );
+                      if (booking) {
+                        const times = getTimesForBothParties(booking);
+                        return times.teamDateTime;
+                      }
+                      return "";
+                    })()}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Rating:</p>
+                <div className="flex items-center gap-1">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      onClick={() => setNewRating(star)}
+                      className="p-1 hover:scale-110 transition-transform"
+                    >
+                      <Star
+                        className={`w-6 h-6 ${
+                          star <= (newRating || 0)
+                            ? "fill-yellow-400 text-yellow-400"
+                            : "text-gray-300"
+                        }`}
+                      />
+                    </button>
+                  ))}
+                  <span className="ml-2 text-sm text-gray-600">
+                    {newRating ? `${newRating}/5` : "Select rating"}
+                  </span>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium mb-2">Your Review:</p>
+                <Textarea
+                  placeholder="Enter your review here..."
+                  className="min-h-[150px]"
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={closeReviewModal}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmitReview}
+                disabled={submittingReview || !reviewText.trim()}
+              >
+                {submittingReview ? "Submitting..." : "Submit Review"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </>
+    </div>
+  );
+};
+
+export default TeamBooking;
