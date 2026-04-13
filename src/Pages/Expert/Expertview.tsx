@@ -574,13 +574,15 @@ const Expertview = () => {
         );
       } else {
         displayDescription =
-          service.description ||
-          service.additionalDetails ||
-          null;
+          service.description || service.additionalDetails || null;
       }
       // Use default description if none available
-      if (!displayDescription || displayDescription === "No description available") {
-        displayDescription = SERVICE_DEFAULT_DESCRIPTIONS[serviceId] || "No description available";
+      if (
+        !displayDescription ||
+        displayDescription === "No description available"
+      ) {
+        displayDescription =
+          SERVICE_DEFAULT_DESCRIPTIONS[serviceId] || "No description available";
       }
       return {
         id: service.id || service.serviceId,
@@ -1054,7 +1056,7 @@ const Expertview = () => {
         </div>
       )}
 
-      {localStorage.getItem("role") === "player" ? (
+      {localStorage.getItem("role") === "player" || "team" ? (
         <>
           <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-bold">Services Offered</h2>
