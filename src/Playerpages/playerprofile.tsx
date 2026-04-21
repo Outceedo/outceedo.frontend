@@ -29,6 +29,7 @@ import FollowList from "../components/follower/followerlist";
 import axios from "axios";
 import Settings from "./settings";
 import PlayerBusinessCard from "./businessCard";
+import ProfileMatches from "./profileMatches";
 
 interface Stat {
   name: string;
@@ -117,7 +118,7 @@ const StarRating: React.FC<{
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "account" | "businessCard"
+    "details" | "media" | "reviews" | "account" | "businessCard" | "matches"
   >("details");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
@@ -737,6 +738,7 @@ const Profile: React.FC = () => {
                   "reviews",
                   "account",
                   "businessCard",
+                  "matches",
                 ] as const
               ).map((tab) => (
                 <button
@@ -787,6 +789,9 @@ const Profile: React.FC = () => {
                       playerData={playerData}
                       playerStats={playerStats}
                     />
+                  )}
+                  {activeTab === "matches" && currentProfile?.id && (
+                    <ProfileMatches userId={currentProfile.id} />
                   )}
                 </>
               )}

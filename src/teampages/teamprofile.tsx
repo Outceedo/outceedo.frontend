@@ -21,11 +21,12 @@ import { getProfile } from "@/store/profile-slice";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
 import Settings from "./settings";
+import ProfileMatches from "./profileMatches";
 
 const TeamProfile = () => {
-  const [activeTab, setActiveTab] = useState<"details" | "media" | "account">(
-    "details",
-  );
+  const [activeTab, setActiveTab] = useState<
+    "details" | "media" | "account" | "matches"
+  >("details");
   const [showIncompleteNotice, setShowIncompleteNotice] = useState(true);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -357,7 +358,7 @@ const TeamProfile = () => {
         {/* Tabs Section */}
         <div className="mt-6">
           <div className="flex gap-4 border-b overflow-x-auto">
-            {(["details", "media", "account"] as const).map((tab) => (
+            {(["details", "media", "account", "matches"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -376,6 +377,9 @@ const TeamProfile = () => {
             {activeTab === "details" && <TeamDetails profileData={data} />}
             {activeTab === "media" && <Mediaedit Data={data} />}
             {activeTab === "account" && <Settings />}
+            {activeTab === "matches" && currentProfile?.id && (
+              <ProfileMatches userId={currentProfile.id} />
+            )}
           </div>
         </div>
       </>
