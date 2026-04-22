@@ -275,6 +275,7 @@ const AppContent: React.FC = () => {
           <Route path="sponsorinfo" element={<PlayerSponsorInfo />} />
           <Route path="applications" element={<SponsorApplicationpage />} />
           <Route path="referral" element={<ReferralPage />} />
+          <Route path="teamprofile" element={<TeamView />} />
         </Route>
 
         {/* Expert routes */}

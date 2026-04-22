@@ -21,7 +21,10 @@ const PlayerTeamTab = () => {
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
 
-  const associatedTeam = currentProfile?.associatedTeam as AssociatedTeam | null | undefined;
+  const associatedTeam = currentProfile?.associatedTeam as
+    | AssociatedTeam
+    | null
+    | undefined;
 
   const handleExitTeam = async () => {
     setIsExiting(true);
@@ -32,7 +35,9 @@ const PlayerTeamTab = () => {
       const username = localStorage.getItem("username");
       if (username) dispatch(getProfile(username));
     } catch (err: any) {
-      setError(err.response?.data?.error || "Failed to exit team. Please try again.");
+      setError(
+        err.response?.data?.error || "Failed to exit team. Please try again.",
+      );
     } finally {
       setIsExiting(false);
     }
@@ -69,7 +74,7 @@ const PlayerTeamTab = () => {
       {/* Team Card */}
       <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm">
         {/* Banner */}
-        <div className="h-16 bg-gradient-to-r from-red-600 to-red-800" />
+        <div className="h-16 bg-red-600" />
 
         <div className="px-5 pb-5">
           {/* Team Photo */}
@@ -116,9 +121,7 @@ const PlayerTeamTab = () => {
             </Button>
           </div>
 
-          {error && (
-            <p className="text-xs text-red-600 mt-2">{error}</p>
-          )}
+          {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
         </div>
       </div>
 
@@ -148,8 +151,10 @@ const PlayerTeamTab = () => {
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-300 mb-6">
                 Are you sure you want to leave{" "}
-                <strong>{associatedTeam.teamName || associatedTeam.teamUsername}</strong>?
-                You will be removed from the team roster and your profile will
+                <strong>
+                  {associatedTeam.teamName || associatedTeam.teamUsername}
+                </strong>
+                ? You will be removed from the team roster and your profile will
                 no longer show this team association.
               </p>
               <div className="flex gap-2">

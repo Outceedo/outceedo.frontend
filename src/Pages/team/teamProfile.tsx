@@ -13,10 +13,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BookOpen, X, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import {
+  BookOpen,
+  X,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  ArrowLeft,
+} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
 import profile from "../../assets/images/avatar.png";
+import loaderGif from "../../assets/images/loader.gif";
 import Mediaview from "@/Pages/Media/MediaView";
 import TeamProfileDetails from "./TeamProfileDetails";
 import TeamPlayersView from "./teamPlayers";
@@ -237,9 +245,7 @@ const TeamView: React.FC = () => {
       try {
         const username = localStorage.getItem("viewteamusername");
         if (username) {
-          setTimeout(() => {
-            dispatch(getProfile(username));
-          }, 200);
+          dispatch(getProfile(username));
         } else {
           setIsLoading(false);
         }
@@ -252,6 +258,7 @@ const TeamView: React.FC = () => {
 
   // --- Handle Profile Data & Fetch Stats ---
   useEffect(() => {
+    const targetUsername = localStorage.getItem("viewteamusername");
     if (status === "succeeded" && viewedProfile) {
       let processedProfile = viewedProfile;
       if (viewedProfile.user) {
@@ -260,20 +267,18 @@ const TeamView: React.FC = () => {
         processedProfile = viewedProfile.data;
       }
 
-      setProfileData(processedProfile);
+      // Don't render until the correct profile is loaded
+      if (processedProfile.username !== targetUsername) return;
 
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
+      setProfileData(processedProfile);
+      setIsLoading(false);
 
       // Fetch stats if the profile is a team (and has an ID)
       if (processedProfile.role === "team" && processedProfile.id) {
         fetchTeamStats(processedProfile.id);
       }
     } else if (status === "failed") {
-      setTimeout(() => {
-        setIsLoading(false);
-      }, 500);
+      setIsLoading(false);
     }
   }, [viewedProfile, status]);
 
@@ -493,7 +498,7 @@ const TeamView: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-screen w-full">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-red-600"></div>
+        <Loader2 />
       </div>
     );
   }
@@ -528,12 +533,12 @@ const TeamView: React.FC = () => {
     <div className="w-full min-h-screen dark:bg-gray-900 px-16 sm:p-6">
       <div className="w-full">
         {/* Back Button */}
-        <div
+        <button
           onClick={() => navigate(-1)}
-          className="flex flex-row text-2xl sm:text-4xl font-bold text-start cursor-pointer mb-4"
+          className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300 mb-4"
         >
-          ←
-        </div>
+          <ArrowLeft className="h-5 w-5" />
+        </button>
 
         {/* Profile Header Section */}
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-start mt-1 sm:mt-3">
@@ -749,28 +754,33 @@ const TeamView: React.FC = () => {
         {/* Tabs Section */}
         <div className="mt-8">
           <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto pb-1">
-            {(["details", "media", "reviews", "matches", "players"] as const).map(
-              (tab) => (
-                <button
-                  key={tab}
-                  onClick={() => {
-                    setActiveTab(tab);
-                    if (tab === "matches" && profileData?.id && matches.length === 0 && !matchesLoading) {
-                      fetchMatches(profileData.id);
-                    }
-                  }}
-                  className={`text-base sm:text-lg font-medium capitalize transition-all duration-200 px-2 pb-2 border-b-2 ${
-                    activeTab === tab
-                      ? "text-red-600 border-red-600"
-                      : "border-transparent text-gray-500 dark:text-gray-400 hover:text-red-600"
-                  }`}
-                >
-                  {tab === "players"
-                    ? `players${profileData.teamPlayersData?.length ? ` (${(profileData.teamPlayersData as any[]).length})` : ""}`
-                    : tab}
-                </button>
-              ),
-            )}
+            {(
+              ["details", "media", "reviews", "matches", "players"] as const
+            ).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  if (
+                    tab === "matches" &&
+                    profileData?.id &&
+                    matches.length === 0 &&
+                    !matchesLoading
+                  ) {
+                    fetchMatches(profileData.id);
+                  }
+                }}
+                className={`text-base sm:text-lg font-medium capitalize transition-all duration-200 px-2 pb-2 border-b-2 ${
+                  activeTab === tab
+                    ? "text-red-600 border-red-600"
+                    : "border-transparent text-gray-500 dark:text-gray-400 hover:text-red-600"
+                }`}
+              >
+                {tab === "players"
+                  ? `players${profileData.teamPlayersData?.length ? ` (${(profileData.teamPlayersData as any[]).length})` : ""}`
+                  : tab}
+              </button>
+            ))}
           </div>
           <div className="mt-6">
             {activeTab === "details" && (
@@ -778,11 +788,7 @@ const TeamView: React.FC = () => {
             )}
             {activeTab === "media" && <Mediaview Data={profileData} />}
             {activeTab === "reviews" && <Reviewview Data={profileData} />}
-            {activeTab === "players" && (
-              <TeamPlayersView
-                players={(profileData.teamPlayersData as any) || []}
-              />
-            )}
+            {activeTab === "players" && <TeamPlayersView />}
             {activeTab === "matches" && (
               <div className="space-y-4">
                 <div className="flex justify-end">
