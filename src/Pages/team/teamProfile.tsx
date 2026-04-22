@@ -19,6 +19,7 @@ import { getProfile } from "../../store/profile-slice";
 import profile from "../../assets/images/avatar.png";
 import Mediaview from "@/Pages/Media/MediaView";
 import TeamProfileDetails from "./TeamProfileDetails";
+import TeamPlayersView from "./teamPlayers";
 import FollowersList from "../../components/follower/followerlist";
 import Reviewview from "../Reviews/Reviewview";
 import Swal from "sweetalert2";
@@ -182,7 +183,7 @@ const StarRating: React.FC<{
 
 const TeamView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "matches"
+    "details" | "media" | "reviews" | "matches" | "players"
   >("details");
   const [matches, setMatches] = useState<MatchRecord[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
@@ -748,7 +749,7 @@ const TeamView: React.FC = () => {
         {/* Tabs Section */}
         <div className="mt-8">
           <div className="flex gap-6 border-b border-gray-200 dark:border-gray-700 overflow-x-auto pb-1">
-            {(["details", "media", "reviews", "matches"] as const).map(
+            {(["details", "media", "reviews", "matches", "players"] as const).map(
               (tab) => (
                 <button
                   key={tab}
@@ -764,7 +765,9 @@ const TeamView: React.FC = () => {
                       : "border-transparent text-gray-500 dark:text-gray-400 hover:text-red-600"
                   }`}
                 >
-                  {tab}
+                  {tab === "players"
+                    ? `players${profileData.teamPlayersData?.length ? ` (${(profileData.teamPlayersData as any[]).length})` : ""}`
+                    : tab}
                 </button>
               ),
             )}
@@ -775,6 +778,11 @@ const TeamView: React.FC = () => {
             )}
             {activeTab === "media" && <Mediaview Data={profileData} />}
             {activeTab === "reviews" && <Reviewview Data={profileData} />}
+            {activeTab === "players" && (
+              <TeamPlayersView
+                players={(profileData.teamPlayersData as any) || []}
+              />
+            )}
             {activeTab === "matches" && (
               <div className="space-y-4">
                 <div className="flex justify-end">

@@ -707,6 +707,7 @@ const Playerview: React.FC = () => {
                   </div>
                 )}
               {profileData.role === "player" && (
+                <div className="flex flex-wrap gap-3 items-start mt-0">
                 <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit">
                   {statsLoading ? (
                     <div className="flex items-center justify-center p-4 sm:p-8">
@@ -758,6 +759,33 @@ const Playerview: React.FC = () => {
                     </div>
                   )}
                 </Card>
+                {(() => {
+                  const team = profileData.associatedTeam as { teamName?: string; teamUsername?: string; photo?: string } | null;
+                  if (!team?.teamUsername) return null;
+                  return (
+                    <div className="flex flex-col justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm min-w-[140px] max-w-[160px]">
+                      <div className="h-8 bg-gradient-to-r from-red-600 to-red-800" />
+                      <div className="px-3 pb-3">
+                        <div className="-mt-5 mb-2">
+                          <img
+                            src={team.photo || "/avatar.png"}
+                            alt={team.teamName || team.teamUsername}
+                            className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow"
+                            onError={(e) => { e.currentTarget.src = "/avatar.png"; }}
+                          />
+                        </div>
+                        <p className="text-xs font-bold dark:text-white leading-tight line-clamp-1">
+                          {team.teamName || team.teamUsername}
+                        </p>
+                        <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">@{team.teamUsername}</p>
+                        <span className="inline-block mt-1.5 text-[10px] font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
+                          My Team
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })()}
+                </div>
               )}
               <div className="flex items-center gap-2 mt-3 sm:mt-4">
                 <StarRating avg={avgRating} className="mr-2" />
