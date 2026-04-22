@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BookOpen, X, Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { BookOpen, X, Loader2, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
 import profile from "../../assets/images/avatar.png";
@@ -570,15 +570,15 @@ const Playerview: React.FC = () => {
       : profileData.country || profileData.city || "N/A";
 
   return (
-    <div className="flex w-full min-h-screen dark:bg-gray-900">
-      <div className="flex px-2 sm:px-4">
+    <div className="w-full min-h-screen dark:bg-gray-900">
+      <div className="w-full px-2 sm:px-4">
         <div className="max-w-6xl mx-auto">
-          <div
+          <button
             onClick={() => navigate(-1)}
-            className="flex flex-row text-2xl sm:text-4xl font-bold text-start cursor-pointer"
+            className="flex items-center justify-center w-9 h-9 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-gray-700 dark:text-gray-300"
           >
-            ←
-          </div>
+            <ArrowLeft className="h-5 w-5" />
+          </button>
           <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center mt-1 sm:mt-3">
             <img
               src={profileData.photo || profile}
@@ -707,8 +707,8 @@ const Playerview: React.FC = () => {
                   </div>
                 )}
               {profileData.role === "player" && (
-                <div className="flex flex-wrap gap-3 items-start mt-0">
-                <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit">
+                <div className="flex flex-wrap gap-3 items-start mt-0 w-full">
+                <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit max-w-full overflow-x-auto flex-shrink-0">
                   {statsLoading ? (
                     <div className="flex items-center justify-center p-4 sm:p-8">
                       <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-t-2 border-b-2 border-red-600"></div>
@@ -763,9 +763,9 @@ const Playerview: React.FC = () => {
                   const team = profileData.associatedTeam as { teamName?: string; teamUsername?: string; photo?: string } | null;
                   if (!team?.teamUsername) return null;
                   return (
-                    <div className="flex flex-col justify-between bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm min-w-[140px] max-w-[160px]">
-                      <div className="h-8 bg-gradient-to-r from-red-600 to-red-800" />
-                      <div className="px-3 pb-3">
+                    <div className="flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm min-w-[140px] max-w-[160px] flex-shrink-0">
+                      <div className="h-8 bg-red-600" />
+                      <div className="px-3 pb-1">
                         <div className="-mt-5 mb-2">
                           <img
                             src={team.photo || "/avatar.png"}
@@ -777,8 +777,8 @@ const Playerview: React.FC = () => {
                         <p className="text-xs font-bold dark:text-white leading-tight line-clamp-1">
                           {team.teamName || team.teamUsername}
                         </p>
-                        <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">@{team.teamUsername}</p>
-                        <span className="inline-block mt-1.5 text-[10px] font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
+                        {/* <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">@{team.teamUsername}</p> */}
+                        <span className="inline-block mt-1 text-[10px] font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
                           My Team
                         </span>
                       </div>
