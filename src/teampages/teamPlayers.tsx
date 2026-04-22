@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { userService } from "@/store/apiConfig";
+import { useAppSelector, useAppDispatch } from "@/store/hooks";
+import { getProfile } from "@/store/profile-slice";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -30,33 +32,28 @@ interface Player {
   weight?: number;
 }
 
+interface TeamPlayerData {
+  username: string;
+  photo: string | null;
+  firstName: string;
+  lastName: string;
+}
+
 const TeamPlayers = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const currentProfile = useAppSelector((state) => state.profile.currentProfile);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Player[]>([]);
-  const [teamPlayers, setTeamPlayers] = useState<Player[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
   const [isSearching, setIsSearching] = useState(false);
-  const [isLoadingTeam, setIsLoadingTeam] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState<string | null>(null);
   const [removingPlayer, setRemovingPlayer] = useState<string | null>(null);
   const [error, setError] = useState("");
 
-  useEffect(() => {
-    loadTeamPlayers();
-  }, []);
-
-  const loadTeamPlayers = async () => {
-    setIsLoadingTeam(true);
-    try {
-      const { data } = await userService.get("/players/my-team");
-      setTeamPlayers(data.players || []);
-    } catch (err: any) {
-      console.error("Failed to load team players", err);
-    } finally {
-      setIsLoadingTeam(false);
-    }
-  };
+  const teamPlayersData: TeamPlayerData[] =
+    (currentProfile?.teamPlayersData as unknown as TeamPlayerData[]) || [];
 
   // Debounced search
   useEffect(() => {
@@ -86,7 +83,9 @@ const TeamPlayers = () => {
     try {
       await userService.post("/players/add", { usernames: [username] });
       setSearchResults((prev) => prev.filter((p) => p.username !== username));
-      await loadTeamPlayers();
+      if (currentProfile?.username) {
+        dispatch(getProfile(currentProfile.username));
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to add player");
     } finally {
@@ -101,7 +100,9 @@ const TeamPlayers = () => {
       await userService.delete("/players/remove", {
         data: { usernames: [username] },
       });
-      setTeamPlayers((prev) => prev.filter((p) => p.username !== username));
+      if (currentProfile?.username) {
+        dispatch(getProfile(currentProfile.username));
+      }
     } catch (err: any) {
       setError(err.response?.data?.error || "Failed to remove player");
     } finally {
@@ -114,7 +115,7 @@ const TeamPlayers = () => {
     navigate("/team/playerinfo");
   };
 
-  const teamPlayerUsernames = new Set(teamPlayers.map((p) => p.username));
+  const teamPlayerUsernames = new Set(teamPlayersData.map((p) => p.username));
 
   return (
     <div className="space-y-8">
@@ -226,15 +227,11 @@ const TeamPlayers = () => {
         <h2 className="text-base font-semibold mb-3 dark:text-white">
           Your Players{" "}
           <span className="text-sm font-normal text-gray-500">
-            ({teamPlayers.length})
+            ({teamPlayersData.length})
           </span>
         </h2>
 
-        {isLoadingTeam ? (
-          <div className="flex justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin text-red-500" />
-          </div>
-        ) : teamPlayers.length === 0 ? (
+        {teamPlayersData.length === 0 ? (
           <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
             <p className="text-gray-500 text-sm">
               No players in your team yet. Search above to add some.
@@ -242,7 +239,7 @@ const TeamPlayers = () => {
           </div>
         ) : (
           <div className="space-y-2">
-            {teamPlayers.map((player) => (
+            {teamPlayersData.map((player) => (
               <div
                 key={player.username}
                 className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
@@ -261,11 +258,6 @@ const TeamPlayers = () => {
                   </p>
                   <p className="text-xs text-gray-500">@{player.username}</p>
                 </div>
-                {player.sport && (
-                  <span className="hidden sm:inline text-xs text-red-600 font-medium px-2 py-0.5 bg-red-50 dark:bg-red-900/20 rounded-full flex-shrink-0">
-                    {player.sport}
-                  </span>
-                )}
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Button
                     size="sm"
