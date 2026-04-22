@@ -22,10 +22,11 @@ import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
 import Settings from "./settings";
 import ProfileMatches from "./profileMatches";
+import TeamPlayers from "./teamPlayers";
 
 const TeamProfile = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "account" | "matches"
+    "details" | "media" | "account" | "matches" | "manage team"
   >("details");
   const [showIncompleteNotice, setShowIncompleteNotice] = useState(true);
   const dispatch = useAppDispatch();
@@ -358,7 +359,7 @@ const TeamProfile = () => {
         {/* Tabs Section */}
         <div className="mt-6">
           <div className="flex gap-4 border-b overflow-x-auto">
-            {(["details", "media", "account", "matches"] as const).map((tab) => (
+            {(["details", "media", "account", "matches", "manage team"] as const).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -380,6 +381,7 @@ const TeamProfile = () => {
             {activeTab === "matches" && currentProfile?.id && (
               <ProfileMatches userId={currentProfile.id} />
             )}
+            {activeTab === "manage team" && <TeamPlayers />}
           </div>
         </div>
       </>
