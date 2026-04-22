@@ -47,6 +47,7 @@ const TeamPlayers = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Player[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<TeamPlayerData | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState<string | null>(null);
   const [removingPlayer, setRemovingPlayer] = useState<string | null>(null);
@@ -238,42 +239,41 @@ const TeamPlayers = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {teamPlayersData.map((player) => (
               <div
                 key={player.username}
-                className="flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg"
+                className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm flex flex-col items-center gap-2"
               >
                 <img
                   src={player.photo || avatar}
                   alt={player.username}
-                  className="w-10 h-10 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                  className="w-14 h-14 rounded-full object-cover border-2 border-gray-200"
                   onError={(e) => {
                     e.currentTarget.src = avatar;
                   }}
                 />
-                <div className="flex-1 min-w-0">
+                <div className="text-center w-full">
                   <p className="text-sm font-semibold dark:text-white truncate">
                     {player.firstName} {player.lastName}
                   </p>
-                  <p className="text-xs text-gray-500">@{player.username}</p>
+                  <p className="text-xs text-gray-500 truncate">@{player.username}</p>
                 </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex gap-1.5 w-full mt-1">
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-xs h-8 gap-1 border-gray-300"
+                    className="flex-1 text-xs h-7 gap-1 border-gray-300"
                     onClick={() => viewProfile(player.username)}
                   >
                     <Eye className="h-3 w-3" />
-                    <span className="hidden sm:inline">View Profile</span>
                   </Button>
                   <Button
                     size="sm"
                     variant="outline"
-                    className="text-xs h-8 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    className="flex-1 text-xs h-7 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
                     disabled={removingPlayer === player.username}
-                    onClick={() => removePlayer(player.username)}
+                    onClick={() => setConfirmRemove(player)}
                   >
                     {removingPlayer === player.username ? (
                       <Loader2 className="h-3 w-3 animate-spin" />
@@ -287,6 +287,74 @@ const TeamPlayers = () => {
           </div>
         )}
       </div>
+
+      {/* Remove Confirmation Modal */}
+      {confirmRemove && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setConfirmRemove(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
+              <h3 className="font-semibold text-base dark:text-white">Remove Player</h3>
+              <button
+                onClick={() => setConfirmRemove(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={confirmRemove.photo || avatar}
+                  alt={confirmRemove.username}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                  onError={(e) => { e.currentTarget.src = avatar; }}
+                />
+                <div>
+                  <p className="font-semibold text-sm dark:text-white">
+                    {confirmRemove.firstName} {confirmRemove.lastName}
+                  </p>
+                  <p className="text-xs text-gray-500">@{confirmRemove.username}</p>
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
+                Are you sure you want to remove this player from your team? They will need to be re-added manually.
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 h-9 text-sm"
+                  onClick={() => setConfirmRemove(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700"
+                  disabled={removingPlayer === confirmRemove.username}
+                  onClick={() => {
+                    removePlayer(confirmRemove.username);
+                    setConfirmRemove(null);
+                  }}
+                >
+                  {removingPlayer === confirmRemove.username ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <UserMinus className="h-4 w-4 mr-1.5" />
+                      Remove
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Player Info Modal */}
       {selectedPlayer && (
