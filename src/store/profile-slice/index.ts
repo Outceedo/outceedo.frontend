@@ -8,6 +8,8 @@ interface SocialLinks {
   facebook?: string;
   instagram?: string;
   twitter?: string;
+  youtube?: string;
+  [key: string]: string | undefined;
 }
 
 interface Document {

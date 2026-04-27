@@ -14,6 +14,7 @@ import {
   faLinkedinIn,
   faFacebookF,
   faXTwitter,
+  faYoutube,
 } from "@fortawesome/free-brands-svg-icons";
 import {
   getProfile,
@@ -43,6 +44,7 @@ interface FormData {
     linkedin: string;
     facebook: string;
     twitter: string;
+    youtube: string;
   };
 }
 
@@ -131,6 +133,7 @@ export default function TeamDetailsForm() {
       linkedin: "",
       facebook: "",
       twitter: "",
+      youtube: "",
     },
   });
 
@@ -410,6 +413,7 @@ export default function TeamDetailsForm() {
           linkedin: profileData.socialLinks?.linkedin || "",
           facebook: profileData.socialLinks?.facebook || "",
           twitter: profileData.socialLinks?.twitter || "",
+          youtube: profileData.socialLinks?.youtube || "",
         },
       });
     }
@@ -495,6 +499,7 @@ export default function TeamDetailsForm() {
           linkedin: form.socialLinks.linkedin || "",
           facebook: form.socialLinks.facebook || "",
           twitter: form.socialLinks.twitter || "",
+          youtube: form.socialLinks.youtube || "",
         },
       };
 
@@ -947,6 +952,11 @@ export default function TeamDetailsForm() {
                 icon: faXTwitter,
                 name: "twitter",
                 bg: "bg-black",
+              },
+              {
+                icon: faYoutube,
+                name: "youtube",
+                bg: "bg-red-600",
               },
             ].map((social) => (
               <div key={social.name} className="flex items-center gap-3">

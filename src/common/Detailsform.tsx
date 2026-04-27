@@ -13,6 +13,7 @@ import {
   faFacebook,
   faTwitter,
   faXTwitter,
+  faYoutube,
 } from "@fortawesome/free-brands-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faX } from "@fortawesome/free-solid-svg-icons";
@@ -96,6 +97,7 @@ const Detailsform: React.FC = () => {
     facebook: "",
     instagram: "",
     twitter: "",
+    youtube: "",
     responseTime: "",
     travelLimit: "",
     certificationLevel: "",
@@ -192,6 +194,7 @@ const Detailsform: React.FC = () => {
         facebook: profileData.socialLinks?.facebook || "",
         instagram: profileData.socialLinks?.instagram || "",
         twitter: profileData.socialLinks?.twitter || "",
+        youtube: profileData.socialLinks?.youtube || "",
       }));
 
       if (profileData.country) {
@@ -729,6 +732,7 @@ const Detailsform: React.FC = () => {
           facebook: formData.facebook || "",
           instagram: formData.instagram || "",
           twitter: formData.twitter || "",
+          youtube: formData.youtube || "",
         },
         interests: [],
         profession:
@@ -1827,6 +1831,21 @@ const Detailsform: React.FC = () => {
               name="twitter"
               placeholder="Twitter"
               value={formData.twitter}
+              onChange={handleInputChange}
+              className="border p-2 w-full rounded outline-none"
+            />
+          </div>
+
+          <div className="flex flex-col sm:flex-row items-center w-full sm:w-1/2 mb-2">
+            <FontAwesomeIcon
+              icon={faYoutube}
+              className="text-red-600 text-3xl mb-2 sm:mb-0 sm:mr-3 mr-0 cursor-pointer"
+            />
+            <input
+              type="text"
+              name="youtube"
+              placeholder="YouTube"
+              value={formData.youtube}
               onChange={handleInputChange}
               className="border p-2 w-full rounded outline-none"
             />

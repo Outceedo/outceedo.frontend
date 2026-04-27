@@ -5,6 +5,7 @@ import {
   faInstagram,
   faFacebook,
   faXTwitter,
+  faYoutube,
 } from "@fortawesome/free-brands-svg-icons";
 import {
   faStar as faStarSolid,
@@ -51,6 +52,7 @@ const icons = [
   { icon: faFacebook, color: "#3b5998", link: "" },
   { icon: faInstagram, color: "#E1306C", link: "" },
   { icon: faXTwitter, color: "#0C0B0B", link: "" },
+  { icon: faYoutube, color: "#FF0000", link: "" },
 ];
 
 const StarRating: React.FC<{
@@ -266,6 +268,7 @@ const ExpertProfile = () => {
     icons[1].link = socials.facebook || "";
     icons[2].link = socials.instagram || "";
     icons[3].link = socials.twitter || "";
+    icons[4].link = socials.youtube || "";
     const certifications =
       profile.documents
         ?.filter((doc) => doc.type === "certificate")
@@ -497,13 +500,19 @@ const ExpertProfile = () => {
           {/* Left - Expert Info Section */}
           <div className="flex-1 w-full lg:pr-6">
             {/* Name and Social Icons */}
-            <div className="flex flex-col sm:flex-row items-start sm:items-center mb-4 sm:mb-6 gap-4">
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white">
+            <div className="flex flex-wrap items-center mb-4 sm:mb-6 gap-x-4 gap-y-2">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white min-w-0 break-words">
                 {expertData.name}
               </h1>
-              <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
-                {icons.map((item, index) =>
-                  item.link ? (
+              <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0 flex-wrap">
+                {icons.map((item, index) => {
+                  const bg =
+                    item.icon === faInstagram
+                      ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                      : item.color;
+                  const baseClass =
+                    "w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-white text-sm sm:text-base lg:text-xl shadow-lg";
+                  return item.link ? (
                     <a
                       key={index}
                       href={
@@ -513,18 +522,21 @@ const ExpertProfile = () => {
                       }
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-8 h-8 sm:w-9 sm:h-9 lg:w-10 lg:h-10 flex items-center justify-center rounded-full text-white text-sm sm:text-base lg:text-xl shadow-lg"
-                      style={{
-                        background:
-                          item.icon === faInstagram
-                            ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
-                            : item.color,
-                      }}
+                      className={baseClass}
+                      style={{ background: bg }}
                     >
                       <FontAwesomeIcon icon={item.icon} />
                     </a>
-                  ) : null,
-                )}
+                  ) : (
+                    <span
+                      key={index}
+                      className={`${baseClass} opacity-25 cursor-default`}
+                      style={{ background: bg }}
+                    >
+                      <FontAwesomeIcon icon={item.icon} />
+                    </span>
+                  );
+                })}
                 {/* <BusinessCardDownloadButton expertData={expertData} /> */}
               </div>
             </div>

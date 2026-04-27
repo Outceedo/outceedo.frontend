@@ -10,6 +10,7 @@ import {
   faInstagram,
   faFacebook,
   faXTwitter,
+  faYoutube,
 } from "@fortawesome/free-brands-svg-icons";
 import profile from "../../assets/images/avatar.png";
 import {
@@ -40,6 +41,7 @@ const socialIconsConfig = [
   { key: "facebook", icon: faFacebook, color: "#3b5998" },
   { key: "instagram", icon: faInstagram, color: "#E1306C" },
   { key: "twitter", icon: faXTwitter, color: "#1DA1F2" },
+  { key: "youtube", icon: faYoutube, color: "#FF0000" },
 ];
 
 interface Service {
@@ -848,7 +850,7 @@ const Expertview = () => {
             </h1>
             <div className="ml-0 sm:ml-10 flex gap-3 sm:gap-4 mt-2 sm:mt-0">
               {socialIconsConfig.map((item, index) => {
-                const link = expertData.socialLinks?.[item.key] || "";
+                const link = (expertData.socialLinks as Record<string, string>)?.[item.key] || "";
                 const hasLink = link && link.trim() !== "";
 
                 if (hasLink) {

@@ -5,6 +5,7 @@ import {
   faLinkedinIn,
   faFacebookF,
   faXTwitter,
+  faYoutube,
 } from "@fortawesome/free-brands-svg-icons";
 
 import { Card } from "@/components/ui/card";
@@ -64,6 +65,7 @@ const Sponsorview: React.FC = () => {
           linkedin: "",
           facebook: "",
           twitter: "",
+          youtube: "",
         },
         bio: viewedProfile.bio || "No information available.",
         sponsorshipInfo: {
@@ -88,6 +90,7 @@ const Sponsorview: React.FC = () => {
           linkedin: "",
           facebook: "",
           twitter: "",
+          youtube: "",
         },
         bio: "We are a top-tier sponsor with global outreach in football development, aiming to support young talent worldwide.",
         sponsorshipInfo: {
@@ -119,6 +122,11 @@ const Sponsorview: React.FC = () => {
       icon: faXTwitter,
       link: sponsorData.socialLinks.twitter,
       bg: "bg-black",
+    },
+    {
+      icon: faYoutube,
+      link: sponsorData.socialLinks.youtube,
+      bg: "bg-red-600",
     },
   ];
 
@@ -215,21 +223,28 @@ const Sponsorview: React.FC = () => {
           </div>
 
           <div className="mt-6 md:mt-10 flex gap-6">
-            {icons.map(({ icon, link, bg }, index) => (
-              <a
-                key={index}
-                href={link || "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={!link ? "opacity-50 cursor-not-allowed" : ""}
-              >
-                <div
-                  className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
-                >
-                  <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
-                </div>
-              </a>
-            ))}
+            {icons.map(({ icon, link, bg }, index) => {
+              const hasLink = link && link.trim() !== "";
+              const href = hasLink
+                ? link.startsWith("http") ? link : `https://${link.replace(/^\/+/, "")}`
+                : undefined;
+              if (hasLink) {
+                return (
+                  <a key={index} href={href} target="_blank" rel="noopener noreferrer">
+                    <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
+                      <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                    </div>
+                  </a>
+                );
+              }
+              return (
+                <span key={index} className="opacity-25 cursor-default">
+                  <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
+                    <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                  </div>
+                </span>
+              );
+            })}
           </div>
 
           <div className="mt-6 md:mt-10">

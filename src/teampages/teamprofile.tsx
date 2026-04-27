@@ -9,6 +9,7 @@ import {
   faLinkedinIn,
   faFacebookF,
   faXTwitter,
+  faYoutube,
 } from "@fortawesome/free-brands-svg-icons";
 import {
   faExclamationTriangle,
@@ -53,6 +54,7 @@ const TeamProfile = () => {
       linkedin: "#",
       facebook: "#",
       twitter: "#",
+      youtube: "#",
     },
     email: "",
     phone: "",
@@ -86,6 +88,12 @@ const TeamProfile = () => {
       link:
         profileData?.socialLinks?.twitter || fallbackData.socialLinks.twitter,
       bg: "bg-black",
+    },
+    {
+      icon: faYoutube,
+      link:
+        profileData?.socialLinks?.youtube || fallbackData.socialLinks.youtube,
+      bg: "bg-red-600",
     },
   ];
 
@@ -293,26 +301,28 @@ const TeamProfile = () => {
 
             {/* Social Icons */}
             <div className="mt-6 mb-5 flex flex-wrap gap-4">
-              {socialIcons.map(({ icon, link, bg }, index) => (
-                <a
-                  key={index}
-                  href={link !== "#" ? link : undefined}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={
-                    link === "#" ? "opacity-50 cursor-not-allowed" : ""
-                  }
-                >
-                  <div
-                    className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
-                  >
-                    <FontAwesomeIcon
-                      icon={icon}
-                      className="w-6 h-6 text-white"
-                    />
-                  </div>
-                </a>
-              ))}
+              {socialIcons.map(({ icon, link, bg }, index) => {
+                const hasLink = link && link.trim() !== "" && link !== "#";
+                const href = hasLink
+                  ? link.startsWith("http") ? link : `https://${link.replace(/^\/+/, "")}`
+                  : undefined;
+                if (hasLink) {
+                  return (
+                    <a key={index} href={href} target="_blank" rel="noopener noreferrer">
+                      <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
+                        <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                      </div>
+                    </a>
+                  );
+                }
+                return (
+                  <span key={index} className="opacity-25 cursor-default">
+                    <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
+                      <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                    </div>
+                  </span>
+                );
+              })}
             </div>
 
             {/* Contact Info */}

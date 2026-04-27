@@ -11,6 +11,13 @@ import {
   faTimes,
 } from "@fortawesome/free-solid-svg-icons";
 import { faStar as faStarRegular } from "@fortawesome/free-regular-svg-icons";
+import {
+  faInstagram,
+  faLinkedin,
+  faFacebook,
+  faXTwitter,
+  faYoutube,
+} from "@fortawesome/free-brands-svg-icons";
 import ProfileDetails from "./profiledetails";
 import { Card } from "@/components/ui/card";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -618,6 +625,48 @@ const Profile: React.FC = () => {
                   </div>
                 </div>
               </div>
+              {/* Social Links */}
+              {(() => {
+                const socialIconsConfig = [
+                  { key: "linkedin", icon: faLinkedin, color: "#0077B5" },
+                  { key: "facebook", icon: faFacebook, color: "#3b5998" },
+                  { key: "instagram", icon: faInstagram, color: "#E1306C" },
+                  { key: "twitter", icon: faXTwitter, color: "#1DA1F2" },
+                  { key: "youtube", icon: faYoutube, color: "#FF0000" },
+                ];
+                return (
+                  <div className="flex gap-3 mt-4 flex-wrap">
+                    {socialIconsConfig.map((item, index) => {
+                      const link = (playerData.socials as Record<string, string>)?.[item.key] || "";
+                      const hasLink = link && link.trim() !== "";
+                      if (hasLink) {
+                        return (
+                          <a
+                            key={index}
+                            href={link.startsWith("http") ? link : `https://${link.replace(/^\/+/, "")}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="w-9 h-9 flex items-center justify-center rounded-full text-white text-lg shadow-lg"
+                            style={{ background: item.icon === faInstagram ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" : item.color }}
+                          >
+                            <FontAwesomeIcon icon={item.icon} />
+                          </a>
+                        );
+                      }
+                      return (
+                        <span
+                          key={index}
+                          className="w-9 h-9 flex items-center justify-center rounded-full text-white text-lg opacity-25 cursor-default"
+                          style={{ background: item.icon === faInstagram ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" : item.color }}
+                        >
+                          <FontAwesomeIcon icon={item.icon} />
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
               {/* OVR Section */}
               <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit mt-8 relative overflow-x-auto">
                 {statsLoading ? (
