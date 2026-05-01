@@ -36,6 +36,7 @@ import CheckAuth from "./common/Checkauth";
 //components
 import PlayerLayout from "./components/player/layout";
 import ExpertLayout from "./components/expert/layout";
+import ScoutLayout from "./components/scout/layout";
 import SponserLayout from "./components/sponsor/layout";
 import TeamLayout from "./components/team/layout";
 //expertpage
@@ -67,6 +68,10 @@ import TeamPlayer from "./teampages/player";
 import TeamSponsor from "./teampages/TeamSponser";
 import TeamSponsorInfo from "./teampages/Sponsorinfo";
 import TeamExperts from "./teampages/expertprofile";
+//scout pages
+import ScoutProfile from "./ScoutPages/scoutdata";
+import ScoutPlayersProfile from "./ScoutPages/playerProfiles";
+import ScoutPlayerInfo from "./ScoutPages/playerinfo";
 //fan pages
 import FanLayout from "./components/fan/layout";
 import FanPlayers from "./fanpages/Players";
@@ -108,7 +113,7 @@ const DashboardRedirect: React.FC = () => {
 
     // Check if current path matches /role/dashboard pattern
     if (
-      currentPath.match(/\/(player|expert|sponsor|team|fan|admin)\/dashboard$/)
+      currentPath.match(/\/(player|expert|sponsor|team|fan|scout|admin)\/dashboard$/)
     ) {
       const role = currentPath.split("/")[1];
       const profilePath = `/${role}/profile`;
@@ -183,6 +188,8 @@ const AppContent: React.FC = () => {
       case "fan":
       case "user":
         return "/fan/profile";
+      case "scout":
+        return "/scout/profile";
       default:
         return "/";
     }
@@ -200,6 +207,8 @@ const AppContent: React.FC = () => {
       navigate("/team/profile");
     } else if (role === "fan") {
       navigate("/fan/profile");
+    } else if (role === "scout") {
+      navigate("/scout/profile");
     } else {
       navigate("/");
     }
@@ -375,6 +384,26 @@ const AppContent: React.FC = () => {
           <Route path="details-form" element={<Fandetailsform />} />
           <Route path="exdetails" element={<Expertinfo />} />
           <Route path="playerinfo" element={<Playerinfo />} />
+          <Route path="referral" element={<ReferralPage />} />
+        </Route>
+
+        {/* Scout routes */}
+        <Route
+          path="/scout"
+          element={
+            isBannedOrSuspended ? (
+              <Navigate to="/banned" replace />
+            ) : (
+              <CheckAuth isAuthenticated={effectivelyAuthenticated} user={user}>
+                <ScoutLayout />
+              </CheckAuth>
+            )
+          }
+        >
+          <Route path="profile" element={<ScoutProfile />} />
+          <Route path="viewplayers" element={<ScoutPlayersProfile />} />
+          <Route path="playerinfo" element={<ScoutPlayerInfo />} />
+          <Route path="details-form" element={<Detailsform />} />
           <Route path="referral" element={<ReferralPage />} />
         </Route>
 

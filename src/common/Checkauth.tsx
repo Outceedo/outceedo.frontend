@@ -83,6 +83,8 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
         case "user":
         case "fan":
           return <Navigate to="/fan/profile" replace />;
+        case "scout":
+          return <Navigate to="/scout/profile" replace />;
         default:
           return <Navigate to="/" replace />;
       }
@@ -102,6 +104,8 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
         case "user":
         case "fan":
           return <Navigate to="/fan/profile" replace />;
+        case "scout":
+          return <Navigate to="/scout/profile" replace />;
         default:
           return <Navigate to="/" replace />;
       }
@@ -115,6 +119,7 @@ const CheckAuth: React.FC<CheckAuthProps> = ({
       team: ["/team", "/", "/public"],
       user: ["/fan", "/", "/public"],
       fan: ["/fan", "/", "/public"],
+      scout: ["/scout", "/", "/public"],
     };
 
     const allowedPaths = rolePathMap[effectiveRole] || [];

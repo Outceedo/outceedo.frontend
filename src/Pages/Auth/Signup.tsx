@@ -10,7 +10,7 @@ import { Eye, EyeOff, ArrowLeft, UserPlus } from "lucide-react";
 import logo from "../../assets/images/logosmall.png";
 import img from "@/assets/images/Main.png";
 
-type Role = "expert" | "player" | "team" | "sponsor" | "user";
+type Role = "expert" | "player" | "team" | "sponsor" | "user" | "scout";
 
 const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: "player", label: "Player" },
@@ -18,6 +18,7 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: "team", label: "Team" },
   { value: "sponsor", label: "Sponsor" },
   { value: "user", label: "Fan" },
+  { value: "scout", label: "Scout" },
 ];
 
 const Signup: React.FC = () => {

@@ -275,6 +275,7 @@ const PlayerProfiles: React.FC = () => {
       expert: "/expert/playerinfo",
       team: "/team/playerinfo",
       sponsor: "/sponsor/playerinfo",
+      scout: "/scout/playerinfo",
     };
     navigate(routes[role || ""] || "/fan/playerinfo");
   };

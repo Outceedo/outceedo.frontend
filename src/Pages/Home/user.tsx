@@ -7,6 +7,7 @@ import {
   Handshake,
   Heart,
   ArrowRight,
+  UserSearch,
 } from "lucide-react";
 
 const options = [
@@ -28,7 +29,7 @@ const options = [
     name: "Teams",
     icon: Trophy,
     role: "team",
-    desc: "Scout talent",
+    desc: "Assemble your Squad",
     color: "bg-orange-500",
   },
   {
@@ -44,6 +45,13 @@ const options = [
     role: "user",
     desc: "Follow stars",
     color: "bg-pink-500",
+  },
+  {
+    name: "Scouts",
+    icon: UserSearch,
+    role: "scout",
+    desc: "Discover talent",
+    color: "bg-indigo-500",
   },
 ];
 
@@ -79,7 +87,7 @@ const User: React.FC = () => {
 
       {/* Options Grid */}
       {/* 👇 ADJUSTED: Changed grid-cols-2 to grid-cols-1 on very small screens if needed */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4">
         {options.map((option, index) => (
           <motion.button
             key={index}

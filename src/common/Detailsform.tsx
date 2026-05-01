@@ -133,7 +133,7 @@ const Detailsform: React.FC = () => {
 
   useEffect(() => {
     const role = localStorage.getItem("role");
-    setIsExpert(role === "expert");
+    setIsExpert(role === "expert" || role === "scout");
   }, []);
 
   useEffect(() => {
@@ -185,7 +185,7 @@ const Detailsform: React.FC = () => {
             ? profileData.skills.map((skill: any) =>
                 typeof skill === "string"
                   ? skill
-                  : skill.name || skill.skill || skill
+                  : skill.name || skill.skill || skill,
               )
             : []
           : [],
@@ -200,7 +200,7 @@ const Detailsform: React.FC = () => {
       if (profileData.country) {
         setSearchTerm(profileData.country);
         const country = countries.find(
-          (c) => c.name.toLowerCase() === profileData.country?.toLowerCase()
+          (c) => c.name.toLowerCase() === profileData.country?.toLowerCase(),
         );
         if (country) {
           setSelectedCountry(country);
@@ -325,7 +325,7 @@ const Detailsform: React.FC = () => {
   };
 
   const handleInputChange = (
-    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+    e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
 
@@ -342,7 +342,7 @@ const Detailsform: React.FC = () => {
 
   const uploadMediaFile = async (
     file: File,
-    type: string
+    type: string,
   ): Promise<string | null> => {
     try {
       const formData = new FormData();
@@ -359,7 +359,7 @@ const Detailsform: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       console.log(`${type} photo uploaded:`, response.data);
@@ -388,7 +388,7 @@ const Detailsform: React.FC = () => {
   const handleFileUpload = async (
     event: React.ChangeEvent<HTMLInputElement>,
     type: "profile" | "professional" | "certificate" | "award",
-    id?: number
+    id?: number,
   ) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -410,16 +410,16 @@ const Detailsform: React.FC = () => {
 
         setCertificates((prev) =>
           prev.map((cert) =>
-            cert.id === id ? { ...cert, file, imageUrl } : cert
-          )
+            cert.id === id ? { ...cert, file, imageUrl } : cert,
+          ),
         );
       } else if (type === "award" && id !== undefined) {
         const imageUrl = URL.createObjectURL(file);
 
         setAwards((prev) =>
           prev.map((award) =>
-            award.id === id ? { ...award, file, imageUrl } : award
-          )
+            award.id === id ? { ...award, file, imageUrl } : award,
+          ),
         );
       }
 
@@ -435,7 +435,7 @@ const Detailsform: React.FC = () => {
     title: string,
     issuedBy: string = "",
     type: "certificate" | "award",
-    description: string = ""
+    description: string = "",
   ): Promise<string | null> => {
     try {
       if (!file) {
@@ -466,7 +466,7 @@ const Detailsform: React.FC = () => {
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       console.log(`${type} document uploaded:`, response.data);
@@ -476,7 +476,7 @@ const Detailsform: React.FC = () => {
       setError(
         `Failed to upload ${type}: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
       throw error;
     }
@@ -490,14 +490,14 @@ const Detailsform: React.FC = () => {
             cert.file,
             cert.name,
             cert.organization || "",
-            "certificate"
+            "certificate",
           );
 
           if (docId) {
             setCertificates((prev) =>
               prev.map((c) =>
-                c.id === cert.id ? { ...c, uploadedDocId: docId } : c
-              )
+                c.id === cert.id ? { ...c, uploadedDocId: docId } : c,
+              ),
             );
           }
         }
@@ -509,14 +509,14 @@ const Detailsform: React.FC = () => {
             award.file,
             award.name,
             award.organization || "",
-            "award"
+            "award",
           );
 
           if (docId) {
             setAwards((prev) =>
               prev.map((a) =>
-                a.id === award.id ? { ...a, uploadedDocId: docId } : a
-              )
+                a.id === award.id ? { ...a, uploadedDocId: docId } : a,
+              ),
             );
           }
         }
@@ -569,7 +569,7 @@ const Detailsform: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         console.log(`Deleted certificate ${id} from server`);
       } catch (error) {
@@ -585,7 +585,7 @@ const Detailsform: React.FC = () => {
   const handleCertificateChange = (
     id: number,
     field: "name" | "organization",
-    value: string
+    value: string,
   ) => {
     const cert = certificates.find((c) => c.id === id);
 
@@ -595,8 +595,8 @@ const Detailsform: React.FC = () => {
 
     setCertificates(
       certificates.map((cert) =>
-        cert.id === id ? { ...cert, [field]: value } : cert
-      )
+        cert.id === id ? { ...cert, [field]: value } : cert,
+      ),
     );
 
     if (field === "name" && validationErrors[`certificate_${id}_name`]) {
@@ -629,7 +629,7 @@ const Detailsform: React.FC = () => {
             headers: {
               Authorization: `Bearer ${token}`,
             },
-          }
+          },
         );
         console.log(`Deleted award ${id} from server`);
       } catch (error) {
@@ -645,7 +645,7 @@ const Detailsform: React.FC = () => {
   const handleAwardChange = (
     id: number,
     field: "name" | "organization",
-    value: string
+    value: string,
   ) => {
     const award = awards.find((a) => a.id === id);
 
@@ -655,8 +655,8 @@ const Detailsform: React.FC = () => {
 
     setAwards(
       awards.map((award) =>
-        award.id === id ? { ...award, [field]: value } : award
-      )
+        award.id === id ? { ...award, [field]: value } : award,
+      ),
     );
 
     if (field === "name" && validationErrors[`award_${id}_name`]) {
@@ -699,7 +699,7 @@ const Detailsform: React.FC = () => {
       }
 
       const professionalPhotoMedia = uploadedMedia.find(
-        (m) => m.type === "professional"
+        (m) => m.type === "professional",
       );
 
       let languageArray: string[] = [];
@@ -753,7 +753,7 @@ const Detailsform: React.FC = () => {
             ? formData.skills.map((skill: any) =>
                 typeof skill === "string"
                   ? skill
-                  : skill.name || skill.skill || skill
+                  : skill.name || skill.skill || skill,
               )
             : [],
           responseTime: formData.responseTime || null,
@@ -771,7 +771,7 @@ const Detailsform: React.FC = () => {
         if (profilePhoto && profilePhotoChanged) {
           try {
             const photoResultAction = await dispatch(
-              updateProfilePhoto(profilePhoto)
+              updateProfilePhoto(profilePhoto),
             );
 
             if (updateProfilePhoto.fulfilled.match(photoResultAction)) {
@@ -779,7 +779,7 @@ const Detailsform: React.FC = () => {
             } else if (updateProfilePhoto.rejected.match(photoResultAction)) {
               console.error(
                 "Failed to upload profile photo:",
-                photoResultAction.error
+                photoResultAction.error,
               );
             }
           } catch (photoError) {
@@ -795,6 +795,8 @@ const Detailsform: React.FC = () => {
             navigate("/player/profile");
           } else if (userRole === "expert") {
             navigate("/expert/profile");
+          } else if (userRole === "scout") {
+            navigate("/scout/profile");
           } else {
             navigate("/");
           }
@@ -803,7 +805,7 @@ const Detailsform: React.FC = () => {
         console.error("Failed to update profile:", resultAction.error);
         setError(
           resultAction.error?.message ||
-            "Failed to update profile. Please try again."
+            "Failed to update profile. Please try again.",
         );
 
         if (resultAction.payload && typeof resultAction.payload === "object") {
@@ -813,7 +815,7 @@ const Detailsform: React.FC = () => {
     } catch (error: any) {
       console.error("Error updating profile:", error);
       setError(
-        error.message || "An unexpected error occurred. Please try again."
+        error.message || "An unexpected error occurred. Please try again.",
       );
     } finally {
       setIsSubmitting(false);
@@ -825,7 +827,7 @@ const Detailsform: React.FC = () => {
     const fetchCountries = async (): Promise<void> => {
       try {
         const response = await fetch(
-          "https://countriesnow.space/api/v0.1/countries/flag/images"
+          "https://countriesnow.space/api/v0.1/countries/flag/images",
         );
         if (!response.ok) throw new Error("Failed to fetch countries");
 
@@ -875,7 +877,7 @@ const Detailsform: React.FC = () => {
             body: JSON.stringify({
               country: selectedCountry.name,
             }),
-          }
+          },
         );
 
         if (!response.ok) throw new Error("Failed to fetch cities");
@@ -926,7 +928,7 @@ const Detailsform: React.FC = () => {
               Authorization: `Bearer ${token}`,
               "Content-Type": "multipart/form-data",
             },
-          }
+          },
         );
         const data = response.data;
         setUserData(data);
@@ -971,55 +973,55 @@ const Detailsform: React.FC = () => {
       )}
 
       <div className="flex flex-col items-center mb-12">
-  {/* Responsive Stepper */}
-  <div className="flex w-full max-w-xs sm:max-w-md md:max-w-lg items-center relative">
-    {[1, 2, 3, 4].map((stepNum) => (
-      <React.Fragment key={stepNum}>
-        <div className="relative flex flex-col items-center w-1/4">
-          <div
-            className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 ${
-              step >= stepNum ? "bg-red-500" : "bg-gray-300"
-            } rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base`}
-          >
-            {stepNum}
+        {/* Responsive Stepper */}
+        <div className="flex w-full max-w-xs sm:max-w-md md:max-w-lg items-center relative">
+          {[1, 2, 3, 4].map((stepNum) => (
+            <React.Fragment key={stepNum}>
+              <div className="relative flex flex-col items-center w-1/4">
+                <div
+                  className={`w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 ${
+                    step >= stepNum ? "bg-red-500" : "bg-gray-300"
+                  } rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm md:text-base`}
+                >
+                  {stepNum}
+                </div>
+              </div>
+              {stepNum < 4 && (
+                <div
+                  className={
+                    `flex-1 h-1 bg-gray-300 rounded-full relative ` +
+                    (step === 2
+                      ? "-mx-3 sm:-mx-5 md:-mx-7 lg:-mx-12"
+                      : "lg:-mx-12 md:-mx-7 sm:-mx-5 -mx-3")
+                  }
+                >
+                  <div
+                    className={`absolute top-0 left-0 h-1 rounded-full ${
+                      step > stepNum ? "bg-red-500 w-full" : "w-0"
+                    } transition-all duration-500`}
+                  ></div>
+                </div>
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+
+        {/* Responsive Labels */}
+        <div className="flex w-full max-w-xs sm:max-w-md md:max-w-lg justify-between mt-2 min-w-0">
+          <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+            Personal Details
+          </div>
+          <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+            More Details
+          </div>
+          <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+            Certification/Awards
+          </div>
+          <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
+            Links
           </div>
         </div>
-        {stepNum < 4 && (
-          <div
-            className={
-              `flex-1 h-1 bg-gray-300 rounded-full relative ` +
-              (step === 2
-                ? "-mx-3 sm:-mx-5 md:-mx-7 lg:-mx-12"
-                : "lg:-mx-12 md:-mx-7 sm:-mx-5 -mx-3")
-            }
-          >
-            <div
-              className={`absolute top-0 left-0 h-1 rounded-full ${
-                step > stepNum ? "bg-red-500 w-full" : "w-0"
-              } transition-all duration-500`}
-            ></div>
-          </div>
-        )}
-      </React.Fragment>
-    ))}
-  </div>
-
-  {/* Responsive Labels */}
-  <div className="flex w-full max-w-xs sm:max-w-md md:max-w-lg justify-between mt-2 min-w-0">
-    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
-      Personal Details
-    </div>
-    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
-      More Details
-    </div>
-    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
-      Certification/Awards
-    </div>
-    <div className="w-1/4 text-center text-[9px] xs:text-xs sm:text-sm md:text-base font-medium break-words whitespace-normal px-1">
-      Links
-    </div>
-  </div>
-</div>
+      </div>
 
       {step === 1 && (
         <div>
@@ -1130,11 +1132,9 @@ const Detailsform: React.FC = () => {
                 <option value="coach">Coach</option>
                 <option value="manager">Manager</option>
                 <option value="player">Player</option>
-                <option value="scout">Scout</option>
                 <option value="exmanager">Ex-Manager</option>
                 <option value="explayer">Ex-Player</option>
                 <option value="excoach">Ex-Coach</option>
-                <option value="exscout">Ex-Scout</option>
               </select>
               {validationErrors.profession && (
                 <p className="text-red-500 text-xs mt-1">
@@ -1414,7 +1414,7 @@ const Detailsform: React.FC = () => {
                     .filter((city) =>
                       city.name
                         .toLowerCase()
-                        .includes(citySearchTerm.toLowerCase())
+                        .includes(citySearchTerm.toLowerCase()),
                     )
                     .map((city, index) => (
                       <li
@@ -1455,7 +1455,7 @@ const Detailsform: React.FC = () => {
                     .filter((country) =>
                       country.name
                         .toLowerCase()
-                        .includes(searchTerm.toLowerCase())
+                        .includes(searchTerm.toLowerCase()),
                     )
                     .map((country, index) => (
                       <li
@@ -1629,7 +1629,7 @@ const Detailsform: React.FC = () => {
                   handleCertificateChange(
                     cert.id,
                     "organization",
-                    e.target.value
+                    e.target.value,
                   )
                 }
                 className={`border p-2 w-full rounded mb-2 ${
@@ -1679,7 +1679,7 @@ const Detailsform: React.FC = () => {
                         award.imageUrl ||
                         (award.uploadedDocId && profileData?.documents
                           ? profileData.documents.find(
-                              (doc) => doc.id === award.uploadedDocId
+                              (doc) => doc.id === award.uploadedDocId,
                             )?.url || ""
                           : "")
                       }

@@ -1,6 +1,6 @@
 # Outceedo Frontend
 
-React 19 + TypeScript + Vite sports platform with five distinct user roles: **player**, **expert**, **team**, **sponsor**, and **fan**.
+React 19 + TypeScript + Vite sports platform with six distinct user roles: **player**, **expert**, **team**, **sponsor**, **fan**, and **scout**.
 
 ---
 
@@ -46,6 +46,7 @@ outceedo.frontend/
 │   │   ├── team/                # Team layout, header, sidebar
 │   │   ├── sponsor/             # Sponsor layout, header, sidebar
 │   │   ├── fan/                 # Fan layout, header, sidebar
+│   │   ├── scout/               # Scout layout, header, sidebar
 │   │   └── follower/            # FollowersList component
 │   ├── Pages/
 │   │   ├── Auth/                # Login, Signup, EmailVerification, ForgotPassword, ResetPassword
@@ -93,6 +94,10 @@ outceedo.frontend/
 │   │   ├── Players.tsx
 │   │   ├── Experts.tsx
 │   │   └── Following.tsx
+│   ├── ScoutPages/              # Scout dashboard pages
+│   │   ├── scoutdata.tsx        # Main scout profile (bio, organisation, scouting region, sports interests, media, reviews)
+│   │   ├── playerProfiles.tsx   # Browse players (re-exports PlayerProfilesfetch)
+│   │   └── playerinfo.tsx       # View a player's public profile (re-exports Playerview)
 │   ├── store/
 │   │   ├── store.ts             # Redux store config
 │   │   ├── hooks.ts             # useAppDispatch, useAppSelector
@@ -238,6 +243,16 @@ All routes are defined in `src/App.tsx`. Each role's routes are wrapped in `<Che
 | `/teaminfo` | View team profile |
 | `/referral` | Referral program |
 
+### Scout Routes (`/scout/*`)
+
+| Path | Component / Description |
+|---|---|
+| `/profile` | `scoutdata.tsx` — scout profile (bio, organisation, scouting region, sports interests, media, reviews) |
+| `/viewplayers` | Browse players (`PlayerProfilesfetch`) |
+| `/playerinfo` | View a player's public profile (`Playerview`) |
+| `/details-form` | Profile completion / edit form (shared `Detailsform`, same fields as expert) |
+| `/referral` | Referral program |
+
 ### Fan Routes (`/fan/*`)
 
 | Path | Component / Description |
@@ -285,7 +300,7 @@ All routes are defined in `src/App.tsx`. Each role's routes are wrapped in `<Che
 |---|---|
 | `accessToken` | JWT bearer token |
 | `username` | Own username |
-| `role` | `player` \| `expert` \| `team` \| `sponsor` \| `fan` |
+| `role` | `player` \| `expert` \| `team` \| `sponsor` \| `fan` \| `scout` |
 | `userId` | Own user ID |
 | `viewplayerusername` | Target player username for profile view navigation |
 | `viewteamusername` | Target team username for profile view navigation |

@@ -200,7 +200,7 @@ const EmailVerification: React.FC = () => {
                     const val = e.target.value;
                     if (val === "" || /^\d+$/.test(val)) setOtp(val);
                   }}
-                  className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl text-gray-900 font-black text-3xl tracking-[0.4em] text-center focus:border-red-500 outline-none transition-all"
+                  className="w-full px-4 py-4 bg-gray-50 border border-gray-300 rounded-2xl text-gray-900 font-black text-3xl tracking-[0.4em] text-center focus:border-red-500 outline-none transition-all"
                   maxLength={6}
                   inputMode="numeric"
                 />
