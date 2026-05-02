@@ -66,6 +66,7 @@ const Detailsform: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [isExpert, setIsExpert] = useState(false);
+  const [isScout, setIsScout] = useState(false);
 
   const [existingProfilePhoto, setExistingProfilePhoto] = useState<
     string | null
@@ -134,6 +135,7 @@ const Detailsform: React.FC = () => {
   useEffect(() => {
     const role = localStorage.getItem("role");
     setIsExpert(role === "expert" || role === "scout");
+    setIsScout(role === "scout");
   }, []);
 
   useEffect(() => {
@@ -1129,12 +1131,21 @@ const Detailsform: React.FC = () => {
                 required
               >
                 <option value="">Select</option>
-                <option value="coach">Coach</option>
-                <option value="manager">Manager</option>
-                <option value="player">Player</option>
-                <option value="exmanager">Ex-Manager</option>
-                <option value="explayer">Ex-Player</option>
-                <option value="excoach">Ex-Coach</option>
+                {isScout ? (
+                  <>
+                    <option value="scout">Scout</option>
+                    <option value="exscout">Ex-Scout</option>
+                  </>
+                ) : (
+                  <>
+                    <option value="coach">Coach</option>
+                    <option value="manager">Manager</option>
+                    <option value="player">Player</option>
+                    <option value="exmanager">Ex-Manager</option>
+                    <option value="explayer">Ex-Player</option>
+                    <option value="excoach">Ex-Coach</option>
+                  </>
+                )}
               </select>
               {validationErrors.profession && (
                 <p className="text-red-500 text-xs mt-1">
@@ -1142,23 +1153,25 @@ const Detailsform: React.FC = () => {
                 </p>
               )}
             </div>
-            <div className="w-1/3">
-              <label className="block text-black mb-1">Sub Profession</label>
-              <select
-                name="subProfession"
-                value={formData.subProfession}
-                onChange={handleInputChange}
-                className="border p-2 w-full rounded"
-              >
-                <option value="">Select</option>
-                <option value="blank">Blank</option>
-                <option value="defender">Defender</option>
-                <option value="striker">Striker</option>
-                <option value="goalkeeper">GoalKeeper</option>
-                <option value="coach">Coach</option>
-                <option value="midfielder">Midfielder</option>
-              </select>
-            </div>
+            {!isScout && (
+              <div className="w-1/3">
+                <label className="block text-black mb-1">Sub Profession</label>
+                <select
+                  name="subProfession"
+                  value={formData.subProfession}
+                  onChange={handleInputChange}
+                  className="border p-2 w-full rounded"
+                >
+                  <option value="">Select</option>
+                  <option value="blank">Blank</option>
+                  <option value="defender">Defender</option>
+                  <option value="striker">Striker</option>
+                  <option value="goalkeeper">GoalKeeper</option>
+                  <option value="coach">Coach</option>
+                  <option value="midfielder">Midfielder</option>
+                </select>
+              </div>
+            )}
             <div className="w-1/3">
               <label className="block text-black mb-1">Phone</label>
               <input

@@ -6,6 +6,9 @@ import {
   ArrowRight,
   Target,
   Heart,
+  Search,
+  UserSearch,
+  UserPlusIcon,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
@@ -30,8 +33,8 @@ const ecosystemItems = [
     number: "03",
     title: "Teams",
     desc: "Streamline your scouting. Access verified player data, expert technical reports, and direct communication channels.",
-    icon: Target,
-    tag: "Recruitment",
+    icon: UserPlusIcon,
+    tag: "Squad",
     role: "team", // Added role value
   },
   {
@@ -44,11 +47,19 @@ const ecosystemItems = [
   },
   {
     number: "05",
+    title: "Scouts",
+    desc: "Find and recruit the next generation of talent. Discover verified player profiles, track performance data, and connect directly with prospects across the globe.",
+    icon: UserSearch,
+    tag: "Talent Discovery",
+    role: "scout",
+  },
+  {
+    number: "06",
     title: "Fans",
     desc: "Follow your favourite players, stay updated on their journey, and support rising talent as they pursue their professional dreams.",
     icon: Heart,
     tag: "Support",
-    role: "user", // Added role value
+    role: "user",
   },
 ];
 

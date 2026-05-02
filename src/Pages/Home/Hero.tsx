@@ -10,6 +10,7 @@ import {
   File,
   Fan,
   UserSearchIcon,
+  Heart,
 } from "lucide-react";
 import img from "@/assets/images/Main.png";
 import logo from "@/assets/images/logosmall.png";
@@ -34,7 +35,7 @@ const FloatingExpertCard = ({
     initial={{ opacity: 0, y: 30, scale: 0.9 }}
     animate={{ opacity: 1, y: 0, scale: 1 }}
     transition={{ delay, duration: 0.8, ease: "easeOut" }}
-    className="hidden lg:flex absolute z-30 bg-white/80 backdrop-blur-xl border border-slate-200 p-3 rounded-2xl shadow-xl items-center gap-4 group hover:bg-white transition-colors cursor-pointer"
+    className="hidden lg:flex absolute z-30 bg-white/20 backdrop-blur-xl p-3 rounded-2xl shadow-xl items-center gap-4 group hover:bg-white transition-colors cursor-pointer"
     style={{
       boxShadow: `0 20px 40px -10px rgba(0,0,0,0.1)`,
     }}
@@ -75,7 +76,7 @@ export default function Hero() {
         />
 
         {/* White overlay gradients */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50 to-white/90" />
+        <div className="absolute inset-0 bg-gradient-to-b from-white/90 via-white/50" />
 
         {/* Noise texture */}
         <div className="absolute inset-0 opacity-[0.05] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] pointer-events-none mix-blend-multiply" />
@@ -96,10 +97,10 @@ export default function Hero() {
           <div className="hidden lg:block absolute bottom-[45%] -left-[10%]">
             <FloatingExpertCard
               delay={1.5}
-              icon={UserSearchIcon}
+              icon={Heart}
               title="Worldwide Followers"
               // sub="4.9/5 Average Score"
-              color="bg-orange-500"
+              color="bg-blue-500"
             />
           </div>
 
@@ -149,10 +150,10 @@ export default function Hero() {
               Outdo your sport to Succeed
             </div>
             {/* Headline */}
-            <h1 className="mb-8 text-6xl font-black tracking-tight text-slate-900 sm:text-8xl lg:text-[100px] leading-[0.9] lg:leading-[0.9]">
-              ELITE ACCESS <br />
+            <h1 className="mb-8 text-5xl font-black tracking-tight text-slate-900 sm:text-6xl lg:text-[80px] leading-[0.9] lg:leading-[0.9]">
+              FROM GRASSROOTS <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-slate-800 to-red-500 bg-[length:200%_auto] animate-[gradient_4s_linear_infinite]">
-                FOR THE PROS.
+                TO PROFESSIONAL FOOTBALL.
               </span>
             </h1>
             {/* Description */}
