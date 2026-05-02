@@ -38,6 +38,7 @@ import Settings from "./settings";
 import PlayerBusinessCard from "./businessCard";
 import ProfileMatches from "./profileMatches";
 import PlayerTeamTab from "./team";
+import AllReports from "./allReports";
 
 interface Stat {
   name: string;
@@ -126,7 +127,7 @@ const StarRating: React.FC<{
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "account" | "businessCard" | "matches" | "team"
+    "details" | "media" | "reviews" | "account" | "businessCard" | "matches" | "team" | "allReports"
   >("details");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
@@ -790,18 +791,56 @@ const Profile: React.FC = () => {
                   "businessCard",
                   "matches",
                   "team",
+                  "allReports",
                 ] as const
               ).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => {
+                    if (tab === "allReports" && !isUserOnPremiumPlan) {
+                      Swal.fire({
+                        icon: "info",
+                        title: "Upgrade to Premium",
+                        html: `
+                          <div class="text-left">
+                            <p class="mb-3">Assessment Reports are only available for Premium members.</p>
+                            <div class="bg-blue-50 p-3 rounded-lg mb-3">
+                              <h4 class="font-semibold text-blue-800 mb-2">Premium Benefits:</h4>
+                              <ul class="text-sm text-blue-700 space-y-1">
+                                <li>• View all assessment reports</li>
+                                <li>• Reports download & share</li>
+                                <li>• Access to all expert services</li>
+                                <li>• Unlimited bookings</li>
+                                <li>• Priority support</li>
+                                <li>• Follow your favorite experts</li>
+                              </ul>
+                            </div>
+                            <p class="text-sm text-gray-600">Your current plan: <strong>${planName || "Free"}</strong></p>
+                          </div>
+                        `,
+                        showCancelButton: true,
+                        confirmButtonText: "Upgrade Now",
+                        cancelButtonText: "Maybe Later",
+                        confirmButtonColor: "#3B82F6",
+                        cancelButtonColor: "#6B7280",
+                      }).then((result) => {
+                        if (result.isConfirmed) navigate("/plans");
+                      });
+                      return;
+                    }
+                    setActiveTab(tab);
+                  }}
                   className={`text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
                     activeTab === tab
                       ? "text-red-600 border-red-600"
                       : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
                   }`}
                 >
-                  {tab === "businessCard" ? "Business Card" : tab}
+                  {tab === "businessCard"
+                    ? "Business Card"
+                    : tab === "allReports"
+                    ? `All Reports${!isUserOnPremiumPlan ? " 🔒" : ""}`
+                    : tab}
                 </button>
               ))}
             </div>
@@ -845,6 +884,9 @@ const Profile: React.FC = () => {
                     <ProfileMatches userId={currentProfile.id} />
                   )}
                   {activeTab === "team" && <PlayerTeamTab />}
+                  {activeTab === "allReports" && currentProfile?.id && (
+                    <AllReports userId={currentProfile.id} />
+                  )}
                 </>
               )}
             </div>

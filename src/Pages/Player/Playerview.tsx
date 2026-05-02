@@ -16,6 +16,7 @@ import {
 import { BookOpen, X, Loader2, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
+import AllReports from "./allReports";
 import profile from "../../assets/images/avatar.png";
 import Mediaview from "@/Pages/Media/MediaView";
 import PlayerProfileDetails from "./PlayerProfileDetails";
@@ -183,7 +184,7 @@ const StarRating: React.FC<{
 
 const Playerview: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "matches"
+    "details" | "media" | "reviews" | "matches" | "allReports"
   >("details");
   const [matches, setMatches] = useState<MatchRecord[]>([]);
   const [matchesLoading, setMatchesLoading] = useState(false);
@@ -204,6 +205,8 @@ const Playerview: React.FC = () => {
   const [followersPage, setFollowersPage] = useState(1);
 
   const navigate = useNavigate();
+  const { pathname } = window.location;
+  const isScoutRoute = pathname.includes("/scout/playerinfo");
   const dispatch = useAppDispatch();
 
   const { viewedProfile, status } = useAppSelector((state) => state.profile);
@@ -849,23 +852,54 @@ const Playerview: React.FC = () => {
           </div>
           <div className="mt-5 sm:mt-8">
             <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
-              {(["details", "media", "reviews", "matches"] as const).map(
+              {(["details", "media", "reviews", "matches", ...(isScoutRoute ? ["allReports" as const] : [])] as const).map(
                 (tab) => (
                   <button
                     key={tab}
                     onClick={() => {
+                      if (tab === "allReports" && !isUserOnPremiumPlan) {
+                        Swal.fire({
+                          icon: "info",
+                          title: "Upgrade to Premium",
+                          html: `
+                            <div class="text-left">
+                              <p class="mb-3">Viewing player assessment reports requires a Premium plan.</p>
+                              <div class="bg-blue-50 p-3 rounded-lg mb-3">
+                                <h4 class="font-semibold text-blue-800 mb-2">Premium Benefits:</h4>
+                                <ul class="text-sm text-blue-700 space-y-1">
+                                  <li>• View full player assessment reports</li>
+                                  <li>• Access to all scouting tools</li>
+                                  <li>• Unlimited player searches</li>
+                                  <li>• Priority support</li>
+                                </ul>
+                              </div>
+                              <p class="text-sm text-gray-600">Your current plan: <strong>${planName || "Free"}</strong></p>
+                            </div>
+                          `,
+                          showCancelButton: true,
+                          confirmButtonText: "Upgrade Now",
+                          cancelButtonText: "Maybe Later",
+                          confirmButtonColor: "#3B82F6",
+                          cancelButtonColor: "#6B7280",
+                        }).then((result) => {
+                          if (result.isConfirmed) navigate("/plans");
+                        });
+                        return;
+                      }
                       setActiveTab(tab);
                       if (tab === "matches" && profileData?.id && matches.length === 0 && !matchesLoading) {
                         fetchMatches(profileData.id);
                       }
                     }}
-                    className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 ${
+                    className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
                       activeTab === tab
                         ? "text-red-600 border-red-600"
                         : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
                     }`}
                   >
-                    {tab}
+                    {tab === "allReports"
+                      ? `All Reports${!isUserOnPremiumPlan ? " 🔒" : ""}`
+                      : tab}
                   </button>
                 ),
               )}
@@ -876,6 +910,9 @@ const Playerview: React.FC = () => {
               )}
               {activeTab === "media" && <Mediaview Data={profileData} />}
               {activeTab === "reviews" && <Reviewview Data={profileData} />}
+              {activeTab === "allReports" && profileData?.id && (
+                <AllReports userId={profileData.id} />
+              )}
               {activeTab === "matches" && (
                 <div className="space-y-4">
                   <div className="flex justify-end">

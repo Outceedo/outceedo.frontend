@@ -52,7 +52,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   // Get current user role
   const currentUserRole = localStorage.getItem("role");
-  const isPlayerRole = currentUserRole === "player";
+  const isPlayerRole =
+    currentUserRole === "player" || currentUserRole === "scout";
 
   // API base URL
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
@@ -141,10 +142,10 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         html: `
           <div class="text-left">
             <p class="mb-2">You've reached your ${activeTab} upload limit${
-          isPlayerRole
-            ? ` for the <strong>${planLimits.planName}</strong> plan`
-            : ""
-        }.</p>
+              isPlayerRole
+                ? ` for the <strong>${planLimits.planName}</strong> plan`
+                : ""
+            }.</p>
             <p class="text-sm text-gray-600">
               Current: ${
                 activeTab === "photo"
@@ -181,7 +182,9 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const handleTitleChange = (id: number, value: string) => {
     setUploads(
-      uploads.map((item) => (item.id === id ? { ...item, title: value } : item))
+      uploads.map((item) =>
+        item.id === id ? { ...item, title: value } : item,
+      ),
     );
   };
 
@@ -211,8 +214,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         uploads.map((item) =>
           item.id === id
             ? { ...item, error: `File size should not exceed ${maxSizeText}.` }
-            : item
-        )
+            : item,
+        ),
       );
       return;
     }
@@ -222,8 +225,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       uploads.map((item) =>
         item.id === id
           ? { ...item, file, preview: previewUrl, error: undefined }
-          : item
-      )
+          : item,
+      ),
     );
   };
 
@@ -235,8 +238,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
     try {
       setUploads(
         uploads.map((u) =>
-          u.id === item.id ? { ...u, isUploading: true, error: undefined } : u
-        )
+          u.id === item.id ? { ...u, isUploading: true, error: undefined } : u,
+        ),
       );
 
       const formData = new FormData();
@@ -253,7 +256,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
             Authorization: `Bearer ${token}`,
             "Content-Type": "multipart/form-data",
           },
-        }
+        },
       );
 
       if (item.preview) {
@@ -270,8 +273,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
                 isUploading: false,
                 error: error.response?.data?.message || "Upload failed",
               }
-            : u
-        )
+            : u,
+        ),
       );
       return false;
     }
@@ -279,7 +282,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
 
   const handleUpload = async () => {
     const itemsToUpload = uploads.filter(
-      (item) => item.type === activeTab && item.file && item.title.trim()
+      (item) => item.type === activeTab && item.file && item.title.trim(),
     );
 
     if (itemsToUpload.length === 0) {
@@ -327,7 +330,7 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
       }
 
       const results = await Promise.all(
-        itemsToUpload.map((item) => uploadSingleFile(item))
+        itemsToUpload.map((item) => uploadSingleFile(item)),
       );
 
       const successCount = results.filter((result) => result).length;
@@ -398,8 +401,8 @@ const MediaUpload: React.FC<MediaUploadProps> = ({
         html: `
           <div class="text-left">
             <p class="mb-2">You've reached your ${tab} upload limit${
-          isPlayerRole ? "" : ""
-        }.</p>
+              isPlayerRole ? "" : ""
+            }.</p>
             <p class="text-sm text-gray-600">Current: ${current}/${limit}</p>
             ${upgradeContent}
           </div>
