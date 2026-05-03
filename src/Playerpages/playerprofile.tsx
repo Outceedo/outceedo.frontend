@@ -34,11 +34,12 @@ import Reviewnoedit from "@/Pages/Reviews/Reviewprofilenoedit";
 
 import FollowList from "../components/follower/followerlist";
 import axios from "axios";
-import Settings from "./settings";
+
 import PlayerBusinessCard from "./businessCard";
 import ProfileMatches from "./profileMatches";
 import PlayerTeamTab from "./team";
 import AllReports from "./allReports";
+import Settings from "@/common/settings";
 
 interface Stat {
   name: string;
@@ -127,7 +128,14 @@ const StarRating: React.FC<{
 
 const Profile: React.FC = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "account" | "businessCard" | "matches" | "team" | "allReports"
+    | "details"
+    | "media"
+    | "reviews"
+    | "account"
+    | "businessCard"
+    | "matches"
+    | "team"
+    | "allReports"
   >("details");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
@@ -638,17 +646,29 @@ const Profile: React.FC = () => {
                 return (
                   <div className="flex gap-3 mt-4 flex-wrap">
                     {socialIconsConfig.map((item, index) => {
-                      const link = (playerData.socials as Record<string, string>)?.[item.key] || "";
+                      const link =
+                        (playerData.socials as Record<string, string>)?.[
+                          item.key
+                        ] || "";
                       const hasLink = link && link.trim() !== "";
                       if (hasLink) {
                         return (
                           <a
                             key={index}
-                            href={link.startsWith("http") ? link : `https://${link.replace(/^\/+/, "")}`}
+                            href={
+                              link.startsWith("http")
+                                ? link
+                                : `https://${link.replace(/^\/+/, "")}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-9 h-9 flex items-center justify-center rounded-full text-white text-lg shadow-lg"
-                            style={{ background: item.icon === faInstagram ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" : item.color }}
+                            style={{
+                              background:
+                                item.icon === faInstagram
+                                  ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                                  : item.color,
+                            }}
                           >
                             <FontAwesomeIcon icon={item.icon} />
                           </a>
@@ -658,7 +678,12 @@ const Profile: React.FC = () => {
                         <span
                           key={index}
                           className="w-9 h-9 flex items-center justify-center rounded-full text-white text-lg opacity-25 cursor-default"
-                          style={{ background: item.icon === faInstagram ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" : item.color }}
+                          style={{
+                            background:
+                              item.icon === faInstagram
+                                ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                                : item.color,
+                          }}
                         >
                           <FontAwesomeIcon icon={item.icon} />
                         </span>
@@ -839,8 +864,8 @@ const Profile: React.FC = () => {
                   {tab === "businessCard"
                     ? "Business Card"
                     : tab === "allReports"
-                    ? `All Reports${!isUserOnPremiumPlan ? " 🔒" : ""}`
-                    : tab}
+                      ? `All Reports${!isUserOnPremiumPlan ? " 🔒" : ""}`
+                      : tab}
                 </button>
               ))}
             </div>

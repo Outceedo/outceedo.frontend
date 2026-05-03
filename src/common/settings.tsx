@@ -81,7 +81,7 @@ export default function Settings() {
       const response = await axios.post(
         api,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
 
       if (response.data?.url) {
@@ -107,7 +107,7 @@ export default function Settings() {
       const response = await axios.post(
         api,
         {},
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       if (response.data?.url) {
         window.open(response.data.url, "_self");
@@ -151,8 +151,8 @@ export default function Settings() {
     selectedInterval === "month"
       ? monthlyPlan
       : selectedInterval === "year"
-      ? yearlyPlan
-      : dailyPlan;
+        ? yearlyPlan
+        : dailyPlan;
 
   const isCurrentPlanSelected =
     isPremiumUser && currentPlanId === selectedPremiumPlan?.id;

@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/dialog";
 import FollowList from "../components/follower/followerlist";
 import axios from "axios";
+import Settings from "@/common/settings";
 
 interface Follower {
   id: string;
@@ -90,7 +91,7 @@ const StarRating: React.FC<{
 
 const ScoutProfile = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "businessCard"
+    "details" | "media" | "reviews" | "account" | "businessCard"
   >("details");
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -216,7 +217,9 @@ const ScoutProfile = () => {
     if (profile.photo) {
       profileImage = profile.photo;
     } else if (mediaItems.length > 0) {
-      const profilePhoto = mediaItems.find((item: any) => item.type === "photo");
+      const profilePhoto = mediaItems.find(
+        (item: any) => item.type === "photo",
+      );
       if (profilePhoto) profileImage = profilePhoto.url;
     }
 
@@ -234,7 +237,9 @@ const ScoutProfile = () => {
 
     return {
       id: profile.id || "",
-      name: `${profile.firstName || ""} ${profile.lastName || ""}`.trim() || "Scout",
+      name:
+        `${profile.firstName || ""} ${profile.lastName || ""}`.trim() ||
+        "Scout",
       profession: profile.profession || "",
       location:
         profile.city && profile.country
@@ -269,22 +274,40 @@ const ScoutProfile = () => {
     if (!file) return;
 
     if (file.size > 1 * 1024 * 1024) {
-      Swal.fire({ icon: "error", title: "File too large", text: "Profile photo must be less than 1MB" });
+      Swal.fire({
+        icon: "error",
+        title: "File too large",
+        text: "Profile photo must be less than 1MB",
+      });
       return;
     }
     if (!file.type.startsWith("image/")) {
-      Swal.fire({ icon: "error", title: "Invalid file type", text: "Please select an image file" });
+      Swal.fire({
+        icon: "error",
+        title: "Invalid file type",
+        text: "Please select an image file",
+      });
       return;
     }
 
     setIsUpdatingPhoto(true);
     try {
       await dispatch(updateProfilePhoto(file)).unwrap();
-      Swal.fire({ icon: "success", title: "Success", text: "Profile photo updated successfully", timer: 2000, showConfirmButton: false });
+      Swal.fire({
+        icon: "success",
+        title: "Success",
+        text: "Profile photo updated successfully",
+        timer: 2000,
+        showConfirmButton: false,
+      });
       const username = localStorage.getItem("username");
       if (username) dispatch(getProfile(username));
     } catch (error: any) {
-      Swal.fire({ icon: "error", title: "Upload Failed", text: error.message || "Failed to update profile photo" });
+      Swal.fire({
+        icon: "error",
+        title: "Upload Failed",
+        text: error.message || "Failed to update profile photo",
+      });
     } finally {
       setIsUpdatingPhoto(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -300,9 +323,12 @@ const ScoutProfile = () => {
     if (!currentProfile.bio) missingFields.push("Bio");
     if (!currentProfile.profession) missingFields.push("Profession");
     if (!currentProfile.club) missingFields.push("Club");
-    if (!currentProfile.language || currentProfile.language.length === 0) missingFields.push("Languages");
-    if (!currentProfile.city || !currentProfile.country) missingFields.push("Location");
-    if (!currentProfile.certificationLevel) missingFields.push("Certification Level");
+    if (!currentProfile.language || currentProfile.language.length === 0)
+      missingFields.push("Languages");
+    if (!currentProfile.city || !currentProfile.country)
+      missingFields.push("Location");
+    if (!currentProfile.certificationLevel)
+      missingFields.push("Certification Level");
     if (!currentProfile.responseTime) missingFields.push("Response Time");
     if (!currentProfile.travelLimit) missingFields.push("Travel Limit");
     return missingFields;
@@ -316,7 +342,8 @@ const ScoutProfile = () => {
   const avgRating =
     totalReviews === 0
       ? 0
-      : reviewsArray.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) / totalReviews;
+      : reviewsArray.reduce((sum: number, r: any) => sum + (r.rating || 0), 0) /
+        totalReviews;
 
   if (status === "loading" && !currentProfile) {
     return (
@@ -353,7 +380,6 @@ const ScoutProfile = () => {
   return (
     <div className="flex -mt-6">
       <main className="flex-1 p-3 sm:p-4 md:p-6 dark:bg-gray-900 ml-0 sm:ml-15">
-
         {/* Profile Incomplete Notice */}
         {isProfileIncomplete && showIncompleteNotice && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 relative">
@@ -365,15 +391,24 @@ const ScoutProfile = () => {
               <FontAwesomeIcon icon={faTimes} />
             </button>
             <div className="flex items-start gap-3">
-              <FontAwesomeIcon icon={faExclamationTriangle} className="text-amber-600 mt-1 flex-shrink-0" />
+              <FontAwesomeIcon
+                icon={faExclamationTriangle}
+                className="text-amber-600 mt-1 flex-shrink-0"
+              />
               <div className="flex-1 pr-6">
-                <h3 className="font-semibold text-amber-800 mb-1">Profile Incomplete</h3>
+                <h3 className="font-semibold text-amber-800 mb-1">
+                  Profile Incomplete
+                </h3>
                 <p className="text-sm text-amber-700 mb-2">
-                  Complete your profile to increase visibility. The following fields are missing:
+                  Complete your profile to increase visibility. The following
+                  fields are missing:
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {missingFields.map((field, index) => (
-                    <span key={index} className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded">
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 bg-amber-100 text-amber-800 text-xs font-medium rounded"
+                    >
                       {field}
                     </span>
                   ))}
@@ -407,7 +442,11 @@ const ScoutProfile = () => {
                   return item.link ? (
                     <a
                       key={index}
-                      href={item.link.startsWith("http") ? item.link : `https://${item.link.replace(/^\/+/, "")}`}
+                      href={
+                        item.link.startsWith("http")
+                          ? item.link
+                          : `https://${item.link.replace(/^\/+/, "")}`
+                      }
                       target="_blank"
                       rel="noopener noreferrer"
                       className={baseClass}
@@ -416,7 +455,11 @@ const ScoutProfile = () => {
                       <FontAwesomeIcon icon={item.icon} />
                     </a>
                   ) : (
-                    <span key={index} className={`${baseClass} opacity-25 cursor-default`} style={{ background: bg }}>
+                    <span
+                      key={index}
+                      className={`${baseClass} opacity-25 cursor-default`}
+                      style={{ background: bg }}
+                    >
                       <FontAwesomeIcon icon={item.icon} />
                     </span>
                   );
@@ -426,33 +469,59 @@ const ScoutProfile = () => {
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6">
               <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Profession</p>
-                <p className="font-semibold dark:text-white text-sm sm:text-base">{scoutData.profession || "Not specified"}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Club</p>
-                <p className="font-semibold dark:text-white text-sm sm:text-base">{scoutData.club || "Not specified"}</p>
-              </div>
-              <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Languages</p>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Profession
+                </p>
                 <p className="font-semibold dark:text-white text-sm sm:text-base">
-                  {scoutData.language?.length > 0 ? scoutData.language.slice(0, 3).join(", ") : "Not specified"}
+                  {scoutData.profession || "Not specified"}
                 </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Location</p>
-                <p className="font-semibold dark:text-white text-sm sm:text-base">{scoutData.location || "Not specified"}</p>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Club
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {scoutData.club || "Not specified"}
+                </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Certification Level</p>
-                <p className="font-semibold dark:text-white text-sm sm:text-base">{scoutData.certificationLevel || "N/A"}</p>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Languages
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {scoutData.language?.length > 0
+                    ? scoutData.language.slice(0, 3).join(", ")
+                    : "Not specified"}
+                </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Response Time</p>
-                <p className="font-semibold dark:text-white text-sm sm:text-base">{scoutData.responseTime || "N/A"} mins</p>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Location
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {scoutData.location || "Not specified"}
+                </p>
               </div>
               <div>
-                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">Travel Limit</p>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Certification Level
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {scoutData.certificationLevel || "N/A"}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Response Time
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {scoutData.responseTime || "N/A"} mins
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Travel Limit
+                </p>
                 <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {scoutData.travelLimit.replace("kms", " ")}kms
                 </p>
@@ -472,17 +541,30 @@ const ScoutProfile = () => {
               className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center justify-center cursor-pointer"
             >
               <div className="text-white text-center">
-                <FontAwesomeIcon icon={faCamera} className="text-xl sm:text-2xl mb-2" />
+                <FontAwesomeIcon
+                  icon={faCamera}
+                  className="text-xl sm:text-2xl mb-2"
+                />
                 <p className="text-xs sm:text-sm font-medium">
                   {scoutData.profileImage ? "Change Photo" : "Add Photo"}
                 </p>
               </div>
             </div>
-            <input type="file" ref={fileInputRef} onChange={handlePhotoChange} accept="image/*" className="hidden" />
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handlePhotoChange}
+              accept="image/*"
+              className="hidden"
+            />
             {isUpdatingPhoto && (
               <div className="absolute inset-0 bg-black bg-opacity-70 flex items-center justify-center">
                 <div className="text-white text-center">
-                  <FontAwesomeIcon icon={faSpinner} spin className="text-xl sm:text-2xl mb-2" />
+                  <FontAwesomeIcon
+                    icon={faSpinner}
+                    spin
+                    className="text-xl sm:text-2xl mb-2"
+                  />
                   <p className="mt-2 text-xs sm:text-sm">Uploading...</p>
                 </div>
               </div>
@@ -505,14 +587,21 @@ const ScoutProfile = () => {
               </p>
             </div>
 
-            <Dialog open={isFollowersModalOpen} onOpenChange={setIsFollowersModalOpen}>
+            <Dialog
+              open={isFollowersModalOpen}
+              onOpenChange={setIsFollowersModalOpen}
+            >
               <DialogTrigger asChild>
                 <div
                   className="text-center cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
                   onClick={handleFollowersClick}
                 >
-                  <p className="text-red-500 text-2xl sm:text-3xl font-bold">{followersCount}</p>
-                  <p className="text-gray-500 dark:text-white text-sm sm:text-base">Followers</p>
+                  <p className="text-red-500 text-2xl sm:text-3xl font-bold">
+                    {followersCount}
+                  </p>
+                  <p className="text-gray-500 dark:text-white text-sm sm:text-base">
+                    Followers
+                  </p>
                 </div>
               </DialogTrigger>
               <DialogContent className="max-w-xs sm:max-w-md max-h-[80vh] overflow-hidden">
@@ -535,7 +624,9 @@ const ScoutProfile = () => {
                       disabled={loadingFollowers}
                     >
                       {[5, 10, 20, 50].map((val) => (
-                        <option key={val} value={val}>{val}</option>
+                        <option key={val} value={val}>
+                          {val}
+                        </option>
                       ))}
                     </select>
                   </div>
@@ -551,9 +642,13 @@ const ScoutProfile = () => {
                     >
                       Prev
                     </button>
-                    <span className="text-sm font-medium">Page {followersPage}</span>
+                    <span className="text-sm font-medium">
+                      Page {followersPage}
+                    </span>
                     <button
-                      disabled={followers.length < followersLimit || loadingFollowers}
+                      disabled={
+                        followers.length < followersLimit || loadingFollowers
+                      }
                       onClick={() => {
                         const newPage = followersPage + 1;
                         setFollowersPage(newPage);
@@ -566,7 +661,10 @@ const ScoutProfile = () => {
                   </div>
                 </div>
                 <div className="overflow-y-auto max-h-96">
-                  <FollowList followers={followers} loading={loadingFollowers} />
+                  <FollowList
+                    followers={followers}
+                    loading={loadingFollowers}
+                  />
                 </div>
               </DialogContent>
             </Dialog>
@@ -576,7 +674,15 @@ const ScoutProfile = () => {
         {/* Tabs */}
         <div className="mt-6 sm:mt-8">
           <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
-            {(["details", "media", "reviews", "businessCard"] as const).map((tab) => (
+            {(
+              [
+                "details",
+                "media",
+                "reviews",
+                "account",
+                "businessCard",
+              ] as const
+            ).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -591,13 +697,17 @@ const ScoutProfile = () => {
             ))}
           </div>
           <div className="mt-4">
-            {activeTab === "details" && <ExpertDetails expertData={scoutData} />}
+            {activeTab === "details" && (
+              <ExpertDetails expertData={scoutData} />
+            )}
             {activeTab === "media" && <Mediaedit Data={scoutData} />}
             {activeTab === "reviews" && <Reviewnoedit Data={scoutData} />}
-            {activeTab === "businessCard" && <BusinessCard expertData={scoutData} />}
+            {activeTab === "account" && <Settings />}
+            {activeTab === "businessCard" && (
+              <BusinessCard expertData={scoutData} />
+            )}
           </div>
         </div>
-
       </main>
     </div>
   );

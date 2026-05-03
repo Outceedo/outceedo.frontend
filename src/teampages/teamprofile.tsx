@@ -21,9 +21,9 @@ import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
 import { useNavigate } from "react-router-dom";
 import Mediaedit from "@/Pages/Media/MediaEdit";
-import Settings from "./settings";
 import ProfileMatches from "./profileMatches";
 import TeamPlayers from "./teamPlayers";
+import Settings from "@/common/settings";
 
 const TeamProfile = () => {
   const [activeTab, setActiveTab] = useState<
@@ -205,8 +205,8 @@ const TeamProfile = () => {
                   Profile Incomplete
                 </h3>
                 <p className="text-sm text-amber-700 mb-2">
-                  Complete your team profile to attract more players and sponsors.
-                  The following fields are missing:
+                  Complete your team profile to attract more players and
+                  sponsors. The following fields are missing:
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {missingFields.map((field, index) => (
@@ -304,21 +304,38 @@ const TeamProfile = () => {
               {socialIcons.map(({ icon, link, bg }, index) => {
                 const hasLink = link && link.trim() !== "" && link !== "#";
                 const href = hasLink
-                  ? link.startsWith("http") ? link : `https://${link.replace(/^\/+/, "")}`
+                  ? link.startsWith("http")
+                    ? link
+                    : `https://${link.replace(/^\/+/, "")}`
                   : undefined;
                 if (hasLink) {
                   return (
-                    <a key={index} href={href} target="_blank" rel="noopener noreferrer">
-                      <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
-                        <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                    <a
+                      key={index}
+                      href={href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <div
+                        className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
+                      >
+                        <FontAwesomeIcon
+                          icon={icon}
+                          className="w-6 h-6 text-white"
+                        />
                       </div>
                     </a>
                   );
                 }
                 return (
                   <span key={index} className="opacity-25 cursor-default">
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
-                      <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                    <div
+                      className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
+                    >
+                      <FontAwesomeIcon
+                        icon={icon}
+                        className="w-6 h-6 text-white"
+                      />
                     </div>
                   </span>
                 );
@@ -369,7 +386,9 @@ const TeamProfile = () => {
         {/* Tabs Section */}
         <div className="mt-6">
           <div className="flex gap-4 border-b overflow-x-auto">
-            {(["details", "media", "account", "matches", "manage team"] as const).map((tab) => (
+            {(
+              ["details", "media", "account", "matches", "manage team"] as const
+            ).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}

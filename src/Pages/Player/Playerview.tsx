@@ -13,7 +13,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BookOpen, X, Loader2, AlertCircle, RefreshCw, ArrowLeft } from "lucide-react";
+import {
+  BookOpen,
+  X,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+  ArrowLeft,
+} from "lucide-react";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { getProfile } from "../../store/profile-slice";
 import AllReports from "./allReports";
@@ -206,10 +213,14 @@ const Playerview: React.FC = () => {
 
   const navigate = useNavigate();
   const { pathname } = window.location;
-  const isScoutRoute = pathname.includes("/scout/playerinfo");
+  const isScoutRoute =
+    pathname.includes("/scout/playerinfo") ||
+    pathname.includes("/sponsor/playerinfo");
   const dispatch = useAppDispatch();
 
-  const { viewedProfile, status } = useAppSelector((state) => state.profile);
+  const { viewedProfile, currentProfile, status } = useAppSelector(
+    (state) => state.profile,
+  );
   const {
     isActive,
     planName,
@@ -220,7 +231,8 @@ const Playerview: React.FC = () => {
   const API_STATS_URL = `${import.meta.env.VITE_PORT}/api/v1/user/reports`;
 
   const isUserOnPremiumPlan =
-    isActive && planName && planName.toLowerCase() !== "free";
+    (isActive && planName && planName.toLowerCase() !== "free") ||
+    currentProfile?.role === "sponsor";
 
   const isFollowAllowed = () => {
     if (localStorage.getItem("role") === "player") {
@@ -602,22 +614,22 @@ const Playerview: React.FC = () => {
                 </h2>
                 <div className="flex flex-wrap gap-x-5 gap-y-2 text-gray-600 font-Opensans mt-2 dark:text-gray-300 text-xs sm:text-sm">
                   <span>
-                    {profileData.age ? `Age: ${profileData.age}` : ""}
+                    {profileData.age ? <><strong>Age:</strong> {profileData.age}</> : ""}
                   </span>
                   <span>
                     {profileData.height
-                      ? `Height: ${profileData.height}cm`
+                      ? <><strong>Height:</strong> {profileData.height}cm</>
                       : ""}
                   </span>
                   <span>
                     {profileData.weight
-                      ? `Weight: ${profileData.weight}kg`
+                      ? <><strong>Weight:</strong> {profileData.weight}kg</>
                       : ""}
                   </span>
-                  <span>Location: {location}</span>
-                  <span>Club: {profileData.company || ""}</span>
+                  <span><strong>Location:</strong> {location}</span>
+                  <span><strong>Club:</strong> {profileData.company || ""}</span>
                   <span>
-                    {`Language: `}
+                    <strong>Language:</strong>{" "}
                     {Array.isArray(profileData.language) &&
                     profileData.language.length > 0
                       ? profileData.language.join(", ")
@@ -637,17 +649,29 @@ const Playerview: React.FC = () => {
                 return (
                   <div className="flex gap-3 mt-2 flex-wrap">
                     {socialIconsConfig.map((item, index) => {
-                      const link = (profileData.socialLinks as Record<string, string>)?.[item.key] || "";
+                      const link =
+                        (profileData.socialLinks as Record<string, string>)?.[
+                          item.key
+                        ] || "";
                       const hasLink = link && link.trim() !== "";
                       if (hasLink) {
                         return (
                           <a
                             key={index}
-                            href={link.startsWith("http") ? link : `https://${link.replace(/^\/+/, "")}`}
+                            href={
+                              link.startsWith("http")
+                                ? link
+                                : `https://${link.replace(/^\/+/, "")}`
+                            }
                             target="_blank"
                             rel="noopener noreferrer"
                             className="w-9 h-9 flex items-center justify-center rounded-full text-white text-lg shadow-lg"
-                            style={{ background: item.icon === faInstagram ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" : item.color }}
+                            style={{
+                              background:
+                                item.icon === faInstagram
+                                  ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                                  : item.color,
+                            }}
                           >
                             <FontAwesomeIcon icon={item.icon} />
                           </a>
@@ -657,7 +681,12 @@ const Playerview: React.FC = () => {
                         <span
                           key={index}
                           className="w-9 h-9 flex items-center justify-center rounded-full text-white text-lg opacity-25 cursor-default"
-                          style={{ background: item.icon === faInstagram ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)" : item.color }}
+                          style={{
+                            background:
+                              item.icon === faInstagram
+                                ? "radial-gradient(circle at 30% 107%, #fdf497 0%, #fdf497 5%, #fd5949 45%, #d6249f 60%, #285AEB 90%)"
+                                : item.color,
+                          }}
                         >
                           <FontAwesomeIcon icon={item.icon} />
                         </span>
@@ -760,83 +789,92 @@ const Playerview: React.FC = () => {
                 )}
               {profileData.role === "player" && (
                 <div className="flex flex-wrap gap-3 items-start mt-0 w-full">
-                <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit max-w-full overflow-x-auto flex-shrink-0">
-                  {statsLoading ? (
-                    <div className="flex items-center justify-center p-4 sm:p-8">
-                      <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-t-2 border-b-2 border-red-600"></div>
-                      <span className="ml-2 text-xs sm:text-sm">
-                        Loading stats...
-                      </span>
-                    </div>
-                  ) : (
-                    <div className="flex flex-wrap gap-3 sm:gap-6 items-center">
-                      <div>
-                        <h2 className="text-base sm:text-xl text-gray-800 dark:text-white">
-                          <span className="block font-bold font-opensans text-xl sm:text-3xl">
-                            {OVR}
-                          </span>
-                          <span className="text-base sm:text-xl font-opensans">
-                            OVR
-                          </span>
-                        </h2>
-                      </div>
-                      {playerStats.map((stat, index) => (
-                        <div key={index} className="flex flex-col items-center">
-                          <div
-                            className="w-12 h-12 sm:w-20 sm:h-20 relative"
-                            style={{ transform: "rotate(-90deg)" }}
-                          >
-                            <CircularProgressbar
-                              value={stat.averageScore}
-                              styles={buildStyles({
-                                textSize: "18px",
-                                pathColor: stat.color,
-                                trailColor: "#ddd",
-                                strokeLinecap: "round",
-                              })}
-                              circleRatio={0.5}
-                            />
-                            <div
-                              className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm ml-1 sm:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
-                              style={{ transform: "rotate(90deg)" }}
-                            >
-                              {Math.round(stat.averageScore)}
-                            </div>
-                          </div>
-                          <p className="text-xs sm:text-sm -mt-5 sm:-mt-8 font-opensans text-gray-700 dark:text-white capitalize">
-                            {stat.name}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </Card>
-                {(() => {
-                  const team = profileData.associatedTeam as { teamName?: string; teamUsername?: string; photo?: string } | null;
-                  if (!team?.teamUsername) return null;
-                  return (
-                    <div className="flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm min-w-[140px] max-w-[160px] flex-shrink-0">
-                      <div className="h-8 bg-red-600" />
-                      <div className="px-3 pb-1">
-                        <div className="-mt-5 mb-2">
-                          <img
-                            src={team.photo || "/avatar.png"}
-                            alt={team.teamName || team.teamUsername}
-                            className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow"
-                            onError={(e) => { e.currentTarget.src = "/avatar.png"; }}
-                          />
-                        </div>
-                        <p className="text-xs font-bold dark:text-white leading-tight line-clamp-1">
-                          {team.teamName || team.teamUsername}
-                        </p>
-                        {/* <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">@{team.teamUsername}</p> */}
-                        <span className="inline-block mt-1 text-[10px] font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
-                          My Team
+                  <Card className="bg-yellow-100 dark:bg-gray-700 p-2 sm:p-3 w-fit max-w-full overflow-x-auto flex-shrink-0">
+                    {statsLoading ? (
+                      <div className="flex items-center justify-center p-4 sm:p-8">
+                        <div className="animate-spin rounded-full h-6 w-6 sm:h-8 sm:w-8 border-t-2 border-b-2 border-red-600"></div>
+                        <span className="ml-2 text-xs sm:text-sm">
+                          Loading stats...
                         </span>
                       </div>
-                    </div>
-                  );
-                })()}
+                    ) : (
+                      <div className="flex flex-wrap gap-3 sm:gap-6 items-center">
+                        <div>
+                          <h2 className="text-base sm:text-xl text-gray-800 dark:text-white">
+                            <span className="block font-bold font-opensans text-xl sm:text-3xl">
+                              {OVR}
+                            </span>
+                            <span className="text-base sm:text-xl font-opensans">
+                              OVR
+                            </span>
+                          </h2>
+                        </div>
+                        {playerStats.map((stat, index) => (
+                          <div
+                            key={index}
+                            className="flex flex-col items-center"
+                          >
+                            <div
+                              className="w-12 h-12 sm:w-20 sm:h-20 relative"
+                              style={{ transform: "rotate(-90deg)" }}
+                            >
+                              <CircularProgressbar
+                                value={stat.averageScore}
+                                styles={buildStyles({
+                                  textSize: "18px",
+                                  pathColor: stat.color,
+                                  trailColor: "#ddd",
+                                  strokeLinecap: "round",
+                                })}
+                                circleRatio={0.5}
+                              />
+                              <div
+                                className="absolute inset-0 flex items-center justify-center text-xs sm:text-sm ml-1 sm:ml-3 font-semibold font-opensans text-stone-800 dark:text-white"
+                                style={{ transform: "rotate(90deg)" }}
+                              >
+                                {Math.round(stat.averageScore)}
+                              </div>
+                            </div>
+                            <p className="text-xs sm:text-sm -mt-5 sm:-mt-8 font-opensans text-gray-700 dark:text-white capitalize">
+                              {stat.name}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </Card>
+                  {(() => {
+                    const team = profileData.associatedTeam as {
+                      teamName?: string;
+                      teamUsername?: string;
+                      photo?: string;
+                    } | null;
+                    if (!team?.teamUsername) return null;
+                    return (
+                      <div className="flex flex-col bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl overflow-hidden shadow-sm min-w-[140px] max-w-[160px] flex-shrink-0">
+                        <div className="h-8 bg-red-600" />
+                        <div className="px-3 pb-1">
+                          <div className="-mt-5 mb-2">
+                            <img
+                              src={team.photo || "/avatar.png"}
+                              alt={team.teamName || team.teamUsername}
+                              className="w-10 h-10 rounded-full object-cover border-2 border-white dark:border-gray-800 shadow"
+                              onError={(e) => {
+                                e.currentTarget.src = "/avatar.png";
+                              }}
+                            />
+                          </div>
+                          <p className="text-xs font-bold dark:text-white leading-tight line-clamp-1">
+                            {team.teamName || team.teamUsername}
+                          </p>
+                          {/* <p className="text-[10px] text-gray-400 mt-0.5 line-clamp-1">@{team.teamUsername}</p> */}
+                          <span className="inline-block mt-1 text-[10px] font-medium text-green-700 bg-green-100 dark:bg-green-900/30 dark:text-green-400 px-1.5 py-0.5 rounded-full">
+                            My Team
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
               <div className="flex items-center gap-2 mt-3 sm:mt-4">
@@ -852,16 +890,23 @@ const Playerview: React.FC = () => {
           </div>
           <div className="mt-5 sm:mt-8">
             <div className="flex gap-2 sm:gap-4 border-b overflow-x-auto">
-              {(["details", "media", "reviews", "matches", ...(isScoutRoute ? ["allReports" as const] : [])] as const).map(
-                (tab) => (
-                  <button
-                    key={tab}
-                    onClick={() => {
-                      if (tab === "allReports" && !isUserOnPremiumPlan) {
-                        Swal.fire({
-                          icon: "info",
-                          title: "Upgrade to Premium",
-                          html: `
+              {(
+                [
+                  "details",
+                  "media",
+                  "reviews",
+                  "matches",
+                  ...(isScoutRoute ? ["allReports" as const] : []),
+                ] as const
+              ).map((tab) => (
+                <button
+                  key={tab}
+                  onClick={() => {
+                    if (tab === "allReports" && !isUserOnPremiumPlan) {
+                      Swal.fire({
+                        icon: "info",
+                        title: "Upgrade to Premium",
+                        html: `
                             <div class="text-left">
                               <p class="mb-3">Viewing player assessment reports requires a Premium plan.</p>
                               <div class="bg-blue-50 p-3 rounded-lg mb-3">
@@ -876,33 +921,37 @@ const Playerview: React.FC = () => {
                               <p class="text-sm text-gray-600">Your current plan: <strong>${planName || "Free"}</strong></p>
                             </div>
                           `,
-                          showCancelButton: true,
-                          confirmButtonText: "Upgrade Now",
-                          cancelButtonText: "Maybe Later",
-                          confirmButtonColor: "#3B82F6",
-                          cancelButtonColor: "#6B7280",
-                        }).then((result) => {
-                          if (result.isConfirmed) navigate("/plans");
-                        });
-                        return;
-                      }
-                      setActiveTab(tab);
-                      if (tab === "matches" && profileData?.id && matches.length === 0 && !matchesLoading) {
-                        fetchMatches(profileData.id);
-                      }
-                    }}
-                    className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
-                      activeTab === tab
-                        ? "text-red-600 border-red-600"
-                        : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
-                    }`}
-                  >
-                    {tab === "allReports"
-                      ? `All Reports${!isUserOnPremiumPlan ? " 🔒" : ""}`
-                      : tab}
-                  </button>
-                ),
-              )}
+                        showCancelButton: true,
+                        confirmButtonText: "Upgrade Now",
+                        cancelButtonText: "Maybe Later",
+                        confirmButtonColor: "#3B82F6",
+                        cancelButtonColor: "#6B7280",
+                      }).then((result) => {
+                        if (result.isConfirmed) navigate("/plans");
+                      });
+                      return;
+                    }
+                    setActiveTab(tab);
+                    if (
+                      tab === "matches" &&
+                      profileData?.id &&
+                      matches.length === 0 &&
+                      !matchesLoading
+                    ) {
+                      fetchMatches(profileData.id);
+                    }
+                  }}
+                  className={`text-sm sm:text-md font-medium capitalize transition-all duration-150 px-2 pb-1 border-b-2 whitespace-nowrap ${
+                    activeTab === tab
+                      ? "text-red-600 border-red-600"
+                      : "border-transparent text-gray-600 dark:text-white hover:text-red-600"
+                  }`}
+                >
+                  {tab === "allReports"
+                    ? `All Reports${!isUserOnPremiumPlan ? " 🔒" : ""}`
+                    : tab}
+                </button>
+              ))}
             </div>
             <div className="mt-3 sm:mt-4">
               {activeTab === "details" && (
