@@ -136,6 +136,17 @@ export default function Settings() {
   // 3. Find Current Plan Details (Price & Interval)
   const currentPlanDetails = plans.find((p) => p.id === currentPlanId);
 
+  const getNextRenewalDate = (interval?: "day" | "month" | "year"): string => {
+    if (!interval) return "";
+    const next = new Date();
+    if (interval === "day") next.setDate(next.getDate() + 1);
+    else if (interval === "month") next.setMonth(next.getMonth() + 1);
+    else if (interval === "year") next.setFullYear(next.getFullYear() + 1);
+    const day = String(next.getDate()).padStart(2, "0");
+    const month = String(next.getMonth() + 1).padStart(2, "0");
+    return `${day}-${month}-${next.getFullYear()}`;
+  };
+
   // Plan logic for Modal
   const basicPlan = {
     name: "Basic",
@@ -231,14 +242,16 @@ export default function Settings() {
             </div>
 
             {/* Date Box */}
-            {expiryDate && (
+            {isPremiumUser && currentPlanDetails && (
               <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border">
                 <div className="text-sm font-medium text-muted-foreground mb-1">
                   Next Renewal
                 </div>
                 <div className="flex items-center gap-2">
                   <CalendarDays className="h-4 w-4 text-blue-500" />
-                  <div className="font-medium">{formatDate(expiryDate)}</div>
+                  <div className="font-medium">
+                    {getNextRenewalDate(currentPlanDetails.interval)}
+                  </div>
                 </div>
               </div>
             )}

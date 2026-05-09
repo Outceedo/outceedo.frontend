@@ -98,6 +98,7 @@ import SubscriptionCancel from "./Pages/common/subscriptionCancel";
 import Advisors from "./Pages/Home/Advisors";
 import PublicProfile from "./common/publicProfile";
 import TeamBooking from "./teampages/bookings/mybooking";
+import Feed from "./common/feed";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -113,7 +114,9 @@ const DashboardRedirect: React.FC = () => {
 
     // Check if current path matches /role/dashboard pattern
     if (
-      currentPath.match(/\/(player|expert|sponsor|team|fan|scout|admin)\/dashboard$/)
+      currentPath.match(
+        /\/(player|expert|sponsor|team|fan|scout|admin)\/dashboard$/,
+      )
     ) {
       const role = currentPath.split("/")[1];
       const profilePath = `/${role}/profile`;
@@ -285,6 +288,7 @@ const AppContent: React.FC = () => {
           <Route path="applications" element={<SponsorApplicationpage />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="teamprofile" element={<TeamView />} />
+          <Route path="feed" element={<Feed />} />
         </Route>
 
         {/* Expert routes */}
@@ -311,6 +315,7 @@ const AppContent: React.FC = () => {
           <Route path="slots" element={<ExpertAvailabilityManager />} />
           <Route path="evaluation" element={<AssessmentEvaluationForm />} />
           <Route path="referral" element={<ReferralPage />} />
+          <Route path="feed" element={<Feed />} />
         </Route>
 
         {/* Sponsor routes */}
@@ -335,6 +340,7 @@ const AppContent: React.FC = () => {
           <Route path="playerinfo" element={<SponsorPlayerInfo />} />
           <Route path="teaminfo" element={<TeamView />} />
           <Route path="referral" element={<ReferralPage />} />
+          <Route path="feed" element={<Feed />} />
         </Route>
 
         {/* Team routes */}
@@ -363,6 +369,7 @@ const AppContent: React.FC = () => {
           <Route path="matches" element={<Matches />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="bookings" element={<TeamBooking />} />
+          <Route path="feed" element={<Feed />} />
         </Route>
 
         {/* Fan routes */}
@@ -405,6 +412,7 @@ const AppContent: React.FC = () => {
           <Route path="playerinfo" element={<ScoutPlayerInfo />} />
           <Route path="details-form" element={<Detailsform />} />
           <Route path="referral" element={<ReferralPage />} />
+          <Route path="feed" element={<Feed />} />
         </Route>
 
         {/* Utility routes */}

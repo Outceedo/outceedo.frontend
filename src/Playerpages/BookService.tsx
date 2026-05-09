@@ -140,7 +140,7 @@ const BookingCalendar: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedDate, setSelectedDate] = useState<number | null>(null);
   const [selectedStartTime, setSelectedStartTime] = useState<string | null>(
-    null
+    null,
   ); // player-view time
   const [selectedEndTime, setSelectedEndTime] = useState<string | null>(null); // player-view time
   const [finalPrice, setFinalPrice] = useState<number>(0);
@@ -158,7 +158,7 @@ const BookingCalendar: React.FC = () => {
     useState<boolean>(false);
   const [loadingTimeSlots, setLoadingTimeSlots] = useState<boolean>(false);
   const [availabilityData, setAvailabilityData] = useState<AvailabilityData>(
-    {}
+    {},
   );
   const [availableSlots, setAvailableSlots] = useState<DisplaySlot[]>([]);
 
@@ -203,7 +203,7 @@ const BookingCalendar: React.FC = () => {
     dateStr: string,
     startTime: string,
     expertTZ: string,
-    userTZ: string
+    userTZ: string,
   ): string => {
     const [y, m, d] = dateStr.split("-").map(Number);
     const [hh, mm] = startTime.split(":").map(Number);
@@ -264,7 +264,7 @@ const BookingCalendar: React.FC = () => {
 
   const calculatePriceForTimeRange = (
     startTime: string,
-    endTime: string
+    endTime: string,
   ): number => {
     const duration = calculateDurationInMinutes(startTime, endTime);
     const basePrice = parsePrice(service?.price);
@@ -274,7 +274,7 @@ const BookingCalendar: React.FC = () => {
 
   const calculateDurationInMinutes = (
     startTime: string,
-    endTime: string
+    endTime: string,
   ): number => {
     const [startHour, startMinute] = startTime.split(":").map(Number);
     const [endHour, endMinute] = endTime.split(":").map(Number);
@@ -312,7 +312,7 @@ const BookingCalendar: React.FC = () => {
 
   const isTimeSlotAvailable = (time: string): boolean => {
     return availableSlots.some(
-      (slot) => slot.displayStartTime === time && slot.isAvailable
+      (slot) => slot.displayStartTime === time && slot.isAvailable,
     );
   };
 
@@ -321,7 +321,7 @@ const BookingCalendar: React.FC = () => {
     if (selectedStartTime && selectedEndTime) {
       const price = calculatePriceForTimeRange(
         selectedStartTime,
-        selectedEndTime
+        selectedEndTime,
       );
       setFinalPrice(price);
     } else if (service) {
@@ -371,7 +371,7 @@ const BookingCalendar: React.FC = () => {
           const formattedDate = formatDateString(
             selectedYear,
             selectedMonthIndex,
-            selectedDate
+            selectedDate,
           );
           if (!data[formattedDate]) {
             setSelectedDate(null);
@@ -423,7 +423,7 @@ const BookingCalendar: React.FC = () => {
         const formattedDate = formatDateString(
           selectedYear,
           selectedMonthIndex,
-          selectedDate
+          selectedDate,
         );
         const API_AV = `${import.meta.env.VITE_PORT}/api/v1/user/availability/${
           service.expertId
@@ -448,7 +448,7 @@ const BookingCalendar: React.FC = () => {
               slot.date,
               slot.startTime,
               data.expertTimeZone || "UTC",
-              userTimeZone
+              userTimeZone,
             ),
             expertStartTime: slot.startTime,
             date: slot.date,
@@ -456,7 +456,7 @@ const BookingCalendar: React.FC = () => {
           }));
 
         available.sort((a, b) =>
-          a.displayStartTime.localeCompare(b.displayStartTime)
+          a.displayStartTime.localeCompare(b.displayStartTime),
         );
 
         setAvailableSlots(available);
@@ -497,7 +497,7 @@ const BookingCalendar: React.FC = () => {
     const numberOfDays = new Date(
       selectedYear,
       selectedMonthIndex + 1,
-      0
+      0,
     ).getDate();
     let firstDay = new Date(selectedYear, selectedMonthIndex, 1).getDay() - 1;
     if (firstDay === -1) firstDay = 6;
@@ -514,10 +514,10 @@ const BookingCalendar: React.FC = () => {
   const formatDateString = (
     year: number,
     month: number,
-    day: number
+    day: number,
   ): string => {
     return `${year}-${String(month + 1).padStart(2, "0")}-${String(
-      day
+      day,
     ).padStart(2, "0")}`;
   };
 
@@ -589,13 +589,13 @@ const BookingCalendar: React.FC = () => {
   };
 
   const handleDescriptionChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>
+    e: React.ChangeEvent<HTMLTextAreaElement>,
   ) => {
     setBookingDescription(e.target.value);
   };
 
   const handleLocationInputChange = (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     setBookingLocation(e.target.value);
   };
@@ -613,7 +613,7 @@ const BookingCalendar: React.FC = () => {
     if (!selectedStartTime || !selectedEndTime) return "";
     const duration = calculateDurationInMinutes(
       selectedStartTime,
-      selectedEndTime
+      selectedEndTime,
     );
     const hours = Math.floor(duration / 60);
     const minutes = duration % 60;
@@ -673,7 +673,7 @@ const BookingCalendar: React.FC = () => {
 
     const duration = calculateDurationInMinutes(
       selectedStartTime,
-      selectedEndTime
+      selectedEndTime,
     );
     if (duration < 60 || duration > 120) {
       Swal.fire({
@@ -716,7 +716,7 @@ const BookingCalendar: React.FC = () => {
       const formattedDate = formatDateForAPI();
       const duration = calculateDurationInMinutes(
         selectedStartTime,
-        selectedEndTime
+        selectedEndTime,
       );
 
       const bookingData = {
@@ -799,7 +799,11 @@ const BookingCalendar: React.FC = () => {
           timer: 3000,
           showConfirmButton: false,
         }).then(() => {
-          navigate("/player/mybooking");
+          {
+            localStorage.role === "player"
+              ? navigate("/player/mybooking")
+              : navigate("/team/mybooking");
+          }
         });
       }
     } catch (error) {
@@ -839,7 +843,7 @@ const BookingCalendar: React.FC = () => {
     const emptyCells = Array(displayedMonth.firstDayOfWeek).fill(null);
     const daysInMonth = Array.from(
       { length: displayedMonth.numberOfDays },
-      (_, i) => i + 1
+      (_, i) => i + 1,
     );
     return [...emptyCells, ...daysInMonth];
   };
@@ -872,7 +876,7 @@ const BookingCalendar: React.FC = () => {
       (time) =>
         isTimeSlotAvailable(time) &&
         isValidEndTime(time) &&
-        calculateDurationInMinutes(selectedStartTime, time) > 0
+        calculateDurationInMinutes(selectedStartTime, time) > 0,
     );
   };
 
@@ -880,7 +884,7 @@ const BookingCalendar: React.FC = () => {
 
   const renderSlotLabel = (displayTime: string) => {
     const slotMeta = availableSlots.find(
-      (s) => s.displayStartTime === displayTime
+      (s) => s.displayStartTime === displayTime,
     );
     const expertLabel =
       slotMeta && expertTimeZone
@@ -948,8 +952,8 @@ const BookingCalendar: React.FC = () => {
                     {service?.name?.includes("Video")
                       ? "Video call details provided upon confirmation"
                       : service?.name?.includes("GROUND")
-                      ? "Address details will be shared after booking"
-                      : "Session details provided upon booking confirmation"}
+                        ? "Address details will be shared after booking"
+                        : "Session details provided upon booking confirmation"}
                   </span>
                 </div>
                 <div className="flex items-center gap-3">
@@ -1194,7 +1198,7 @@ const BookingCalendar: React.FC = () => {
                                 !isTimeSlotAvailable(time) ||
                                 calculateDurationInMinutes(
                                   selectedStartTime,
-                                  time
+                                  time,
                                 ) <= 0
                               }
                               className={`
@@ -1203,13 +1207,13 @@ const BookingCalendar: React.FC = () => {
                                   selectedEndTime === time
                                     ? "border-red-500 bg-red-50 text-red-500"
                                     : isValidEndTime(time) &&
-                                      isTimeSlotAvailable(time) &&
-                                      calculateDurationInMinutes(
-                                        selectedStartTime,
-                                        time
-                                      ) > 0
-                                    ? "border-gray-200 hover:border-gray-300 text-gray-800"
-                                    : "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
+                                        isTimeSlotAvailable(time) &&
+                                        calculateDurationInMinutes(
+                                          selectedStartTime,
+                                          time,
+                                        ) > 0
+                                      ? "border-gray-200 hover:border-gray-300 text-gray-800"
+                                      : "border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed"
                                 }
                               `}
                             >
