@@ -136,6 +136,10 @@ interface FormState {
   visibility: NoticeVisibility;
 }
 
+type FormErrors = Partial<
+  Record<"title" | "description" | "contactEmail" | "contactPhone", string>
+>;
+
 const emptyForm: FormState = {
   title: "",
   description: "",
@@ -165,6 +169,17 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
   const [sponsorshipDirection, setSponsorshipDirection] =
     useState<NoticeSponsorshipDirection | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
+  const [errors, setErrors] = useState<FormErrors>({});
+
+  const setField = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
+    setErrors((prev) => {
+      if (!(key in prev)) return prev;
+      const next = { ...prev };
+      delete next[key as keyof FormErrors];
+      return next;
+    });
+  };
 
   const postedByType: NoticePostedByType = useMemo(() => {
     const role = (localStorage.getItem("role") || "").toLowerCase();
@@ -177,6 +192,7 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
       setPostType(null);
       setSponsorshipDirection(null);
       setForm(emptyForm);
+      setErrors({});
       dispatch(resetCreateState());
     }
   }, [open, dispatch]);
@@ -237,32 +253,37 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     };
   };
 
-  const handleSubmit = async () => {
-    if (!postType) return;
-    if (!form.title.trim() || !form.description.trim()) {
-      toast.error("Title and description are required");
-      return;
-    }
+  const validate = (): FormErrors => {
+    const next: FormErrors = {};
+    if (!form.title.trim()) next.title = "Title is required";
+    if (!form.description.trim())
+      next.description = "Description is required";
     if (form.contactMethod === "EMAIL") {
       if (!form.contactEmail.trim()) {
-        toast.error("Please enter an email address");
-        return;
-      }
-      if (!isValidEmail(form.contactEmail)) {
-        toast.error("Please enter a valid email address");
-        return;
+        next.contactEmail = "Email address is required";
+      } else if (!isValidEmail(form.contactEmail)) {
+        next.contactEmail = "Enter a valid email address";
       }
     }
     if (form.contactMethod === "PHONE") {
       if (!form.contactPhone.trim()) {
-        toast.error("Please enter a phone number");
-        return;
-      }
-      if (!isValidPhone(form.contactPhone)) {
-        toast.error("Please enter a valid phone number");
-        return;
+        next.contactPhone = "Phone number is required";
+      } else if (!isValidPhone(form.contactPhone)) {
+        next.contactPhone = "Enter a valid phone number";
       }
     }
+    return next;
+  };
+
+  const handleSubmit = async () => {
+    if (!postType) return;
+    const v = validate();
+    if (Object.keys(v).length > 0) {
+      setErrors(v);
+      toast.error("Please fix the highlighted fields");
+      return;
+    }
+    setErrors({});
     const payload: CreateNoticePayload = {
       postType,
       title: form.title.trim(),
@@ -465,10 +486,17 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
                   id="notice-title"
                   value={form.title}
                   maxLength={120}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, title: e.target.value }))
+                  aria-invalid={!!errors.title}
+                  className={
+                    errors.title
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : undefined
                   }
+                  onChange={(e) => setField("title", e.target.value)}
                 />
+                {errors.title && (
+                  <p className="text-xs text-red-600">{errors.title}</p>
+                )}
               </div>
 
               <div className="space-y-1.5">
@@ -478,10 +506,17 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
                   rows={5}
                   maxLength={5000}
                   value={form.description}
-                  onChange={(e) =>
-                    setForm((f) => ({ ...f, description: e.target.value }))
+                  aria-invalid={!!errors.description}
+                  className={
+                    errors.description
+                      ? "border-red-500 focus-visible:ring-red-500"
+                      : undefined
                   }
+                  onChange={(e) => setField("description", e.target.value)}
                 />
+                {errors.description && (
+                  <p className="text-xs text-red-600">{errors.description}</p>
+                )}
               </div>
 
               {fields.showClubOrTeamName && (
@@ -542,12 +577,18 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
                       <Label>Contact method *</Label>
                       <Select
                         value={form.contactMethod}
-                        onValueChange={(v) =>
+                        onValueChange={(v) => {
                           setForm((f) => ({
                             ...f,
                             contactMethod: v as NoticeContactMethod,
-                          }))
-                        }
+                          }));
+                          setErrors((prev) => {
+                            const next = { ...prev };
+                            delete next.contactEmail;
+                            delete next.contactPhone;
+                            return next;
+                          });
+                        }}
                       >
                         <SelectTrigger>
                           <SelectValue />
@@ -591,13 +632,21 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
                         placeholder="you@example.com"
                         value={form.contactEmail}
                         maxLength={120}
+                        aria-invalid={!!errors.contactEmail}
+                        className={
+                          errors.contactEmail
+                            ? "border-red-500 focus-visible:ring-red-500"
+                            : undefined
+                        }
                         onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            contactEmail: e.target.value,
-                          }))
+                          setField("contactEmail", e.target.value)
                         }
                       />
+                      {errors.contactEmail && (
+                        <p className="text-xs text-red-600">
+                          {errors.contactEmail}
+                        </p>
+                      )}
                     </div>
                   )}
 
@@ -614,13 +663,21 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
                         placeholder="+44 20 7946 0958"
                         value={form.contactPhone}
                         maxLength={40}
+                        aria-invalid={!!errors.contactPhone}
+                        className={
+                          errors.contactPhone
+                            ? "border-red-500 focus-visible:ring-red-500"
+                            : undefined
+                        }
                         onChange={(e) =>
-                          setForm((f) => ({
-                            ...f,
-                            contactPhone: e.target.value,
-                          }))
+                          setField("contactPhone", e.target.value)
                         }
                       />
+                      {errors.contactPhone && (
+                        <p className="text-xs text-red-600">
+                          {errors.contactPhone}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

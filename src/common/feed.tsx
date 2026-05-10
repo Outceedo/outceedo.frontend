@@ -467,7 +467,7 @@ function Feed() {
 
         {/* Grid */}
         {status === "succeeded" && notices.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-14">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-14 items-start">
             {notices.map((notice, i) => {
               const pinColor = PIN_COLORS[i % PIN_COLORS.length];
               const paperBg = PAPER_BGS[i % PAPER_BGS.length];
