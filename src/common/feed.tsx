@@ -1,5 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
-import { Paperclip, Plus, X, Search, User, LogOut, Briefcase } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Paperclip,
+  Plus,
+  X,
+  Search,
+  User,
+  LogOut,
+  Briefcase,
+  Loader2,
+} from "lucide-react";
 import { FaAngleRight } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +59,7 @@ const VISIBILITY_OPTIONS: { value: NoticeVisibility; label: string }[] = [
   { value: "EXPERT", label: "Experts" },
   { value: "SCOUT", label: "Scouts" },
   { value: "PRIVATE", label: "Private" },
+  { value: "SPONSOR", label: "Sponsor" },
 ];
 
 const PIN_COLORS = [
@@ -68,6 +78,8 @@ const PAPER_BGS = [
 ];
 
 const ROTATIONS = [-2.5, 1.5, -1.8, 2.2, -1.2, 1.8, -2.8, 1.2, -0.8];
+
+const PAGE_SIZE = 24;
 
 const TYPE_TAG: Record<NoticePostType, { label: string; bg: string }> = {
   PLAYER_REQUIRED: { label: "PLAYER", bg: "bg-rose-500" },
@@ -191,7 +203,13 @@ function NoticeSlip({
 
 function Feed() {
   const dispatch = useAppDispatch();
-  const { data: notices, status, error } = useAppSelector((s) => s.notices);
+  const {
+    data: notices,
+    status,
+    error,
+    total,
+    loadingMore,
+  } = useAppSelector((s) => s.notices);
 
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
@@ -199,6 +217,7 @@ function Feed() {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showOnlyMine, setShowOnlyMine] = useState(false);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState<FilterState>({
     postType: "",
     urgency: "",
@@ -206,6 +225,9 @@ function Feed() {
     city: "",
     country: "",
   });
+
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const currentFetchRef = useRef<{ abort?: () => void } | null>(null);
 
   const myUserId =
     typeof window !== "undefined" ? localStorage.getItem("userId") : null;
@@ -216,7 +238,14 @@ function Feed() {
   }, [searchQuery]);
 
   useEffect(() => {
-    dispatch(
+    setPage(1);
+  }, [debouncedSearch, filters, showOnlyMine, myUserId]);
+
+  // Abort any in-flight fetch so a stale page-N append can't land after a fresh
+  // page-1 replace triggered by a filter change.
+  useEffect(() => {
+    currentFetchRef.current?.abort?.();
+    currentFetchRef.current = dispatch(
       fetchNotices({
         ...(filters.postType && { postType: filters.postType }),
         ...(filters.urgency && { urgency: filters.urgency }),
@@ -225,11 +254,30 @@ function Feed() {
         ...(filters.country && { country: filters.country }),
         ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
         ...(showOnlyMine && myUserId ? { postedById: myUserId } : {}),
-        page: 1,
-        limit: 24,
+        page,
+        limit: PAGE_SIZE,
+        append: page > 1,
       }),
+    ) as unknown as { abort?: () => void };
+  }, [dispatch, debouncedSearch, filters, showOnlyMine, myUserId, page]);
+
+  useEffect(() => {
+    if (status !== "succeeded") return;
+    if (loadingMore) return;
+    if (notices.length >= total) return;
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setPage((p) => p + 1);
+        }
+      },
+      { rootMargin: "200px" },
     );
-  }, [dispatch, debouncedSearch, filters, showOnlyMine, myUserId]);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [status, loadingMore, notices.length, total]);
 
   const cityOptions = useMemo(() => {
     const set = new Set<string>();
@@ -467,6 +515,7 @@ function Feed() {
 
         {/* Grid */}
         {status === "succeeded" && notices.length > 0 && (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-14 items-start">
             {notices.map((notice, i) => {
               const pinColor = PIN_COLORS[i % PIN_COLORS.length];
@@ -502,6 +551,22 @@ function Feed() {
               );
             })}
           </div>
+          {notices.length < total && (
+            <div
+              ref={sentinelRef}
+              className="h-12 mt-10 flex items-center justify-center"
+            >
+              {loadingMore && (
+                <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+              )}
+            </div>
+          )}
+          {notices.length >= total && total > PAGE_SIZE && (
+            <p className="text-center text-xs text-gray-400 mt-10">
+              You've reached the end.
+            </p>
+          )}
+          </>
         )}
       </div>
 

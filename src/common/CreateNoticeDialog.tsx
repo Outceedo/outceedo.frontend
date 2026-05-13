@@ -104,12 +104,14 @@ const CONTACT_METHODS: { value: NoticeContactMethod; label: string }[] = [
   { value: "IN_APP_MESSAGE", label: "In-app message" },
   { value: "EMAIL", label: "Email" },
   { value: "PHONE", label: "Phone" },
+  { value: "NA", label: "N/A" },
 ];
 
 const VISIBILITIES: { value: NoticeVisibility; label: string }[] = [
   { value: "PUBLIC", label: "Public — everyone" },
   { value: "EXPERT", label: "Experts only" },
   { value: "SCOUT", label: "Scouts only" },
+  { value: "SPONSOR", label: "Sponsors only" },
   { value: "PRIVATE", label: "Private — only me" },
 ];
 
@@ -202,6 +204,7 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
       showLocation: true,
       showClubOrTeamName: true,
       showContact: true,
+      showUrgency: true,
       titleHint: "Title",
       descriptionHint: "Description",
     };
@@ -240,6 +243,8 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     if (type === "MATCH") {
       return {
         ...base,
+        showContact: false,
+        showUrgency: false,
         titleHint: "Match title (e.g., Arsenal vs Spurs)",
         descriptionHint:
           "Date, kick-off, competition, ticket info, anything fans should know…",
@@ -247,6 +252,8 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     }
     return {
       ...base,
+      showContact: false,
+      showUrgency: false,
       titleHint: "Result headline (e.g., Arsenal 3 – 1 Spurs)",
       descriptionHint:
         "Goalscorers, key moments, competition / matchday, attendance…",
@@ -258,14 +265,16 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
     if (!form.title.trim()) next.title = "Title is required";
     if (!form.description.trim())
       next.description = "Description is required";
-    if (form.contactMethod === "EMAIL") {
+    const skipContactValidation =
+      postType === "MATCH" || postType === "RESULT";
+    if (!skipContactValidation && form.contactMethod === "EMAIL") {
       if (!form.contactEmail.trim()) {
         next.contactEmail = "Email address is required";
       } else if (!isValidEmail(form.contactEmail)) {
         next.contactEmail = "Enter a valid email address";
       }
     }
-    if (form.contactMethod === "PHONE") {
+    if (!skipContactValidation && form.contactMethod === "PHONE") {
       if (!form.contactPhone.trim()) {
         next.contactPhone = "Phone number is required";
       } else if (!isValidPhone(form.contactPhone)) {
@@ -284,11 +293,12 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
       return;
     }
     setErrors({});
+    const hideContactAndUrgency = postType === "MATCH" || postType === "RESULT";
     const payload: CreateNoticePayload = {
       postType,
       title: form.title.trim(),
       description: form.description.trim(),
-      contactMethod: form.contactMethod,
+      contactMethod: hideContactAndUrgency ? "NA" : form.contactMethod,
       urgency: form.urgency,
       visibility: form.visibility,
       postedByType,
@@ -298,14 +308,17 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
       ...(form.clubOrTeamName.trim() && {
         clubOrTeamName: form.clubOrTeamName.trim(),
       }),
-      ...(form.contactPersonName.trim() && {
-        contactPersonName: form.contactPersonName.trim(),
-      }),
-      ...(form.contactMethod === "EMAIL" &&
+      ...(!hideContactAndUrgency &&
+        form.contactPersonName.trim() && {
+          contactPersonName: form.contactPersonName.trim(),
+        }),
+      ...(!hideContactAndUrgency &&
+        form.contactMethod === "EMAIL" &&
         form.contactEmail.trim() && {
           contactEmail: form.contactEmail.trim(),
         }),
-      ...(form.contactMethod === "PHONE" &&
+      ...(!hideContactAndUrgency &&
+        form.contactMethod === "PHONE" &&
         form.contactPhone.trim() && {
           contactPhone: form.contactPhone.trim(),
         }),
@@ -683,27 +696,31 @@ const CreateNoticeDialog: React.FC<Props> = ({ open, onOpenChange }) => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label>Urgency *</Label>
-                  <Select
-                    value={form.urgency}
-                    onValueChange={(v) =>
-                      setForm((f) => ({ ...f, urgency: v as NoticeUrgency }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {URGENCIES.map((u) => (
-                        <SelectItem key={u.value} value={u.value}>
-                          {u.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div
+                className={`grid grid-cols-1 ${fields.showUrgency ? "sm:grid-cols-2" : ""} gap-3`}
+              >
+                {fields.showUrgency && (
+                  <div className="space-y-1.5">
+                    <Label>Urgency *</Label>
+                    <Select
+                      value={form.urgency}
+                      onValueChange={(v) =>
+                        setForm((f) => ({ ...f, urgency: v as NoticeUrgency }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {URGENCIES.map((u) => (
+                          <SelectItem key={u.value} value={u.value}>
+                            {u.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div className="space-y-1.5">
                   <Label>Visibility</Label>
                   <Select

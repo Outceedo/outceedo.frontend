@@ -103,12 +103,14 @@ const CONTACT_METHODS: { value: NoticeContactMethod; label: string }[] = [
   { value: "IN_APP_MESSAGE", label: "In-app message" },
   { value: "EMAIL", label: "Email" },
   { value: "PHONE", label: "Phone" },
+  { value: "NA", label: "N/A" },
 ];
 
 const VISIBILITIES: { value: NoticeVisibility; label: string }[] = [
   { value: "PUBLIC", label: "Public — everyone" },
   { value: "EXPERT", label: "Experts only" },
   { value: "SCOUT", label: "Scouts only" },
+  { value: "SPONSOR", label: "Sponsors only" },
   { value: "PRIVATE", label: "Private — only me" },
 ];
 
@@ -421,9 +423,11 @@ const NoticeDetailDialog: React.FC<Props> = ({ open, onOpenChange, notice }) => 
             <span className="bg-stone-800 text-white text-[10px] font-bold tracking-widest rounded-full px-2.5 py-1">
               {POST_TYPE_LABEL[current.postType] || current.postType}
             </span>
-            <span className="bg-amber-100 text-amber-800 text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 border border-amber-200">
-              {URGENCY_LABEL[current.urgency] || current.urgency}
-            </span>
+            {current.postType !== "MATCH" && current.postType !== "RESULT" && (
+              <span className="bg-amber-100 text-amber-800 text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 border border-amber-200">
+                {URGENCY_LABEL[current.urgency] || current.urgency}
+              </span>
+            )}
             <span className="bg-slate-100 text-slate-700 text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 border border-slate-200">
               {current.visibility}
             </span>
@@ -786,30 +790,32 @@ const NoticeDetailDialog: React.FC<Props> = ({ open, onOpenChange, notice }) => 
                 <p className="font-semibold text-gray-800">{location}</p>
               </div>
             )}
-            <div className="rounded-lg border border-gray-200 bg-white p-3">
-              <p className="text-xs uppercase tracking-wider text-gray-500 mb-0.5 flex items-center gap-1">
-                <ContactIcon method={current.contactMethod} /> Contact
-              </p>
-              <p className="font-semibold text-gray-800 capitalize">
-                {current.contactMethod.replace("_", " ").toLowerCase()}
-              </p>
-              {current.contactMethod === "EMAIL" && current.contactEmail && (
-                <a
-                  href={`mailto:${current.contactEmail}`}
-                  className="text-xs text-red-600 hover:underline break-all"
-                >
-                  {current.contactEmail}
-                </a>
-              )}
-              {current.contactMethod === "PHONE" && current.contactPhone && (
-                <a
-                  href={`tel:${current.contactPhone.replace(/[^+0-9]/g, "")}`}
-                  className="text-xs text-red-600 hover:underline"
-                >
-                  {current.contactPhone}
-                </a>
-              )}
-            </div>
+            {current.contactMethod !== "NA" && (
+              <div className="rounded-lg border border-gray-200 bg-white p-3">
+                <p className="text-xs uppercase tracking-wider text-gray-500 mb-0.5 flex items-center gap-1">
+                  <ContactIcon method={current.contactMethod} /> Contact
+                </p>
+                <p className="font-semibold text-gray-800 capitalize">
+                  {current.contactMethod.replace("_", " ").toLowerCase()}
+                </p>
+                {current.contactMethod === "EMAIL" && current.contactEmail && (
+                  <a
+                    href={`mailto:${current.contactEmail}`}
+                    className="text-xs text-red-600 hover:underline break-all"
+                  >
+                    {current.contactEmail}
+                  </a>
+                )}
+                {current.contactMethod === "PHONE" && current.contactPhone && (
+                  <a
+                    href={`tel:${current.contactPhone.replace(/[^+0-9]/g, "")}`}
+                    className="text-xs text-red-600 hover:underline"
+                  >
+                    {current.contactPhone}
+                  </a>
+                )}
+              </div>
+            )}
             {current.contactPersonName && (
               <div className="rounded-lg border border-gray-200 bg-white p-3">
                 <p className="text-xs uppercase tracking-wider text-gray-500 mb-0.5 flex items-center gap-1">

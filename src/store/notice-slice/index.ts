@@ -9,9 +9,14 @@ export type NoticePostType =
   | "RESULT"
   | "OTHER";
 
-export type NoticeContactMethod = "EMAIL" | "PHONE" | "IN_APP_MESSAGE";
+export type NoticeContactMethod = "EMAIL" | "PHONE" | "IN_APP_MESSAGE" | "NA";
 export type NoticeUrgency = "IMMEDIATE" | "THIS_WEEK" | "ONGOING";
-export type NoticeVisibility = "PUBLIC" | "PRIVATE" | "SCOUT" | "EXPERT";
+export type NoticeVisibility =
+  | "PUBLIC"
+  | "PRIVATE"
+  | "SCOUT"
+  | "EXPERT"
+  | "SPONSOR";
 export type NoticePostedByType =
   | "PLAYER"
   | "EXPERT"
@@ -103,6 +108,7 @@ interface NoticeState {
   page: number;
   limit: number;
   status: "idle" | "loading" | "succeeded" | "failed";
+  loadingMore: boolean;
   error: string | null;
   createStatus: "idle" | "loading" | "succeeded" | "failed";
   createError: string | null;
@@ -114,20 +120,26 @@ const initialState: NoticeState = {
   page: 1,
   limit: 20,
   status: "idle",
+  loadingMore: false,
   error: null,
   createStatus: "idle",
   createError: null,
 };
 
+export interface FetchNoticesArg extends ListNoticesQuery {
+  append?: boolean;
+}
+
 export const fetchNotices = createAsyncThunk(
   "notices/fetchNotices",
-  async (query: ListNoticesQuery = {}, { rejectWithValue }) => {
+  async (arg: FetchNoticesArg = {}, { rejectWithValue, signal }) => {
     try {
+      const { append: _append, ...query } = arg;
       const params: Record<string, string | number> = {};
       Object.entries(query).forEach(([k, v]) => {
         if (v !== undefined && v !== null && v !== "") params[k] = v as any;
       });
-      const response = await noticeService.get("/", { params });
+      const response = await noticeService.get("/", { params, signal });
       return response.data as {
         data: Notice[];
         total: number;
@@ -263,30 +275,35 @@ const noticeSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchNotices.pending, (state) => {
-        state.status = "loading";
+      .addCase(fetchNotices.pending, (state, action) => {
+        if (action.meta.arg?.append) {
+          state.loadingMore = true;
+        } else {
+          state.status = "loading";
+        }
         state.error = null;
       })
-      .addCase(
-        fetchNotices.fulfilled,
-        (
-          state,
-          action: PayloadAction<{
-            data: Notice[];
-            total: number;
-            page: number;
-            limit: number;
-          }>
-        ) => {
-          state.status = "succeeded";
+      .addCase(fetchNotices.fulfilled, (state, action) => {
+        state.status = "succeeded";
+        state.loadingMore = false;
+        state.total = action.payload.total;
+        state.page = action.payload.page;
+        state.limit = action.payload.limit;
+        if (action.meta.arg?.append) {
+          const existing = new Set(state.data.map((n) => n.id));
+          const fresh = action.payload.data.filter((n) => !existing.has(n.id));
+          state.data = [...state.data, ...fresh];
+        } else {
           state.data = action.payload.data;
-          state.total = action.payload.total;
-          state.page = action.payload.page;
-          state.limit = action.payload.limit;
         }
-      )
+      })
       .addCase(fetchNotices.rejected, (state, action) => {
-        state.status = "failed";
+        state.loadingMore = false;
+        // Ignore aborted fetches (filter changed mid-flight) — don't surface as error.
+        if (action.meta.aborted) return;
+        if (!action.meta.arg?.append) {
+          state.status = "failed";
+        }
         state.error = (action.payload as string) || "Failed to load notices";
       })
       .addCase(createNotice.pending, (state) => {
