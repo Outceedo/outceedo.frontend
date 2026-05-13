@@ -124,7 +124,16 @@ function NoticeSlip({
 
   return (
     <div
-      className={`relative bg-gradient-to-br ${paperBg} rounded-sm pt-10 px-5 pb-5 min-h-[11rem] flex flex-col gap-3 shadow-[2px_4px_12px_rgba(0,0,0,0.08)] border border-black/5 w-full`}
+      role="button"
+      tabIndex={0}
+      onClick={() => onReadMore(notice)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onReadMore(notice);
+        }
+      }}
+      className={`relative bg-gradient-to-br ${paperBg} rounded-sm pt-10 px-5 pb-5 min-h-[11rem] flex flex-col gap-3 shadow-[2px_4px_12px_rgba(0,0,0,0.08)] border border-black/5 w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2`}
     >
       <Clip color={pinColor} />
 
