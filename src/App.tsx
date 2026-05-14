@@ -72,6 +72,9 @@ import TeamExperts from "./teampages/expertprofile";
 import ScoutProfile from "./ScoutPages/scoutdata";
 import ScoutPlayersProfile from "./ScoutPages/playerProfiles";
 import ScoutPlayerInfo from "./ScoutPages/playerinfo";
+import ScoutMyBooking from "./ScoutPages/bookings/mybooking";
+import ScoutProfilesList from "./Pages/Scouts/ScoutProfilefetch";
+import ScoutPublicView from "./Pages/Scouts/ScoutView";
 //fan pages
 import FanLayout from "./components/fan/layout";
 import FanPlayers from "./fanpages/Players";
@@ -278,6 +281,8 @@ const AppContent: React.FC = () => {
         >
           <Route path="matches" element={<Matches />} />
           <Route path="mybooking" element={<MyBooking />} />
+          <Route path="viewscouts" element={<ScoutProfilesList />} />
+          <Route path="scoutdetails" element={<ScoutPublicView />} />
           <Route path="viewexperts" element={<Expertspage />} />
           <Route path="exdetails" element={<Experts />} />
           <Route path="profile" element={<Profile />} />
@@ -369,6 +374,8 @@ const AppContent: React.FC = () => {
           <Route path="matches" element={<Matches />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="bookings" element={<TeamBooking />} />
+          <Route path="viewscouts" element={<ScoutProfilesList />} />
+          <Route path="scoutdetails" element={<ScoutPublicView />} />
           <Route path="feed" element={<Feed />} />
         </Route>
 
@@ -411,6 +418,7 @@ const AppContent: React.FC = () => {
           <Route path="viewplayers" element={<ScoutPlayersProfile />} />
           <Route path="playerinfo" element={<ScoutPlayerInfo />} />
           <Route path="details-form" element={<Detailsform />} />
+          <Route path="mybooking" element={<ScoutMyBooking />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="feed" element={<Feed />} />
         </Route>

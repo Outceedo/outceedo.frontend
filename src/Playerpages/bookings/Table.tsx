@@ -26,6 +26,7 @@ import { X } from "lucide-react";
 import axios from "axios";
 import profile from "../../assets/images/avatar.png";
 import AssessmentReport from "../../Pages/common/AssessmentReport";
+import ScoutReportPreviewModal from "../../Pages/common/ScoutReportPreviewModal";
 import Swal from "sweetalert2";
 
 interface Expert {
@@ -131,6 +132,8 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
   const [selectedBookingId, setSelectedBookingId] = useState<string>("");
   const [reportData, setReportData] = useState<ReportData[]>([]);
   const [reportLoading, setReportLoading] = useState(false);
+  const [scoutPreviewUrl, setScoutPreviewUrl] = useState<string | null>(null);
+  const [scoutPreviewTitle, setScoutPreviewTitle] = useState<string>("");
 
   const truncateText = (text: string, maxLength: number = 15) => {
     if (!text) return "";
@@ -308,6 +311,18 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
     e.stopPropagation();
     setSelectedBookingId(bookingId);
 
+    const booking = bookings.find((b) => b.id === bookingId);
+    const scoutReportUrl = (booking as any)?.scoutReportUrl;
+    if (scoutReportUrl) {
+      setScoutPreviewUrl(scoutReportUrl);
+      setScoutPreviewTitle(
+        (booking as any).customServiceTitle ||
+          (booking?.service as any)?.title ||
+          "Scouting Report",
+      );
+      return;
+    }
+
     const result = await fetchReportData(bookingId);
     if (result.found) {
       setIsReportOpen(true);
@@ -346,6 +361,13 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
 
   return (
     <>
+      <ScoutReportPreviewModal
+        open={!!scoutPreviewUrl}
+        onClose={() => setScoutPreviewUrl(null)}
+        url={scoutPreviewUrl}
+        title={scoutPreviewTitle}
+      />
+
       {isReportOpen && (
         <div className="fixed inset-0 z-50 bg-white flex flex-col">
           <div className="flex justify-between items-center p-4 border-b">
@@ -439,10 +461,16 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
                       <span
                         className="truncate block max-w-[100px]"
                         title={
-                          booking.service?.service?.name || "Unknown Service"
+                          (booking as any).customServiceTitle ||
+                          (booking.service as any)?.title ||
+                          booking.service?.service?.name ||
+                          "Unknown Service"
                         }
                       >
-                        {booking.service?.service?.name || "Unknown Service"}
+                        {(booking as any).customServiceTitle ||
+                          (booking.service as any)?.title ||
+                          booking.service?.service?.name ||
+                          "Unknown Service"}
                       </span>
                     </div>
                   </TableCell>
@@ -470,7 +498,7 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
                       className="h-8 w-8 cursor-pointer"
                       onClick={(e) => onOpenVideoModal(booking.id, e)}
                       disabled={
-                        booking.service
+                        booking.service && booking.service.service
                           ? booking.service.service.id !== "1"
                           : true
                       }
@@ -482,7 +510,14 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 cursor-pointer"
+                      className={`h-8 w-8 cursor-pointer ${
+                        (booking as any).scoutReportUrl ? "text-red-600" : ""
+                      }`}
+                      title={
+                        (booking as any).scoutReportUrl
+                          ? "Download scouting report"
+                          : "View assessment report"
+                      }
                       onClick={(e) => handleReportClick(booking.id, e)}
                     >
                       <FontAwesomeIcon icon={faFileAlt} />

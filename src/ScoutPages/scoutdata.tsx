@@ -35,6 +35,7 @@ import {
 import FollowList from "../components/follower/followerlist";
 import axios from "axios";
 import Settings from "@/common/settings";
+import ScoutServices from "./ScoutServices";
 
 interface Follower {
   id: string;
@@ -91,7 +92,7 @@ const StarRating: React.FC<{
 
 const ScoutProfile = () => {
   const [activeTab, setActiveTab] = useState<
-    "details" | "media" | "reviews" | "account" | "businessCard"
+    "details" | "services" | "media" | "reviews" | "account" | "businessCard"
   >("details");
   const dispatch = useAppDispatch();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -677,6 +678,7 @@ const ScoutProfile = () => {
             {(
               [
                 "details",
+                "services",
                 "media",
                 "reviews",
                 "account",
@@ -700,6 +702,7 @@ const ScoutProfile = () => {
             {activeTab === "details" && (
               <ExpertDetails expertData={scoutData} />
             )}
+            {activeTab === "services" && <ScoutServices />}
             {activeTab === "media" && <Mediaedit Data={scoutData} />}
             {activeTab === "reviews" && <Reviewnoedit Data={scoutData} />}
             {activeTab === "account" && <Settings />}

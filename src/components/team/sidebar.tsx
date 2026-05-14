@@ -33,6 +33,12 @@ const adminSidebarMenuItems: MenuItem[] = [
     path: "/team/experts",
   },
   {
+    id: 10,
+    name: "Scouts",
+    icon: "fas fa-binoculars",
+    path: "/team/viewscouts",
+  },
+  {
     id: 3,
     name: "bookings",
     icon: "fas fa-user-tie",

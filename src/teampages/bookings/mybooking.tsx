@@ -30,6 +30,7 @@ import profile from "../../assets/images/avatar.png";
 import axios from "axios";
 import Swal from "sweetalert2";
 import BookingsTable from "./Table";
+import ScoutReportPreviewModal from "../../Pages/common/ScoutReportPreviewModal";
 
 import {
   Select,
@@ -190,6 +191,8 @@ const TeamBooking: React.FC = () => {
 
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [scoutPreviewUrl, setScoutPreviewUrl] = useState<string | null>(null);
+  const [scoutPreviewTitle, setScoutPreviewTitle] = useState<string>("");
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedBookingForPayment, setSelectedBookingForPayment] =
@@ -1219,6 +1222,12 @@ const TeamBooking: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
+      <ScoutReportPreviewModal
+        open={!!scoutPreviewUrl}
+        onClose={() => setScoutPreviewUrl(null)}
+        url={scoutPreviewUrl}
+        title={scoutPreviewTitle}
+      />
       <>
         <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
 
@@ -1372,9 +1381,17 @@ const TeamBooking: React.FC = () => {
                         />
                         <h3
                           className="font-medium truncate"
-                          title={booking.service?.service?.name || "Service"}
+                          title={
+                            (booking as any).customServiceTitle ||
+                            (booking.service as any)?.title ||
+                            booking.service?.service?.name ||
+                            "Service"
+                          }
                         >
-                          {booking.service?.service?.name || "Service"}
+                          {(booking as any).customServiceTitle ||
+                            (booking.service as any)?.title ||
+                            booking.service?.service?.name ||
+                            "Service"}
                         </h3>
                       </div>
                       <div className="flex items-center gap-2">
@@ -1878,8 +1895,29 @@ const TeamBooking: React.FC = () => {
                           </div>
                         </div>
                         <h4 className="font-medium mb-2 break-words">
-                          {selectedBooking.service?.service?.name || "N/A"}
+                          {(selectedBooking as any).customServiceTitle ||
+                            (selectedBooking.service as any)?.title ||
+                            selectedBooking.service?.service?.name ||
+                            "N/A"}
                         </h4>
+                        {(selectedBooking as any).scoutReportUrl && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setScoutPreviewUrl(
+                                (selectedBooking as any).scoutReportUrl,
+                              );
+                              setScoutPreviewTitle(
+                                (selectedBooking as any).customServiceTitle ||
+                                  (selectedBooking.service as any)?.title ||
+                                  "Scouting Report",
+                              );
+                            }}
+                            className="text-blue-700 font-medium hover:underline block mb-2"
+                          >
+                            📄 Preview scouting report
+                          </button>
+                        )}
                         <p className="text-sm text-gray-600 mb-2">
                           Type:{" "}
                           {getServiceTypeName(getServiceType(selectedBooking))}

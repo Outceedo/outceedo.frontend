@@ -706,6 +706,7 @@ const Expertview = () => {
         localStorage.role === "player"
           ? navigate("/player/book")
           : navigate("/team/book");
+          
         break;
       default:
         localStorage.setItem("selectedService", JSON.stringify(serviceData));

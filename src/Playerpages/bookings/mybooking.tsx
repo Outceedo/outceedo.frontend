@@ -30,6 +30,7 @@ import profile from "../../assets/images/avatar.png";
 import axios from "axios";
 import Swal from "sweetalert2";
 import BookingsTable from "./Table";
+import ScoutReportPreviewModal from "../../Pages/common/ScoutReportPreviewModal";
 
 import {
   Select,
@@ -190,6 +191,8 @@ const MyBooking: React.FC = () => {
 
   const [isBookingDetailsOpen, setIsBookingDetailsOpen] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [scoutPreviewUrl, setScoutPreviewUrl] = useState<string | null>(null);
+  const [scoutPreviewTitle, setScoutPreviewTitle] = useState<string>("");
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedBookingForPayment, setSelectedBookingForPayment] =
@@ -1255,6 +1258,12 @@ const MyBooking: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 bg-white dark:bg-gray-800 rounded-md shadow-md">
+      <ScoutReportPreviewModal
+        open={!!scoutPreviewUrl}
+        onClose={() => setScoutPreviewUrl(null)}
+        url={scoutPreviewUrl}
+        title={scoutPreviewTitle}
+      />
       <>
         <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
 
@@ -1692,6 +1701,27 @@ const MyBooking: React.FC = () => {
                           {getPaymentStatusText(selectedBooking)}
                         </Badge>
                       </div>
+
+                      {(selectedBooking as any).scoutReportUrl && (
+                        <div className="mb-4 p-3 rounded-lg border bg-blue-50 border-blue-200">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setScoutPreviewUrl(
+                                (selectedBooking as any).scoutReportUrl,
+                              );
+                              setScoutPreviewTitle(
+                                (selectedBooking as any).customServiceTitle ||
+                                  (selectedBooking.service as any)?.title ||
+                                  "Scouting Report",
+                              );
+                            }}
+                            className="text-blue-700 font-medium hover:underline"
+                          >
+                            📄 Preview scouting report
+                          </button>
+                        </div>
+                      )}
 
                       {/* Status & warnings - only for non-recorded video */}
                       {!isRecorded &&

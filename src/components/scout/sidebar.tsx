@@ -25,12 +25,18 @@ const scoutSidebarMenuItems: MenuItem[] = [
   { id: 2, name: "Profile", icon: "fas fa-user", path: "/scout/profile" },
   {
     id: 3,
+    name: "My Bookings",
+    icon: "fas fa-calendar-check",
+    path: "/scout/mybooking",
+  },
+  {
+    id: 4,
     name: "Referral",
     icon: "fas fa-user-plus",
     path: "/scout/referral",
   },
   {
-    id: 4,
+    id: 5,
     name: "Logout",
     icon: "fas fa-sign-out-alt",
     path: "/logout",
