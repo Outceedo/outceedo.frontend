@@ -13,9 +13,9 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCheck,
   faTimes,
-  faCalendarAlt,
   faFilePdf,
   faCheckCircle,
+  faFileUpload,
 } from "@fortawesome/free-solid-svg-icons";
 
 export interface ScoutBooking {
@@ -54,10 +54,10 @@ interface Props {
   loading: boolean;
   onAccept: (id: string) => void;
   onReject: (id: string) => void;
-  onReschedule: (id: string) => void;
   onComplete: (id: string) => void;
   onRowClick: (booking: ScoutBooking) => void;
   onPreviewReport: (booking: ScoutBooking) => void;
+  onUploadReport: (booking: ScoutBooking) => void;
 }
 
 const formatDate = (iso: string, tz: string): string => {
@@ -120,10 +120,10 @@ const ScoutBookingTable: React.FC<Props> = ({
   loading,
   onAccept,
   onReject,
-  onReschedule,
   onComplete,
   onRowClick,
   onPreviewReport,
+  onUploadReport,
 }) => {
   if (loading) {
     return (
@@ -209,72 +209,59 @@ const ScoutBookingTable: React.FC<Props> = ({
                       <FontAwesomeIcon icon={faFilePdf} />
                     </button>
                   ) : (
-                    <span
-                      onClick={() => onRowClick(b)}
-                      title="No report uploaded — open booking to upload"
-                      className="text-gray-400 text-xs cursor-pointer"
+                    <button
+                      type="button"
+                      title="Upload scouting report"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUploadReport(b);
+                      }}
+                      className="text-gray-500 text-lg hover:text-red-600"
                     >
-                      —
-                    </span>
+                      <FontAwesomeIcon icon={faFileUpload} />
+                    </button>
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex items-center gap-1">
                     {status === "WAITING_EXPERT_APPROVAL" && (
                       <>
                         <Button
-                          size="sm"
-                          className="bg-green-600 hover:bg-green-700 text-white"
+                          size="icon"
+                          title="Accept"
+                          className="h-8 w-8 bg-green-600 hover:bg-green-700 text-white"
                           onClick={(e) => {
                             e.stopPropagation();
                             onAccept(b.id);
                           }}
                         >
-                          <FontAwesomeIcon icon={faCheck} className="mr-1" />
-                          Accept
+                          <FontAwesomeIcon icon={faCheck} />
                         </Button>
                         <Button
-                          size="sm"
+                          size="icon"
                           variant="outline"
-                          className="text-red-600 border-red-600 hover:bg-red-50"
+                          title="Reject"
+                          className="h-8 w-8 text-red-600 border-red-600 hover:bg-red-50"
                           onClick={(e) => {
                             e.stopPropagation();
                             onReject(b.id);
                           }}
                         >
-                          <FontAwesomeIcon icon={faTimes} className="mr-1" />
-                          Reject
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onReschedule(b.id);
-                          }}
-                        >
-                          <FontAwesomeIcon
-                            icon={faCalendarAlt}
-                            className="mr-1"
-                          />
-                          Reschedule
+                          <FontAwesomeIcon icon={faTimes} />
                         </Button>
                       </>
                     )}
                     {status === "SCHEDULED" && !b.expertMarkedComplete && (
                       <Button
-                        size="sm"
-                        className="bg-purple-600 hover:bg-purple-700 text-white"
+                        size="icon"
+                        title="Mark complete"
+                        className="h-8 w-8 bg-purple-600 hover:bg-purple-700 text-white"
                         onClick={(e) => {
                           e.stopPropagation();
                           onComplete(b.id);
                         }}
                       >
-                        <FontAwesomeIcon
-                          icon={faCheckCircle}
-                          className="mr-1"
-                        />
-                        Mark Complete
+                        <FontAwesomeIcon icon={faCheckCircle} />
                       </Button>
                     )}
                   </div>

@@ -449,8 +449,14 @@ const BookingsTable: React.FC<BookingsTableProps> = ({
                     </div>
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    {formatShortDate(booking.startAt, booking.timezone)},
-                    {booking.timezone}
+                    {booking.startAt === booking.endAt ? (
+                      "—"
+                    ) : (
+                      <>
+                        {formatShortDate(booking.startAt, booking.timezone)},
+                        {booking.timezone}
+                      </>
+                    )}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

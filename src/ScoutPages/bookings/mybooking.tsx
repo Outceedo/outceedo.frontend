@@ -25,6 +25,9 @@ import {
   faFileUpload,
   faCalendarAlt,
   faTrash,
+  faCheck,
+  faTimes,
+  faCheckCircle,
 } from "@fortawesome/free-solid-svg-icons";
 import ScoutBookingTable, { ScoutBooking } from "./Table";
 import ScoutReportPreviewModal from "@/Pages/common/ScoutReportPreviewModal";
@@ -48,15 +51,6 @@ const ScoutMyBooking: React.FC = () => {
   const [selectedBooking, setSelectedBooking] = useState<ScoutBooking | null>(
     null,
   );
-
-  const [rescheduleOpen, setRescheduleOpen] = useState(false);
-  const [rescheduleBookingId, setRescheduleBookingId] = useState<string | null>(
-    null,
-  );
-  const [reDate, setReDate] = useState("");
-  const [reStart, setReStart] = useState("");
-  const [reEnd, setReEnd] = useState("");
-  const [rescheduling, setRescheduling] = useState(false);
 
   const [uploadOpen, setUploadOpen] = useState(false);
   const [uploadBooking, setUploadBooking] = useState<ScoutBooking | null>(null);
@@ -157,50 +151,6 @@ const ScoutMyBooking: React.FC = () => {
         title: "Failed to reject",
         text: err.response?.data?.error || err.message,
       });
-    }
-  };
-
-  const openReschedule = (id: string) => {
-    setRescheduleBookingId(id);
-    setReDate("");
-    setReStart("");
-    setReEnd("");
-    setRescheduleOpen(true);
-  };
-
-  const submitReschedule = async () => {
-    if (!rescheduleBookingId || !reDate || !reStart || !reEnd) {
-      Swal.fire({ icon: "error", title: "Fill date and times" });
-      return;
-    }
-    setRescheduling(true);
-    try {
-      await axios.patch(
-        `${API_BASE}/booking/${rescheduleBookingId}/reschedule`,
-        {
-          date: reDate,
-          startTime: reStart,
-          endTime: reEnd,
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        },
-        { headers: authHeaders() },
-      );
-      Swal.fire({
-        icon: "success",
-        title: "Reschedule requested",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-      setRescheduleOpen(false);
-      fetchBookings();
-    } catch (err: any) {
-      Swal.fire({
-        icon: "error",
-        title: "Failed to reschedule",
-        text: err.response?.data?.error || err.message,
-      });
-    } finally {
-      setRescheduling(false);
     }
   };
 
@@ -399,9 +349,6 @@ const ScoutMyBooking: React.FC = () => {
             <SelectItem value="SCHEDULED">Scheduled</SelectItem>
             <SelectItem value="COMPLETED">Completed</SelectItem>
             <SelectItem value="REJECTED">Rejected</SelectItem>
-            <SelectItem value="RESCHEDULE_REQUESTED">
-              Reschedule Requested
-            </SelectItem>
           </SelectContent>
         </Select>
         {filtersApplied && (
@@ -421,9 +368,9 @@ const ScoutMyBooking: React.FC = () => {
         loading={loading}
         onAccept={handleAccept}
         onReject={handleReject}
-        onReschedule={openReschedule}
         onComplete={handleComplete}
         onPreviewReport={openPreview}
+        onUploadReport={openUpload}
         onRowClick={(b) => {
           setSelectedBooking(b);
           setDetailsOpen(true);
@@ -537,62 +484,50 @@ const ScoutMyBooking: React.FC = () => {
               )}
             </div>
           )}
-          <DialogFooter>
+          <DialogFooter className="flex flex-wrap gap-2 justify-end">
+            {selectedBooking?.status === "WAITING_EXPERT_APPROVAL" && (
+              <>
+                <Button
+                  className="bg-green-600 hover:bg-green-700 text-white"
+                  onClick={() => {
+                    const id = selectedBooking.id;
+                    setDetailsOpen(false);
+                    handleAccept(id);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faCheck} className="mr-2" />
+                  Accept
+                </Button>
+                <Button
+                  variant="outline"
+                  className="text-red-600 border-red-600 hover:bg-red-50"
+                  onClick={() => {
+                    const id = selectedBooking.id;
+                    setDetailsOpen(false);
+                    handleReject(id);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faTimes} className="mr-2" />
+                  Reject
+                </Button>
+              </>
+            )}
+            {selectedBooking?.status === "SCHEDULED" &&
+              !selectedBooking?.expertMarkedComplete && (
+                <Button
+                  className="bg-purple-600 hover:bg-purple-700 text-white"
+                  onClick={() => {
+                    const id = selectedBooking.id;
+                    setDetailsOpen(false);
+                    handleComplete(id);
+                  }}
+                >
+                  <FontAwesomeIcon icon={faCheckCircle} className="mr-2" />
+                  Mark Complete
+                </Button>
+              )}
             <Button variant="outline" onClick={() => setDetailsOpen(false)}>
               Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Reschedule modal */}
-      <Dialog open={rescheduleOpen} onOpenChange={setRescheduleOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Propose a new time</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium">Date</label>
-              <Input
-                type="date"
-                value={reDate}
-                onChange={(e) => setReDate(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium">Start time</label>
-                <Input
-                  type="time"
-                  value={reStart}
-                  onChange={(e) => setReStart(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">End time</label>
-                <Input
-                  type="time"
-                  value={reEnd}
-                  onChange={(e) => setReEnd(e.target.value)}
-                />
-              </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRescheduleOpen(false)}
-              disabled={rescheduling}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="bg-red-600 hover:bg-red-700"
-              onClick={submitReschedule}
-              disabled={rescheduling}
-            >
-              {rescheduling ? "Submitting…" : "Propose new time"}
             </Button>
           </DialogFooter>
         </DialogContent>

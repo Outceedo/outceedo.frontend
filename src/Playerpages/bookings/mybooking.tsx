@@ -49,6 +49,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate } from "react-router-dom";
 import { loadStripe } from "@stripe/stripe-js";
 import StripePaymentModal from "../StripePaymentModal";
@@ -88,6 +89,9 @@ interface Booking {
   id: string;
   playerId: string;
   expertId: string;
+  scoutId?: string | null;
+  providerType?: "EXPERT" | "SCOUT";
+  customServiceTitle?: string | null;
   serviceId: string;
   status: string;
   startAt: string;
@@ -168,6 +172,7 @@ const TIMEZONES = [
 
 const MyBooking: React.FC = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [providerTab, setProviderTab] = useState<"EXPERT" | "SCOUT">("EXPERT");
   const [bookingStatus, setBookingStatus] = useState("all");
   const [actionFilter, setActionFilter] = useState("all");
   const [serviceTypeFilter, setServiceTypeFilter] = useState("all");
@@ -1213,6 +1218,8 @@ const MyBooking: React.FC = () => {
   };
 
   const filteredBookings = bookings.filter((booking) => {
+    const matchesProvider =
+      (booking.providerType || "EXPERT") === providerTab;
     const expertName = booking.expert?.username || "";
     const matchesSearch = expertName
       .toLowerCase()
@@ -1226,11 +1233,12 @@ const MyBooking: React.FC = () => {
         ["ACCEPTED", "CONFIRMED"].includes(booking.status));
 
     return (
+      matchesProvider &&
       matchesSearch &&
       matchesStatus &&
       matchesDateFilter(booking, dateFilter) &&
       matchesActionFilter(booking) &&
-      matchesServiceTypeFilter(booking)
+      (providerTab === "SCOUT" || matchesServiceTypeFilter(booking))
     );
   });
 
@@ -1267,6 +1275,18 @@ const MyBooking: React.FC = () => {
       <>
         <h1 className="text-xl sm:text-2xl font-bold mb-6">My Bookings</h1>
 
+        {/* PROVIDER TABS */}
+        <Tabs
+          value={providerTab}
+          onValueChange={(v) => setProviderTab(v as "EXPERT" | "SCOUT")}
+          className="mb-4"
+        >
+          <TabsList>
+            <TabsTrigger value="EXPERT">Expert</TabsTrigger>
+            <TabsTrigger value="SCOUT">Scout</TabsTrigger>
+          </TabsList>
+        </Tabs>
+
         {/* FILTERS */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6">
           <div className="relative w-full sm:w-1/5">
@@ -1276,7 +1296,11 @@ const MyBooking: React.FC = () => {
             />
             <Input
               type="text"
-              placeholder="Search by Expert Name"
+              placeholder={
+                providerTab === "SCOUT"
+                  ? "Search by Scout Name"
+                  : "Search by Expert Name"
+              }
               className="pl-10 w-full"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -1321,23 +1345,25 @@ const MyBooking: React.FC = () => {
               <SelectItem value="completed">Completed</SelectItem>
             </SelectContent>
           </Select>
-          <Select
-            value={serviceTypeFilter}
-            onValueChange={setServiceTypeFilter}
-          >
-            <SelectTrigger className="sm:w-[180px]">
-              <SelectValue placeholder="Service Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Service Types</SelectItem>
-              <SelectItem value="recorded-video">
-                RECORDED VIDEO ASSESSMENT
-              </SelectItem>
-              <SelectItem value="online">ONLINE TRAINING</SelectItem>
-              <SelectItem value="in-person">ON GROUND ASSESSMENT</SelectItem>
-              <SelectItem value="other">ONLINE ASSESSMENT</SelectItem>
-            </SelectContent>
-          </Select>
+          {providerTab === "EXPERT" && (
+            <Select
+              value={serviceTypeFilter}
+              onValueChange={setServiceTypeFilter}
+            >
+              <SelectTrigger className="sm:w-[180px]">
+                <SelectValue placeholder="Service Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Service Types</SelectItem>
+                <SelectItem value="recorded-video">
+                  RECORDED VIDEO ASSESSMENT
+                </SelectItem>
+                <SelectItem value="online">ONLINE TRAINING</SelectItem>
+                <SelectItem value="in-person">ON GROUND ASSESSMENT</SelectItem>
+                <SelectItem value="other">ONLINE ASSESSMENT</SelectItem>
+              </SelectContent>
+            </Select>
+          )}
           {filtersApplied && (
             <Button
               variant="outline"
@@ -1676,12 +1702,18 @@ const MyBooking: React.FC = () => {
 
               <div className="py-4">
                 {(() => {
-                  const isRecorded = selectedBooking.service?.serviceId === "1";
+                  const isScout = selectedBooking.providerType === "SCOUT";
+                  const hasSchedule =
+                    selectedBooking.startAt !== selectedBooking.endAt;
+                  const isRecorded =
+                    !isScout && selectedBooking.service?.serviceId === "1";
                   const times = getTimesForBothParties(selectedBooking);
-                  const duration = formatDuration(
-                    selectedBooking.startAt,
-                    selectedBooking.endAt,
-                  );
+                  const duration = hasSchedule
+                    ? formatDuration(
+                        selectedBooking.startAt,
+                        selectedBooking.endAt,
+                      )
+                    : null;
 
                   return (
                     <>
@@ -1725,6 +1757,7 @@ const MyBooking: React.FC = () => {
 
                       {/* Status & warnings - only for non-recorded video */}
                       {!isRecorded &&
+                        hasSchedule &&
                         isSessionOver(selectedBooking) &&
                         selectedBooking.status !== "COMPLETED" && (
                           <div className="mb-5 p-4 rounded-lg border bg-amber-50 border-amber-200">
@@ -1748,6 +1781,8 @@ const MyBooking: React.FC = () => {
 
                       {/* Live session info - only for non-recorded video */}
                       {!isRecorded &&
+                        !isScout &&
+                        hasSchedule &&
                         isPaid(selectedBooking) &&
                         selectedBooking.status === "SCHEDULED" &&
                         !isSessionOver(selectedBooking) && (
@@ -1870,19 +1905,19 @@ const MyBooking: React.FC = () => {
                         </div>
                       )}
 
-                      {/* Expert info */}
+                      {/* Provider info */}
                       <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                         <h3 className="text-lg font-semibold mb-2 flex items-center">
                           <FontAwesomeIcon
                             icon={faUser}
                             className="mr-2 text-gray-600"
                           />
-                          Expert Information
+                          {isScout ? "Scout Information" : "Expert Information"}
                         </h3>
                         <div className="flex items-start gap-4">
                           <img
                             src={selectedBooking.expert?.photo || profile}
-                            alt="Expert"
+                            alt={isScout ? "Scout" : "Expert"}
                             className="w-16 h-16 rounded-full object-cover"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
@@ -1893,32 +1928,36 @@ const MyBooking: React.FC = () => {
                             <h4 className="font-medium text-lg mb-1 break-words">
                               {selectedBooking.expert?.username}
                             </h4>
-                            <p className="text-gray-600 text-sm mb-1">
-                              Professional Coach
-                            </p>
-                            <p className="text-gray-600 text-sm">
-                              <FontAwesomeIcon
-                                icon={faStar}
-                                className="text-yellow-500 mr-1"
-                              />
-                              <FontAwesomeIcon
-                                icon={faStar}
-                                className="text-yellow-500 mr-1"
-                              />
-                              <FontAwesomeIcon
-                                icon={faStar}
-                                className="text-yellow-500 mr-1"
-                              />
-                              <FontAwesomeIcon
-                                icon={faStar}
-                                className="text-yellow-500 mr-1"
-                              />
-                              <FontAwesomeIcon
-                                icon={faStar}
-                                className="text-gray-300 mr-1"
-                              />
-                              (4.0)
-                            </p>
+                            {!isScout && (
+                              <>
+                                <p className="text-gray-600 text-sm mb-1">
+                                  Professional Coach
+                                </p>
+                                <p className="text-gray-600 text-sm">
+                                  <FontAwesomeIcon
+                                    icon={faStar}
+                                    className="text-yellow-500 mr-1"
+                                  />
+                                  <FontAwesomeIcon
+                                    icon={faStar}
+                                    className="text-yellow-500 mr-1"
+                                  />
+                                  <FontAwesomeIcon
+                                    icon={faStar}
+                                    className="text-yellow-500 mr-1"
+                                  />
+                                  <FontAwesomeIcon
+                                    icon={faStar}
+                                    className="text-yellow-500 mr-1"
+                                  />
+                                  <FontAwesomeIcon
+                                    icon={faStar}
+                                    className="text-gray-300 mr-1"
+                                  />
+                                  (4.0)
+                                </p>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -1928,9 +1967,13 @@ const MyBooking: React.FC = () => {
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-lg font-semibold flex items-center">
                             <FontAwesomeIcon
-                              icon={getServiceTypeIcon(
-                                getServiceType(selectedBooking),
-                              )}
+                              icon={
+                                isScout
+                                  ? faInfoCircle
+                                  : getServiceTypeIcon(
+                                      getServiceType(selectedBooking),
+                                    )
+                              }
                               className="mr-2 text-gray-600"
                             />
                             Service Details
@@ -1944,20 +1987,30 @@ const MyBooking: React.FC = () => {
                           </div>
                         </div>
                         <h4 className="font-medium mb-2 break-words">
-                          {selectedBooking.service?.service?.name || "N/A"}
+                          {isScout
+                            ? selectedBooking.customServiceTitle ||
+                              (selectedBooking.service as any)?.title ||
+                              "Scout Service"
+                            : selectedBooking.service?.service?.name || "N/A"}
                         </h4>
-                        <p className="text-sm text-gray-600 mb-2">
-                          Type:{" "}
-                          {getServiceTypeName(getServiceType(selectedBooking))}
-                        </p>
-                        <p className="text-gray-600 mb-4">
-                          {selectedBooking.service?.service?.description ||
-                            "No description available"}
-                        </p>
+                        {!isScout && (
+                          <>
+                            <p className="text-sm text-gray-600 mb-2">
+                              Type:{" "}
+                              {getServiceTypeName(
+                                getServiceType(selectedBooking),
+                              )}
+                            </p>
+                            <p className="text-gray-600 mb-4">
+                              {selectedBooking.service?.service?.description ||
+                                "No description available"}
+                            </p>
+                          </>
+                        )}
                       </div>
 
-                      {/* Session info - only for non-recorded video */}
-                      {!isRecorded && (
+                      {/* Session info - only when scheduled and not recorded */}
+                      {!isRecorded && hasSchedule && (
                         <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                           <h3 className="text-lg font-semibold mb-3 flex items-center">
                             <FontAwesomeIcon
@@ -1988,10 +2041,10 @@ const MyBooking: React.FC = () => {
                             </p>
                           </div>
 
-                          {/* Expert Time */}
+                          {/* Provider Time */}
                           <div className="mb-3 p-3 bg-blue-50 rounded border border-blue-200">
                             <p className="text-sm text-blue-600 mb-1 font-medium">
-                              Expert's Time (
+                              {isScout ? "Scout's Time" : "Expert's Time"} (
                               {selectedBooking.expertTimeZone || "UTC"})
                             </p>
                             <p className="font-semibold text-blue-800">
@@ -2014,7 +2067,9 @@ const MyBooking: React.FC = () => {
                             </div>
                             <div className="p-2 bg-gray-100 rounded">
                               <p className="text-xs text-gray-500">
-                                Expert's Timezone
+                                {isScout
+                                  ? "Scout's Timezone"
+                                  : "Expert's Timezone"}
                               </p>
                               <p className="text-sm font-medium text-gray-800">
                                 {selectedBooking.expertTimeZone || "UTC"}
@@ -2092,12 +2147,13 @@ const MyBooking: React.FC = () => {
                             />
                             <div>
                               <p className="font-medium text-amber-800">
-                                Waiting for Expert Approval
+                                Waiting for {isScout ? "Scout" : "Expert"}{" "}
+                                Approval
                               </p>
                               <p className="text-amber-700 text-sm mt-1">
                                 Your booking request is pending approval from
-                                the expert. You will be able to make payment
-                                once approved.
+                                the {isScout ? "scout" : "expert"}. You will be
+                                able to make payment once approved.
                               </p>
                             </div>
                           </div>
@@ -2117,10 +2173,10 @@ const MyBooking: React.FC = () => {
                                 Reschedule Requested
                               </p>
                               <p className="text-yellow-700 text-sm mt-1">
-                                The expert has requested to reschedule this
-                                booking to a new date and time. Please review
-                                the new schedule below and accept if it works
-                                for you.
+                                The {isScout ? "scout" : "expert"} has
+                                requested to reschedule this booking to a new
+                                date and time. Please review the new schedule
+                                below and accept if it works for you.
                               </p>
                             </div>
                           </div>
@@ -2128,8 +2184,9 @@ const MyBooking: React.FC = () => {
                       )}
 
                       {/* Video recording */}
-                      {(selectedBooking.recordedVideo ||
-                        selectedBooking.meetingRecording) && (
+                      {!isScout &&
+                        (selectedBooking.recordedVideo ||
+                          selectedBooking.meetingRecording) && (
                         <div className="mb-5 bg-gray-50 p-4 rounded-lg">
                           <h3 className="text-lg font-semibold mb-2 flex items-center">
                             <FontAwesomeIcon
@@ -2271,13 +2328,17 @@ const MyBooking: React.FC = () => {
               {/* Footer actions */}
               <DialogFooter className="flex flex-wrap gap-3 justify-end">
                 {(() => {
+                  const isScout = selectedBooking?.providerType === "SCOUT";
+                  const hasSchedule =
+                    selectedBooking?.startAt !== selectedBooking?.endAt;
                   const isRecorded =
-                    selectedBooking?.service?.serviceId === "1";
+                    !isScout && selectedBooking?.service?.serviceId === "1";
 
                   return (
                     <>
-                      {/* Go Live button - only for non-recorded video */}
+                      {/* Go Live button - only for non-recorded video, non-scout */}
                       {!isRecorded &&
+                        !isScout &&
                         isPaid(selectedBooking) &&
                         canGoLive(selectedBooking) &&
                         selectedBooking.status === "SCHEDULED" &&
@@ -2294,7 +2355,9 @@ const MyBooking: React.FC = () => {
 
                       {/* Mark as completed button */}
                       {(selectedBooking.status === "SCHEDULED" ||
-                        (!isRecorded && isSessionOver(selectedBooking))) &&
+                        (!isRecorded &&
+                          hasSchedule &&
+                          isSessionOver(selectedBooking))) &&
                         selectedBooking.status !== "COMPLETED" && (
                           <Button
                             variant="outline"
@@ -2335,7 +2398,7 @@ const MyBooking: React.FC = () => {
                             icon={faCreditCard}
                             className="mr-2"
                           />
-                          Awaiting Expert Approval
+                          Awaiting {isScout ? "Scout" : "Expert"} Approval
                         </Button>
                       )}
 
@@ -2366,15 +2429,17 @@ const MyBooking: React.FC = () => {
                       )}
 
                       {/* Report and Review buttons */}
-                      <Button
-                        variant="outline"
-                        onClick={(e) =>
-                          handleReportClick(selectedBooking.id, e)
-                        }
-                      >
-                        <FontAwesomeIcon icon={faFileAlt} className="mr-2" />
-                        View Report
-                      </Button>
+                      {!isScout && (
+                        <Button
+                          variant="outline"
+                          onClick={(e) =>
+                            handleReportClick(selectedBooking.id, e)
+                          }
+                        >
+                          <FontAwesomeIcon icon={faFileAlt} className="mr-2" />
+                          View Report
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         onClick={() => openReviewModal(selectedBooking.id)}
@@ -2480,7 +2545,7 @@ const MyBooking: React.FC = () => {
                 <div className="text-center py-8">Loading report...</div>
               ) : (
                 <AssessmentReport
-                  bookingId={selectedBookingId}
+                  bookingId={selectedBookingId ?? ""}
                   reportData={reportData}
                 />
               )}
@@ -2508,7 +2573,7 @@ const MyBooking: React.FC = () => {
           <AgoraVideoModal
             isOpen={isAgoraModalOpen}
             onClose={handleEndCall}
-            booking={booking}
+            booking={booking as any}
             agora={agora}
           />
         )}
