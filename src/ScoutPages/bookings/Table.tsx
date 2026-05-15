@@ -174,14 +174,18 @@ const ScoutBookingTable: React.FC<Props> = ({
                   {serviceTitle}
                 </TableCell>
                 <TableCell onClick={() => onRowClick(b)}>
-                  {formatDate(b.startAt, b.expertTimeZone || b.timezone)}
+                  {b.startAt === b.endAt
+                    ? "—"
+                    : formatDate(b.startAt, b.expertTimeZone || b.timezone)}
                 </TableCell>
                 <TableCell onClick={() => onRowClick(b)}>
-                  {formatTimeRange(
-                    b.startAt,
-                    b.endAt,
-                    b.expertTimeZone || b.timezone,
-                  )}
+                  {b.startAt === b.endAt
+                    ? "No fixed time"
+                    : formatTimeRange(
+                        b.startAt,
+                        b.endAt,
+                        b.expertTimeZone || b.timezone,
+                      )}
                 </TableCell>
                 <TableCell onClick={() => onRowClick(b)}>
                   £{b.price ?? b.service?.price ?? 0}

@@ -50,6 +50,8 @@ interface ScoutService {
   title: string;
   description: string | null;
   price: number;
+  requiresScheduling: boolean;
+  timezone: string | null;
 }
 
 const socialIconsConfig = [
@@ -62,14 +64,54 @@ const socialIconsConfig = [
 
 const TIMEZONES = [
   "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Sao_Paulo",
   "Europe/London",
   "Europe/Berlin",
-  "America/New_York",
-  "America/Los_Angeles",
+  "Europe/Paris",
+  "Europe/Madrid",
+  "Europe/Rome",
+  "Europe/Amsterdam",
+  "Europe/Zurich",
+  "Europe/Istanbul",
+  "Europe/Moscow",
   "Asia/Dubai",
+  "Asia/Jerusalem",
+  "Asia/Riyadh",
   "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
   "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Asia/Kuala_Lumpur",
+  "Asia/Jakarta",
+  "Asia/Manila",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Colombo",
   "Australia/Sydney",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Pacific/Auckland",
+  "Africa/Johannesburg",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "America/Mexico_City",
+  "America/Bogota",
+  "America/Lima",
+  "America/Argentina/Buenos_Aires",
+  "America/Santiago",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Pacific/Fiji",
+  "Pacific/Guam",
 ];
 
 type TabType = "details" | "services" | "media" | "reviews";
@@ -125,8 +167,6 @@ const ScoutView: React.FC = () => {
   const [bookingTz, setBookingTz] = useState(
     Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
   );
-  const [bookingScoutTz, setBookingScoutTz] = useState("UTC");
-  const [bookingPrice, setBookingPrice] = useState<number>(0);
   const [bookingSubmitting, setBookingSubmitting] = useState(false);
 
   const dispatch = useAppDispatch();
@@ -232,10 +272,8 @@ const ScoutView: React.FC = () => {
   const avgRating =
     totalReviews === 0
       ? 0
-      : reviewsArray.reduce(
-          (s: number, r: any) => s + (r.rating || 0),
-          0,
-        ) / totalReviews;
+      : reviewsArray.reduce((s: number, r: any) => s + (r.rating || 0), 0) /
+        totalReviews;
 
   const openBooking = (service: ScoutService) => {
     const role = localStorage.getItem("role");
@@ -247,7 +285,6 @@ const ScoutView: React.FC = () => {
       return;
     }
     setBookingService(service);
-    setBookingPrice(service.price);
     setBookingDate("");
     setBookingStart("");
     setBookingEnd("");
@@ -257,7 +294,8 @@ const ScoutView: React.FC = () => {
 
   const submitBooking = async () => {
     if (!bookingService || !viewedProfile?.id) return;
-    if (!bookingDate || !bookingStart || !bookingEnd) {
+    const needsSchedule = bookingService.requiresScheduling;
+    if (needsSchedule && (!bookingDate || !bookingStart || !bookingEnd)) {
       Swal.fire({ icon: "error", title: "Pick a date and time" });
       return;
     }
@@ -268,18 +306,21 @@ const ScoutView: React.FC = () => {
     }
     setBookingSubmitting(true);
     try {
-      const payload = {
+      const payload: Record<string, unknown> = {
         playerId,
         scoutId: viewedProfile.id,
         serviceId: bookingService.id,
-        date: bookingDate,
-        startTime: bookingStart,
-        endTime: bookingEnd,
-        price: Number(bookingPrice),
-        timezone: bookingTz,
-        expertTimeZone: bookingScoutTz,
         description: bookingDescription || undefined,
       };
+      if (needsSchedule) {
+        payload.date = bookingDate;
+        payload.startTime = bookingStart;
+        payload.endTime = bookingEnd;
+        payload.timezone = bookingTz;
+        // The scout's timezone is fixed by the service; it is sent only as a
+        // fallback — the server uses the service's configured timezone.
+        payload.expertTimeZone = bookingService.timezone || undefined;
+      }
       await axios.post(`${API_BASE}/booking/scout`, payload, {
         headers: authHeaders({ "Content-Type": "application/json" }),
       });
@@ -352,8 +393,9 @@ const ScoutView: React.FC = () => {
             <div className="ml-0 sm:ml-10 flex gap-3 sm:gap-4 mt-2 sm:mt-0">
               {socialIconsConfig.map((item, index) => {
                 const link =
-                  (scoutData.socialLinks as Record<string, string>)?.[item.key] ||
-                  "";
+                  (scoutData.socialLinks as Record<string, string>)?.[
+                    item.key
+                  ] || "";
                 const hasLink = link && link.trim() !== "";
                 if (hasLink) {
                   return (
@@ -559,79 +601,82 @@ const ScoutView: React.FC = () => {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium">Date</label>
-              <Input
-                type="date"
-                value={bookingDate}
-                onChange={(e) => setBookingDate(e.target.value)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium">Start time</label>
-                <Input
-                  type="time"
-                  value={bookingStart}
-                  onChange={(e) => setBookingStart(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">End time</label>
-                <Input
-                  type="time"
-                  value={bookingEnd}
-                  onChange={(e) => setBookingEnd(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="text-sm font-medium">Your timezone</label>
-                <Select value={bookingTz} onValueChange={setBookingTz}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEZONES.map((tz) => (
-                      <SelectItem key={tz} value={tz}>
-                        {tz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label className="text-sm font-medium">Scout timezone</label>
-                <Select
-                  value={bookingScoutTz}
-                  onValueChange={setBookingScoutTz}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEZONES.map((tz) => (
-                      <SelectItem key={tz} value={tz}>
-                        {tz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium">Price (£)</label>
-              <Input
-                type="number"
-                min={bookingService?.price || 0}
-                value={bookingPrice}
-                onChange={(e) => setBookingPrice(e.target.valueAsNumber || 0)}
-              />
-              <p className="text-xs text-gray-500 mt-1">
-                Minimum: £{bookingService?.price}
+            {bookingService?.description && (
+              <p className="text-sm text-gray-600 dark:text-gray-300">
+                {bookingService.description}
               </p>
+            )}
+
+            {bookingService?.requiresScheduling && (
+              <>
+                <div>
+                  <label className="text-sm font-medium">Date</label>
+                  <Input
+                    type="date"
+                    value={bookingDate}
+                    onChange={(e) => setBookingDate(e.target.value)}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium">Start time</label>
+                    <Input
+                      type="time"
+                      value={bookingStart}
+                      onChange={(e) => setBookingStart(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">End time</label>
+                    <Input
+                      type="time"
+                      value={bookingEnd}
+                      onChange={(e) => setBookingEnd(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-sm font-medium">Your timezone</label>
+                    <Select value={bookingTz} onValueChange={setBookingTz}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMEZONES.map((tz) => (
+                          <SelectItem key={tz} value={tz}>
+                            {tz}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">
+                      Scout timezone
+                    </label>
+                    <div className="flex h-9 items-center rounded-md border bg-gray-50 dark:bg-gray-700 px-3 text-sm text-gray-700 dark:text-gray-200">
+                      {bookingService?.timezone || "Not specified"}
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Set by the scout — you can't change this.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="flex items-center justify-between rounded-md border bg-gray-50 dark:bg-gray-700 px-3 py-2">
+              <span className="text-sm font-medium">Price</span>
+              <span className="text-lg font-bold text-red-600">
+                £{bookingService?.price ?? 0}
+              </span>
             </div>
+            <p className="text-xs text-gray-500">
+              This is the fixed price set by the scout — you pay exactly this
+              amount.
+            </p>
+
             <div>
               <label className="text-sm font-medium">Notes (optional)</label>
               <Textarea

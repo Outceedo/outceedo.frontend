@@ -13,6 +13,65 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const TIMEZONES = [
+  "UTC",
+  "America/New_York",
+  "America/Chicago",
+  "America/Denver",
+  "America/Los_Angeles",
+  "America/Toronto",
+  "America/Vancouver",
+  "America/Sao_Paulo",
+  "Europe/London",
+  "Europe/Berlin",
+  "Europe/Paris",
+  "Europe/Madrid",
+  "Europe/Rome",
+  "Europe/Amsterdam",
+  "Europe/Zurich",
+  "Europe/Istanbul",
+  "Europe/Moscow",
+  "Asia/Dubai",
+  "Asia/Jerusalem",
+  "Asia/Riyadh",
+  "Asia/Kolkata",
+  "Asia/Bangkok",
+  "Asia/Hong_Kong",
+  "Asia/Shanghai",
+  "Asia/Singapore",
+  "Asia/Tokyo",
+  "Asia/Seoul",
+  "Asia/Kuala_Lumpur",
+  "Asia/Jakarta",
+  "Asia/Manila",
+  "Asia/Karachi",
+  "Asia/Kathmandu",
+  "Asia/Colombo",
+  "Australia/Sydney",
+  "Australia/Melbourne",
+  "Australia/Perth",
+  "Pacific/Auckland",
+  "Africa/Johannesburg",
+  "Africa/Cairo",
+  "Africa/Nairobi",
+  "America/Mexico_City",
+  "America/Bogota",
+  "America/Lima",
+  "America/Argentina/Buenos_Aires",
+  "America/Santiago",
+  "America/Anchorage",
+  "Pacific/Honolulu",
+  "Pacific/Fiji",
+  "Pacific/Guam",
+];
 
 interface ScoutService {
   id: string;
@@ -20,6 +79,8 @@ interface ScoutService {
   title: string;
   description: string | null;
   price: number;
+  requiresScheduling: boolean;
+  timezone?: string | null;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -30,6 +91,8 @@ type DraftService = {
   title: string;
   description: string;
   price: number;
+  requiresScheduling: boolean;
+  timezone: string;
 };
 
 const API_BASE = `${import.meta.env.VITE_PORT}/api/v1/user/scout-services`;
@@ -44,6 +107,8 @@ const toDraft = (s: ScoutService): DraftService => ({
   title: s.title,
   description: s.description || "",
   price: s.price,
+  requiresScheduling: s.requiresScheduling ?? true,
+  timezone: s.timezone || "UTC",
 });
 
 const ScoutServices: React.FC = () => {
@@ -58,7 +123,15 @@ const ScoutServices: React.FC = () => {
     title: string;
     description: string;
     price: number;
-  }>({ title: "", description: "", price: 0 });
+    requiresScheduling: boolean;
+    timezone: string;
+  }>({
+    title: "",
+    description: "",
+    price: 0,
+    requiresScheduling: true,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+  });
   const newIdCounter = useRef(0);
 
   const fetchServices = async () => {
@@ -100,7 +173,7 @@ const ScoutServices: React.FC = () => {
   const updateDraft = (
     index: number,
     field: keyof DraftService,
-    value: string | number,
+    value: string | number | boolean,
   ) => {
     setDrafts((prev) => {
       const next = [...prev];
@@ -120,7 +193,13 @@ const ScoutServices: React.FC = () => {
   };
 
   const openAddModal = () => {
-    setNewService({ title: "", description: "", price: 0 });
+    setNewService({
+      title: "",
+      description: "",
+      price: 0,
+      requiresScheduling: true,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC",
+    });
     setShowAddModal(true);
   };
 
@@ -147,6 +226,8 @@ const ScoutServices: React.FC = () => {
         title: newService.title.trim(),
         description: newService.description.trim(),
         price: Number(newService.price),
+        requiresScheduling: newService.requiresScheduling,
+        timezone: newService.timezone,
       },
     ]);
     setShowAddModal(false);
@@ -178,6 +259,8 @@ const ScoutServices: React.FC = () => {
           title: d.title.trim(),
           description: d.description.trim() || null,
           price: Number(d.price),
+          requiresScheduling: d.requiresScheduling,
+          timezone: d.requiresScheduling ? d.timezone : null,
         };
         if (d.remoteId) {
           await axios.patch(`${API_BASE}/${d.remoteId}`, payload, {
@@ -229,7 +312,11 @@ const ScoutServices: React.FC = () => {
           </Button>
         ) : (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={handleCancel} disabled={isSaving}>
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={isSaving}
+            >
               <FontAwesomeIcon icon={faTimes} className="mr-1" /> Cancel
             </Button>
             <Button
@@ -325,6 +412,55 @@ const ScoutServices: React.FC = () => {
                       disabled={isSaving}
                     />
                   </div>
+                  <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={d.requiresScheduling}
+                      onChange={(e) =>
+                        updateDraft(
+                          index,
+                          "requiresScheduling",
+                          e.target.checked,
+                        )
+                      }
+                      disabled={isSaving}
+                    />
+                    <span>
+                      Requires a scheduled day &amp; time
+                      <span className="block text-xs text-gray-500">
+                        If checked, players pick a date and start/end time when
+                        booking. If unchecked, they just book the service.
+                      </span>
+                    </span>
+                  </label>
+                  {d.requiresScheduling && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Your timezone
+                      </label>
+                      <Select
+                        value={d.timezone}
+                        onValueChange={(v) => updateDraft(index, "timezone", v)}
+                        disabled={isSaving}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TIMEZONES.map((tz) => (
+                            <SelectItem key={tz} value={tz}>
+                              {tz}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Players will see this when scheduling and cannot change
+                        it.
+                      </p>
+                    </div>
+                  )}
                 </div>
               </Card>
             ))
@@ -348,6 +484,24 @@ const ScoutServices: React.FC = () => {
                 <p className="text-gray-700 dark:text-gray-300">
                   {s.description || "No description provided"}
                 </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <span
+                    className={`inline-block text-xs px-2 py-1 rounded-full ${
+                      s.requiresScheduling
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-gray-100 text-gray-700"
+                    }`}
+                  >
+                    {s.requiresScheduling
+                      ? "Scheduled (day & time)"
+                      : "No scheduling required"}
+                  </span>
+                  {s.requiresScheduling && s.timezone && (
+                    <span className="inline-block text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-700">
+                      {s.timezone}
+                    </span>
+                  )}
+                </div>
               </div>
             </Card>
           ))
@@ -418,6 +572,54 @@ const ScoutServices: React.FC = () => {
                     }
                   />
                 </div>
+                <label className="flex items-start gap-2 text-sm text-gray-700 dark:text-gray-300">
+                  <input
+                    type="checkbox"
+                    className="mt-1"
+                    checked={newService.requiresScheduling}
+                    onChange={(e) =>
+                      setNewService((p) => ({
+                        ...p,
+                        requiresScheduling: e.target.checked,
+                      }))
+                    }
+                  />
+                  <span>
+                    Requires a scheduled day &amp; time
+                    <span className="block text-xs text-gray-500">
+                      If checked, players pick a date and start/end time when
+                      booking. If unchecked, they just book the service.
+                    </span>
+                  </span>
+                </label>
+                {newService.requiresScheduling && (
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Your timezone
+                    </label>
+                    <Select
+                      value={newService.timezone}
+                      onValueChange={(v) =>
+                        setNewService((p) => ({ ...p, timezone: v }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TIMEZONES.map((tz) => (
+                          <SelectItem key={tz} value={tz}>
+                            {tz}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Players will see this when scheduling and cannot change
+                      it.
+                    </p>
+                  </div>
+                )}
                 <div className="flex justify-end gap-2">
                   <Button
                     variant="outline"

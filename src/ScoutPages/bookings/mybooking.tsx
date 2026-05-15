@@ -459,24 +459,33 @@ const ScoutMyBooking: React.FC = () => {
                 <span className="font-medium">Price:</span> £
                 {selectedBooking.price ?? 0}
               </p>
-              <p>
-                <span className="font-medium">Starts at:</span>{" "}
-                {new Date(selectedBooking.startAt).toLocaleString("en-US", {
-                  timeZone:
-                    selectedBooking.expertTimeZone ||
-                    selectedBooking.timezone ||
-                    "UTC",
-                })}
-              </p>
-              <p>
-                <span className="font-medium">Ends at:</span>{" "}
-                {new Date(selectedBooking.endAt).toLocaleString("en-US", {
-                  timeZone:
-                    selectedBooking.expertTimeZone ||
-                    selectedBooking.timezone ||
-                    "UTC",
-                })}
-              </p>
+              {selectedBooking.startAt === selectedBooking.endAt ? (
+                <p>
+                  <span className="font-medium">Scheduling:</span> Not required
+                  for this service
+                </p>
+              ) : (
+                <>
+                  <p>
+                    <span className="font-medium">Starts at:</span>{" "}
+                    {new Date(selectedBooking.startAt).toLocaleString("en-US", {
+                      timeZone:
+                        selectedBooking.expertTimeZone ||
+                        selectedBooking.timezone ||
+                        "UTC",
+                    })}
+                  </p>
+                  <p>
+                    <span className="font-medium">Ends at:</span>{" "}
+                    {new Date(selectedBooking.endAt).toLocaleString("en-US", {
+                      timeZone:
+                        selectedBooking.expertTimeZone ||
+                        selectedBooking.timezone ||
+                        "UTC",
+                    })}
+                  </p>
+                </>
+              )}
               {selectedBooking.scoutReportUrl && (
                 <p>
                   <button
