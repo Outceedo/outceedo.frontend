@@ -117,6 +117,27 @@ const Signup: React.FC = () => {
     if (storedRole) setRole(storedRole);
   }, []);
 
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    const firstNameParam = searchParams.get("first_name");
+    const mobileParam = searchParams.get("mobile");
+
+    if (emailParam) setEmail(emailParam);
+    if (firstNameParam) setFirstName(firstNameParam);
+    if (mobileParam) {
+      const trimmed = mobileParam.trim();
+      const spaceIdx = trimmed.indexOf(" ");
+      if (trimmed.startsWith("+") && spaceIdx > 0) {
+        const code = trimmed.slice(0, spaceIdx);
+        setCountryCode(code);
+        setSearchTerm(code);
+        setMobileNumber(trimmed.slice(spaceIdx + 1).replace(/\s+/g, ""));
+      } else {
+        setMobileNumber(trimmed.replace(/\s+/g, ""));
+      }
+    }
+  }, [searchParams]);
+
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(e.target.value);
     setUsernameGenerated(true);

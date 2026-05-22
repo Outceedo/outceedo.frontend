@@ -22,12 +22,12 @@ const adminSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-user-tie",
     path: "/player/viewexperts",
   },
-  {
-    id: 10,
-    name: "Scouts",
-    icon: "fas fa-binoculars",
-    path: "/player/viewscouts",
-  },
+  // {
+  //   id: 10,
+  //   name: "Scouts",
+  //   icon: "fas fa-binoculars",
+  //   path: "/player/viewscouts",
+  // },
   { id: 3, name: "Matches", icon: "fas fa-futbol", path: "/player/matches" },
   {
     id: 4,
