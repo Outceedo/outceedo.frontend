@@ -21,6 +21,41 @@ const ROLE_OPTIONS: { value: Role; label: string }[] = [
   { value: "scout", label: "Scout" },
 ];
 
+const PASSWORD_HELP =
+  "Min 8 chars, with 1 uppercase letter, 1 number, and 1 symbol.";
+
+const validatePassword = (pw: string): string | null => {
+  if (pw.length < 8) return "Password must be at least 8 characters.";
+  if (!/[A-Z]/.test(pw))
+    return "Password must contain at least 1 uppercase letter.";
+  if (!/[0-9]/.test(pw)) return "Password must contain at least 1 number.";
+  if (!/[^A-Za-z0-9]/.test(pw))
+    return "Password must contain at least 1 symbol.";
+  return null;
+};
+
+const ERROR_ORDER = [
+  "role",
+  "firstName",
+  "lastName",
+  "username",
+  "email",
+  "password",
+  "confirmPassword",
+  "countryCode",
+  "mobileNumber",
+  "ageVerify",
+  "termsAccepted",
+];
+
+const summarizeErrors = (errors: Record<string, string>): string => {
+  const keys = Object.keys(errors).sort(
+    (a, b) => ERROR_ORDER.indexOf(a) - ERROR_ORDER.indexOf(b),
+  );
+  if (keys.length === 1) return errors[keys[0]];
+  return `Please fix the following:\n• ${keys.map((k) => errors[k]).join("\n• ")}`;
+};
+
 const Signup: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -163,6 +198,7 @@ const Signup: React.FC = () => {
         ...prev,
         role: "Role selection is required.",
       }));
+      setFormError("Please select a role to continue.");
       return;
     }
 
@@ -171,17 +207,23 @@ const Signup: React.FC = () => {
     if (!lastName) errors.lastName = "Last name is required.";
     if (!username) errors.username = "Username is required.";
     if (!email) errors.email = "Email is required.";
-    if (!password) errors.password = "Password is required.";
-    if (password && password.length < 8) errors.password = "Min 8 characters.";
-    if (password !== confirmPassword)
-      errors.confirmPassword = "Passwords match error.";
-    if (!countryCode) errors.countryCode = "Required.";
-    if (!mobileNumber) errors.mobileNumber = "Required.";
-    if (!ageVerify) errors.ageVerify = "Confirm age.";
-    if (!termsAccepted) errors.termsAccepted = "Accept terms.";
+    if (!password) {
+      errors.password = "Password is required.";
+    } else {
+      const passwordIssue = validatePassword(password);
+      if (passwordIssue) errors.password = passwordIssue;
+    }
+    if (password && password !== confirmPassword)
+      errors.confirmPassword = "Passwords do not match.";
+    if (!countryCode) errors.countryCode = "Country code is required.";
+    if (!mobileNumber) errors.mobileNumber = "Mobile number is required.";
+    if (!ageVerify) errors.ageVerify = "Please confirm you are 18 or older.";
+    if (!termsAccepted)
+      errors.termsAccepted = "Please accept the Terms and Privacy Policy.";
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
+      setFormError(summarizeErrors(errors));
       return;
     }
 
@@ -305,7 +347,7 @@ const Signup: React.FC = () => {
             </div>
 
             {formError && (
-              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm">
+              <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm whitespace-pre-line">
                 {formError}
               </div>
             )}
@@ -350,6 +392,7 @@ const Signup: React.FC = () => {
                   toggle={() => setShowPassword(!showPassword)}
                   onChange={setPassword}
                   error={fieldErrors.password}
+                  helper={PASSWORD_HELP}
                 />
                 <PasswordInput
                   label="Confirm"
@@ -535,6 +578,7 @@ const PasswordInput = ({
   toggle,
   onChange,
   error,
+  helper,
 }: any) => (
   <div>
     <label
@@ -557,6 +601,12 @@ const PasswordInput = ({
         {show ? <EyeOff size={16} /> : <Eye size={16} />}
       </button>
     </div>
+    {helper && !error && (
+      <p className="text-[10px] text-gray-400 mt-1">{helper}</p>
+    )}
+    {error && (
+      <p className="text-red-500 text-[10px] mt-1 font-bold">{error}</p>
+    )}
   </div>
 );
 
