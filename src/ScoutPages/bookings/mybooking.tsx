@@ -560,13 +560,23 @@ const ScoutMyBooking: React.FC = () => {
               ref={fileInputRef}
               type="file"
               accept="application/pdf"
+              className="hidden"
               onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
             />
-            {uploadFile && (
-              <p className="text-sm text-gray-600">
-                Selected: {uploadFile.name}
-              </p>
-            )}
+            <div className="flex items-center gap-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+              >
+                <FontAwesomeIcon icon={faFileUpload} className="mr-2" />
+                Choose file
+              </Button>
+              <span className="text-sm text-gray-600 truncate">
+                {uploadFile ? uploadFile.name : "No file chosen"}
+              </span>
+            </div>
           </div>
           <DialogFooter>
             <Button

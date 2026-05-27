@@ -16,6 +16,7 @@ import {
   faFilePdf,
   faCheckCircle,
   faFileUpload,
+  faDollarSign,
 } from "@fortawesome/free-solid-svg-icons";
 
 export interface ScoutBooking {
@@ -264,6 +265,33 @@ const ScoutBookingTable: React.FC<Props> = ({
                         <FontAwesomeIcon icon={faCheckCircle} />
                       </Button>
                     )}
+                    {b.expertMarkedComplete &&
+                      (() => {
+                        const bothMarked =
+                          status === "COMPLETED" ||
+                          (b.expertMarkedComplete && b.playerMarkedComplete);
+                        return (
+                          <Button
+                            size="icon"
+                            title={
+                              bothMarked
+                                ? "Claim payment"
+                                : "Available once player also marks complete"
+                            }
+                            disabled={!bothMarked}
+                            className={`h-8 w-8 bg-amber-500 hover:bg-amber-600 text-white ${
+                              bothMarked
+                                ? ""
+                                : "opacity-40 blur-[1px] cursor-not-allowed"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                            }}
+                          >
+                            <FontAwesomeIcon icon={faDollarSign} />
+                          </Button>
+                        );
+                      })()}
                   </div>
                 </TableCell>
               </TableRow>
