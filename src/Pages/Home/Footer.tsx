@@ -37,14 +37,14 @@ const OutceedoFooter: React.FC = () => {
                     About
                   </button>
                 </li>
-                <li>
+                {/* <li>
                   <button
                     onClick={() => navigate("/team")}
                     className="hover:underline bg-transparent text-[#e3e9f1]"
                   >
                     Team
                   </button>
-                </li>
+                </li> */}
                 <li>
                   <button
                     onClick={() => navigate("/plans")}
@@ -93,7 +93,7 @@ const OutceedoFooter: React.FC = () => {
                 onClick={() =>
                   window.open(
                     "https://www.google.com/maps/search/?api=1&query=82+Berryden+Gardens,+Aberdeen,+Scotland,+UK,+AB25+3RW",
-                    "_blank"
+                    "_blank",
                   )
                 }
               >
