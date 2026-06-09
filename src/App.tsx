@@ -102,6 +102,7 @@ import Advisors from "./Pages/Home/Advisors";
 import PublicProfile from "./common/publicProfile";
 import TeamBooking from "./teampages/bookings/mybooking";
 import Feed from "./common/feed";
+import Redeem from "./Pages/common/Redeem";
 
 const token = localStorage.getItem("token");
 if (token) {
@@ -294,6 +295,7 @@ const AppContent: React.FC = () => {
           <Route path="referral" element={<ReferralPage />} />
           <Route path="teamprofile" element={<TeamView />} />
           <Route path="feed" element={<Feed />} />
+          <Route path="redeem" element={<Redeem />} />
         </Route>
 
         {/* Expert routes */}
@@ -321,6 +323,7 @@ const AppContent: React.FC = () => {
           <Route path="evaluation" element={<AssessmentEvaluationForm />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="feed" element={<Feed />} />
+          <Route path="redeem" element={<Redeem />} />
         </Route>
 
         {/* Sponsor routes */}
@@ -346,6 +349,7 @@ const AppContent: React.FC = () => {
           <Route path="teaminfo" element={<TeamView />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="feed" element={<Feed />} />
+          <Route path="redeem" element={<Redeem />} />
         </Route>
 
         {/* Team routes */}
@@ -377,6 +381,7 @@ const AppContent: React.FC = () => {
           <Route path="viewscouts" element={<ScoutProfilesList />} />
           <Route path="scoutdetails" element={<ScoutPublicView />} />
           <Route path="feed" element={<Feed />} />
+          <Route path="redeem" element={<Redeem />} />
         </Route>
 
         {/* Fan routes */}
@@ -399,6 +404,7 @@ const AppContent: React.FC = () => {
           <Route path="exdetails" element={<Expertinfo />} />
           <Route path="playerinfo" element={<Playerinfo />} />
           <Route path="referral" element={<ReferralPage />} />
+          <Route path="redeem" element={<Redeem />} />
         </Route>
 
         {/* Scout routes */}
@@ -421,6 +427,7 @@ const AppContent: React.FC = () => {
           <Route path="mybooking" element={<ScoutMyBooking />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="feed" element={<Feed />} />
+          <Route path="redeem" element={<Redeem />} />
         </Route>
 
         {/* Utility routes */}

@@ -18,6 +18,7 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
+import CoinsCounter from "../CoinsCounter";
 import axios from "axios";
 
 interface teamHeaderProps {
@@ -377,6 +378,7 @@ function TeamHeader({ setOpen }: teamHeaderProps) {
 
         {/* Right Section: Premium Button, Notifications, Theme Toggle */}
         <div className="flex flex-wrap justify-end gap-3 items-center w-full sm:w-auto mt-3 sm:mt-0">
+          <CoinsCounter />
           {/* --- Subscription Button --- */}
           <div className="relative" ref={dropdownRef}>
             <Button

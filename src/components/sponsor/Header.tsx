@@ -9,6 +9,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import CoinsCounter from "../CoinsCounter";
 
 interface SponserHeaderProps {
   setOpen: (open: boolean) => void;
@@ -73,6 +74,7 @@ function SponsorHeader({ setOpen }: SponserHeaderProps) {
 
       {/* Right Section: Premium Button, Notifications, Theme Toggle */}
       <div className="flex justify-end gap-3 items-center w-full">
+        <CoinsCounter />
         <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
           <FontAwesomeIcon
             icon={faBell}

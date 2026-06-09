@@ -18,6 +18,7 @@ import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
+import CoinsCounter from "../CoinsCounter";
 import axios from "axios";
 
 interface ScoutHeaderProps {
@@ -300,6 +301,7 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
           </h2>
         </div>
         <div className="flex flex-nowrap justify-end gap-2 items-center flex-shrink-0">
+          <CoinsCounter />
           <div className="relative" ref={dropdownRef}>
             <Button
               className={`h-10 px-2 sm:px-4 rounded-lg flex items-center justify-center space-x-1 sm:space-x-2 transition-colors ${

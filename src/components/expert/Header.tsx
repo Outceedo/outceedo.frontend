@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBell, faMoon, faSun } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import CoinsCounter from "../CoinsCounter";
 
 interface ExpertHeaderProps {
   setOpen: (open: boolean) => void;
@@ -67,6 +68,7 @@ function ExpertHeader({ setOpen }: ExpertHeaderProps) {
         </h2>
       </div>
       <div className="flex flex-nowrap justify-end gap-2 sm:gap-3 items-center flex-shrink-0">
+        <CoinsCounter />
         <Button
           className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-2 sm:p-3 h-10 w-10"
           size="sm"
