@@ -35,6 +35,12 @@ const expertSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-calendar",
     path: "/expert/slots",
   },
+  {
+    id: 100,
+    name: "Notice Board",
+    icon: "fas fa-clipboard-list",
+    path: "/expert/feed",
+  },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/expert/profile" },
   {
     id: 7,

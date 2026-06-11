@@ -20,6 +20,7 @@ const menuItems = [
   { path: "/fan/players", name: "Players" },
   { path: "/fan/profile", name: "Profile" },
   { path: "/fan/referral", name: "Referral Program" },
+  { path: "/fan/redeem", name: "Rewards" },
 ];
 function FanHeader({ setOpen }: fanHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);

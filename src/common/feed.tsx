@@ -39,6 +39,14 @@ interface FilterState {
   country: string;
 }
 
+const EMPTY_FILTERS: FilterState = {
+  postType: "",
+  urgency: "",
+  visibility: "",
+  city: "",
+  country: "",
+};
+
 const POST_TYPE_OPTIONS: { value: NoticePostType; label: string }[] = [
   { value: "PLAYER_REQUIRED", label: "Player needed" },
   { value: "EXPERT_REQUIRED", label: "Coach needed" },
@@ -227,13 +235,11 @@ function Feed() {
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [showOnlyMine, setShowOnlyMine] = useState(false);
   const [page, setPage] = useState(1);
-  const [filters, setFilters] = useState<FilterState>({
-    postType: "",
-    urgency: "",
-    visibility: "",
-    city: "",
-    country: "",
-  });
+  const [filters, setFilters] = useState<FilterState>(EMPTY_FILTERS);
+  // Bumped on clear to force-remount the Select dropdowns. Radix Select goes
+  // uncontrolled when value is undefined, so it keeps showing the last pick;
+  // remounting is the reliable way to reset them back to the placeholder.
+  const [resetKey, setResetKey] = useState(0);
 
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const currentFetchRef = useRef<{ abort?: () => void } | null>(null);
@@ -305,53 +311,13 @@ function Feed() {
 
   const clearAllFilters = () => {
     setSearchQuery("");
-    setFilters({
-      postType: "",
-      urgency: "",
-      visibility: "",
-      city: "",
-      country: "",
-    });
+    setFilters(EMPTY_FILTERS);
+    setResetKey((k) => k + 1);
   };
 
   return (
     <div className="min-h-screen px-4 sm:px-6 py-6 sm:py-10">
       <div className="max-w-screen-2xl mx-auto">
-        {/* Header — action buttons on the top-right */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:gap-3 mb-6">
-          <Button
-            onClick={() => setShowOnlyMine((v) => !v)}
-            variant={showOnlyMine ? "default" : "outline"}
-            className={
-              showOnlyMine
-                ? "bg-stone-800 hover:bg-stone-900 text-white font-semibold w-full sm:w-auto"
-                : "border-stone-300 text-stone-700 hover:bg-stone-100 font-semibold w-full sm:w-auto"
-            }
-            disabled={!myUserId}
-            title={
-              !myUserId
-                ? "Sign in to view your notices"
-                : showOnlyMine
-                  ? "Showing only your notices"
-                  : "Show only notices you created"
-            }
-          >
-            {!showOnlyMine ? (
-              <User className="h-4 w-4 mr-2" />
-            ) : (
-              <LogOut className="h-4 w-4 mr-2" />
-            )}
-            {showOnlyMine ? "Back to all Notices" : "My Notices"}
-          </Button>
-          <Button
-            onClick={() => setCreateOpen(true)}
-            className="bg-red-600 hover:bg-red-700 text-white font-semibold w-full sm:w-auto"
-          >
-            <Plus className="h-4 w-4" />
-            Create Notice
-          </Button>
-        </div>
-
         {/* Search */}
         <div className="mb-4">
           <div className="relative w-full bg-white dark:bg-slate-600 rounded-lg">
@@ -366,10 +332,11 @@ function Feed() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="w-full mb-6 sm:mb-8">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 pt-1">
+        {/* Filters + actions */}
+        <div className="w-full mb-6 sm:mb-8 flex flex-col xl:flex-row xl:items-start gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4 pt-1 flex-1">
             <Select
+              key={`postType-${resetKey}`}
               value={filters.postType || undefined}
               onValueChange={(v) =>
                 setFilters((f) => ({
@@ -391,6 +358,7 @@ function Feed() {
             </Select>
 
             <Select
+              key={`urgency-${resetKey}`}
               value={filters.urgency || undefined}
               onValueChange={(v) =>
                 setFilters((f) => ({
@@ -412,6 +380,7 @@ function Feed() {
             </Select>
 
             <Select
+              key={`visibility-${resetKey}`}
               value={filters.visibility || undefined}
               onValueChange={(v) =>
                 setFilters((f) => ({
@@ -433,6 +402,7 @@ function Feed() {
             </Select>
 
             <Select
+              key={`city-${resetKey}`}
               value={filters.city || undefined}
               onValueChange={(v) =>
                 setFilters((f) => ({ ...f, city: v || "" }))
@@ -457,6 +427,7 @@ function Feed() {
             </Select>
 
             <Select
+              key={`country-${resetKey}`}
               value={filters.country || undefined}
               onValueChange={(v) =>
                 setFilters((f) => ({ ...f, country: v || "" }))
@@ -491,6 +462,42 @@ function Feed() {
                 </Button>
               </div>
             )}
+          </div>
+
+          {/* Action buttons — sit beside the filters on wide screens */}
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 shrink-0 sm:pt-1">
+            <Button
+              onClick={() => setShowOnlyMine((v) => !v)}
+              variant={showOnlyMine ? "default" : "outline"}
+              className={
+                (showOnlyMine
+                  ? "bg-stone-800 hover:bg-stone-900 text-white"
+                  : "border-stone-300 text-stone-700 hover:bg-stone-100") +
+                " font-semibold rounded-xl min-h-[48px] w-full sm:w-auto"
+              }
+              disabled={!myUserId}
+              title={
+                !myUserId
+                  ? "Sign in to view your notices"
+                  : showOnlyMine
+                    ? "Showing only your notices"
+                    : "Show only notices you created"
+              }
+            >
+              {!showOnlyMine ? (
+                <User className="h-4 w-4 mr-2" />
+              ) : (
+                <LogOut className="h-4 w-4 mr-2" />
+              )}
+              {showOnlyMine ? "Back to all Notices" : "My Notices"}
+            </Button>
+            <Button
+              onClick={() => setCreateOpen(true)}
+              className="bg-red-600 hover:bg-red-700 text-white font-semibold rounded-xl min-h-[48px] w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4" />
+              Create Notice
+            </Button>
           </div>
         </div>
 

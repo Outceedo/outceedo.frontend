@@ -47,6 +47,12 @@ const adminSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-file",
     path: "/player/applications",
   },
+  {
+    id: 100,
+    name: "Notice Board",
+    icon: "fas fa-clipboard-list",
+    path: "/player/feed",
+  },
   { id: 7, name: "Profile", icon: "fas fa-user", path: "/player/profile" },
   {
     id: 8,

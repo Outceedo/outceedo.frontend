@@ -19,7 +19,7 @@ export default function FooterSection() {
 
   const platformLinks = [
     { label: "About", path: "/about" },
-    { label: "Team", path: "/teams" },
+
     { label: "Pricing", path: "/plans" },
     { label: "Contact", path: "/contactus" },
   ];

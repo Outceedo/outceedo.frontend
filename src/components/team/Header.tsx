@@ -46,6 +46,8 @@ const menuItems = [
   { path: "/team/playerinfo", name: "Player Profile" },
   { path: "/team/exdetails", name: "Expert Profile" },
   { path: "/team/referral", name: "Referral Program" },
+  { path: "/team/redeem", name: "Rewards" },
+  { path: "/team/feed", name: "Feed" },
 ];
 
 function TeamHeader({ setOpen }: teamHeaderProps) {

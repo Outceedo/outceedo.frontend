@@ -47,6 +47,7 @@ const menuItems = [
   { path: "/player/applications", name: "Sponsor Applications" },
   { path: "/player/referral", name: "Referral Program" },
   { path: "/player/feed", name: "Feed" },
+  { path: "/player/redeem", name: "Rewards" },
 ];
 
 function PlayerHeader({ setOpen }: PlayerHeaderProps) {

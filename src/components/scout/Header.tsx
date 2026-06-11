@@ -40,6 +40,8 @@ const menuItems = [
   { path: "/scout/playerinfo", name: "Player Profile" },
   { path: "/scout/details-form", name: "Edit Profile" },
   { path: "/scout/referral", name: "Referral Program" },
+  { path: "/scout/redeem", name: "Rewards" },
+  { path: "/scout/feed", name: "Feed" },
 ];
 
 function ScoutHeader({ setOpen }: ScoutHeaderProps) {
@@ -54,7 +56,9 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
   const [showModal, setShowModal] = useState(false);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loadingPlans, setLoadingPlans] = useState(false);
-  const [selectedInterval, setSelectedInterval] = useState<"month" | "year" | "day">("month");
+  const [selectedInterval, setSelectedInterval] = useState<
+    "month" | "year" | "day"
+  >("month");
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -76,7 +80,10 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         setIsDropdownOpen(false);
       }
     }
@@ -112,7 +119,10 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
       const token = localStorage.getItem("token");
       axios
         .get(API_PLANS, {
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
         })
         .then((res) => setPlans(res.data?.plans || []))
         .catch(() => setPlans([]))
@@ -121,14 +131,22 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
   }, [showModal]);
 
   const handleSubscribe = async (planId: string) => {
-    if (!planId) { alert("Selected plan is not available."); return; }
+    if (!planId) {
+      alert("Selected plan is not available.");
+      return;
+    }
     try {
       localStorage.setItem("planId", planId);
       const token = localStorage.getItem("token");
       const response = await axios.post(
         `${import.meta.env.VITE_PORT}/api/v1/subscription/subscribe/${planId}`,
         {},
-        { headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` } },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        },
       );
       if (response.data?.url) {
         window.open(response.data.url, "_self");
@@ -177,17 +195,23 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
   const yearlyPlan = plans.find((p) => p.interval === "year");
 
   const selectedPremiumPlan =
-    selectedInterval === "month" ? monthlyPlan :
-    selectedInterval === "year" ? yearlyPlan : dailyPlan;
+    selectedInterval === "month"
+      ? monthlyPlan
+      : selectedInterval === "year"
+        ? yearlyPlan
+        : dailyPlan;
 
-  const isCurrentPlanSelected = isPremiumUser && currentPlanId === selectedPremiumPlan?.id;
+  const isCurrentPlanSelected =
+    isPremiumUser && currentPlanId === selectedPremiumPlan?.id;
 
   const modal = showModal && (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
       <div className="relative w-full max-w-4xl bg-white dark:bg-slate-950 rounded-xl shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">Select a Plan</h3>
+            <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
+              Select a Plan
+            </h3>
             <button
               onClick={() => setShowModal(false)}
               className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 text-4xl"
@@ -211,9 +235,15 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
                 }`}
               >
                 <div className="text-center">
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">Basic</h4>
-                  <p className="text-gray-500 dark:text-gray-400 mt-2">{basicPlan.description}</p>
-                  <div className="text-3xl font-bold mt-4 text-gray-900 dark:text-white">Free</div>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Basic
+                  </h4>
+                  <p className="text-gray-500 dark:text-gray-400 mt-2">
+                    {basicPlan.description}
+                  </p>
+                  <div className="text-3xl font-bold mt-4 text-gray-900 dark:text-white">
+                    Free
+                  </div>
                 </div>
                 <Button
                   onClick={() => isPremiumUser && handleManageBilling()}
@@ -239,7 +269,9 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
                   </div>
                 )}
                 <div className="text-center w-full">
-                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">Premium</h4>
+                  <h4 className="text-xl font-bold text-gray-900 dark:text-white">
+                    Premium
+                  </h4>
 
                   <div className="flex bg-gray-100 dark:bg-slate-800 p-1 rounded-lg mt-4 w-full">
                     {["day", "month", "year"].map((int) => (
@@ -258,7 +290,9 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
                   </div>
 
                   <div className="text-3xl font-bold mt-6 text-gray-900 dark:text-white">
-                    {selectedPremiumPlan ? `£${selectedPremiumPlan.price}` : "N/A"}
+                    {selectedPremiumPlan
+                      ? `£${selectedPremiumPlan.price}`
+                      : "N/A"}
                     <span className="text-base font-normal text-gray-500 dark:text-gray-400">
                       /{selectedInterval}
                     </span>
@@ -272,9 +306,16 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
                       : "bg-red-500 hover:bg-red-600 text-white"
                   }`}
                   disabled={isCurrentPlanSelected}
-                  onClick={() => selectedPremiumPlan && handleSubscribe(selectedPremiumPlan.id)}
+                  onClick={() =>
+                    selectedPremiumPlan &&
+                    handleSubscribe(selectedPremiumPlan.id)
+                  }
                 >
-                  {isCurrentPlanSelected ? "Current Plan" : isPremiumUser ? "Switch Plan" : "Select Premium"}
+                  {isCurrentPlanSelected
+                    ? "Current Plan"
+                    : isPremiumUser
+                      ? "Switch Plan"
+                      : "Select Premium"}
                 </Button>
               </div>
             </div>
@@ -315,7 +356,9 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
               <FontAwesomeIcon
                 icon={isPremiumUser ? faCrown : faGem}
                 className={`text-lg sm:text-xl ${
-                  isPremiumUser ? "text-yellow-300" : "text-blue-700 dark:text-blue-400"
+                  isPremiumUser
+                    ? "text-yellow-300"
+                    : "text-blue-700 dark:text-blue-400"
                 }`}
               />
               <p
@@ -323,7 +366,11 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
                   isPremiumUser ? "text-white" : "text-gray-800 dark:text-white"
                 }`}
               >
-                {subscriptionLoading ? "Loading..." : isPremiumUser ? "Premium Plan" : "Upgrade to Premium"}
+                {subscriptionLoading
+                  ? "Loading..."
+                  : isPremiumUser
+                    ? "Premium Plan"
+                    : "Upgrade to Premium"}
               </p>
               {isPremiumUser && (
                 <ChevronDown className="h-4 w-4 ml-1 text-white opacity-80" />
@@ -334,14 +381,20 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
               <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-slate-800 focus:outline-none z-50">
                 <div className="py-1">
                   <button
-                    onClick={() => { setIsDropdownOpen(false); setShowModal(true); }}
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      setShowModal(true);
+                    }}
                     className="flex w-full items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
                   >
                     <CreditCard className="mr-3 h-4 w-4" />
                     Change Plan
                   </button>
                   <button
-                    onClick={() => { setIsDropdownOpen(false); handleManageBilling(); }}
+                    onClick={() => {
+                      setIsDropdownOpen(false);
+                      handleManageBilling();
+                    }}
                     className="flex w-full items-center px-4 py-3 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-slate-700"
                   >
                     <Settings className="mr-3 h-4 w-4" />
@@ -356,7 +409,10 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
             className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-2 sm:p-3 h-10 w-10"
             size="sm"
           >
-            <FontAwesomeIcon icon={faBell} className="text-black dark:text-white text-lg sm:text-xl" />
+            <FontAwesomeIcon
+              icon={faBell}
+              className="text-black dark:text-white text-lg sm:text-xl"
+            />
           </Button>
           <Button
             onClick={toggleTheme}

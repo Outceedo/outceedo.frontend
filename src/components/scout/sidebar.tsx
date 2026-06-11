@@ -22,6 +22,12 @@ const scoutSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-users",
     path: "/scout/viewplayers",
   },
+  {
+    id: 100,
+    name: "Notice Board",
+    icon: "fas fa-clipboard-list",
+    path: "/scout/feed",
+  },
   { id: 2, name: "Profile", icon: "fas fa-user", path: "/scout/profile" },
   {
     id: 3,

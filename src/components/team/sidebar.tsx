@@ -63,6 +63,12 @@ const adminSidebarMenuItems: MenuItem[] = [
     icon: "fas fa-handshake",
     path: "/team/applications",
   },
+  {
+    id: 100,
+    name: "Notice Board",
+    icon: "fas fa-clipboard-list",
+    path: "/team/feed",
+  },
   { id: 6, name: "Profile", icon: "fas fa-user", path: "/team/profile" },
   {
     id: 8,

@@ -42,6 +42,12 @@ const sponsorSidebarMenuItems: MenuItem[] = [
     path: "/sponsor/application",
   },
   {
+    id: 100,
+    name: "Notice Board",
+    icon: "fas fa-clipboard-list",
+    path: "/sponsor/feed",
+  },
+  {
     id: 4,
     name: "Profile",
     icon: "fas fa-user",
