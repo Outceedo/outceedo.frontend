@@ -1,12 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Paperclip,
   Plus,
   X,
   Search,
   User,
   LogOut,
-  Briefcase,
+  Users,
+  MapPin,
   Loader2,
 } from "lucide-react";
 import { FaAngleRight } from "react-icons/fa";
@@ -70,65 +70,71 @@ const VISIBILITY_OPTIONS: { value: NoticeVisibility; label: string }[] = [
   { value: "SPONSOR", label: "Sponsor" },
 ];
 
-const PIN_COLORS = [
-  "#e74c3c",
-  "#3b82f6",
-  "#8b5cf6",
-  "#10b981",
-  "#f59e0b",
-  "#0ea5e9",
-];
-
-const PAPER_BGS = [
-  "from-yellow-100 to-yellow-200",
-  "from-slate-50 to-gray-100",
-  "from-orange-50 to-orange-100",
-];
-
-const ROTATIONS = [-2.5, 1.5, -1.8, 2.2, -1.2, 1.8, -2.8, 1.2, -0.8];
-
 const PAGE_SIZE = 24;
 
-const TYPE_TAG: Record<NoticePostType, { label: string; bg: string }> = {
-  PLAYER_REQUIRED: { label: "PLAYER", bg: "bg-rose-500" },
-  EXPERT_REQUIRED: { label: "COACH", bg: "bg-violet-500" },
-  SPONSOR: { label: "SPONSOR", bg: "bg-amber-500" },
-  MATCH: { label: "MATCH", bg: "bg-sky-500" },
-  RESULT: { label: "RESULT", bg: "bg-emerald-500" },
-  OTHER: { label: "INFO", bg: "bg-slate-500" },
+const TYPE_TAG: Record<
+  NoticePostType,
+  { label: string; bg: string; soft: string; text: string }
+> = {
+  PLAYER_REQUIRED: {
+    label: "PLAYER",
+    bg: "bg-rose-500",
+    soft: "bg-rose-50 dark:bg-rose-500/10",
+    text: "text-rose-600 dark:text-rose-400",
+  },
+  EXPERT_REQUIRED: {
+    label: "COACH",
+    bg: "bg-violet-500",
+    soft: "bg-violet-50 dark:bg-violet-500/10",
+    text: "text-violet-600 dark:text-violet-400",
+  },
+  SPONSOR: {
+    label: "SPONSOR",
+    bg: "bg-amber-500",
+    soft: "bg-amber-50 dark:bg-amber-500/10",
+    text: "text-amber-600 dark:text-amber-400",
+  },
+  MATCH: {
+    label: "MATCH",
+    bg: "bg-sky-500",
+    soft: "bg-sky-50 dark:bg-sky-500/10",
+    text: "text-sky-600 dark:text-sky-400",
+  },
+  RESULT: {
+    label: "RESULT",
+    bg: "bg-emerald-500",
+    soft: "bg-emerald-50 dark:bg-emerald-500/10",
+    text: "text-emerald-600 dark:text-emerald-400",
+  },
+  OTHER: {
+    label: "INFO",
+    bg: "bg-slate-500",
+    soft: "bg-slate-100 dark:bg-slate-700",
+    text: "text-slate-600 dark:text-slate-300",
+  },
 };
 
 const URGENCY_BADGE: Record<NoticeUrgency, string> = {
-  IMMEDIATE: "bg-red-100 text-red-700 border-red-200",
-  THIS_WEEK: "bg-amber-100 text-amber-700 border-amber-200",
-  ONGOING: "bg-emerald-100 text-emerald-700 border-emerald-200",
+  IMMEDIATE:
+    "bg-red-50/80 text-red-600 border-red-100 dark:bg-red-500/10 dark:border-red-500/20",
+  THIS_WEEK:
+    "bg-amber-50/80 text-amber-600 border-amber-100 dark:bg-amber-500/10 dark:border-amber-500/20",
+  ONGOING:
+    "bg-emerald-50/80 text-emerald-600 border-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/20",
 };
-
-const Clip = ({ color }: { color: string }) => (
-  <div className="absolute -top-4 left-4 z-20 -rotate-12 drop-shadow">
-    <Paperclip size={32} strokeWidth={2.2} color={color} />
-  </div>
-);
 
 interface SlipProps {
   notice: Notice;
-  pinColor: string;
-  paperBg: string;
-  lined: boolean;
   onReadMore: (notice: Notice) => void;
 }
 
-function NoticeSlip({
-  notice,
-  pinColor,
-  paperBg,
-  lined,
-  onReadMore,
-}: SlipProps) {
+function NoticeSlip({ notice, onReadMore }: SlipProps) {
   const tag = TYPE_TAG[notice.postType] || TYPE_TAG.OTHER;
   const location = [notice.city, notice.region, notice.country]
     .filter(Boolean)
     .join(", ");
+  const isApplicable = APPLICABLE_POST_TYPES.includes(notice.postType);
+  const applicants = notice._count?.applications ?? 0;
 
   return (
     <div
@@ -141,79 +147,75 @@ function NoticeSlip({
           onReadMore(notice);
         }
       }}
-      className={`relative bg-gradient-to-br ${paperBg} rounded-sm pt-10 px-5 pb-5 min-h-[11rem] flex flex-col gap-3 shadow-[2px_4px_12px_rgba(0,0,0,0.08)] border border-black/5 w-full cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2`}
+      className="group relative flex h-full overflow-hidden rounded-2xl border border-gray-200/70 bg-gradient-to-br from-white to-gray-50/60 shadow-[0_1px_2px_rgba(15,23,42,0.04),0_10px_30px_-16px_rgba(15,23,42,0.18)] backdrop-blur-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(15,23,42,0.04),0_22px_48px_-20px_rgba(15,23,42,0.32)] dark:border-white/10 dark:from-slate-800/80 dark:to-slate-900/60 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-red-400 focus-visible:ring-offset-2"
     >
-      <Clip color={pinColor} />
+      {/* Left accent bar — encodes the post type */}
+      <div className={`w-1.5 shrink-0 ${tag.bg}`} />
 
-      {lined && (
-        <div
-          className="absolute inset-0 rounded-sm pointer-events-none"
-          style={{
-            backgroundImage:
-              "repeating-linear-gradient(transparent, transparent 27px, rgba(59, 130, 246, 0.15) 28px)",
-            backgroundPositionY: 48,
-          }}
-        />
-      )}
+      <div className="flex flex-1 flex-col gap-3.5 p-6">
+        {/* Badges */}
+        <div className="flex flex-wrap items-center gap-2">
+          <span
+            className={`inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-bold tracking-widest ${tag.soft} ${tag.text}`}
+          >
+            {tag.label}
+          </span>
+          <span
+            className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider ${URGENCY_BADGE[notice.urgency]}`}
+          >
+            {notice.urgency.replace("_", " ").toLowerCase()}
+          </span>
+        </div>
 
-      <div className="flex items-center gap-2 self-start">
-        <span
-          className={`${tag.bg} text-white text-[10px] font-bold tracking-widest rounded-full px-2.5 py-1 shadow-sm`}
-        >
-          {tag.label}
-        </span>
-        <span
-          className={`text-[10px] font-semibold uppercase tracking-wider rounded-full px-2 py-0.5 border ${URGENCY_BADGE[notice.urgency]}`}
-        >
-          {notice.urgency.replace("_", " ").toLowerCase()}
-        </span>
-      </div>
+        {/* Title + description */}
+        <div className="flex flex-col gap-2">
+          <h3 className="line-clamp-2 text-lg font-semibold leading-snug tracking-tight text-gray-900 dark:text-white">
+            {notice.title}
+          </h3>
+          <p className="line-clamp-3 whitespace-pre-line text-sm leading-relaxed text-gray-500 dark:text-gray-400">
+            {notice.description}
+          </p>
+        </div>
 
-      <div className="relative z-10 flex flex-col gap-1.5">
-        <p className="text-base font-extrabold text-gray-800 leading-snug tracking-tight line-clamp-2">
-          {notice.title}
-        </p>
-        <p className="text-sm font-medium text-gray-600 whitespace-pre-line leading-relaxed line-clamp-4">
-          {notice.description}
-        </p>
+        {/* Location */}
         {(location || notice.clubOrTeamName) && (
-          <p className="text-xs text-gray-500 mt-1">
-            {notice.clubOrTeamName && (
-              <span className="font-semibold">{notice.clubOrTeamName}</span>
-            )}
-            {notice.clubOrTeamName && location && <span> • </span>}
-            {location && <span>{location}</span>}
+          <p className="flex items-start gap-1.5 text-xs text-gray-500 dark:text-gray-400">
+            <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-gray-400" />
+            <span className="line-clamp-1">
+              {notice.clubOrTeamName && (
+                <span className="font-semibold text-gray-700 dark:text-gray-300">
+                  {notice.clubOrTeamName}
+                </span>
+              )}
+              {notice.clubOrTeamName && location && <span> · </span>}
+              {location}
+            </span>
           </p>
         )}
-        {APPLICABLE_POST_TYPES.includes(notice.postType) && (
-          <p className="text-[11px] font-semibold text-stone-700 inline-flex items-center mt-1">
-            <Briefcase className="h-3 w-3 mr-1" />
-            {notice._count?.applications ?? 0}{" "}
-            {(notice._count?.applications ?? 0) === 1
-              ? "applicant"
-              : "applicants"}
+
+        {/* Footer */}
+        <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
+          <div className="flex items-center gap-2">
+            {isApplicable && (
+              <span className="inline-flex items-center text-[11px] font-semibold text-gray-600 dark:text-gray-300">
+                <Users className="mr-1 h-3.5 w-3.5 text-gray-400" />
+                {applicants} {applicants === 1 ? "applicant" : "applicants"}
+              </span>
+            )}
             {notice.postType === "SPONSOR" && notice.sponsorshipDirection && (
-              <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider rounded-full px-1.5 py-0.5 border border-stone-300 text-stone-600">
+              <span className="rounded-full border border-gray-200 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gray-500 dark:border-slate-600 dark:text-gray-400">
                 {notice.sponsorshipDirection === "OFFERING_SPONSORSHIP"
                   ? "Offering"
                   : "Seeking"}
               </span>
             )}
-          </p>
-        )}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onReadMore(notice);
-          }}
-          className="self-end mt-1 inline-flex items-center text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
-        >
-          Read More <FaAngleRight className="ml-0.5" />
-        </button>
+          </div>
+          <span className="inline-flex items-center text-xs font-semibold text-red-600 dark:text-red-400">
+            Read More
+            <FaAngleRight className="ml-0.5 transition-transform group-hover:translate-x-0.5" />
+          </span>
+        </div>
       </div>
-
-      <div className="absolute bottom-0 right-0 w-8 h-8 bg-gradient-to-tl from-black/5 to-transparent rounded-br-sm pointer-events-none" />
     </div>
   );
 }
@@ -228,7 +230,6 @@ function Feed() {
     loadingMore,
   } = useAppSelector((s) => s.notices);
 
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const [selectedNotice, setSelectedNotice] = useState<Notice | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -532,56 +533,30 @@ function Feed() {
         {/* Grid */}
         {status === "succeeded" && notices.length > 0 && (
           <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-x-8 gap-y-14 items-start">
-            {notices.map((notice, i) => {
-              const pinColor = PIN_COLORS[i % PIN_COLORS.length];
-              const paperBg = PAPER_BGS[i % PAPER_BGS.length];
-              const lined = i % 4 === 3;
-              const rotation = ROTATIONS[i % ROTATIONS.length];
-              const isHovered = hoveredId === notice.id;
-              return (
-                <div
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 sm:gap-6 items-stretch">
+              {notices.map((notice) => (
+                <NoticeSlip
                   key={notice.id}
-                  onMouseEnter={() => setHoveredId(notice.id)}
-                  onMouseLeave={() => setHoveredId(null)}
-                  className="transition-all duration-300 ease-out"
-                  style={{
-                    transform: isHovered
-                      ? "rotate(0deg) scale(1.05) translateY(-4px)"
-                      : `rotate(${rotation}deg)`,
-                    zIndex: isHovered ? 50 : 1,
-                  }}
-                >
-                  <div
-                    className={`h-full transition-shadow duration-300 ${isHovered ? "shadow-2xl" : ""}`}
-                  >
-                    <NoticeSlip
-                      notice={notice}
-                      pinColor={pinColor}
-                      paperBg={paperBg}
-                      lined={lined}
-                      onReadMore={setSelectedNotice}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          {notices.length < total && (
-            <div
-              ref={sentinelRef}
-              className="h-12 mt-10 flex items-center justify-center"
-            >
-              {loadingMore && (
-                <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
-              )}
+                  notice={notice}
+                  onReadMore={setSelectedNotice}
+                />
+              ))}
             </div>
-          )}
-          {notices.length >= total && total > PAGE_SIZE && (
-            <p className="text-center text-xs text-gray-400 mt-10">
-              You've reached the end.
-            </p>
-          )}
+            {notices.length < total && (
+              <div
+                ref={sentinelRef}
+                className="h-12 mt-10 flex items-center justify-center"
+              >
+                {loadingMore && (
+                  <Loader2 className="h-5 w-5 text-gray-400 animate-spin" />
+                )}
+              </div>
+            )}
+            {notices.length >= total && total > PAGE_SIZE && (
+              <p className="text-center text-xs text-gray-400 mt-10">
+                You've reached the end.
+              </p>
+            )}
           </>
         )}
       </div>
