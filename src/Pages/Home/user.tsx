@@ -26,6 +26,13 @@ const options = [
     color: "bg-green-500",
   },
   {
+    name: "Scouts",
+    icon: UserSearch,
+    role: "scout",
+    desc: "Discover talent",
+    color: "bg-indigo-500",
+  },
+  {
     name: "Teams",
     icon: Trophy,
     role: "team",
@@ -45,13 +52,6 @@ const options = [
     role: "user",
     desc: "Follow stars",
     color: "bg-pink-500",
-  },
-  {
-    name: "Scouts",
-    icon: UserSearch,
-    role: "scout",
-    desc: "Discover talent",
-    color: "bg-indigo-500",
   },
 ];
 

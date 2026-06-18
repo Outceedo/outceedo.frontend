@@ -139,7 +139,7 @@ const Expertview = () => {
   const API_FOLLOW_URL = `${import.meta.env.VITE_PORT}/api/v1/user/profile`;
 
   const isUserOnPremiumPlan =
-    isActive && planName && planName.toLowerCase() !== "free";
+    (isActive && planName && planName.toLowerCase() !== "free") || true;
 
   const isServiceAllowed = (serviceId: string) => {
     if (!isUserOnPremiumPlan) {
@@ -706,7 +706,7 @@ const Expertview = () => {
         localStorage.role === "player"
           ? navigate("/player/book")
           : navigate("/team/book");
-          
+
         break;
       default:
         localStorage.setItem("selectedService", JSON.stringify(serviceData));
@@ -851,7 +851,10 @@ const Expertview = () => {
             </h1>
             <div className="ml-0 sm:ml-10 flex gap-3 sm:gap-4 mt-2 sm:mt-0">
               {socialIconsConfig.map((item, index) => {
-                const link = (expertData.socialLinks as Record<string, string>)?.[item.key] || "";
+                const link =
+                  (expertData.socialLinks as Record<string, string>)?.[
+                    item.key
+                  ] || "";
                 const hasLink = link && link.trim() !== "";
 
                 if (hasLink) {
@@ -1072,7 +1075,7 @@ const Expertview = () => {
           <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
             <h2 className="text-lg sm:text-xl font-bold">Services Offered</h2>
 
-            {!subscriptionLoading && (
+            {/* {!subscriptionLoading && (
               <div
                 className={`rounded-lg p-3 mb-4 mt-2 ${
                   isUserOnPremiumPlan
@@ -1109,7 +1112,7 @@ const Expertview = () => {
                   )}
                 </p>
               </div>
-            )}
+            )} */}
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 mt-4 mb-6 sm:mb-8">
               {services.length > 0 ? (
