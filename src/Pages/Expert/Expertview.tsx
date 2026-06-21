@@ -468,7 +468,8 @@ const Expertview = () => {
             viewedProfile.lastName || ""
           }`.trim() || viewedProfile.username,
         profession: viewedProfile.profession || "Coach",
-        subProfession: viewedProfile.subProfession || "",
+        position: viewedProfile.position || "",
+        foot: viewedProfile.foot || "",
         location:
           viewedProfile.city && viewedProfile.country
             ? `${viewedProfile.city}, ${viewedProfile.country}`

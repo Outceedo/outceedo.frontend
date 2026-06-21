@@ -10,6 +10,7 @@ const USER_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/user`;
 const USERS_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/users`;
 const NOTICE_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/other/notices`;
 const GAME_COINS_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/other/game-coins`;
+const TEAM_PLAYER_SERVICE_URL = `${import.meta.env.VITE_PORT}/api/v1/other/team-players`;
 
 // Create an instance of axios for the auth service
 const authService = axios.create({
@@ -48,6 +49,13 @@ const gameCoinsService = axios.create({
   },
 });
 
+const teamPlayerService = axios.create({
+  baseURL: TEAM_PLAYER_SERVICE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
 // Add a request interceptor to handle the token
 const requestInterceptor = (
   config: InternalAxiosRequestConfig,
@@ -64,6 +72,7 @@ userService.interceptors.request.use(requestInterceptor);
 usersService.interceptors.request.use(requestInterceptor);
 noticeService.interceptors.request.use(requestInterceptor);
 gameCoinsService.interceptors.request.use(requestInterceptor);
+teamPlayerService.interceptors.request.use(requestInterceptor);
 
 // Add a response interceptor
 const responseInterceptor = (response: AxiosResponse): AxiosResponse =>
@@ -76,6 +85,10 @@ userService.interceptors.response.use(responseInterceptor, errorInterceptor);
 usersService.interceptors.response.use(responseInterceptor, errorInterceptor);
 noticeService.interceptors.response.use(responseInterceptor, errorInterceptor);
 gameCoinsService.interceptors.response.use(responseInterceptor, errorInterceptor);
+teamPlayerService.interceptors.response.use(
+  responseInterceptor,
+  errorInterceptor,
+);
 
 export {
   authService,
@@ -83,4 +96,5 @@ export {
   usersService,
   noticeService,
   gameCoinsService,
+  teamPlayerService,
 };

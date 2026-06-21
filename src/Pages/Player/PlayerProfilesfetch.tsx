@@ -34,7 +34,8 @@ interface Profile {
   city?: string;
   country?: string;
   profession?: string;
-  subProfession?: string;
+  position?: string;
+  foot?: "right_foot" | "left_foot" | "both_foot";
   sports?: string[];
   sport?: string;
   language?: string[];

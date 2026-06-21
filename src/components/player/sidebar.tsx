@@ -26,7 +26,7 @@ const adminSidebarMenuItems: MenuItem[] = [
   //   id: 10,
   //   name: "Scouts",
   //   icon: "fas fa-binoculars",
-  //   path: "/player/viewscouts",
+  //   path: "/player/scouts",
   // },
   { id: 3, name: "Matches", icon: "fas fa-futbol", path: "/player/matches" },
   {
@@ -90,7 +90,13 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
   // Get age and profession from profile data
   const playerProfession = currentProfile?.profession || "";
-  const playerSubProfession = currentProfile?.subProfession || "";
+  const playerPosition = currentProfile?.position || "";
+  const playerFoot = currentProfile?.foot
+    ? currentProfile.foot
+        .split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")
+    : "";
 
   // Calculate age from birthYear
   const calculateAge = (birthYear: number | undefined): number | null => {
@@ -183,13 +189,18 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {playerProfession.toUpperCase()}
-          {playerSubProfession
+          {playerPosition
             ? ` - ${
-                playerSubProfession.charAt(0).toUpperCase() +
-                playerSubProfession.slice(1)
+                playerPosition.charAt(0).toUpperCase() +
+                playerPosition.slice(1)
               }`
             : ""}
         </p>
+        {playerFoot && (
+          <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
+            {playerFoot}
+          </p>
+        )}
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {currentProfile?.gender
             ? currentProfile?.gender.charAt(0).toUpperCase() +

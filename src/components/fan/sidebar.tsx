@@ -73,7 +73,13 @@ function MenuItems({ setOpen }: MenuItemsProps) {
   // Get age and profession from profile data
   const playerAge = currentProfile?.age ? `Age ${currentProfile.age}` : "";
   const playerProfession = currentProfile?.profession || "";
-  const playerSubProfession = currentProfile?.subProfession || "";
+  const playerPosition = currentProfile?.position || "";
+  const playerFoot = currentProfile?.foot
+    ? currentProfile.foot
+        .split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")
+    : "";
 
   // Function to handle logout
   function handleLogout() {
@@ -180,8 +186,13 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {playerProfession}
-          {playerSubProfession ? ` - ${playerSubProfession}` : ""}
+          {playerPosition ? ` - ${playerPosition}` : ""}
         </p>
+        {playerFoot && (
+          <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
+            {playerFoot}
+          </p>
+        )}
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {currentProfile?.gender}
         </p>

@@ -79,7 +79,8 @@ const Detailsform: React.FC = () => {
     firstName: "",
     lastName: "",
     profession: "",
-    subProfession: "",
+    position: "",
+    foot: "",
     age: "",
     birthYear: "",
     gender: "" as GenderType,
@@ -160,7 +161,8 @@ const Detailsform: React.FC = () => {
         firstName: profileData.firstName || "",
         lastName: profileData.lastName || "",
         profession: profileData.profession || "",
-        subProfession: profileData.subProfession || "",
+        position: profileData.position || "",
+        foot: profileData.foot || "",
         sport: profileData.sport || "",
         club: profileData.club || "",
         age: profileData.age?.toString() || "",
@@ -740,9 +742,10 @@ const Detailsform: React.FC = () => {
         profession:
           formData.profession.charAt(0).toUpperCase() +
             formData.profession.slice(1) || null,
-        subProfession:
-          formData.subProfession.charAt(0).toUpperCase() +
-            formData.subProfession.slice(1) || null,
+        position:
+          formData.position.charAt(0).toUpperCase() +
+            formData.position.slice(1) || null,
+        foot: formData.foot || null,
         sport: formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1),
         club: formData.club || null,
         company: formData.footballClub || null,
@@ -1155,20 +1158,43 @@ const Detailsform: React.FC = () => {
             </div>
             {!isScout && (
               <div className="w-1/3">
-                <label className="block text-black mb-1">Sub Profession</label>
+                <label className="block text-black mb-1">Position</label>
                 <select
-                  name="subProfession"
-                  value={formData.subProfession}
+                  name="position"
+                  value={formData.position}
                   onChange={handleInputChange}
                   className="border p-2 w-full rounded"
                 >
                   <option value="">Select</option>
-                  <option value="blank">Blank</option>
-                  <option value="defender">Defender</option>
-                  <option value="striker">Striker</option>
-                  <option value="goalkeeper">GoalKeeper</option>
-                  <option value="coach">Coach</option>
-                  <option value="midfielder">Midfielder</option>
+                  <option value="Goalkeeper">Goalkeeper</option>
+                  <option value="Centre-back">Centre-back</option>
+                  <option value="Left-back">Left-back</option>
+                  <option value="Right-back">Right-back</option>
+                  <option value="Wing-back">Wing-back</option>
+                  <option value="Sweeper">Sweeper</option>
+                  <option value="Defensive midfielder">
+                    Defensive midfielder
+                  </option>
+                  <option value="Central midfielder">Central midfielder</option>
+                  <option value="Attacking midfielder">
+                    Attacking midfielder
+                  </option>
+                  <option value="Left midfielder">Left midfielder</option>
+                  <option value="Right midfielder">Right midfielder</option>
+                  <option value="Box-to-box midfielder">
+                    Box-to-box midfielder
+                  </option>
+                  <option value="Deep-lying playmaker">
+                    Deep-lying playmaker
+                  </option>
+                  <option value="Mezzala">Mezzala</option>
+                  <option value="Striker">Striker</option>
+                  <option value="Centre forward">Centre forward</option>
+                  <option value="Left winger">Left winger</option>
+                  <option value="Right winger">Right winger</option>
+                  <option value="Inside forward">Inside forward</option>
+                  <option value="False 9">False 9</option>
+                  <option value="Second striker">Second striker</option>
                 </select>
               </div>
             )}
@@ -1183,6 +1209,25 @@ const Detailsform: React.FC = () => {
               <p className="text-xs text-gray-500 mt-1"></p>
             </div>
           </div>
+
+          {!isScout && (
+            <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
+              <div className="w-1/3">
+                <label className="block text-black mb-1">Foot</label>
+                <select
+                  name="foot"
+                  value={formData.foot}
+                  onChange={handleInputChange}
+                  className="border p-2 w-full rounded"
+                >
+                  <option value="">Select</option>
+                  <option value="right_foot">Right Foot</option>
+                  <option value="left_foot">Left Foot</option>
+                  <option value="both_foot">Both Foot</option>
+                </select>
+              </div>
+            </div>
+          )}
 
           <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">

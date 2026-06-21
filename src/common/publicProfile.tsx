@@ -49,7 +49,8 @@ interface Expert {
   address?: string;
   bio?: string;
   profession?: string;
-  subProfession?: string;
+  position?: string;
+  foot?: "right_foot" | "left_foot" | "both_foot";
   certificationLevel?: string;
   company?: string;
   companyLink?: string;

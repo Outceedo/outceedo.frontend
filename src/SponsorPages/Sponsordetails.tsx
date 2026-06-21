@@ -31,7 +31,8 @@ interface ProfileData {
   lastName?: string;
   bio?: string;
   profession?: string;
-  subProfession?: string;
+  position?: string;
+  foot?: "right_foot" | "left_foot" | "both_foot";
   company?: string;
   companyLink?: string;
   country?: string;

@@ -49,7 +49,8 @@ interface Expert {
   sport?: string | null;
   photo?: string | null;
   verified?: boolean | null;
-  subProfession?: string | null;
+  position?: string | null;
+  foot?: "right_foot" | "left_foot" | "both_foot" | null;
   reviewsReceived?: Review[] | null;
   [key: string]: any;
 }

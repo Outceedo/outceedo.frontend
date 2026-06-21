@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { userService } from "@/store/apiConfig";
+import { userService, teamPlayerService } from "@/store/apiConfig";
 import { useAppSelector, useAppDispatch } from "@/store/hooks";
 import { getProfile } from "@/store/profile-slice";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,11 @@ import {
   Eye,
   X,
   Loader2,
+  Plus,
+  Pencil,
 } from "lucide-react";
 import avatar from "../assets/images/avatar.png";
+import outceedoLogo from "../assets/images/logosmall.png";
 
 interface Player {
   id: string;
@@ -37,12 +40,97 @@ interface TeamPlayerData {
   photo: string | null;
   firstName: string;
   lastName: string;
+  position?: string | null;
+  foot?: "right_foot" | "left_foot" | "both_foot" | string | null;
+  age?: number | null;
 }
+
+// Manually-added roster player (no Outceedo account), from the `other` service
+interface ManualPlayer {
+  id: string;
+  teamUsername: string;
+  firstName: string;
+  lastName: string;
+  age?: number | null;
+  photo?: string | null;
+  position?: string | null;
+  foot?: "right_foot" | "left_foot" | "both_foot" | null;
+}
+
+const POSITIONS = [
+  "Goalkeeper",
+  "Centre-back",
+  "Left-back",
+  "Right-back",
+  "Wing-back",
+  "Sweeper",
+  "Defensive midfielder",
+  "Central midfielder",
+  "Attacking midfielder",
+  "Left midfielder",
+  "Right midfielder",
+  "Box-to-box midfielder",
+  "Deep-lying playmaker",
+  "Mezzala",
+  "Striker",
+  "Centre forward",
+  "Left winger",
+  "Right winger",
+  "Inside forward",
+  "False 9",
+  "Second striker",
+];
+
+const formatFoot = (foot?: string | null) =>
+  foot
+    ? foot
+        .split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")
+    : "";
+
+// Elegant red pill tags for position / age / foot, shared by both card types
+const PlayerTags = ({
+  position,
+  age,
+  foot,
+}: {
+  position?: string | null;
+  age?: number | null;
+  foot?: string | null;
+}) => {
+  const tags: string[] = [];
+  if (position) tags.push(position);
+  if (age) tags.push(`Age ${age}`);
+  if (foot) tags.push(formatFoot(foot));
+  if (tags.length === 0) return null;
+  return (
+    <div className="flex flex-wrap justify-center gap-1 mt-1.5">
+      {tags.map((t) => (
+        <span
+          key={t}
+          className="text-[10px] font-medium text-white bg-red-500 px-2 py-0.5 rounded-full"
+        >
+          {t}
+        </span>
+      ))}
+    </div>
+  );
+};
+
+const emptyForm = {
+  firstName: "",
+  lastName: "",
+  age: "",
+  position: "",
+  foot: "",
+};
 
 const TeamPlayers = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const currentProfile = useAppSelector((state) => state.profile.currentProfile);
+  const teamUsername = currentProfile?.username || "";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Player[]>([]);
@@ -52,6 +140,19 @@ const TeamPlayers = () => {
   const [addingPlayer, setAddingPlayer] = useState<string | null>(null);
   const [removingPlayer, setRemovingPlayer] = useState<string | null>(null);
   const [error, setError] = useState("");
+
+  // Manual players (added by the team, no account)
+  const [manualPlayers, setManualPlayers] = useState<ManualPlayer[]>([]);
+  const [loadingManual, setLoadingManual] = useState(false);
+  const [showPlayerModal, setShowPlayerModal] = useState(false);
+  const [editingPlayer, setEditingPlayer] = useState<ManualPlayer | null>(null);
+  const [form, setForm] = useState(emptyForm);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [savingManual, setSavingManual] = useState(false);
+  const [confirmRemoveManual, setConfirmRemoveManual] =
+    useState<ManualPlayer | null>(null);
+  const [removingManualId, setRemovingManualId] = useState<string | null>(null);
 
   const teamPlayersData: TeamPlayerData[] =
     (currentProfile?.teamPlayersData as unknown as TeamPlayerData[]) || [];
@@ -77,6 +178,27 @@ const TeamPlayers = () => {
     }, 400);
     return () => clearTimeout(timer);
   }, [searchQuery]);
+
+  // Fetch the team's manually-added players
+  const fetchManualPlayers = async () => {
+    if (!teamUsername) return;
+    setLoadingManual(true);
+    try {
+      const { data } = await teamPlayerService.get("/", {
+        params: { teamUsername },
+      });
+      setManualPlayers(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error("Failed to fetch manual players", err);
+    } finally {
+      setLoadingManual(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchManualPlayers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamUsername]);
 
   const addPlayer = async (username: string) => {
     setAddingPlayer(username);
@@ -116,7 +238,96 @@ const TeamPlayers = () => {
     navigate("/team/playerinfo");
   };
 
+  const openAddModal = () => {
+    setEditingPlayer(null);
+    setForm(emptyForm);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+    setError("");
+    setShowPlayerModal(true);
+  };
+
+  const openEditModal = (player: ManualPlayer) => {
+    setEditingPlayer(player);
+    setForm({
+      firstName: player.firstName || "",
+      lastName: player.lastName || "",
+      age: player.age != null ? String(player.age) : "",
+      position: player.position || "",
+      foot: player.foot || "",
+    });
+    setPhotoFile(null);
+    setPhotoPreview(player.photo || null);
+    setError("");
+    setShowPlayerModal(true);
+  };
+
+  const closePlayerModal = () => {
+    setShowPlayerModal(false);
+    setEditingPlayer(null);
+    setForm(emptyForm);
+    setPhotoFile(null);
+    setPhotoPreview(null);
+  };
+
+  const onPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  };
+
+  const saveManualPlayer = async () => {
+    if (!form.firstName.trim() || !form.lastName.trim()) {
+      setError("First and last name are required");
+      return;
+    }
+    setSavingManual(true);
+    setError("");
+    try {
+      const fd = new FormData();
+      fd.append("firstName", form.firstName.trim());
+      fd.append("lastName", form.lastName.trim());
+      if (form.age) fd.append("age", form.age);
+      if (form.position) fd.append("position", form.position);
+      if (form.foot) fd.append("foot", form.foot);
+      if (photoFile) fd.append("photo", photoFile);
+
+      if (editingPlayer) {
+        await teamPlayerService.patch(`/${editingPlayer.id}`, fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      } else {
+        fd.append("teamUsername", teamUsername);
+        await teamPlayerService.post("/", fd, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+      }
+      closePlayerModal();
+      fetchManualPlayers();
+    } catch (err: any) {
+      const msg = err.response?.data?.errors?.[0] || err.response?.data?.message;
+      setError(msg || "Failed to save player");
+    } finally {
+      setSavingManual(false);
+    }
+  };
+
+  const deleteManualPlayer = async (id: string) => {
+    setRemovingManualId(id);
+    setError("");
+    try {
+      await teamPlayerService.delete(`/${id}`);
+      setManualPlayers((prev) => prev.filter((p) => p.id !== id));
+    } catch (err: any) {
+      setError(err.response?.data?.message || "Failed to remove player");
+    } finally {
+      setRemovingManualId(null);
+    }
+  };
+
   const teamPlayerUsernames = new Set(teamPlayersData.map((p) => p.username));
+  const totalPlayers = teamPlayersData.length + manualPlayers.length;
 
   return (
     <div className="space-y-8">
@@ -135,14 +346,25 @@ const TeamPlayers = () => {
         <h2 className="text-base font-semibold mb-3 dark:text-white">
           Add Players
         </h2>
-        <div className="relative">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search players by username..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
-          />
+        <div className="flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-2.5 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search players by username..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Button
+            type="button"
+            onClick={openAddModal}
+            className="h-10 gap-1.5 bg-red-600 hover:bg-red-700 shrink-0"
+            title="Add a player manually"
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Manually</span>
+          </Button>
         </div>
 
         {isSearching && (
@@ -228,38 +450,53 @@ const TeamPlayers = () => {
         <h2 className="text-base font-semibold mb-3 dark:text-white">
           Your Players{" "}
           <span className="text-sm font-normal text-gray-500">
-            ({teamPlayersData.length})
+            ({totalPlayers})
           </span>
+          {loadingManual && (
+            <Loader2 className="inline h-4 w-4 animate-spin text-red-500 ml-2" />
+          )}
         </h2>
 
-        {teamPlayersData.length === 0 ? (
+        {totalPlayers === 0 && !loadingManual ? (
           <div className="text-center py-10 border-2 border-dashed border-gray-200 dark:border-gray-700 rounded-lg">
             <p className="text-gray-500 text-sm">
-              No players in your team yet. Search above to add some.
+              No players in your team yet. Search above or add one manually.
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {/* Outceedo account players */}
             {teamPlayersData.map((player) => (
               <div
                 key={player.username}
-                className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-3 shadow-sm flex flex-col items-center gap-2"
+                className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm flex flex-col items-center gap-2"
               >
+                <img
+                  src={outceedoLogo}
+                  alt="On Outceedo"
+                  title="This player is on Outceedo"
+                  className="absolute top-3 right-3 w-6 h-6 object-contain"
+                />
                 <img
                   src={player.photo || avatar}
                   alt={player.username}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-gray-200"
+                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
                   onError={(e) => {
                     e.currentTarget.src = avatar;
                   }}
                 />
                 <div className="text-center w-full">
-                  <p className="text-sm font-semibold dark:text-white truncate">
+                  <p className="text-base font-semibold dark:text-white truncate">
                     {player.firstName} {player.lastName}
                   </p>
                   <p className="text-xs text-gray-500 truncate">@{player.username}</p>
+                  <PlayerTags
+                    position={player.position}
+                    age={player.age}
+                    foot={player.foot}
+                  />
                 </div>
-                <div className="flex gap-1.5 w-full mt-1">
+                <div className="flex gap-1.5 w-full mt-2">
                   <Button
                     size="sm"
                     variant="outline"
@@ -284,9 +521,286 @@ const TeamPlayers = () => {
                 </div>
               </div>
             ))}
+
+            {/* Manually-added players (rendered after Outceedo players) */}
+            {manualPlayers.map((player) => (
+              <div
+                key={player.id}
+                className="relative bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-5 shadow-sm flex flex-col items-center gap-2"
+              >
+                {/* <span className="absolute top-2 left-2 text-[10px] font-medium text-gray-500 bg-gray-100 dark:bg-gray-700 px-1.5 py-0.5 rounded-full">
+                  Manual
+                </span> */}
+                <img
+                  src={player.photo || avatar}
+                  alt={player.firstName}
+                  className="w-24 h-24 rounded-full object-cover border-2 border-gray-200"
+                  onError={(e) => {
+                    e.currentTarget.src = avatar;
+                  }}
+                />
+                <div className="text-center w-full">
+                  <p className="text-base font-semibold dark:text-white truncate">
+                    {player.firstName} {player.lastName}
+                  </p>
+                  <PlayerTags
+                    position={player.position}
+                    age={player.age}
+                    foot={player.foot}
+                  />
+                </div>
+                <div className="flex gap-1.5 w-full mt-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-xs h-7 gap-1 border-gray-300"
+                    onClick={() => openEditModal(player)}
+                  >
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="flex-1 text-xs h-7 border-red-200 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                    disabled={removingManualId === player.id}
+                    onClick={() => setConfirmRemoveManual(player)}
+                  >
+                    {removingManualId === player.id ? (
+                      <Loader2 className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <UserMinus className="h-3 w-3" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            ))}
           </div>
         )}
       </div>
+
+      {/* Add / Edit Manual Player Modal */}
+      {showPlayerModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={closePlayerModal}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-md overflow-hidden max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
+              <h3 className="font-semibold text-base dark:text-white">
+                {editingPlayer ? "Edit Player" : "Add Player Manually"}
+              </h3>
+              <button
+                onClick={closePlayerModal}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5 space-y-4">
+              {/* Profile photo */}
+              <div className="flex flex-col items-center gap-2">
+                <img
+                  src={photoPreview || avatar}
+                  alt="preview"
+                  className="w-20 h-20 rounded-full object-cover border-2 border-gray-200"
+                  onError={(e) => {
+                    e.currentTarget.src = avatar;
+                  }}
+                />
+                <label className="text-sm p-2 rounded-sm text-white cursor-pointer bg-red-500">
+                  {photoPreview ? "Change photo" : "Upload photo"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={onPhotoChange}
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
+                    First Name *
+                  </label>
+                  <Input
+                    value={form.firstName}
+                    onChange={(e) =>
+                      setForm({ ...form, firstName: e.target.value })
+                    }
+                    placeholder="First name"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
+                    Last Name *
+                  </label>
+                  <Input
+                    value={form.lastName}
+                    onChange={(e) =>
+                      setForm({ ...form, lastName: e.target.value })
+                    }
+                    placeholder="Last name"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
+                    Age
+                  </label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={120}
+                    value={form.age}
+                    onChange={(e) => setForm({ ...form, age: e.target.value })}
+                    placeholder="Age"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
+                    Foot
+                  </label>
+                  <select
+                    value={form.foot}
+                    onChange={(e) => setForm({ ...form, foot: e.target.value })}
+                    className="w-full h-9 px-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white"
+                  >
+                    <option value="">Select</option>
+                    <option value="right_foot">Right Foot</option>
+                    <option value="left_foot">Left Foot</option>
+                    <option value="both_foot">Both Foot</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs text-gray-600 dark:text-gray-300 mb-1">
+                  Position
+                </label>
+                <select
+                  value={form.position}
+                  onChange={(e) =>
+                    setForm({ ...form, position: e.target.value })
+                  }
+                  className="w-full h-9 px-2 border border-gray-300 dark:border-gray-600 rounded-md text-sm dark:bg-gray-700 dark:text-white"
+                >
+                  <option value="">Select</option>
+                  {POSITIONS.map((pos) => (
+                    <option key={pos} value={pos}>
+                      {pos}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-2 pt-1">
+                <Button
+                  variant="outline"
+                  className="flex-1 h-9 text-sm"
+                  onClick={closePlayerModal}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700"
+                  disabled={savingManual}
+                  onClick={saveManualPlayer}
+                >
+                  {savingManual ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : editingPlayer ? (
+                    "Save Changes"
+                  ) : (
+                    "Add Player"
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Manual Player Confirmation */}
+      {confirmRemoveManual && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          onClick={() => setConfirmRemoveManual(null)}
+        >
+          <div
+            className="bg-white dark:bg-gray-800 rounded-xl shadow-xl w-full max-w-sm overflow-hidden"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
+              <h3 className="font-semibold text-base dark:text-white">
+                Remove Player
+              </h3>
+              <button
+                onClick={() => setConfirmRemoveManual(null)}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="p-5">
+              <div className="flex items-center gap-3 mb-4">
+                <img
+                  src={confirmRemoveManual.photo || avatar}
+                  alt={confirmRemoveManual.firstName}
+                  className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
+                  onError={(e) => {
+                    e.currentTarget.src = avatar;
+                  }}
+                />
+                <div>
+                  <p className="font-semibold text-sm dark:text-white">
+                    {confirmRemoveManual.firstName} {confirmRemoveManual.lastName}
+                  </p>
+                  {confirmRemoveManual.position && (
+                    <p className="text-xs text-gray-500">
+                      {confirmRemoveManual.position}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
+                Are you sure you want to remove this player from your team?
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 h-9 text-sm"
+                  onClick={() => setConfirmRemoveManual(null)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 h-9 text-sm bg-red-600 hover:bg-red-700"
+                  disabled={removingManualId === confirmRemoveManual.id}
+                  onClick={() => {
+                    deleteManualPlayer(confirmRemoveManual.id);
+                    setConfirmRemoveManual(null);
+                  }}
+                >
+                  {removingManualId === confirmRemoveManual.id ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <>
+                      <UserMinus className="h-4 w-4 mr-1.5" />
+                      Remove
+                    </>
+                  )}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Remove Confirmation Modal */}
       {confirmRemove && (

@@ -39,7 +39,8 @@ interface Profile {
   height?: number | null;
   weight?: number | null;
   profession?: string | null;
-  subProfession?: string | null;
+  position?: string | null;
+  foot?: "right_foot" | "left_foot" | "both_foot" | null;
   bio?: string | null;
   photo?: string | null;
   language?: string[] | null;

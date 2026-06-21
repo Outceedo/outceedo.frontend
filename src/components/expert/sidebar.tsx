@@ -78,7 +78,13 @@ function MenuItems({ setOpen }: MenuItemsProps) {
 
   // Get age and profession details from profile data
   const expertProfession = currentProfile?.profession || "Expert";
-  const expertSubProfession = currentProfile?.subProfession || "";
+  const expertPosition = currentProfile?.position || "";
+  const expertFoot = currentProfile?.foot
+    ? currentProfile.foot
+        .split("_")
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(" ")
+    : "";
   localStorage.setItem("expertId", currentProfile?.id);
 
   // Function to handle logout
@@ -169,13 +175,18 @@ function MenuItems({ setOpen }: MenuItemsProps) {
         </p>
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {expertProfession.toUpperCase()}
-          {expertSubProfession
+          {expertPosition
             ? ` - ${
-                expertSubProfession.charAt(0).toUpperCase() +
-                expertSubProfession.slice(1)
+                expertPosition.charAt(0).toUpperCase() +
+                expertPosition.slice(1)
               }`
             : ""}
         </p>
+        {expertFoot && (
+          <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
+            {expertFoot}
+          </p>
+        )}
         <p className="text-gray-600 font-bold text-sm font-Raleway dark:text-gray-400">
           {currentProfile?.gender?.charAt(0).toUpperCase() +
             currentProfile?.gender?.slice(1)}

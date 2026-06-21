@@ -282,7 +282,7 @@ const AppContent: React.FC = () => {
         >
           <Route path="matches" element={<Matches />} />
           <Route path="mybooking" element={<MyBooking />} />
-          <Route path="viewscouts" element={<ScoutProfilesList />} />
+          <Route path="scouts" element={<ScoutProfilesList />} />
           <Route path="scoutdetails" element={<ScoutPublicView />} />
           <Route path="viewexperts" element={<Expertspage />} />
           <Route path="exdetails" element={<Experts />} />
@@ -370,7 +370,7 @@ const AppContent: React.FC = () => {
           <Route path="sponsors" element={<TeamSponsor />} />
           <Route path="applications" element={<SponsorApplicationpage />} />
           <Route path="profile" element={<TeamProfile />} />
-          <Route path="details-form" element={<TeamDetailsForm />} />
+          <Route path="details-form" element={<TeamDetailsForm />} />t
           <Route path="exdetails" element={<TeamExperts />} />
           <Route path="playerinfo" element={<TeamPlayerInfo />} />
           <Route path="sponsorinfo" element={<TeamSponsorInfo />} />
@@ -378,7 +378,7 @@ const AppContent: React.FC = () => {
           <Route path="matches" element={<Matches />} />
           <Route path="referral" element={<ReferralPage />} />
           <Route path="bookings" element={<TeamBooking />} />
-          <Route path="viewscouts" element={<ScoutProfilesList />} />
+          <Route path="scouts" element={<ScoutProfilesList />} />
           <Route path="scoutdetails" element={<ScoutPublicView />} />
           <Route path="feed" element={<Feed />} />
           <Route path="redeem" element={<Redeem />} />
