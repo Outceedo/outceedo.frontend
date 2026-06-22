@@ -139,7 +139,7 @@ const ProfileMatches: React.FC<ProfileMatchesProps> = ({ userId }) => {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-[640px]">
                 <TableHeader className="dark:bg-gray-800 dark:text-gray-300">
                   <TableRow className="dark:border-gray-700">
                     <TableHead className="dark:text-gray-300">Date</TableHead>

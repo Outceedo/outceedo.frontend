@@ -36,6 +36,7 @@ import FollowList from "../components/follower/followerlist";
 import axios from "axios";
 
 import PlayerBusinessCard from "./businessCard";
+import ViewCvButton from "@/components/ViewCvButton";
 import ProfileMatches from "./profileMatches";
 import PlayerTeamTab from "./team";
 import AllReports from "./allReports";
@@ -509,7 +510,7 @@ const Profile: React.FC = () => {
 
   return (
     <div className="flex w-full min-h-screen dark:bg-gray-900">
-      <div className="flex-1 p-2 sm:p-4">
+      <div className="flex-1 min-w-0 p-2 sm:p-4">
         {/* Profile Incomplete Notice */}
         {isProfileIncompleteCheck && showIncompleteNotice && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 relative">
@@ -599,9 +600,15 @@ const Profile: React.FC = () => {
             {/* Profile Info */}
             <div className="relative w-full mt-4 lg:mt-0">
               <div>
-                <h2 className="text-2xl font-semibold text-gray-900 dark:text-white font-Raleway break-words">
-                  {playerData.name || "Player Profile"}
-                </h2>
+                <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
+                  <h2 className="min-w-0 break-words text-xl font-semibold text-gray-900 dark:text-white font-Raleway sm:text-2xl">
+                    {playerData.name || "Player Profile"}
+                  </h2>
+                  <ViewCvButton
+                    role="player"
+                    username={localStorage.getItem("username")}
+                  />
+                </div>
                 {/* Basic Info Section */}
                 <div className="mt-5">
                   <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-Opensans dark:text-gray-300 mt-2">
@@ -694,7 +701,7 @@ const Profile: React.FC = () => {
               })()}
 
               {/* OVR Section */}
-              <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit mt-8 relative overflow-x-auto">
+              <Card className="bg-yellow-100 dark:bg-gray-700 p-3 w-fit max-w-full mt-8 relative overflow-x-auto">
                 {statsLoading ? (
                   <div className="flex items-center justify-center p-8">
                     <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-red-600"></div>
@@ -930,7 +937,7 @@ const Profile: React.FC = () => {
                 Followers ({followersCount})
               </h3>
               {/* Pagination and limit controls */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
                 <div>
                   <label className="mr-2 font-medium">
                     Followers per page:

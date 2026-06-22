@@ -622,7 +622,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
             <div className="relative">
               <p
                 ref={aboutTextRef}
-                className={`text-gray-700 dark:text-gray-300 ${showSeeMore && !isAboutExpanded
+                className={`break-words text-gray-700 dark:text-gray-300 ${showSeeMore && !isAboutExpanded
                     ? "line-clamp-3 overflow-hidden"
                     : ""
                   }`}
@@ -899,7 +899,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                     >
                       {/* Image Section */}
                       {cert.imageUrl && (
-                        <div className="w-20 h-15 flex-shrink-0">
+                        <div className="w-20 h-20 flex-shrink-0">
                           <img
                             src={cert.imageUrl}
                             alt={cert.title}
@@ -909,7 +909,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       )}
 
                       {/* Text Content */}
-                      <div className="p-4">
+                      <div className="min-w-0 flex-1 p-4 break-words">
                         <h4 className="font-semibold text-gray-800 dark:text-gray-200">
                           {cert.title}
                         </h4>
@@ -953,11 +953,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
         {/* Certificate Modal */}
         {modalCertificate && (
-          <div className="fixed inset-0 z-50 flex justify-center items-center">
+          <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
             <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
             <div
               ref={modalCertificateRef}
-              className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-3xl max-h-5xl w-full z-10"
+              className="relative bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto z-10"
             >
               <button
                 className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
@@ -985,7 +985,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                   <img
                     src={modalCertificate.imageUrl}
                     alt={modalCertificate.title || ""}
-                    className="w-full max-h-90 object-contain rounded"
+                    className="w-full max-h-[60vh] object-contain rounded"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
                       target.style.display = "none";
@@ -1223,7 +1223,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                       onClick={() => setModalAward(award)}
                     >
                       {award.imageUrl && (
-                        <div className="w-20 h-15 flex-shrink-0">
+                        <div className="w-20 h-20 flex-shrink-0">
                           <img
                             src={award.imageUrl}
                             alt={award.title}
@@ -1231,7 +1231,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                           />
                         </div>
                       )}
-                      <div className="p-4">
+                      <div className="min-w-0 flex-1 p-4 break-words">
                         <h4 className="font-semibold text-gray-800 dark:text-gray-200">
                           {award.title}
                         </h4>
@@ -1275,11 +1275,11 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
 
       {/* Award Modal */}
       {modalAward && (
-        <div className="fixed inset-0 z-50 flex justify-center items-center">
+        <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
           <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
           <div
             ref={modalAwardRef}
-            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-4xl w-full z-10"
+            className="relative bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto z-10"
           >
             <button
               className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
@@ -1307,7 +1307,7 @@ const ProfileDetails: React.FC<ProfileDetailsProps> = ({
                 <img
                   src={modalAward.imageUrl}
                   alt={modalAward.title || ""}
-                  className="w-full max-h-90 object-contain rounded"
+                  className="w-full max-h-[60vh] object-contain rounded"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";

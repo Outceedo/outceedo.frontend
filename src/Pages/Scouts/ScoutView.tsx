@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import ViewCvButton from "@/components/ViewCvButton";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -431,6 +432,12 @@ const ScoutView: React.FC = () => {
                 );
               })}
             </div>
+            <ViewCvButton
+              role="scout"
+              username={scoutData.username}
+              label="View CV"
+              className="mt-2 sm:mt-0 sm:ml-auto"
+            />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 mb-4 sm:mb-6">

@@ -5,6 +5,7 @@ import "react-circular-progressbar/dist/styles.css";
 import axios from "axios";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import ViewCvButton from "@/components/ViewCvButton";
 import {
   Table,
   TableBody,
@@ -607,11 +608,18 @@ const Playerview: React.FC = () => {
               alt={`${displayName}'s profile`}
               className="rounded-lg w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 object-cover shadow-md"
             />
-            <div className="flex flex-col mt-1 sm:mt-5 w-full gap-2 sm:gap-4">
+            <div className="flex flex-col min-w-0 mt-1 sm:mt-5 w-full gap-2 sm:gap-4">
               <div>
-                <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
-                  {displayName}
-                </h2>
+                <div className="flex items-start justify-between gap-4">
+                  <h2 className="text-lg sm:text-2xl font-semibold text-gray-900 dark:text-white font-Raleway">
+                    {displayName}
+                  </h2>
+                  <ViewCvButton
+                    role="player"
+                    username={profileData.username}
+                    label="View CV"
+                  />
+                </div>
                 <div className="flex flex-wrap gap-x-5 gap-y-2 text-gray-600 font-Opensans mt-2 dark:text-gray-300 text-xs sm:text-sm">
                   <span>
                     {profileData.age ? <><strong>Age:</strong> {profileData.age}</> : ""}
@@ -1003,7 +1011,7 @@ const Playerview: React.FC = () => {
                     </div>
                   ) : (
                     <div className="overflow-x-auto">
-                      <Table>
+                      <Table className="min-w-[640px]">
                         <TableHeader className="dark:bg-gray-800 dark:text-gray-300">
                           <TableRow className="dark:border-gray-700">
                             <TableHead className="dark:text-gray-300">

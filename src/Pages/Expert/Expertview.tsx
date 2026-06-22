@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import ViewCvButton from "@/components/ViewCvButton";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
@@ -845,7 +846,7 @@ const Expertview = () => {
         </button>
       </div>
       <div className="flex flex-col md:flex-row justify-between items-start gap-4 sm:gap-6 mb-6 sm:mb-10">
-        <div className="flex-1 md:pr-6 w-full">
+        <div className="flex-1 min-w-0 md:pr-6 w-full">
           <div className="flex flex-col sm:flex-row items-start sm:items-center mb-5 sm:mb-6">
             <h1 className="text-2xl sm:text-4xl font-bold dark:text-white mb-2 sm:mb-0">
               {expertData.name}
@@ -893,6 +894,12 @@ const Expertview = () => {
                 );
               })}
             </div>
+            <ViewCvButton
+              role="expert"
+              username={expertData.username}
+              label="View CV"
+              className="mt-2 sm:mt-0 sm:ml-auto"
+            />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 mb-4 sm:mb-6">

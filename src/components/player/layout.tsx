@@ -12,12 +12,12 @@ function PlayerLayout() {
       <PlayerSideBar open={openSidebar} setOpen={setOpenSidebar} />
       
       {/* Main content container */}
-      <div className="flex flex-1 flex-col w-full">
+      <div className="flex flex-1 flex-col w-full min-w-0">
         {/* Header - always at top */}
         <PlayerHeader setOpen={setOpenSidebar} />
-        
+
         {/* Main content area with responsive padding */}
-        <main className="flex-1 flex-col flex bg-muted/40 p-2 sm:p-4 md:p-6 overflow-x-hidden">
+        <main className="flex-1 flex-col flex bg-muted/40 p-2 sm:p-4 md:p-6 overflow-x-hidden min-w-0">
           <Outlet />
         </main>
       </div>

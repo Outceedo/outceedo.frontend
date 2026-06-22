@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 // import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import ViewCvButton from "@/components/ViewCvButton";
 import Sponsordetails from "./Sponsordetails";
 import { Loader2 } from "lucide-react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -223,10 +224,14 @@ const SponsorProfile = () => {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
           <div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <h1 className="text-2xl font-bold dark:text-white">
                 {data?.company || data?.firstName + " " + data?.lastName}
               </h1>
+              <ViewCvButton
+                role="sponsor"
+                username={localStorage.getItem("username")}
+              />
             </div>
 
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-2 md:gap-24 text-sm text-gray-600">

@@ -1535,11 +1535,11 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
 
       {/* Certificate Modal */}
       {modalCertificate && (
-        <div className="fixed inset-0 z-50 flex justify-center items-center">
+        <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
           <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
           <div
             ref={modalCertificateRef}
-            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-3xl w-full z-10"
+            className="relative bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto z-10"
           >
             <button
               className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
@@ -1567,7 +1567,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                 <img
                   src={modalCertificate.imageUrl}
                   alt={modalCertificate.title || ""}
-                  className="w-full max-h-90 object-contain rounded"
+                  className="w-full max-h-[60vh] object-contain rounded"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";
@@ -1586,11 +1586,11 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
 
       {/* Award Modal */}
       {modalAward && (
-        <div className="fixed inset-0 z-50 flex justify-center items-center">
+        <div className="fixed inset-0 z-50 flex justify-center items-center p-4">
           <div className="fixed inset-0 bg-blur bg-opacity-50 backdrop-blur-sm"></div>
           <div
             ref={modalAwardRef}
-            className="relative bg-white dark:bg-gray-800 p-8 rounded-lg max-w-3xl w-full z-10"
+            className="relative bg-white dark:bg-gray-800 p-5 sm:p-8 rounded-lg max-w-3xl w-full max-h-[90vh] overflow-y-auto z-10"
           >
             <button
               className="absolute top-2 right-3 text-2xl text-gray-500 dark:text-gray-300 hover:text-red-600"
@@ -1618,7 +1618,7 @@ const ExpertDetails: React.FC<ExpertDetailProps> = ({ expertData = {} }) => {
                 <img
                   src={modalAward.imageUrl}
                   alt={modalAward.title || ""}
-                  className="w-full max-h-90 object-contain rounded"
+                  className="w-full max-h-[60vh] object-contain rounded"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
                     target.style.display = "none";

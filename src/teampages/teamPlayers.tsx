@@ -109,7 +109,7 @@ const PlayerTags = ({
       {tags.map((t) => (
         <span
           key={t}
-          className="text-[10px] font-medium text-white bg-red-500 px-2 py-0.5 rounded-full"
+          className="text-[12px] font-medium text-white bg-red-500 px-2 py-0.5 rounded-sm"
         >
           {t}
         </span>
@@ -129,13 +129,17 @@ const emptyForm = {
 const TeamPlayers = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const currentProfile = useAppSelector((state) => state.profile.currentProfile);
+  const currentProfile = useAppSelector(
+    (state) => state.profile.currentProfile,
+  );
   const teamUsername = currentProfile?.username || "";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Player[]>([]);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [confirmRemove, setConfirmRemove] = useState<TeamPlayerData | null>(null);
+  const [confirmRemove, setConfirmRemove] = useState<TeamPlayerData | null>(
+    null,
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [addingPlayer, setAddingPlayer] = useState<string | null>(null);
   const [removingPlayer, setRemovingPlayer] = useState<string | null>(null);
@@ -306,7 +310,8 @@ const TeamPlayers = () => {
       closePlayerModal();
       fetchManualPlayers();
     } catch (err: any) {
-      const msg = err.response?.data?.errors?.[0] || err.response?.data?.message;
+      const msg =
+        err.response?.data?.errors?.[0] || err.response?.data?.message;
       setError(msg || "Failed to save player");
     } finally {
       setSavingManual(false);
@@ -489,7 +494,9 @@ const TeamPlayers = () => {
                   <p className="text-base font-semibold dark:text-white truncate">
                     {player.firstName} {player.lastName}
                   </p>
-                  <p className="text-xs text-gray-500 truncate">@{player.username}</p>
+                  <p className="text-xs text-gray-500 truncate">
+                    @{player.username}
+                  </p>
                   <PlayerTags
                     position={player.position}
                     age={player.age}
@@ -759,7 +766,8 @@ const TeamPlayers = () => {
                 />
                 <div>
                   <p className="font-semibold text-sm dark:text-white">
-                    {confirmRemoveManual.firstName} {confirmRemoveManual.lastName}
+                    {confirmRemoveManual.firstName}{" "}
+                    {confirmRemoveManual.lastName}
                   </p>
                   {confirmRemoveManual.position && (
                     <p className="text-xs text-gray-500">
@@ -813,7 +821,9 @@ const TeamPlayers = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between px-5 py-4 border-b dark:border-gray-700">
-              <h3 className="font-semibold text-base dark:text-white">Remove Player</h3>
+              <h3 className="font-semibold text-base dark:text-white">
+                Remove Player
+              </h3>
               <button
                 onClick={() => setConfirmRemove(null)}
                 className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
@@ -827,17 +837,22 @@ const TeamPlayers = () => {
                   src={confirmRemove.photo || avatar}
                   alt={confirmRemove.username}
                   className="w-12 h-12 rounded-full object-cover border-2 border-gray-200 flex-shrink-0"
-                  onError={(e) => { e.currentTarget.src = avatar; }}
+                  onError={(e) => {
+                    e.currentTarget.src = avatar;
+                  }}
                 />
                 <div>
                   <p className="font-semibold text-sm dark:text-white">
                     {confirmRemove.firstName} {confirmRemove.lastName}
                   </p>
-                  <p className="text-xs text-gray-500">@{confirmRemove.username}</p>
+                  <p className="text-xs text-gray-500">
+                    @{confirmRemove.username}
+                  </p>
                 </div>
               </div>
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-5">
-                Are you sure you want to remove this player from your team? They will need to be re-added manually.
+                Are you sure you want to remove this player from your team? They
+                will need to be re-added manually.
               </p>
               <div className="flex gap-2">
                 <Button
