@@ -9,6 +9,7 @@ import {
 } from "@fortawesome/free-brands-svg-icons";
 
 import { Card } from "@/components/ui/card";
+import ViewCvButton from "@/components/ViewCvButton";
 import { ArrowLeft, Currency, Loader2 } from "lucide-react";
 import "react-circular-progressbar/dist/styles.css";
 import React, { useState, useEffect } from "react";
@@ -183,9 +184,19 @@ const Sponsorview: React.FC = () => {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center p-0 md:p-5">
         <div className="w-full md:w-3/5">
-          <h1 className="text-2xl font-bold dark:text-white">
-            {sponsorData.name}
-          </h1>
+          <div className="flex items-start justify-between gap-4">
+            <h1 className="text-2xl font-bold dark:text-white">
+              {sponsorData.name}
+            </h1>
+            <ViewCvButton
+              role="sponsor"
+              username={
+                viewedProfile?.username ||
+                localStorage.getItem("viewsponsorusername")
+              }
+              label="View CV"
+            />
+          </div>
           {/* Responsive grid: sm-2, lg-4 */}
           <div className="mt-6 md:mt-10 grid grid-cols-2  lg:grid-cols-4 gap-6 lg:gap-8 text-sm text-gray-600">
             <div>

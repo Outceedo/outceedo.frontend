@@ -465,6 +465,11 @@ const AppContent: React.FC = () => {
 
         <Route path="/subscription/success" element={<Success />} />
         <Route path="/subscription/cancel" element={<SubscriptionCancel />} />
+        <Route path="/player/:username" element={<PublicProfile />} />
+        <Route path="/expert/:username" element={<PublicProfile />} />
+        <Route path="/team/:username" element={<PublicProfile />} />
+        <Route path="/scout/:username" element={<PublicProfile />} />
+        <Route path="/sponsor/:username" element={<PublicProfile />} />
         <Route path="/:username" element={<PublicProfile />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

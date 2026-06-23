@@ -64,7 +64,7 @@ const PlayerTags = ({
       {tags.map((t) => (
         <span
           key={t}
-          className="text-[10px] font-medium text-white bg-red-500 px-2 py-0.5 rounded-full"
+          className="text-[12px] font-medium text-white bg-red-500 px-2 py-0.5 rounded-sm"
         >
           {t}
         </span>

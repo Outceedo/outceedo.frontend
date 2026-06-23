@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import ViewCvButton from "@/components/ViewCvButton";
 import TeamDetails from "./teamdetails";
 
 import { Loader2 } from "lucide-react";
@@ -233,14 +234,20 @@ const TeamProfile = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center px-5">
           {/* Left Section: Info */}
           <div className="w-full md:w-2/3">
-            <div className="flex flex-col gap-3">
-              <h1 className="text-2xl font-bold dark:text-white">
-                {data?.teamName}
-              </h1>
-              <h2 className="text-lg sm:text-sm font-semibold text-gray-900 dark:text-white font-Raleway mb-3">
-                Managed by{" "}
-                {data.firstName?.trim() + " " + data.lastName?.trim()}
-              </h2>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex flex-col gap-3">
+                <h1 className="text-2xl font-bold dark:text-white">
+                  {data?.teamName}
+                </h1>
+                <h2 className="text-lg sm:text-sm font-semibold text-gray-900 dark:text-white font-Raleway mb-3">
+                  Managed by{" "}
+                  {data.firstName?.trim() + " " + data.lastName?.trim()}
+                </h2>
+              </div>
+              <ViewCvButton
+                role="team"
+                username={localStorage.getItem("username")}
+              />
             </div>
 
             {/* Sport, Country, City, Type */}

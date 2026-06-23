@@ -4,6 +4,7 @@ import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import axios from "axios";
 import { Card } from "@/components/ui/card";
+import ViewCvButton from "@/components/ViewCvButton";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -556,9 +557,16 @@ const TeamView: React.FC = () => {
           />
           <div className="flex flex-col mt-1 sm:mt-2 w-full gap-2 sm:gap-4">
             <div>
-              <h2 className="text-lg sm:text-3xl font-semibold text-gray-900 dark:text-white font-Raleway">
-                {displayName}
-              </h2>
+              <div className="flex items-start justify-between gap-4">
+                <h2 className="text-lg sm:text-3xl font-semibold text-gray-900 dark:text-white font-Raleway">
+                  {displayName}
+                </h2>
+                <ViewCvButton
+                  role="team"
+                  username={profileData.username}
+                  label="View CV"
+                />
+              </div>
               <h2 className="text-lg sm:text-sm font-semibold text-gray-900 dark:text-white font-Raleway mb-3 mt-3">
                 Managed by{" "}
                 {profileData.firstName?.trim() +

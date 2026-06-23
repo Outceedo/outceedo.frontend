@@ -19,6 +19,7 @@ import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import ExpertDetails from "./Expertdetails";
 import ExpertServices from "./Expertservices";
 import BusinessCard, { BusinessCardDownloadButton } from "./BusinessCard";
+import ViewCvButton from "@/components/ViewCvButton";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
@@ -451,7 +452,7 @@ const ExpertProfile = () => {
   return (
     <div className="flex -mt-6">
       {/* Main Content */}
-      <main className="flex-1 p-3 sm:p-4 md:p-6 dark:bg-gray-900 ml-0 sm:ml-15">
+      <main className="flex-1 min-w-0 p-3 sm:p-4 md:p-6 dark:bg-gray-900 ml-0 sm:ml-15">
         {/* Profile Incomplete Notice */}
         {isProfileIncomplete && showIncompleteNotice && (
           <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-4 relative">
@@ -498,7 +499,7 @@ const ExpertProfile = () => {
 
         <div className="flex flex-col lg:flex-row justify-between items-start w-full p-2 sm:p-4 mx-auto bg-dark:bg-slate-700 gap-4 lg:gap-6">
           {/* Left - Expert Info Section */}
-          <div className="flex-1 w-full lg:pr-6">
+          <div className="flex-1 min-w-0 w-full lg:pr-6">
             {/* Name and Social Icons */}
             <div className="flex flex-wrap items-center mb-4 sm:mb-6 gap-x-4 gap-y-2">
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold dark:text-white min-w-0 break-words">
@@ -539,6 +540,11 @@ const ExpertProfile = () => {
                 })}
                 {/* <BusinessCardDownloadButton expertData={expertData} /> */}
               </div>
+              <ViewCvButton
+                role="expert"
+                username={localStorage.getItem("username")}
+                className="ml-auto"
+              />
             </div>
 
             {/* Expert Info - All fields in one grid */}
