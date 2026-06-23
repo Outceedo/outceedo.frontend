@@ -236,10 +236,10 @@ const Chip: React.FC<{ icon?: React.ReactNode; children: React.ReactNode }> = ({
   </span>
 );
 
-const SectionTitle: React.FC<{ kicker?: string; children: React.ReactNode }> = ({
-  kicker,
-  children,
-}) => (
+const SectionTitle: React.FC<{
+  kicker?: string;
+  children: React.ReactNode;
+}> = ({ kicker, children }) => (
   <div className="mb-5">
     {kicker && (
       <div className="mb-2 inline-flex items-center gap-2 text-red-500 font-black tracking-[0.3em] uppercase text-[10px]">
@@ -359,7 +359,8 @@ export default function PublicProfile() {
   const showFoot = isPlayer || isExpert;
 
   const displayName = isTeam
-    ? profile.teamName || `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim()
+    ? profile.teamName ||
+      `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim()
     : `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim() ||
       profile.username ||
       "Outceedo Member";
@@ -376,18 +377,17 @@ export default function PublicProfile() {
 
   const roleLabel2 = (() => {
     if (isTeam) return profile.teamType ? `Team` : "Team";
-    if (isSponsor)
-      return profile.sponsorType ? ` Sponsor` : "Sponsor";
+    if (isSponsor) return profile.sponsorType ? ` Sponsor` : "Sponsor";
     if (isScout) return "Scout";
     if (isExpert) return profile.profession || "Expert";
     if (isPlayer) return profile.position || "Player";
     return profile.profession || "Member";
   })();
 
-
-
   const photoSrc = photoBase64 || profile.photo || "";
-  const locationStr = [profile.city, profile.country].filter(Boolean).join(", ");
+  const locationStr = [profile.city, profile.country]
+    .filter(Boolean)
+    .join(", ");
 
   const socials = profile.socialLinks || {};
   const socialList = [
@@ -443,10 +443,7 @@ export default function PublicProfile() {
       const blob = await pdf(
         <CvPdf image={dataUrl} width={width} height={height} />,
       ).toBlob();
-      saveAs(
-        blob,
-        `${displayName.replace(/\s+/g, "_") || "outceedo"}_CV.pdf`,
-      );
+      saveAs(blob, `${displayName.replace(/\s+/g, "_") || "outceedo"}_CV.pdf`);
     } catch (e) {
       console.error("Failed to generate PDF", e);
     } finally {
@@ -458,12 +455,6 @@ export default function PublicProfile() {
   /* ------------------- Role-aware detail rows (sidebar) ------------------- */
   const detailRows = (
     <>
-      <DetailRow icon={<Mail size={16} />} label="Email" value={profile.email} />
-      <DetailRow
-        icon={<Phone size={16} />}
-        label="Phone"
-        value={profile.mobile_number}
-      />
       <DetailRow
         icon={<MapPin size={16} />}
         label="Location"
@@ -524,12 +515,16 @@ export default function PublicProfile() {
           <DetailRow
             icon={<Clock size={16} />}
             label="Response Time"
-            value={profile.responseTime ? `${profile.responseTime} mins` : undefined}
+            value={
+              profile.responseTime ? `${profile.responseTime} mins` : undefined
+            }
           />
           <DetailRow
             icon={<MapPin size={16} />}
             label="Travel Limit"
-            value={profile.travelLimit ? `${profile.travelLimit} km` : undefined}
+            value={
+              profile.travelLimit ? `${profile.travelLimit} km` : undefined
+            }
           />
         </>
       )}
@@ -683,12 +678,14 @@ export default function PublicProfile() {
                 <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
                   {profile.club && (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700">
-                      <Users size={13} className="text-red-500" /> {profile.club}
+                      <Users size={13} className="text-red-500" />{" "}
+                      {profile.club}
                     </span>
                   )}
                   {locationStr && (
                     <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700">
-                      <MapPin size={13} className="text-red-500" /> {locationStr}
+                      <MapPin size={13} className="text-red-500" />{" "}
+                      {locationStr}
                     </span>
                   )}
                   {profile.sport && (
@@ -816,7 +813,10 @@ export default function PublicProfile() {
                   <SectionTitle kicker="Off the pitch">Interests</SectionTitle>
                   <div className="flex flex-wrap gap-2">
                     {profile.interests.map((it, i) => (
-                      <Chip key={i} icon={<Heart size={13} className="text-red-500" />}>
+                      <Chip
+                        key={i}
+                        icon={<Heart size={13} className="text-red-500" />}
+                      >
                         {it}
                       </Chip>
                     ))}

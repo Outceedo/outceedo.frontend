@@ -18,6 +18,7 @@ import {
 import { faStar as farStar } from "@fortawesome/free-regular-svg-icons";
 import ExpertDetails from "../expertpages/Expertdetails";
 import BusinessCard from "../expertpages/BusinessCard";
+import ViewCvButton from "@/components/ViewCvButton";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
 import { getProfile, updateProfilePhoto } from "../store/profile-slice";
 import Swal from "sweetalert2";
@@ -466,6 +467,11 @@ const ScoutProfile = () => {
                   );
                 })}
               </div>
+              <ViewCvButton
+                role="scout"
+                username={localStorage.getItem("username")}
+                className="ml-auto"
+              />
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-4 sm:mb-6">
