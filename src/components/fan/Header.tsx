@@ -1,11 +1,12 @@
 import { AlignJustify } from "lucide-react";
+import Chat from "@/common/chat";
 import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBell,
-  faGem,
   faMoon,
   faSun,
+  faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -24,6 +25,7 @@ const menuItems = [
 ];
 function FanHeader({ setOpen }: fanHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const location = useLocation();
   const currentTitle =
@@ -52,6 +54,7 @@ function FanHeader({ setOpen }: fanHeaderProps) {
   };
 
   return (
+    <>
     <header className="flex items-center justify-between px-4 py-3 bg-background dark:bg-slate-950">
       {/* Left Section: Menu Button + Page Title */}
       <div className="flex items-center gap-4">
@@ -72,6 +75,19 @@ function FanHeader({ setOpen }: fanHeaderProps) {
       {/* Right Section: Premium Button, Notifications, Theme Toggle */}
       <div className="flex justify-end gap-3 items-center w-full">
         <CoinsCounter />
+        <Button
+          onClick={() => setChatOpen(true)}
+          aria-label="Messages"
+          className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 transition-colors p-3"
+        >
+          <FontAwesomeIcon
+            icon={faMessage}
+            className="text-red-500 text-xl sm:text-2xl"
+          />
+          <span className="hidden font-medium text-gray-800 dark:text-white md:inline">
+            Messages
+          </span>
+        </Button>
         <Button className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-3">
           <FontAwesomeIcon
             icon={faBell}
@@ -89,6 +105,8 @@ function FanHeader({ setOpen }: fanHeaderProps) {
         </Button>
       </div>
     </header>
+    <Chat open={chatOpen} onClose={() => setChatOpen(false)} />
+    </>
   );
 }
 

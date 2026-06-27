@@ -5,6 +5,7 @@ import {
   Settings,
   Loader2,
 } from "lucide-react";
+import Chat from "@/common/chat";
 import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -13,6 +14,7 @@ import {
   faMoon,
   faSun,
   faCrown,
+  faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useState, useRef } from "react";
 import { useLocation } from "react-router-dom";
@@ -46,6 +48,7 @@ const menuItems = [
 
 function ScoutHeader({ setOpen }: ScoutHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   const location = useLocation();
   const currentTitle =
@@ -406,6 +409,20 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
           </div>
 
           <Button
+            onClick={() => setChatOpen(true)}
+            aria-label="Messages"
+            className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 transition-colors p-2 sm:p-3 h-10 w-10 md:w-auto md:px-3"
+            size="sm"
+          >
+            <FontAwesomeIcon
+              icon={faMessage}
+              className="text-red-500 text-xl sm:text-2xl"
+            />
+            <span className="hidden font-medium text-gray-800 dark:text-white md:inline">
+              Messages
+            </span>
+          </Button>
+          <Button
             className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-2 sm:p-3 h-10 w-10"
             size="sm"
           >
@@ -427,6 +444,7 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
         </div>
       </header>
       {modal}
+      <Chat open={chatOpen} onClose={() => setChatOpen(false)} />
     </>
   );
 }
