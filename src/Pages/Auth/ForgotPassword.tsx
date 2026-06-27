@@ -1,6 +1,7 @@
 import { useState, ChangeEvent, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import Seo from "@/components/seo/Seo";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { forgotPassword } from "../../store/auth-slice";
 import { ArrowLeft, KeyRound, Mail, CheckCircle } from "lucide-react";
@@ -42,6 +43,7 @@ const ForgotPassword = () => {
   return (
     // 👇 FIX: Use h-screen + overflow-y-auto to allow scrolling on mobile
     <div className="relative w-full h-screen overflow-y-auto bg-white scroll-smooth">
+      <Seo title="Forgot Password" noindex />
       {/* Background Image Layer - FIXED so it stays in place during scroll */}
       <div className="fixed inset-0 z-0 select-none pointer-events-none">
         <img

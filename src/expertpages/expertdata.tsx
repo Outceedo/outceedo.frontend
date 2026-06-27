@@ -238,6 +238,8 @@ const ExpertProfile = () => {
         responseTime: "",
         travelLimit: "",
         certificationLevel: "",
+        specialization: "",
+        nationality: "",
         reviews: 0,
         followers: followersCount, // Use dynamic followers count
         assessments: 0,
@@ -287,6 +289,8 @@ const ExpertProfile = () => {
       responseTime: profile.responseTime || "N/A",
       travelLimit: profile.travelLimit ? `${profile.travelLimit} kms` : "N/A",
       certificationLevel: profile.certificationLevel || "N/A",
+      specialization: profile.specialization || "",
+      nationality: profile.nationality || "",
       reviews: profile.reviews || 0,
       followers: followersCount, // Use dynamic followers count
       assessments: profile.assessments || "0",
@@ -605,6 +609,22 @@ const ExpertProfile = () => {
                 </p>
                 <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {expertData.travelLimit.replace("kms", " ")}kms
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Specialization
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {expertData.specialization || "Not specified"}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Nationality
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {expertData.nationality || "Not specified"}
                 </p>
               </div>
             </div>

@@ -480,6 +480,8 @@ const Expertview = () => {
         responseTime: viewedProfile.responseTime || "40 mins",
         travelLimit: viewedProfile.travelLimit || "30 kms",
         certificationLevel: viewedProfile.certificationLevel || "3rd highest",
+        specialization: viewedProfile.specialization || "Not specified",
+        nationality: viewedProfile.nationality || "Not specified",
         followers: followersCount,
         assessments: 0,
         profileImage: viewedProfile.photo || null,
@@ -507,6 +509,8 @@ const Expertview = () => {
         responseTime: "N/A",
         travelLimit: "N/A",
         certificationLevel: "3rd highest",
+        specialization: "Not specified",
+        nationality: "Not specified",
         followers: followersCount,
         assessments: 100,
         profileImage: "N/A",
@@ -959,6 +963,22 @@ const Expertview = () => {
               </p>
               <p className="font-semibold dark:text-white text-sm sm:text-base">
                 {expertData.travelLimit || "N/A"} kms
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                Specialization
+              </p>
+              <p className="font-semibold dark:text-white text-sm sm:text-base">
+                {expertData.specialization || "Not specified"}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                Nationality
+              </p>
+              <p className="font-semibold dark:text-white text-sm sm:text-base">
+                {expertData.nationality || "Not specified"}
               </p>
             </div>
           </div>

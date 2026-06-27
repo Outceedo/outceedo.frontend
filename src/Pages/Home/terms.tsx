@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { FileText, ChevronRight } from "lucide-react";
+import Seo from "@/components/seo/Seo";
 import Navbar from "./Navbar";
 import FooterSection from "./FooterSection";
 
@@ -29,6 +30,11 @@ const Section = ({ title, children }: SectionProps) => (
 function Terms() {
   return (
     <div className="bg-white">
+      <Seo
+        title="Terms of Service"
+        description="Read the Outceedo Terms of Service governing your use of the platform."
+        canonicalPath="/terms"
+      />
       <Navbar />
 
       {/* Hero Section */}

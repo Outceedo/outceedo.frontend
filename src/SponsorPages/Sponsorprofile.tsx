@@ -43,6 +43,7 @@ const SponsorProfile = () => {
     sportInterest: "Not specified", // sports interest
     country: "Not specified",
     city: "Not specified",
+    nationality: "Not specified",
     bio: "",
     companyLink: "www.company_site.com",
     socialLinks: {
@@ -228,10 +229,10 @@ const SponsorProfile = () => {
               <h1 className="text-2xl font-bold dark:text-white">
                 {data?.company || data?.firstName + " " + data?.lastName}
               </h1>
-              <ViewCvButton
+              {/* <ViewCvButton
                 role="sponsor"
                 username={localStorage.getItem("username")}
-              />
+              /> */}
             </div>
 
             <div className="mt-10 grid grid-cols-1 sm:grid-cols-4 gap-2 md:gap-24 text-sm text-gray-600">
@@ -257,6 +258,14 @@ const SponsorProfile = () => {
                 </label>
                 <span className="font-semibold dark:text-white">
                   {data?.city || fallbackData.city}
+                </span>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-500 dark:text-white mb-1">
+                  Nationality
+                </label>
+                <span className="font-semibold dark:text-white">
+                  {data?.nationality || fallbackData.nationality}
                 </span>
               </div>
               <div>

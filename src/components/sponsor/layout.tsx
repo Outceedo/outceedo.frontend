@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import Seo from "@/components/seo/Seo";
 
 import { useState } from "react";
 import SponsorHeader from "./Header";
@@ -9,6 +10,7 @@ function SponsorLayout() {
 
   return (
     <div className="flex min-h-screen w-full dark:bg-gray-900">
+      <Seo title="Sponsor" noindex />
       <SponsorSideBar open={openSidebar} setOpen={setOpenSidebar} />
       <div className="flex flex-1 flex-col min-w-0">
         <SponsorHeader setOpen={setOpenSidebar} />

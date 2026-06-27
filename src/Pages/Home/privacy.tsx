@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { Shield, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import Seo from "@/components/seo/Seo";
 import Navbar from "./Navbar";
 import FooterSection from "./FooterSection";
 
@@ -30,6 +31,11 @@ const Section = ({ title, children }: SectionProps) => (
 function Privacy() {
   return (
     <div className="bg-white">
+      <Seo
+        title="Privacy Policy"
+        description="Learn how Outceedo collects, uses, and protects your personal data."
+        canonicalPath="/privacy"
+      />
       <Navbar />
 
       {/* Hero Section */}

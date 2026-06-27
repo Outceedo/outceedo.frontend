@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "motion/react";
+import Seo from "@/components/seo/Seo";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { resetPassword, clearError } from "../../store/auth-slice";
 import { ArrowLeft, KeyRound, Eye, EyeOff, CheckCircle } from "lucide-react";
@@ -75,6 +76,7 @@ const ResetPassword: React.FC = () => {
   return (
     // 👇 FIX: Use h-screen + overflow-y-auto to allow scrolling on mobile
     <div className="relative w-full h-screen overflow-y-auto bg-white scroll-smooth">
+      <Seo title="Reset Password" noindex />
       {/* Fixed Background Layer */}
       <div className="fixed inset-0 z-0 select-none pointer-events-none">
         <img

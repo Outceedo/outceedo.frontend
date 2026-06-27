@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import Seo from "@/components/seo/Seo";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { verifyEmail, resendOtp } from "../../store/auth-slice";
 import { RootState } from "../../store/store";
@@ -105,6 +106,7 @@ const EmailVerification: React.FC = () => {
   return (
     // 👇 FIX: Use h-screen + overflow-y-auto to allow scrolling on mobile
     <div className="relative w-full h-screen overflow-y-auto bg-white scroll-smooth">
+      <Seo title="Verify Email" noindex />
       {/* Fixed Background Layer */}
       <div className="fixed inset-0 z-0 select-none pointer-events-none">
         <img

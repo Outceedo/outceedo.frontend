@@ -198,6 +198,8 @@ const ScoutProfile = () => {
         responseTime: "",
         travelLimit: "",
         certificationLevel: "",
+        specialization: "",
+        nationality: "",
         reviews: 0,
         followers: followersCount,
         assessments: 0,
@@ -250,6 +252,8 @@ const ScoutProfile = () => {
       responseTime: profile.responseTime || "N/A",
       travelLimit: profile.travelLimit ? `${profile.travelLimit} kms` : "N/A",
       certificationLevel: profile.certificationLevel || "N/A",
+      specialization: profile.specialization || "",
+      nationality: profile.nationality || "",
       reviews: profile.reviews || 0,
       followers: followersCount,
       assessments: profile.assessments || "0",
@@ -531,6 +535,22 @@ const ScoutProfile = () => {
                 </p>
                 <p className="font-semibold dark:text-white text-sm sm:text-base">
                   {scoutData.travelLimit.replace("kms", " ")}kms
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Specialization
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {scoutData.specialization || "Not specified"}
+                </p>
+              </div>
+              <div>
+                <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                  Nationality
+                </p>
+                <p className="font-semibold dark:text-white text-sm sm:text-base">
+                  {scoutData.nationality || "Not specified"}
                 </p>
               </div>
             </div>

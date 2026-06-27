@@ -48,6 +48,25 @@ interface Stat {
   color: string;
 }
 
+const prettyFoot = (foot?: string) => {
+  if (!foot) return "";
+  return foot
+    .replace(/_/g, " ")
+    .replace(/\bfoot\b/i, "Foot")
+    .replace(/^\w/, (c) => c.toUpperCase());
+};
+
+const prettyLevel = (level?: string) => {
+  if (!level) return "";
+  const map: Record<string, string> = {
+    grassroots: "Grassroots",
+    academy: "Academy",
+    semi_pro: "Semi-Pro",
+    professional: "Professional",
+  };
+  return map[level] || level;
+};
+
 const calculateOVR = (stats: Stat[]) => {
   if (!stats.length) return 0;
   const total = stats.reduce((sum, stat) => sum + stat.averageScore, 0);
@@ -255,6 +274,10 @@ const Profile: React.FC = () => {
         location: "",
         club: "",
         languages: [],
+        position: "",
+        foot: "",
+        playerLevel: "",
+        nationality: "",
         profileImage: "",
         stats: playerStats,
         aboutMe: "",
@@ -299,6 +322,10 @@ const Profile: React.FC = () => {
         Array.isArray(profile.language) && profile.language.length > 0
           ? profile.language
           : [],
+      position: profile.position || "",
+      foot: profile.foot || "",
+      playerLevel: profile.playerLevel || "",
+      nationality: profile.nationality || "",
       profileImage: profileImage,
       stats: playerStats,
       aboutMe: profile.bio || "",
@@ -637,6 +664,26 @@ const Profile: React.FC = () => {
                       {playerData.languages && playerData.languages.length > 0
                         ? playerData.languages.join(", ")
                         : "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Position:</strong>{" "}
+                      {playerData.position || "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Foot:</strong>{" "}
+                      {playerData.foot
+                        ? prettyFoot(playerData.foot)
+                        : "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Player Level:</strong>{" "}
+                      {playerData.playerLevel
+                        ? prettyLevel(playerData.playerLevel)
+                        : "Not specified"}
+                    </span>
+                    <span>
+                      <strong className="font-bold">Nationality:</strong>{" "}
+                      {playerData.nationality || "Not specified"}
                     </span>
                   </div>
                 </div>

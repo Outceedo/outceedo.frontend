@@ -29,6 +29,7 @@ interface FormData {
   companyLink: string;
   city: string;
   country: string;
+  nationality: string;
   address: string;
   countryCode: string;
   phone: string;
@@ -97,6 +98,12 @@ export default function SponsorDetailsForm() {
     useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
 
+  const [nationalities, setNationalities] = useState<string[]>([]);
+  const [nationalitySearchTerm, setNationalitySearchTerm] =
+    useState<string>("");
+  const [showNationalityDropdown, setShowNationalityDropdown] =
+    useState<boolean>(false);
+
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
   const dispatch = useAppDispatch();
   const profileState = useAppSelector((state) => state.profile);
@@ -113,6 +120,7 @@ export default function SponsorDetailsForm() {
     companyLink: "",
     city: "",
     country: "",
+    nationality: "",
     address: "",
     countryCode: "",
     phone: "",
@@ -270,6 +278,53 @@ export default function SponsorDetailsForm() {
     setShowCityDropdown(false);
   };
 
+  const handleNationalitySelect = (nationality: string) => {
+    setForm((prev) => ({ ...prev, nationality }));
+    setNationalitySearchTerm(nationality);
+    setShowNationalityDropdown(false);
+  };
+
+  useEffect(() => {
+    const fetchNationalities = async (): Promise<void> => {
+      try {
+        const response = await fetch(
+          "https://restcountries.com/v3.1/all?fields=demonyms"
+        );
+        if (!response.ok) throw new Error("Failed to fetch nationalities");
+
+        const data = await response.json();
+        const list: string[] = data
+          .map((country: any) => country?.demonyms?.eng?.m)
+          .filter((n: any): n is string => Boolean(n));
+        const unique = Array.from(new Set(list)).sort((a, b) =>
+          a.localeCompare(b)
+        );
+        setNationalities(unique);
+      } catch (error) {
+        console.error("Error fetching nationalities:", error);
+
+        const fallbackNationalities = [
+          "American",
+          "British",
+          "Canadian",
+          "Australian",
+          "German",
+          "French",
+          "Indian",
+          "Japanese",
+          "Chinese",
+          "Brazilian",
+          "Spanish",
+          "Italian",
+          "Portuguese",
+          "Argentine",
+        ];
+        setNationalities(fallbackNationalities);
+      }
+    };
+    fetchNationalities();
+  }, []);
+
   useEffect(() => {
     const fetchUserData = async () => {
       try {
@@ -341,6 +396,10 @@ export default function SponsorDetailsForm() {
           setCitySearchTerm(profile.city);
         }
 
+        if (profile.nationality) {
+          setNationalitySearchTerm(profile.nationality);
+        }
+
         setForm({
           sponsorType: profile.sponsorType,
           sportInterests: profile.profession
@@ -355,6 +414,7 @@ export default function SponsorDetailsForm() {
           companyLink: profile.companyLink || "",
           city: profile.city || "",
           country: profile.country || "",
+          nationality: profile.nationality || "",
           address: profile.address || "",
           countryCode: profile.countryCode || "",
           phone: profile.phone || "",
@@ -529,6 +589,7 @@ export default function SponsorDetailsForm() {
         companyLink: form.companyLink,
         city: form.city,
         country: form.country,
+        nationality: form.nationality || null,
         address: form.address,
         budgetRange: form.budgetMin && form.budgetMax ? `${form.budgetMin}-${form.budgetMax}` : "",
         currency: form.currency,
@@ -937,6 +998,45 @@ export default function SponsorDetailsForm() {
                         className="px-4 py-2 cursor-pointer hover:bg-gray-200"
                       >
                         {city.name}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+            <div className="relative">
+              <label className="text-sm font-medium text-gray-900 dark:text-white">
+                Nationality
+              </label>
+              <Input
+                name="nationality"
+                value={nationalitySearchTerm}
+                onChange={(e) => {
+                  setNationalitySearchTerm(e.target.value);
+                  setForm((prev) => ({
+                    ...prev,
+                    nationality: e.target.value,
+                  }));
+                  setShowNationalityDropdown(true);
+                }}
+                onFocus={() => setShowNationalityDropdown(true)}
+                placeholder="Search nationality"
+              />
+              {showNationalityDropdown && nationalitySearchTerm && (
+                <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+                  {nationalities
+                    .filter((n) =>
+                      n
+                        .toLowerCase()
+                        .includes(nationalitySearchTerm.toLowerCase())
+                    )
+                    .slice(0, 50)
+                    .map((n, index) => (
+                      <li
+                        key={index}
+                        onClick={() => handleNationalitySelect(n)}
+                        className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+                      >
+                        {n}
                       </li>
                     ))}
                 </ul>

@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import Seo from "@/components/seo/Seo";
 import ScoutSideBar from "./sidebar";
 import ScoutHeader from "./Header";
 import { useState } from "react";
@@ -8,6 +9,7 @@ function ScoutLayout() {
 
   return (
     <div className="flex min-h-screen w-full dark:bg-gray-900">
+      <Seo title="Scout" noindex />
       <ScoutSideBar open={openSidebar} setOpen={setOpenSidebar} />
       <div className="flex flex-1 flex-col min-w-0">
         <ScoutHeader setOpen={setOpenSidebar} />

@@ -13,6 +13,7 @@ import {
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
 import axios from "axios";
+import Seo from "@/components/seo/Seo";
 import Navbar from "./Navbar";
 import FooterSection from "./FooterSection";
 
@@ -174,6 +175,11 @@ export default function PricingPlans() {
 
   return (
     <>
+      <Seo
+        title="Pricing & Plans"
+        description="Compare Outceedo's free and premium plans. Unlock expert assessments, online training, on-ground sessions, and full platform features."
+        canonicalPath="/plans"
+      />
       {showGoBack && <Navbar />}
 
       <section

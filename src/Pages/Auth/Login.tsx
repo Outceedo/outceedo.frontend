@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "motion/react";
+import Seo from "@/components/seo/Seo";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { loginUser, clearError } from "../../store/auth-slice";
 import User from "../Home/user";
@@ -102,6 +103,7 @@ const Login: React.FC = () => {
   return (
     // 👇 FIX: Use h-screen + overflow-y-auto to allow scrolling on mobile
     <div className="relative w-full h-screen overflow-y-auto bg-white scroll-smooth">
+      <Seo title="Log In" noindex />
       {/* Background Image Layer - FIXED position so it stays behind while scrolling */}
       <div className="fixed inset-0 z-0 select-none pointer-events-none">
         <img

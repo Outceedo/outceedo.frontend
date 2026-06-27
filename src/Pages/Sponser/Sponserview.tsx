@@ -58,6 +58,7 @@ const Sponsorview: React.FC = () => {
         sportInterest: viewedProfile.profession || "Not specified",
         country: viewedProfile.country || "Not specified",
         city: viewedProfile.city || "Not specified",
+        nationality: viewedProfile.nationality || "Not specified",
         sponsorType: viewedProfile.sponsorType || "Not specified",
         companySite: viewedProfile.companyLink || "Not specified",
         image: viewedProfile.photo || Sponsor2,
@@ -84,6 +85,7 @@ const Sponsorview: React.FC = () => {
         country: "England",
         city: "London",
         sponsorType: "CompanyName",
+        nationality: "Not specified",
         companySite: "www.company_site.com",
         image: Sponsor2,
         socialLinks: {
@@ -188,14 +190,14 @@ const Sponsorview: React.FC = () => {
             <h1 className="text-2xl font-bold dark:text-white">
               {sponsorData.name}
             </h1>
-            <ViewCvButton
+            {/* <ViewCvButton
               role="sponsor"
               username={
                 viewedProfile?.username ||
                 localStorage.getItem("viewsponsorusername")
               }
               label="View CV"
-            />
+            /> */}
           </div>
           {/* Responsive grid: sm-2, lg-4 */}
           <div className="mt-6 md:mt-10 grid grid-cols-2  lg:grid-cols-4 gap-6 lg:gap-8 text-sm text-gray-600">
@@ -225,6 +227,14 @@ const Sponsorview: React.FC = () => {
             </div>
             <div>
               <label className="block text-sm text-gray-500 dark:text-white mb-1">
+                Nationality
+              </label>
+              <span className="font-semibold dark:text-white">
+                {sponsorData.nationality}
+              </span>
+            </div>
+            <div>
+              <label className="block text-sm text-gray-500 dark:text-white mb-1">
                 Sponsor Type
               </label>
               <span className="font-semibold dark:text-white capitalize">
@@ -237,21 +247,38 @@ const Sponsorview: React.FC = () => {
             {icons.map(({ icon, link, bg }, index) => {
               const hasLink = link && link.trim() !== "";
               const href = hasLink
-                ? link.startsWith("http") ? link : `https://${link.replace(/^\/+/, "")}`
+                ? link.startsWith("http")
+                  ? link
+                  : `https://${link.replace(/^\/+/, "")}`
                 : undefined;
               if (hasLink) {
                 return (
-                  <a key={index} href={href} target="_blank" rel="noopener noreferrer">
-                    <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
-                      <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                  <a
+                    key={index}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <div
+                      className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
+                    >
+                      <FontAwesomeIcon
+                        icon={icon}
+                        className="w-6 h-6 text-white"
+                      />
                     </div>
                   </a>
                 );
               }
               return (
                 <span key={index} className="opacity-25 cursor-default">
-                  <div className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}>
-                    <FontAwesomeIcon icon={icon} className="w-6 h-6 text-white" />
+                  <div
+                    className={`w-10 h-10 flex items-center justify-center rounded-sm ${bg}`}
+                  >
+                    <FontAwesomeIcon
+                      icon={icon}
+                      className="w-6 h-6 text-white"
+                    />
                   </div>
                 </span>
               );

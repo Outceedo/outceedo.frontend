@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
 import { Target, Eye, Users, Award, TrendingUp, Shield } from "lucide-react";
+import Seo from "@/components/seo/Seo";
 import Navbar from "./Navbar";
 import FooterSection from "./FooterSection";
 
@@ -33,6 +34,11 @@ function Aboutus() {
 
   return (
     <div className="bg-white">
+      <Seo
+        title="About Outceedo"
+        description="Learn how Outceedo connects players with certified experts for real-time game analysis, actionable reports, and pathways to team selection and sponsorships."
+        canonicalPath="/about"
+      />
       <Navbar />
 
       {/* Hero Section */}

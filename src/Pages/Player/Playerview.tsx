@@ -50,6 +50,25 @@ import {
   faYoutube,
 } from "@fortawesome/free-brands-svg-icons";
 
+const prettyFoot = (foot?: string) => {
+  if (!foot) return "";
+  return foot
+    .replace(/_/g, " ")
+    .replace(/\bfoot\b/i, "Foot")
+    .replace(/^\w/, (c) => c.toUpperCase());
+};
+
+const prettyLevel = (level?: string) => {
+  if (!level) return "";
+  const map: Record<string, string> = {
+    grassroots: "Grassroots",
+    academy: "Academy",
+    semi_pro: "Semi-Pro",
+    professional: "Professional",
+  };
+  return map[level] || level;
+};
+
 function formatDateDMY(isoDate: string) {
   if (!isoDate) return "";
   const dateObj = new Date(isoDate);
@@ -602,11 +621,11 @@ const Playerview: React.FC = () => {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center mt-1 sm:mt-3">
+          <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 items-center lg:items-start mt-1 sm:mt-3">
             <img
               src={profileData.photo || profile}
               alt={`${displayName}'s profile`}
-              className="rounded-lg w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 object-cover shadow-md"
+              className="rounded-lg w-32 h-32 sm:w-48 sm:h-48 md:w-60 md:h-60 object-cover shadow-md flex-shrink-0"
             />
             <div className="flex flex-col min-w-0 mt-1 sm:mt-5 w-full gap-2 sm:gap-4">
               <div>
@@ -643,6 +662,27 @@ const Playerview: React.FC = () => {
                       ? profileData.language.join(", ")
                       : ""}
                   </span>
+                  {profileData.position && (
+                    <span>
+                      <strong>Position:</strong> {profileData.position}
+                    </span>
+                  )}
+                  {profileData.foot && (
+                    <span>
+                      <strong>Foot:</strong> {prettyFoot(profileData.foot)}
+                    </span>
+                  )}
+                  {profileData.playerLevel && (
+                    <span>
+                      <strong>Player Level:</strong>{" "}
+                      {prettyLevel(profileData.playerLevel)}
+                    </span>
+                  )}
+                  {profileData.nationality && (
+                    <span>
+                      <strong>Nationality:</strong> {profileData.nationality}
+                    </span>
+                  )}
                 </div>
               </div>
               {/* Social Links */}

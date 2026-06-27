@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "motion/react";
+import Seo from "@/components/seo/Seo";
 import * as countryCodes from "country-codes-list";
 import { useAppDispatch, useAppSelector } from "../../store/hooks";
 import { registerUser } from "../../store/auth-slice";
@@ -262,6 +263,7 @@ const Signup: React.FC = () => {
   return (
     // 👇 FIX 1: Allow vertical scrolling on the main container
     <div className="relative w-full h-screen overflow-y-auto bg-white scroll-smooth">
+      <Seo title="Sign Up" noindex />
       {/* Background Image Layer - Fixed so it doesn't scroll with content */}
       <div className="fixed inset-0 z-0 select-none pointer-events-none">
         <img

@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import Seo from "@/components/seo/Seo";
 import PlayerSideBar from "./sidebar";
 import PlayerHeader from "./Header";
 import { useState } from "react";
@@ -8,6 +9,7 @@ function PlayerLayout() {
 
   return (
     <div className="flex min-h-screen w-full dark:bg-gray-900">
+      <Seo title="Player" noindex />
       {/* Sidebar component - appears on left for desktop, slides in for mobile */}
       <PlayerSideBar open={openSidebar} setOpen={setOpenSidebar} />
       

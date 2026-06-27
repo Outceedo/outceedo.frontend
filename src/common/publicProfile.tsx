@@ -27,6 +27,7 @@ import {
   FileText,
   Download,
   Share2,
+  X,
   Users,
   Heart,
   Sparkles,
@@ -34,6 +35,7 @@ import {
   Twitter,
   Facebook,
   Instagram,
+  Youtube,
 } from "lucide-react";
 import Navbar from "../Pages/Home/Navbar";
 import axios from "axios";
@@ -49,6 +51,17 @@ import {
 import { saveAs } from "file-saver";
 import outceedoLogo from "@/assets/images/outceedologo.png";
 import logoSmall from "@/assets/images/logosmall.png";
+import Seo from "@/components/seo/Seo";
+
+const SITE_BASE = (
+  import.meta.env.VITE_HOME || "https://outceedo.com"
+).replace(/\/$/, "");
+
+/** Trim text to a max character length for use in a meta description. */
+const trimChars = (text: string, max = 155) => {
+  const clean = text.replace(/\s+/g, " ").trim();
+  return clean.length <= max ? clean : clean.slice(0, max - 1).trimEnd() + "…";
+};
 
 /* ----------------------------- Theme palette ----------------------------- */
 // primary  -> white      #ffffff
@@ -81,6 +94,18 @@ interface DocumentItem {
   description?: string;
 }
 
+interface Review {
+  id: string;
+  rating: number;
+  comment?: string;
+  createdAt?: string;
+  reviewer?: {
+    id?: string;
+    username?: string;
+    photo?: string | null;
+  } | null;
+}
+
 interface Profile {
   id: string;
   role?: string;
@@ -100,6 +125,10 @@ interface Profile {
   profession?: string;
   position?: string;
   foot?: string;
+  playerLevel?: string;
+  nationality?: string;
+  specialization?: string;
+  experience?: string;
   certificationLevel?: string;
   company?: string;
   companyLink?: string;
@@ -119,6 +148,7 @@ interface Profile {
     facebook?: string | null;
     linkedin?: string | null;
     instagram?: string | null;
+    youtube?: string | null;
   };
   // sponsor
   sponsorType?: string | null;
@@ -130,6 +160,8 @@ interface Profile {
   teamName?: string | null;
   teamType?: string | null;
   teamCategory?: string | null;
+  // reviews
+  reviewsReceived?: Review[];
 }
 
 const SERVICE_NAMES: Record<string, { name: string; icon: React.ReactNode }> = {
@@ -144,7 +176,18 @@ const getServiceInfo = (serviceId: string) =>
     icon: <Dumbbell size={18} />,
   };
 
-const BIO_WORD_LIMIT = 100;
+const BIO_WORD_LIMIT = 50;
+
+/**
+ * Ensure an external link is absolute. Stored social links often omit the
+ * protocol (e.g. "instagram.com/foo"), which the browser would otherwise
+ * resolve relative to the current origin.
+ */
+const normalizeUrl = (url?: string | null): string | undefined => {
+  const trimmed = (url || "").trim();
+  if (!trimmed) return undefined;
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+};
 
 /** Trim text to a maximum number of words, appending an ellipsis when cut. */
 const trimWords = (text: string, limit: number) => {
@@ -159,6 +202,17 @@ const prettyFoot = (foot?: string) => {
     .replace(/_/g, " ")
     .replace(/\bfoot\b/i, "Foot")
     .replace(/^\w/, (c) => c.toUpperCase());
+};
+
+const prettyLevel = (level?: string) => {
+  if (!level) return "";
+  const map: Record<string, string> = {
+    grassroots: "Grassroots",
+    academy: "Academy",
+    semi_pro: "Semi-Pro",
+    professional: "Professional",
+  };
+  return map[level] || level;
 };
 
 /* ----------------- Convert remote image to base64 (CORS safe) ------------- */
@@ -257,10 +311,11 @@ const DetailRow: React.FC<{
   icon: React.ReactNode;
   label: string;
   value?: React.ReactNode;
-}> = ({ icon, label, value }) => {
+  multiline?: boolean;
+}> = ({ icon, label, value, multiline }) => {
   if (value === undefined || value === null || value === "") return null;
   return (
-    <div className="flex items-center gap-3 py-2.5">
+    <div className="flex items-center gap-3 py-4.5">
       <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-red-50 text-red-500">
         {icon}
       </div>
@@ -268,11 +323,54 @@ const DetailRow: React.FC<{
         <p className="text-[10px] font-black uppercase tracking-widest text-gray-400">
           {label}
         </p>
-        <p className="truncate text-sm font-semibold text-gray-900">{value}</p>
+        <p
+          className={`${
+            multiline ? "break-words" : "truncate"
+          } text-sm font-semibold text-gray-900`}
+        >
+          {value}
+        </p>
       </div>
     </div>
   );
 };
+
+/** Compact credential card; clicking it opens the doc in the preview modal. */
+const CredentialCard: React.FC<{
+  doc: DocumentItem;
+  fallbackIcon: React.ReactNode;
+  onView: (doc: DocumentItem) => void;
+}> = ({ doc, fallbackIcon, onView }) => (
+  <button
+    type="button"
+    onClick={() => onView(doc)}
+    className="flex w-full items-center gap-3 rounded-xl border border-gray-100 p-3 text-left transition-shadow hover:shadow-md"
+    style={{ backgroundColor: IVORY }}
+  >
+    {doc.imageUrl ? (
+      <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg ring-1 ring-gray-200">
+        <img
+          src={doc.imageUrl}
+          alt={doc.title || "credential"}
+          crossOrigin="anonymous"
+          className="h-full w-full object-cover"
+        />
+      </div>
+    ) : (
+      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100 text-red-500">
+        {fallbackIcon}
+      </div>
+    )}
+    <div className="min-w-0">
+      <p className="truncate text-sm font-bold text-gray-900">{doc.title}</p>
+      {(doc.issuedBy || doc.issuedDate) && (
+        <p className="truncate text-xs text-gray-500">
+          {[doc.issuedBy, doc.issuedDate].filter(Boolean).join(" · ")}
+        </p>
+      )}
+    </div>
+  </button>
+);
 
 /* ================================ Component =============================== */
 export default function PublicProfile() {
@@ -286,6 +384,8 @@ export default function PublicProfile() {
   const [downloading, setDownloading] = useState(false);
   const [showFullBio, setShowFullBio] = useState(false);
   const [capturing, setCapturing] = useState(false);
+  const [previewDoc, setPreviewDoc] = useState<DocumentItem | null>(null);
+  const [imgLoading, setImgLoading] = useState(true);
   const cvRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -319,6 +419,7 @@ export default function PublicProfile() {
   if (loading) {
     return (
       <div className="min-h-screen bg-white">
+        <Seo title="Loading profile" noindex />
         <Navbar />
         <div className="flex min-h-screen items-center justify-center">
           <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-t-2 border-red-500" />
@@ -330,6 +431,7 @@ export default function PublicProfile() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-white">
+        <Seo title="Profile Not Found" noindex />
         <Navbar />
         <div className="flex min-h-screen flex-col items-center justify-center">
           <h1 className="mb-4 text-3xl font-black text-gray-900">
@@ -356,7 +458,6 @@ export default function PublicProfile() {
   const isTeam = role === "team";
 
   const showExpertScout = isExpert || isScout;
-  const showFoot = isPlayer || isExpert;
 
   const displayName = isTeam
     ? profile.teamName ||
@@ -376,11 +477,11 @@ export default function PublicProfile() {
   })();
 
   const roleLabel2 = (() => {
-    if (isTeam) return profile.teamType ? `Team` : "Team";
-    if (isSponsor) return profile.sponsorType ? ` Sponsor` : "Sponsor";
+    if (isTeam) return  "Team";
+    if (isSponsor) return "Sponsor";
     if (isScout) return "Scout";
-    if (isExpert) return profile.profession || "Expert";
-    if (isPlayer) return profile.position || "Player";
+    if (isExpert) return "Expert";
+    if (isPlayer) return "Player";
     return profile.profession || "Member";
   })();
 
@@ -388,19 +489,33 @@ export default function PublicProfile() {
   const locationStr = [profile.city, profile.country]
     .filter(Boolean)
     .join(", ");
+  const locationNode = locationStr ? (
+    <>
+      {profile.city && <span className="block">{profile.city},</span>}
+      {profile.country && <span className="block">{profile.country}</span>}
+    </>
+  ) : undefined;
 
   const socials = profile.socialLinks || {};
   const socialList = [
-    { key: "linkedin", url: socials.linkedin, icon: <Linkedin size={16} /> },
-    { key: "twitter", url: socials.twitter, icon: <Twitter size={16} /> },
-    { key: "facebook", url: socials.facebook, icon: <Facebook size={16} /> },
-    { key: "instagram", url: socials.instagram, icon: <Instagram size={16} /> },
+    { key: "linkedin", url: normalizeUrl(socials.linkedin), icon: <Linkedin size={16} /> },
+    { key: "twitter", url: normalizeUrl(socials.twitter), icon: <Twitter size={16} /> },
+    { key: "facebook", url: normalizeUrl(socials.facebook), icon: <Facebook size={16} /> },
+    { key: "instagram", url: normalizeUrl(socials.instagram), icon: <Instagram size={16} /> },
+    { key: "youtube", url: normalizeUrl(socials.youtube), icon: <Youtube size={16} /> },
   ].filter((s) => s.url);
 
   const certificates = (profile.documents || []).filter(
     (d) => d.type === "certificate",
   );
   const awards = (profile.documents || []).filter((d) => d.type === "award");
+
+  const reviews = profile.reviewsReceived || [];
+  const reviewCount = reviews.length;
+  const avgRating =
+    reviewCount > 0
+      ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount
+      : 0;
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -423,7 +538,7 @@ export default function PublicProfile() {
   const handleDownloadPdf = async () => {
     if (!cvRef.current) return;
     setDownloading(true);
-    // Force the bio into its trimmed (300-word) state for the PDF and hide the
+    // Force the bio into its trimmed (100-word) state for the PDF and hide the
     // read-more toggle, regardless of how it's expanded on screen.
     setCapturing(true);
     await new Promise((r) =>
@@ -452,65 +567,97 @@ export default function PublicProfile() {
     }
   };
 
+  /* ------------------- Role-aware header chips (below name) ------------------- */
+  const headerChips: { icon: React.ReactNode; value?: string }[] = (() => {
+    if (isPlayer)
+      return [
+        { icon: <Briefcase size={13} className="text-red-500" />, value: profile.sport },
+        { icon: <Target size={13} className="text-red-500" />, value: profile.position },
+        { icon: <Footprints size={13} className="text-red-500" />, value: prettyFoot(profile.foot) },
+        { icon: <CalendarDays size={13} className="text-red-500" />, value: profile.age ? `${profile.age} yrs` : undefined },
+      ];
+    if (isExpert)
+      return [
+        { icon: <Briefcase size={13} className="text-red-500" />, value: profile.sport },
+        { icon: <Award size={13} className="text-red-500" />, value: profile.certificationLevel?.trim() },
+        { icon: <Target size={13} className="text-red-500" />, value: profile.position },
+        { icon: <Sparkles size={13} className="text-red-500" />, value: profile.experience },
+      ];
+    if (isScout)
+      return [
+        { icon: <Briefcase size={13} className="text-red-500" />, value: profile.sport },
+        { icon: <Award size={13} className="text-red-500" />, value: profile.certificationLevel?.trim() },
+        { icon: <Sparkles size={13} className="text-red-500" />, value: profile.experience },
+      ];
+    return [
+      { icon: <Users size={13} className="text-red-500" />, value: profile.club },
+      { icon: <MapPin size={13} className="text-red-500" />, value: locationStr },
+      { icon: <Briefcase size={13} className="text-red-500" />, value: profile.sport },
+    ];
+  })().filter((c) => c.value);
+
   /* ------------------- Role-aware detail rows (sidebar) ------------------- */
   const detailRows = (
     <>
-      <DetailRow
-        icon={<MapPin size={16} />}
-        label="Location"
-        value={locationStr}
-      />
-      <DetailRow
-        icon={<Briefcase size={16} />}
-        label="Sport"
-        value={profile.sport}
-      />
-      <DetailRow icon={<Users size={16} />} label="Club" value={profile.club} />
-      {!isTeam && (
+      {/* Player only */}
+      {isPlayer && (
         <>
+          <DetailRow
+            icon={<Award size={16} />}
+            label="Playing Level"
+            value={prettyLevel(profile.playerLevel)}
+          />
+          <DetailRow
+            icon={<Users size={16} />}
+            label="Club"
+            value={profile.club}
+          />
+          <DetailRow
+            icon={<MapPin size={16} />}
+            label="Location"
+            value={locationNode}
+            multiline
+          />
           <DetailRow
             icon={<UserIcon size={16} />}
             label="Gender"
             value={profile.gender}
           />
           <DetailRow
-            icon={<CalendarDays size={16} />}
-            label="Age"
-            value={profile.age ? `${profile.age} yrs` : undefined}
+            icon={<Weight size={16} />}
+            label="Weight"
+            value={profile.weight ? `${profile.weight} kg` : undefined}
           />
           <DetailRow
             icon={<Ruler size={16} />}
             label="Height"
             value={profile.height ? `${profile.height} cm` : undefined}
           />
-          <DetailRow
-            icon={<Weight size={16} />}
-            label="Weight"
-            value={profile.weight ? `${profile.weight} kg` : undefined}
-          />
         </>
-      )}
-      {isPlayer && (
-        <DetailRow
-          icon={<Target size={16} />}
-          label="Position"
-          value={profile.position}
-        />
-      )}
-      {showFoot && (
-        <DetailRow
-          icon={<Footprints size={16} />}
-          label="Preferred Foot"
-          value={prettyFoot(profile.foot)}
-        />
       )}
       {/* Expert + Scout only */}
       {showExpertScout && (
         <>
           <DetailRow
-            icon={<Award size={16} />}
-            label="Certification"
-            value={profile.certificationLevel?.trim()}
+            icon={<Users size={16} />}
+            label="Club"
+            value={profile.club}
+          />
+          <DetailRow
+            icon={<Sparkles size={16} />}
+            label="Specialisation"
+            value={profile.specialization}
+          />
+          <DetailRow
+            icon={<Globe size={16} />}
+            label="Nationality"
+            value={profile.nationality}
+          />
+          <DetailRow
+            icon={<MapPin size={16} />}
+            label="Location"
+            value={locationNode}
+            multiline
           />
           <DetailRow
             icon={<Clock size={16} />}
@@ -519,12 +666,26 @@ export default function PublicProfile() {
               profile.responseTime ? `${profile.responseTime} mins` : undefined
             }
           />
+        </>
+      )}
+      {/* Sponsor + Team: general rows */}
+      {(isSponsor || isTeam) && (
+        <>
           <DetailRow
             icon={<MapPin size={16} />}
-            label="Travel Limit"
-            value={
-              profile.travelLimit ? `${profile.travelLimit} km` : undefined
-            }
+            label="Location"
+            value={locationNode}
+            multiline
+          />
+          <DetailRow
+            icon={<Briefcase size={16} />}
+            label="Sport"
+            value={profile.sport}
+          />
+          <DetailRow
+            icon={<Users size={16} />}
+            label="Club"
+            value={profile.club}
           />
         </>
       )}
@@ -596,13 +757,56 @@ export default function PublicProfile() {
     </>
   );
 
+  /* ------------------------------ SEO meta ------------------------------ */
+  const profileUsername = profile.username || username || "";
+  const canonicalPath = role
+    ? `/${role}/${profileUsername}`
+    : `/${profileUsername}`;
+  const seoTitle = `${displayName} · ${roleLabel}`;
+  const seoDescription = profile.bio
+    ? trimChars(profile.bio)
+    : `${displayName} — ${roleLabel}${locationStr ? ` based in ${locationStr}` : ""} on Outceedo.`;
+  const sameAs = socialList.map((s) => s.url as string);
+  const profileJsonLd = {
+    "@context": "https://schema.org",
+    "@type": isTeam ? "SportsTeam" : "Person",
+    name: displayName,
+    url: `${SITE_BASE}${canonicalPath}`,
+    ...(profile.photo ? { image: profile.photo } : {}),
+    ...(profile.bio ? { description: trimChars(profile.bio, 300) } : {}),
+    ...(profile.sport ? { sport: profile.sport } : {}),
+    ...(!isTeam ? { jobTitle: roleLabel } : {}),
+    ...(locationStr
+      ? { homeLocation: { "@type": "Place", name: locationStr } }
+      : {}),
+    ...(sameAs.length ? { sameAs } : {}),
+    ...(reviewCount > 0
+      ? {
+          aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: Number(avgRating.toFixed(1)),
+            reviewCount,
+            bestRating: 5,
+          },
+        }
+      : {}),
+  };
+
   /* ============================== Render ============================== */
   return (
     <div className="min-h-screen" style={{ backgroundColor: IVORY }}>
-      <Navbar />
+      <Seo
+        title={seoTitle}
+        description={seoDescription}
+        canonicalPath={canonicalPath}
+        image={profile.photo || undefined}
+        type="profile"
+        jsonLd={profileJsonLd}
+      />
+      {/* <Navbar /> */}
 
       {/* Action bar */}
-      <div className="mx-auto max-w-6xl px-4 pt-24 sm:px-6">
+      <div className="mx-auto max-w-6xl px-4 pt-4 sm:px-6">
         <div className="flex items-center justify-between">
           <button
             onClick={() =>
@@ -650,19 +854,21 @@ export default function PublicProfile() {
             <div className="absolute left-0 top-0 h-full w-1.5 bg-red-500" />
 
             <div className="relative flex flex-col items-center gap-7 sm:flex-row sm:items-center">
-              <div className="h-32 w-32 flex-shrink-0 overflow-hidden rounded-2xl border-4 border-white bg-white shadow-xl sm:h-36 sm:w-36">
-                {photoSrc ? (
-                  <img
-                    src={photoSrc}
-                    alt={displayName}
-                    crossOrigin="anonymous"
-                    className="h-full w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                    <UserIcon size={56} className="text-gray-400" />
-                  </div>
-                )}
+              <div className="flex flex-shrink-0 flex-col items-center gap-3">
+                <div className="h-32 w-32 overflow-hidden rounded-2xl border-4 border-white bg-white shadow-xl sm:h-36 sm:w-36">
+                  {photoSrc ? (
+                    <img
+                      src={photoSrc}
+                      alt={displayName}
+                      crossOrigin="anonymous"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                      <UserIcon size={56} className="text-gray-400" />
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="flex-1 text-center sm:text-left">
@@ -676,24 +882,14 @@ export default function PublicProfile() {
                   {displayName}
                 </h1>
                 <div className="mt-4 flex flex-wrap justify-center gap-2 sm:justify-start">
-                  {profile.club && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700">
-                      <Users size={13} className="text-red-500" />{" "}
-                      {profile.club}
+                  {headerChips.map((chip, i) => (
+                    <span
+                      key={i}
+                      className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700"
+                    >
+                      {chip.icon} {chip.value}
                     </span>
-                  )}
-                  {locationStr && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700">
-                      <MapPin size={13} className="text-red-500" />{" "}
-                      {locationStr}
-                    </span>
-                  )}
-                  {profile.sport && (
-                    <span className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700">
-                      <Briefcase size={13} className="text-red-500" />{" "}
-                      {profile.sport}
-                    </span>
-                  )}
+                  ))}
                 </div>
               </div>
 
@@ -830,85 +1026,59 @@ export default function PublicProfile() {
                 profile.services.length > 0 && (
                   <section>
                     <SectionTitle kicker="Available">Services</SectionTitle>
-                    <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="flex flex-wrap gap-2">
                       {profile.services.map((service) => {
                         const info = getServiceInfo(service.serviceId);
                         return (
-                          <div
+                          <span
                             key={service.id}
-                            className="rounded-2xl border border-gray-100 p-5 transition-shadow hover:shadow-lg"
-                            style={{ backgroundColor: IVORY }}
+                            className="inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs font-bold text-gray-700"
                           >
-                            <div className="mb-3 flex items-center gap-3">
-                              <div
-                                className="flex h-10 w-10 items-center justify-center rounded-xl text-white"
-                                style={{ backgroundColor: NAVY }}
-                              >
-                                {info.icon}
-                              </div>
-                              <h3 className="text-sm font-black text-gray-900">
-                                {info.name}
-                              </h3>
-                            </div>
-                            {service.additionalDetails?.description && (
-                              <p className="mb-3 text-xs text-gray-500">
-                                {service.additionalDetails.description}
-                              </p>
-                            )}
-                            <div className="flex items-center justify-between border-t border-gray-200/70 pt-3">
-                              <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                                Price
-                              </span>
-                              <span className="text-xl font-black text-red-500">
-                                {profile.currency || "$"}
-                                {service.price}
-                              </span>
-                            </div>
-                          </div>
+                            <span className="text-red-500">{info.icon}</span>
+                            {info.name}
+                          </span>
                         );
                       })}
                     </div>
                   </section>
                 )}
 
-              {/* Certifications & Awards */}
-              {(certificates.length > 0 || awards.length > 0) && (
+              {/* Awards */}
+              {awards.length > 0 && (
                 <section>
-                  <SectionTitle kicker="Credentials">
-                    Certifications
-                  </SectionTitle>
-                  <div className="space-y-3">
-                    {[...certificates, ...awards].map((doc) => (
-                      <div
+                  <SectionTitle kicker="Achievements">Awards</SectionTitle>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {awards.map((doc) => (
+                      <CredentialCard
                         key={doc.id}
-                        className="flex items-start gap-3 rounded-2xl border border-gray-100 p-4"
-                        style={{ backgroundColor: IVORY }}
-                      >
-                        <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-red-500 text-white">
-                          {doc.type === "award" ? (
-                            <Award size={18} />
-                          ) : (
-                            <FileText size={18} />
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-bold text-gray-900">{doc.title}</p>
-                          <p className="text-xs text-gray-500">
-                            {[doc.issuedBy, doc.issuedDate]
-                              .filter(Boolean)
-                              .join(" · ")}
-                          </p>
-                          {doc.description && (
-                            <p className="mt-1 text-xs text-gray-500">
-                              {doc.description}
-                            </p>
-                          )}
-                        </div>
-                      </div>
+                        doc={doc}
+                        fallbackIcon={<Award size={28} />}
+                        onView={(d) => { setImgLoading(true); setPreviewDoc(d); }}
+                      />
                     ))}
                   </div>
                 </section>
               )}
+
+              {/* Certifications */}
+              {certificates.length > 0 && (
+                <section>
+                  <SectionTitle kicker="Credentials">
+                    Certifications
+                  </SectionTitle>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    {certificates.map((doc) => (
+                      <CredentialCard
+                        key={doc.id}
+                        doc={doc}
+                        fallbackIcon={<FileText size={28} />}
+                        onView={(d) => { setImgLoading(true); setPreviewDoc(d); }}
+                      />
+                    ))}
+                  </div>
+                </section>
+              )}
+
             </main>
           </div>
 
@@ -929,6 +1099,83 @@ export default function PublicProfile() {
           </div>
         </motion.div>
       </div>
+
+      {/* Credential preview modal (rendered outside the captured CV card) */}
+      {previewDoc && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setPreviewDoc(null)}
+        >
+          <button
+            type="button"
+            onClick={() => setPreviewDoc(null)}
+            aria-label="Close"
+            className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-white/20"
+          >
+            <X size={22} />
+          </button>
+          <div
+            className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl shadow-2xl"
+            style={{ backgroundColor: IVORY }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {previewDoc.imageUrl ? (
+              <div className="relative flex min-h-[220px] w-full items-center justify-center bg-white">
+                {imgLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="h-10 w-10 animate-spin rounded-full border-b-2 border-t-2 border-red-500" />
+                  </div>
+                )}
+                <img
+                  src={previewDoc.imageUrl}
+                  alt={previewDoc.title || "credential"}
+                  crossOrigin="anonymous"
+                  onLoad={() => setImgLoading(false)}
+                  onError={() => setImgLoading(false)}
+                  className={`max-h-[60vh] w-full object-contain transition-opacity duration-300 ${
+                    imgLoading ? "opacity-0" : "opacity-100"
+                  }`}
+                />
+              </div>
+            ) : (
+              <div className="flex h-48 w-full items-center justify-center bg-gray-100 text-red-500">
+                {previewDoc.type === "award" ? (
+                  <Award size={56} />
+                ) : (
+                  <FileText size={56} />
+                )}
+              </div>
+            )}
+            <div className="p-5">
+              {previewDoc.type && (
+                <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-red-500 px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] text-white">
+                  {previewDoc.type === "award" ? (
+                    <Award size={12} />
+                  ) : (
+                    <FileText size={12} />
+                  )}
+                  {previewDoc.type}
+                </span>
+              )}
+              <h3 className="text-xl font-black text-gray-900">
+                {previewDoc.title}
+              </h3>
+              {(previewDoc.issuedBy || previewDoc.issuedDate) && (
+                <p className="mt-1 text-sm font-semibold text-gray-500">
+                  {[previewDoc.issuedBy, previewDoc.issuedDate]
+                    .filter(Boolean)
+                    .join(" · ")}
+                </p>
+              )}
+              {previewDoc.description && (
+                <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-gray-600">
+                  {previewDoc.description}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

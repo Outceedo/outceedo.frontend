@@ -234,6 +234,8 @@ const ScoutView: React.FC = () => {
         responseTime: viewedProfile.responseTime || "N/A",
         travelLimit: viewedProfile.travelLimit || "N/A",
         certificationLevel: viewedProfile.certificationLevel || "N/A",
+        specialization: viewedProfile.specialization || "Not specified",
+        nationality: viewedProfile.nationality || "Not specified",
         profileImage: viewedProfile.photo || null,
         socialLinks: viewedProfile.socialLinks || {},
         about: viewedProfile.bio || "",
@@ -489,6 +491,22 @@ const ScoutView: React.FC = () => {
               </p>
               <p className="font-semibold dark:text-white text-sm sm:text-base">
                 {scoutData.responseTime} mins
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                Specialization
+              </p>
+              <p className="font-semibold dark:text-white text-sm sm:text-base">
+                {scoutData.specialization}
+              </p>
+            </div>
+            <div>
+              <p className="text-gray-500 dark:text-white text-xs sm:text-sm">
+                Nationality
+              </p>
+              <p className="font-semibold dark:text-white text-sm sm:text-base">
+                {scoutData.nationality}
               </p>
             </div>
           </div>

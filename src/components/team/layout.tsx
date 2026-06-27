@@ -1,4 +1,5 @@
 import { Outlet } from "react-router-dom";
+import Seo from "@/components/seo/Seo";
 import TeamSideBar from "./sidebar";
 import TeamHeader from "./Header";
 import { useState } from "react";
@@ -8,6 +9,7 @@ function TeamLayout() {
 
   return (
     <div className="flex min-h-screen w-full dark:bg-gray-900">
+      <Seo title="Team" noindex />
       <TeamSideBar open={openSidebar} setOpen={setOpenSidebar} />
       <div className="flex flex-1 flex-col min-w-0">
         <TeamHeader setOpen={setOpenSidebar} />

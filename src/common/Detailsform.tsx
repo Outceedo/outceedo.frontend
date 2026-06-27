@@ -67,6 +67,7 @@ const Detailsform: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [isExpert, setIsExpert] = useState(false);
   const [isScout, setIsScout] = useState(false);
+  const [isPlayer, setIsPlayer] = useState(false);
 
   const [existingProfilePhoto, setExistingProfilePhoto] = useState<
     string | null
@@ -81,10 +82,14 @@ const Detailsform: React.FC = () => {
     profession: "",
     position: "",
     foot: "",
+    playerLevel: "",
+    nationality: "",
+    specialization: "",
+    experience: "",
     age: "",
     birthYear: "",
     gender: "" as GenderType,
-    languages: "",
+    languages: [] as string[],
     height: "",
     weight: "",
     country: "",
@@ -116,6 +121,7 @@ const Detailsform: React.FC = () => {
   const [awards, setAwards] = useState<Award[]>([{ id: 1 }]);
   const [uploadedMedia, setUploadedMedia] = useState<Media[]>([]);
   const [skillInput, setSkillInput] = useState<string>("");
+  const [languageInput, setLanguageInput] = useState<string>("");
 
   const [countries, setCountries] = useState<Country[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -125,6 +131,12 @@ const Detailsform: React.FC = () => {
   const [showCountryDropdown, setShowCountryDropdown] =
     useState<boolean>(false);
   const [showCityDropdown, setShowCityDropdown] = useState<boolean>(false);
+
+  const [nationalities, setNationalities] = useState<string[]>([]);
+  const [nationalitySearchTerm, setNationalitySearchTerm] =
+    useState<string>("");
+  const [showNationalityDropdown, setShowNationalityDropdown] =
+    useState<boolean>(false);
 
   const API_BASE_URL = `${import.meta.env.VITE_PORT}/api/v1`;
 
@@ -137,6 +149,7 @@ const Detailsform: React.FC = () => {
     const role = localStorage.getItem("role");
     setIsExpert(role === "expert" || role === "scout");
     setIsScout(role === "scout");
+    setIsPlayer(role === "player");
   }, []);
 
   useEffect(() => {
@@ -163,14 +176,18 @@ const Detailsform: React.FC = () => {
         profession: profileData.profession || "",
         position: profileData.position || "",
         foot: profileData.foot || "",
+        playerLevel: profileData.playerLevel || "",
+        nationality: profileData.nationality || "",
+        specialization: profileData.specialization || "",
+        experience: profileData.experience || "",
         sport: profileData.sport || "",
         club: profileData.club || "",
         age: profileData.age?.toString() || "",
         birthYear: profileData.birthYear?.toString() || "",
         gender: (profileData.gender as GenderType) || ("" as GenderType),
         languages: Array.isArray(profileData.language)
-          ? profileData.language.join(", ")
-          : "",
+          ? profileData.language
+          : [],
         height: profileData.height?.toString() || "",
         weight: profileData.weight?.toString() || "",
         country: profileData.country || "",
@@ -213,6 +230,10 @@ const Detailsform: React.FC = () => {
 
       if (profileData.city) {
         setCitySearchTerm(profileData.city);
+      }
+
+      if (profileData.nationality) {
+        setNationalitySearchTerm(profileData.nationality);
       }
 
       if (profileData.documents && Array.isArray(profileData.documents)) {
@@ -552,6 +573,29 @@ const Detailsform: React.FC = () => {
     }));
   };
 
+  const addLanguage = () => {
+    const value = languageInput.trim();
+    if (value === "") return;
+
+    const formatted = value.charAt(0).toUpperCase() + value.slice(1);
+    if (
+      !formData.languages.some((l) => l.toLowerCase() === formatted.toLowerCase())
+    ) {
+      setFormData((prev) => ({
+        ...prev,
+        languages: [...prev.languages, formatted],
+      }));
+    }
+    setLanguageInput("");
+  };
+
+  const removeLanguage = (languageToRemove: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      languages: prev.languages.filter((lang) => lang !== languageToRemove),
+    }));
+  };
+
   const addCertificate = () => {
     setCertificates([...certificates, { id: Date.now() }]);
   };
@@ -689,6 +733,48 @@ const Detailsform: React.FC = () => {
     setShowCityDropdown(false);
   };
 
+  const handleNationalitySelect = (nationality: string) => {
+    setFormData((prev) => ({ ...prev, nationality }));
+    setNationalitySearchTerm(nationality);
+    setShowNationalityDropdown(false);
+  };
+
+  const nationalityField = () => (
+    <div className="w-1/3 relative">
+      <label className="block text-black mb-1 font-bold">Nationality</label>
+      <input
+        type="text"
+        placeholder="Search Nationality"
+        className="border p-2 w-full rounded"
+        value={nationalitySearchTerm}
+        onChange={(e) => {
+          setNationalitySearchTerm(e.target.value);
+          setFormData((prev) => ({ ...prev, nationality: e.target.value }));
+          setShowNationalityDropdown(true);
+        }}
+        onFocus={() => setShowNationalityDropdown(true)}
+      />
+      {showNationalityDropdown && nationalitySearchTerm && (
+        <ul className="absolute w-full bg-white border border-gray-300 rounded-lg shadow-md mt-1 max-h-40 overflow-y-auto z-10">
+          {nationalities
+            .filter((n) =>
+              n.toLowerCase().includes(nationalitySearchTerm.toLowerCase()),
+            )
+            .slice(0, 50)
+            .map((n, index) => (
+              <li
+                key={index}
+                onClick={() => handleNationalitySelect(n)}
+                className="px-4 py-2 cursor-pointer hover:bg-gray-200"
+              >
+                {n}
+              </li>
+            ))}
+        </ul>
+      )}
+    </div>
+  );
+
   const handleSubmit = async () => {
     if (!validateCurrentStep()) return;
 
@@ -706,12 +792,9 @@ const Detailsform: React.FC = () => {
         (m) => m.type === "professional",
       );
 
-      let languageArray: string[] = [];
-      if (formData.languages && formData.languages.trim()) {
-        languageArray = formData.languages
-          .split(",")
-          .map((lang) => lang.charAt(0).toUpperCase() + lang.slice(1));
-      }
+      const languageArray: string[] = formData.languages.map(
+        (lang) => lang.charAt(0).toUpperCase() + lang.slice(1),
+      );
 
       const profileUpdateData = {
         firstName:
@@ -746,11 +829,18 @@ const Detailsform: React.FC = () => {
           formData.position.charAt(0).toUpperCase() +
             formData.position.slice(1) || null,
         foot: formData.foot || null,
+        nationality: formData.nationality || null,
         sport: formData.sport.charAt(0).toUpperCase() + formData.sport.slice(1),
         club: formData.club || null,
         company: formData.footballClub || null,
 
+        ...(isPlayer && {
+          playerLevel: formData.playerLevel || null,
+        }),
+
         ...(isExpert && {
+          specialization: formData.specialization || null,
+          experience: formData.experience || null,
           certificationLevel:
             formData.certificationLevel.charAt(0).toUpperCase() +
               formData.certificationLevel.slice(1) || null,
@@ -865,6 +955,47 @@ const Detailsform: React.FC = () => {
       }
     };
     fetchCountries();
+  }, []);
+
+  useEffect(() => {
+    const fetchNationalities = async (): Promise<void> => {
+      try {
+        const response = await fetch(
+          "https://restcountries.com/v3.1/all?fields=demonyms",
+        );
+        if (!response.ok) throw new Error("Failed to fetch nationalities");
+
+        const data = await response.json();
+        const list: string[] = data
+          .map((country: any) => country?.demonyms?.eng?.m)
+          .filter((n: any): n is string => Boolean(n));
+        const unique = Array.from(new Set(list)).sort((a, b) =>
+          a.localeCompare(b),
+        );
+        setNationalities(unique);
+      } catch (error) {
+        console.error("Error fetching nationalities:", error);
+
+        const fallbackNationalities = [
+          "American",
+          "British",
+          "Canadian",
+          "Australian",
+          "German",
+          "French",
+          "Indian",
+          "Japanese",
+          "Chinese",
+          "Brazilian",
+          "Spanish",
+          "Italian",
+          "Portuguese",
+          "Argentine",
+        ];
+        setNationalities(fallbackNationalities);
+      }
+    };
+    fetchNationalities();
   }, []);
 
   useEffect(() => {
@@ -1032,7 +1163,7 @@ const Detailsform: React.FC = () => {
         <div>
           <h2 className="text-xl font-semibold mb-2">Profile Details</h2>
 
-          <label className="block text-grey mb-1">Profile Picture</label>
+          <label className="block text-grey mb-1 font-bold">Profile Picture</label>
           <div className="relative border-4 border-dotted border-gray-400 p-2 w-full mb-2 rounded-md flex items-center justify-start lg:justify-center md:justify-center">
             {existingProfilePhoto && !profilePhoto && (
               <div className="flex items-center">
@@ -1072,7 +1203,7 @@ const Detailsform: React.FC = () => {
 
           <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
-              <label className="block text-black mb-1">First Name *</label>
+              <label className="block text-black mb-1 font-bold">First Name *</label>
               <input
                 type="text"
                 name="firstName"
@@ -1091,7 +1222,7 @@ const Detailsform: React.FC = () => {
               )}
             </div>
             <div className="w-1/3">
-              <label className="block text-black mb-1">Last Name *</label>
+              <label className="block text-black mb-1 font-bold">Last Name *</label>
               <input
                 type="text"
                 name="lastName"
@@ -1110,7 +1241,7 @@ const Detailsform: React.FC = () => {
               )}
             </div>
             <div className="w-1/3">
-              <label className="block text-black mb-1">Email</label>
+              <label className="block text-black mb-1 font-bold">Email</label>
               <input
                 type="email"
                 name="email"
@@ -1123,7 +1254,7 @@ const Detailsform: React.FC = () => {
 
           <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
-              <label className="block text-black mb-1">Profession *</label>
+              <label className="block text-black mb-1 font-bold">Profession *</label>
               <select
                 name="profession"
                 value={formData.profession}
@@ -1158,7 +1289,7 @@ const Detailsform: React.FC = () => {
             </div>
             {!isScout && (
               <div className="w-1/3">
-                <label className="block text-black mb-1">Position</label>
+                <label className="block text-black mb-1 font-bold">Position</label>
                 <select
                   name="position"
                   value={formData.position}
@@ -1199,7 +1330,7 @@ const Detailsform: React.FC = () => {
               </div>
             )}
             <div className="w-1/3">
-              <label className="block text-black mb-1">Phone</label>
+              <label className="block text-black mb-1 font-bold">Phone</label>
               <input
                 type="text"
                 value={userData.mobileNumber}
@@ -1213,7 +1344,7 @@ const Detailsform: React.FC = () => {
           {!isScout && (
             <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
               <div className="w-1/3">
-                <label className="block text-black mb-1">Foot</label>
+                <label className="block text-black mb-1 font-bold">Foot</label>
                 <select
                   name="foot"
                   value={formData.foot}
@@ -1226,12 +1357,66 @@ const Detailsform: React.FC = () => {
                   <option value="both_foot">Both Foot</option>
                 </select>
               </div>
+
+              {isPlayer && (
+                <div className="w-1/3">
+                  <label className="block text-black mb-1 font-bold">Player Level</label>
+                  <select
+                    name="playerLevel"
+                    value={formData.playerLevel}
+                    onChange={handleInputChange}
+                    className="border p-2 w-full rounded"
+                  >
+                    <option value="">Select</option>
+                    <option value="grassroots">Grassroots</option>
+                    <option value="academy">Academy</option>
+                    <option value="semi_pro">Semi-Pro</option>
+                    <option value="professional">Professional</option>
+                  </select>
+                </div>
+              )}
+
+              {isExpert && (
+                <div className="w-1/3">
+                  <label className="block text-black mb-1 font-bold">
+                    Specialization
+                  </label>
+                  <input
+                    type="text"
+                    name="specialization"
+                    placeholder="e.g., Striker coaching"
+                    value={formData.specialization}
+                    onChange={handleInputChange}
+                    className="border p-2 w-full rounded"
+                  />
+                </div>
+              )}
+
+              {nationalityField()}
+            </div>
+          )}
+
+          {isScout && (
+            <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
+              <div className="w-1/3">
+                <label className="block text-black mb-1 font-bold">Specialization</label>
+                <input
+                  type="text"
+                  name="specialization"
+                  placeholder="e.g., Youth talent scouting"
+                  value={formData.specialization}
+                  onChange={handleInputChange}
+                  className="border p-2 w-full rounded"
+                />
+              </div>
+
+              {nationalityField()}
             </div>
           )}
 
           <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
-              <label className="block text-black mb-1">Age</label>
+              <label className="block text-black mb-1 font-bold">Age</label>
               <input
                 list="ageOptions"
                 name="age"
@@ -1247,7 +1432,7 @@ const Detailsform: React.FC = () => {
               </datalist>
             </div>
             <div className="w-1/3">
-              <label className="block text-black mb-1">Birth Year</label>
+              <label className="block text-black mb-1 font-bold">Birth Year</label>
               <input
                 list="yearOptions"
                 name="birthYear"
@@ -1264,7 +1449,7 @@ const Detailsform: React.FC = () => {
               </datalist>
             </div>
             <div className="w-1/3">
-              <label className="block text-black mb-1">Gender *</label>
+              <label className="block text-black mb-1 font-bold">Gender *</label>
               <select
                 name="gender"
                 value={formData.gender}
@@ -1290,22 +1475,52 @@ const Detailsform: React.FC = () => {
 
           <div className="flex space-x-4 mb-2 md:text-xxl text-sm">
             <div className="w-1/3">
-              <label className="block text-black mb-1">Languages</label>
-              <input
-                type="text"
-                name="languages"
-                placeholder="Language (comma separated)"
-                value={formData.languages}
-                onChange={handleInputChange}
-                className="border p-2 w-full rounded"
-              />
+              <label className="block text-black mb-1 font-bold">Languages</label>
+              <div className="flex flex-col sm:flex-row">
+                <input
+                  type="text"
+                  placeholder="Add a language"
+                  value={languageInput}
+                  onChange={(e) => setLanguageInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      addLanguage();
+                    }
+                  }}
+                  className="border p-2 flex-grow rounded-t sm:rounded-l sm:rounded-t-none"
+                />
+                <button
+                  type="button"
+                  onClick={addLanguage}
+                  className="bg-lightYellow text-white px-4 py-2 rounded-b sm:rounded-r sm:rounded-b-none bg-red-500"
+                >
+                  Add
+                </button>
+              </div>
+              <div className="flex flex-wrap gap-2 mt-2">
+                {formData.languages.map((lang, index) => (
+                  <div
+                    key={index}
+                    className="bg-gray-100 px-3 py-1 rounded-full flex items-center"
+                  >
+                    <span>{lang}</span>
+                    <button
+                      type="button"
+                      className="ml-2 text-red-500"
+                      onClick={() => removeLanguage(lang)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
               <p className="text-xs text-gray-500 mt-1">
-                Enter multiple languages separated by commas (e.g., English,
-                Spanish, French)
+                Type a language and press space or Enter to add it
               </p>
             </div>
             <div className="w-1/3">
-              <label className="block text-black mb-1">Height (cm)</label>
+              <label className="block text-black mb-1 font-bold">Height (cm)</label>
               <input
                 type="number"
                 name="height"
@@ -1316,7 +1531,7 @@ const Detailsform: React.FC = () => {
               />
             </div>
             <div className="w-1/3">
-              <label className="block text-black mb-1">Weight (kg)</label>
+              <label className="block text-black mb-1 font-bold">Weight (kg)</label>
               <input
                 type="number"
                 name="weight"
@@ -1333,7 +1548,7 @@ const Detailsform: React.FC = () => {
       {step === 2 && (
         <div className="max-w-full w-full md:w-5xl mx-auto px-2 md:text-xxl text-sm">
           <h2 className="text-xl font-semibold mb-2">More Details</h2>
-          <label className="block text-grey mb-1">Professional Picture</label>
+          <label className="block text-grey mb-1 font-bold">Professional Picture</label>
           <div className="relative border-4 border-dotted border-gray-400 p-3 w-full mb-2 rounded-md flex items-center justify-start text-sm">
             <span className="text-gray-500 truncate md:text-[16px] text-[8px] ">
               {professionalPhoto
@@ -1359,7 +1574,7 @@ const Detailsform: React.FC = () => {
 
           <div className="flex flex-col md:flex-row md:space-x-4 mb-2 space-y-2 md:space-y-0">
             <div className="w-full md:w-1/2">
-              <label className="block text-black mb-1">Sport</label>
+              <label className="block text-black mb-1 font-bold">Sport</label>
               <select
                 name="sport"
                 value={formData.sport}
@@ -1372,7 +1587,7 @@ const Detailsform: React.FC = () => {
             </div>
 
             <div className="w-full md:w-1/2">
-              <label className="block text-black mb-1">Club</label>
+              <label className="block text-black mb-1 font-bold">Club</label>
               <input
                 type="text"
                 name="club"
@@ -1386,7 +1601,7 @@ const Detailsform: React.FC = () => {
 
           {isExpert && (
             <div className="w-full mb-4">
-              <label className="block text-black mb-1">
+              <label className="block text-black mb-1 font-bold">
                 Certification Level
               </label>
               <input
@@ -1399,8 +1614,24 @@ const Detailsform: React.FC = () => {
           )}
 
           {isExpert && (
+            <div className="w-full md:w-1/2 mb-4">
+              <label className="block text-black mb-1 font-bold">
+                Experience
+              </label>
+              <input
+                type="text"
+                name="experience"
+                value={formData.experience}
+                onChange={handleInputChange}
+                placeholder="7+ yrs"
+                className="border p-2 w-full rounded"
+              />
+            </div>
+          )}
+
+          {isExpert && (
             <div className="w-full mb-4">
-              <label className="block text-black mb-1">Skills</label>
+              <label className="block text-black mb-1 font-bold">Skills</label>
               <div className="flex flex-col sm:flex-row">
                 <input
                   type="text"
@@ -1446,7 +1677,7 @@ const Detailsform: React.FC = () => {
 
           <div className="flex flex-col md:flex-row md:space-x-4 mb-2 space-y-2 md:space-y-0">
             <div className="w-full md:w-1/2 relative">
-              <label className="block text-black mb-1">City *</label>
+              <label className="block text-black mb-1 font-bold">City *</label>
               <input
                 type="text"
                 placeholder="Search City"
@@ -1487,7 +1718,7 @@ const Detailsform: React.FC = () => {
               )}
             </div>
             <div className="w-full md:w-1/2 relative">
-              <label className="block text-black mb-1">Country *</label>
+              <label className="block text-black mb-1 font-bold">Country *</label>
               <input
                 type="text"
                 placeholder="Search Country"
@@ -1532,7 +1763,7 @@ const Detailsform: React.FC = () => {
           {isExpert && (
             <div className="flex flex-col md:flex-row md:space-x-4 mb-4 space-y-2 md:space-y-0">
               <div className="w-full md:w-1/2">
-                <label className="block text-black mb-1">
+                <label className="block text-black mb-1 font-bold">
                   Response Time (mins) *
                 </label>
                 <input
@@ -1553,7 +1784,7 @@ const Detailsform: React.FC = () => {
                 )}
               </div>
               <div className="w-full md:w-1/2">
-                <label className="block text-black mb-1">
+                <label className="block text-black mb-1 font-bold">
                   Travel Limit (kms) *
                 </label>
                 <input
@@ -1577,7 +1808,7 @@ const Detailsform: React.FC = () => {
           )}
 
           <div className="relative w-full">
-            <label className="block text-black mb-1">Bio Data</label>
+            <label className="block text-black mb-1 font-bold">Bio Data</label>
             <textarea
               name="bio"
               placeholder="Enter your Bio Data"
@@ -1655,7 +1886,7 @@ const Detailsform: React.FC = () => {
                 </div>
               )}
 
-              <label className="block text-black mb-1">
+              <label className="block text-black mb-1 font-bold">
                 Certificate Title*
               </label>
               <input
@@ -1678,7 +1909,7 @@ const Detailsform: React.FC = () => {
                   {validationErrors[`certificate_${cert.id}_name`]}
                 </p>
               )}
-              <label className="block text-black mb-1">Issued By</label>
+              <label className="block text-black mb-1 font-bold">Issued By</label>
               <input
                 type="text"
                 placeholder="Organization Name"
@@ -1775,7 +2006,7 @@ const Detailsform: React.FC = () => {
                 </div>
               )}
 
-              <label className="block text-black mb-1">Award Title*</label>
+              <label className="block text-black mb-1 font-bold">Award Title*</label>
               <input
                 type="text"
                 placeholder="Award Title"
@@ -1796,7 +2027,7 @@ const Detailsform: React.FC = () => {
                   {validationErrors[`award_${award.id}_name`]}
                 </p>
               )}
-              <label className="block text-black mb-1">Issued By</label>
+              <label className="block text-black mb-1 font-bold">Issued By</label>
               <input
                 type="text"
                 placeholder="Organization Name"
