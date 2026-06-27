@@ -762,10 +762,10 @@ export default function PublicProfile() {
   const canonicalPath = role
     ? `/${role}/${profileUsername}`
     : `/${profileUsername}`;
-  const seoTitle = `${displayName} · ${roleLabel}`;
+  const seoTitle = `${displayName} · ${roleLabel2}`;
   const seoDescription = profile.bio
     ? trimChars(profile.bio)
-    : `${displayName} — ${roleLabel}${locationStr ? ` based in ${locationStr}` : ""} on Outceedo.`;
+    : `${displayName} — ${roleLabel2}${locationStr ? ` based in ${locationStr}` : ""} on Outceedo.`;
   const sameAs = socialList.map((s) => s.url as string);
   const profileJsonLd = {
     "@context": "https://schema.org",
@@ -775,7 +775,7 @@ export default function PublicProfile() {
     ...(profile.photo ? { image: profile.photo } : {}),
     ...(profile.bio ? { description: trimChars(profile.bio, 300) } : {}),
     ...(profile.sport ? { sport: profile.sport } : {}),
-    ...(!isTeam ? { jobTitle: roleLabel } : {}),
+    ...(!isTeam ? { jobTitle: roleLabel2} : {}),
     ...(locationStr
       ? { homeLocation: { "@type": "Place", name: locationStr } }
       : {}),
@@ -873,7 +873,7 @@ export default function PublicProfile() {
 
               <div className="flex-1 text-center sm:text-left">
                 <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-red-500 px-3 py-1 text-[11px] font-black uppercase tracking-[0.2em] text-white">
-                  {roleLabel}
+                  {roleLabel2}
                 </div>
                 <h1
                   className="text-4xl font-black uppercase italic leading-none tracking-tighter sm:text-5xl"
