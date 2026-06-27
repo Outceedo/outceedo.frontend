@@ -1086,7 +1086,10 @@ const Detailsform: React.FC = () => {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto p-6 bg-white shadow-md rounded-lg">
+    <div
+      className="w-full mx-auto p-6 bg-white shadow-md rounded-lg"
+      style={{ maxWidth: "1100px" }}
+    >
       {error && (
         <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-md">
           <p className="font-semibold">Error</p>
@@ -1498,16 +1501,19 @@ const Detailsform: React.FC = () => {
                   Add
                 </button>
               </div>
-              <div className="flex flex-wrap gap-2 mt-2">
+              <div
+                className="mt-2 flex flex-wrap content-start gap-2 overflow-y-auto rounded border border-gray-100 p-1"
+                style={{ height: "80px" }}
+              >
                 {formData.languages.map((lang, index) => (
                   <div
                     key={index}
-                    className="bg-gray-100 px-3 py-1 rounded-full flex items-center"
+                    className="bg-gray-100 px-3 py-1 rounded-full flex items-center h-fit max-w-full"
                   >
-                    <span>{lang}</span>
+                    <span className="break-all">{lang}</span>
                     <button
                       type="button"
-                      className="ml-2 text-red-500"
+                      className="ml-2 flex-shrink-0 text-red-500"
                       onClick={() => removeLanguage(lang)}
                     >
                       ×
