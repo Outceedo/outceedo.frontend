@@ -6,6 +6,7 @@ import {
   Loader2,
 } from "lucide-react";
 import Chat from "@/common/chat";
+import useUnreadChatCount from "@/common/useUnreadChatCount";
 import { Button } from "../ui/button";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -49,6 +50,7 @@ const menuItems = [
 function ScoutHeader({ setOpen }: ScoutHeaderProps) {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
+  const { count: unreadCount, refresh: refreshUnread } = useUnreadChatCount();
 
   const location = useLocation();
   const currentTitle =
@@ -408,20 +410,27 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
             )}
           </div>
 
-          <Button
-            onClick={() => setChatOpen(true)}
-            aria-label="Messages"
-            className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 transition-colors p-2 sm:p-3 h-10 w-10 md:w-auto md:px-3"
-            size="sm"
-          >
-            <FontAwesomeIcon
-              icon={faMessage}
-              className="text-red-500 text-xl sm:text-2xl"
-            />
-            <span className="hidden font-medium text-gray-800 dark:text-white md:inline">
-              Messages
-            </span>
-          </Button>
+          <div className="relative">
+            <Button
+              onClick={() => setChatOpen(true)}
+              aria-label="Messages"
+              className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 transition-colors p-2 sm:p-3 h-10 w-10 md:w-auto md:px-3"
+              size="sm"
+            >
+              <FontAwesomeIcon
+                icon={faMessage}
+                className="text-red-500 text-xl sm:text-2xl"
+              />
+              <span className="hidden font-medium text-gray-800 dark:text-white md:inline">
+                Messages
+              </span>
+            </Button>
+            {unreadCount > 0 && (
+              <span className="pointer-events-none absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+                {unreadCount > 99 ? "99+" : unreadCount}
+              </span>
+            )}
+          </div>
           <Button
             className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 dark:text-white transition-colors p-2 sm:p-3 h-10 w-10"
             size="sm"
@@ -444,7 +453,13 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
         </div>
       </header>
       {modal}
-      <Chat open={chatOpen} onClose={() => setChatOpen(false)} />
+      <Chat
+        open={chatOpen}
+        onClose={() => {
+          setChatOpen(false);
+          refreshUnread();
+        }}
+      />
     </>
   );
 }
