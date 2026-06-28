@@ -953,8 +953,11 @@ export default function PublicProfile() {
                   ))}
                 </div>
 
-                {!isOwnProfile && (
-                  <div className="mt-5 flex justify-center sm:justify-start">
+                {!isOwnProfile && !capturing && (
+                  <div
+                    data-html2canvas-ignore="true"
+                    className="mt-5 flex justify-center sm:justify-start"
+                  >
                     <button
                       onClick={handleConnectClick}
                       className="inline-flex items-center gap-2 rounded-full bg-red-500 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-600"
