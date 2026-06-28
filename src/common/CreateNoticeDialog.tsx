@@ -108,11 +108,14 @@ const CONTACT_METHODS: { value: NoticeContactMethod; label: string }[] = [
 ];
 
 const VISIBILITIES: { value: NoticeVisibility; label: string }[] = [
-  { value: "PUBLIC", label: "Public — everyone" },
   { value: "EXPERT", label: "Experts only" },
+  { value: "PLAYER", label: "Players only" },
   { value: "SCOUT", label: "Scouts only" },
+  { value: "TEAM", label: "Teams only" },
   { value: "SPONSOR", label: "Sponsors only" },
+  { value: "FAN", label: "Fans only" },
   { value: "PRIVATE", label: "Private — only me" },
+  { value: "PUBLIC", label: "Public — everyone" },
 ];
 
 const ROLE_TO_POSTED_BY: Record<string, NoticePostedByType> = {

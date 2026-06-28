@@ -16,7 +16,10 @@ export type NoticeVisibility =
   | "PRIVATE"
   | "SCOUT"
   | "EXPERT"
-  | "SPONSOR";
+  | "SPONSOR"
+  | "PLAYER"
+  | "TEAM"
+  | "FAN";
 export type NoticePostedByType =
   | "PLAYER"
   | "EXPERT"

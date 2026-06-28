@@ -36,6 +36,10 @@ import {
   Facebook,
   Instagram,
   Youtube,
+  MessageSquare,
+  UserPlus,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import Navbar from "../Pages/Home/Navbar";
 import axios from "axios";
@@ -388,6 +392,18 @@ export default function PublicProfile() {
   const [imgLoading, setImgLoading] = useState(true);
   const cvRef = useRef<HTMLDivElement>(null);
 
+  // Connect & Chat flow
+  type ConnectStage =
+    | "confirm"
+    | "sent"
+    | "exists"
+    | "accepted"
+    | "error"
+    | "login";
+  const [connectStage, setConnectStage] = useState<ConnectStage | null>(null);
+  const [connecting, setConnecting] = useState(false);
+  const [connectError, setConnectError] = useState("");
+
   useEffect(() => {
     const fetchProfile = async () => {
       if (!username) {
@@ -516,6 +532,51 @@ export default function PublicProfile() {
     reviewCount > 0
       ? reviews.reduce((sum, r) => sum + (r.rating || 0), 0) / reviewCount
       : 0;
+
+  /* --------------------------- Connect & Chat ---------------------------- */
+  const targetUsername = profile.username || username || "";
+  const myUsername = localStorage.getItem("username") || "";
+  const isOwnProfile = !!myUsername && myUsername === targetUsername;
+
+  const handleConnectClick = () => {
+    const token = localStorage.getItem("token");
+    if (!token || !myUsername) {
+      setConnectStage("login");
+      return;
+    }
+    setConnectStage("confirm");
+  };
+
+  const sendChatRequest = async () => {
+    setConnecting(true);
+    setConnectError("");
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_PORT}/api/v1/other/chats/request`,
+        { home: myUsername, away: targetUsername },
+        {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        },
+      );
+      const status = res.data?.chat?.status;
+      const created = res.data?.created;
+      if (status === "accepted") setConnectStage("accepted");
+      else if (created) setConnectStage("sent");
+      else setConnectStage("exists");
+    } catch (e: any) {
+      setConnectError(e?.response?.data?.message || "Failed to send request");
+      setConnectStage("error");
+    } finally {
+      setConnecting(false);
+    }
+  };
+
+  // Open the logged-in user's dashboard in a new tab with the chat drawer open.
+  const openMessages = () => {
+    const myRole = (localStorage.getItem("role") || "").toLowerCase();
+    setConnectStage(null);
+    if (myRole) window.open(`/${myRole}/profile?openChat=1`, "_blank");
+  };
 
   const handleShare = async () => {
     const url = window.location.href;
@@ -891,6 +952,17 @@ export default function PublicProfile() {
                     </span>
                   ))}
                 </div>
+
+                {!isOwnProfile && (
+                  <div className="mt-5 flex justify-center sm:justify-start">
+                    <button
+                      onClick={handleConnectClick}
+                      className="inline-flex items-center gap-2 rounded-full bg-red-500 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-600"
+                    >
+                      <MessageSquare size={16} /> Connect &amp; Chat
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Outceedo brand mark (top-right) */}
@@ -1173,6 +1245,149 @@ export default function PublicProfile() {
                 </p>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Connect & Chat modal */}
+      {connectStage && (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setConnectStage(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {connectStage === "confirm" ? (
+              <>
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                  <UserPlus className="text-red-500" />
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                  Send chat request?
+                </h3>
+                <p className="mb-5 text-sm text-gray-600">
+                  Send a chat request to <b>@{targetUsername}</b>? They'll be
+                  able to chat with you once they accept it.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConnectStage(null)}
+                    disabled={connecting}
+                    className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-60"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={sendChatRequest}
+                    disabled={connecting}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+                  >
+                    {connecting ? (
+                      <Loader2 size={15} className="animate-spin" />
+                    ) : (
+                      <MessageSquare size={15} />
+                    )}
+                    Send request
+                  </button>
+                </div>
+              </>
+            ) : connectStage === "login" ? (
+              <>
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                  <MessageSquare className="text-red-500" />
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                  Login to chat
+                </h3>
+                <p className="mb-5 text-sm text-gray-600">
+                  Log in to Outceedo to send a chat request. Once logged in, open
+                  your messages and wait for the request to be accepted — then
+                  you can chat.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConnectStage(null)}
+                    className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => navigate("/login")}
+                    className="flex-1 rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                  >
+                    Login
+                  </button>
+                </div>
+              </>
+            ) : connectStage === "error" ? (
+              <>
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                  <MessageSquare className="text-red-500" />
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                  Something went wrong
+                </h3>
+                <p className="mb-5 text-sm text-gray-600">{connectError}</p>
+                <button
+                  onClick={() => setConnectStage(null)}
+                  className="w-full rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                >
+                  Got it
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                  <CheckCircle2 className="text-green-600" />
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                  {connectStage === "accepted"
+                    ? "You're connected"
+                    : connectStage === "exists"
+                      ? "Request already pending"
+                      : "Request sent!"}
+                </h3>
+                <p className="mb-1 text-sm text-gray-600">
+                  {connectStage === "accepted" ? (
+                    <>
+                      You're already connected with <b>@{targetUsername}</b>.
+                      Open your messages to start chatting.
+                    </>
+                  ) : connectStage === "exists" ? (
+                    <>
+                      You already have a pending request with{" "}
+                      <b>@{targetUsername}</b>. Track it from your messages.
+                    </>
+                  ) : (
+                    <>
+                      Your chat request to <b>@{targetUsername}</b> has been
+                      sent.
+                    </>
+                  )}
+                </p>
+                <p className="mb-4 text-xs text-gray-400">
+                  Open your messages and wait for the request to be accepted —
+                  then you can chat.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setConnectStage(null)}
+                    className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200"
+                  >
+                    Got it
+                  </button>
+                  <button
+                    onClick={openMessages}
+                    className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                  >
+                    <MessageSquare size={15} />
+                    Open messages
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

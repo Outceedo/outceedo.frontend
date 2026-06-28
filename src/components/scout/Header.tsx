@@ -52,6 +52,21 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
   const [chatOpen, setChatOpen] = useState(false);
   const { count: unreadCount, refresh: refreshUnread } = useUnreadChatCount();
 
+  // Auto-open the chat drawer when arrived via ?openChat=1 (from a public profile).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("openChat") === "1") {
+      setChatOpen(true);
+      params.delete("openChat");
+      const qs = params.toString();
+      window.history.replaceState(
+        {},
+        "",
+        window.location.pathname + (qs ? `?${qs}` : "")
+      );
+    }
+  }, []);
+
   const location = useLocation();
   const currentTitle =
     menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??
@@ -414,7 +429,7 @@ function ScoutHeader({ setOpen }: ScoutHeaderProps) {
             <Button
               onClick={() => setChatOpen(true)}
               aria-label="Messages"
-              className="bg-white hover:bg-white dark:bg-slate-950 dark:hover:bg-slate-700 transition-colors p-2 sm:p-3 h-10 w-10 md:w-auto md:px-3"
+              className="bg-amber-50 hover:bg-amber-100 dark:bg-slate-950 dark:hover:bg-slate-700 transition-colors p-2 sm:p-3 h-10 w-10 md:w-auto md:px-3"
               size="sm"
             >
               <FontAwesomeIcon

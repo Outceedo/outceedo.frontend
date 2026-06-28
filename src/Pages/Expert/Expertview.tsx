@@ -35,6 +35,7 @@ import Mediaview from "@/Pages/Media/MediaView";
 import Reviewview from "../Reviews/Reviewview";
 import ExpertProfiledetails from "./ExpertProfiledetails";
 import FollowersList from "../../components/follower/followerlist";
+import ConnectButton from "@/common/ConnectButton";
 import Swal from "sweetalert2";
 
 const socialIconsConfig = [
@@ -1020,11 +1021,16 @@ const Expertview = () => {
         </div>
       </div>
 
-      {(localStorage.getItem("role") !== "player" ||
-        (localStorage.getItem("role") === "player" && isUserOnPremiumPlan)) && (
-        <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
-          <div className="flex flex-col items-center justify-center">
-            {isFollowAllowed() && isFollowing ? (
+      <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
+        <div className="flex flex-row flex-wrap items-center justify-center gap-3">
+          <ConnectButton
+            username={expertData?.username}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
+          />
+
+          {(localStorage.getItem("role") !== "player" ||
+            (localStorage.getItem("role") === "player" && isUserOnPremiumPlan)) &&
+            (isFollowAllowed() && isFollowing ? (
               <div className="flex items-center gap-2">
                 <Button
                   disabled
@@ -1069,17 +1075,16 @@ const Expertview = () => {
                   </>
                 )}
               </Button>
-            )}
-
-            {isFollowing && isFollowAllowed() && (
-              <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
-                <FontAwesomeIcon icon={faHeart} className="mr-1" />
-                You're following {expertData.name}
-              </p>
-            )}
-          </div>
+            ))}
         </div>
-      )}
+
+        {isFollowing && isFollowAllowed() && (
+          <p className="text-sm text-green-600 dark:text-green-400 mt-2 text-center">
+            <FontAwesomeIcon icon={faHeart} className="mr-1" />
+            You're following {expertData.name}
+          </p>
+        )}
+      </div>
       {localStorage.getItem("role") === "player" && !isUserOnPremiumPlan && (
         <div className="border-b py-4 sm:py-6 mb-6 sm:mb-8">
           <div className="w-full max-w-2xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3 mb-4">

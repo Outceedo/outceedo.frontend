@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import ViewCvButton from "@/components/ViewCvButton";
+import ConnectButton from "@/common/ConnectButton";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -440,6 +441,10 @@ const ScoutView: React.FC = () => {
               label="View CV"
               className="mt-2 sm:mt-0 sm:ml-auto"
             />
+          </div>
+
+          <div className="mb-4 sm:mb-6">
+            <ConnectButton username={scoutData.username} />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 mb-4 sm:mb-6">

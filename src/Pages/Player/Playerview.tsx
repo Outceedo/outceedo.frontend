@@ -29,6 +29,7 @@ import profile from "../../assets/images/avatar.png";
 import Mediaview from "@/Pages/Media/MediaView";
 import PlayerProfileDetails from "./PlayerProfileDetails";
 import FollowersList from "../../components/follower/followerlist";
+import ConnectButton from "@/common/ConnectButton";
 import Reviewview from "../Reviews/Reviewview";
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -743,6 +744,10 @@ const Playerview: React.FC = () => {
                   </div>
                 );
               })()}
+
+              <div className="mt-3 sm:mt-4">
+                <ConnectButton username={profileData?.username} />
+              </div>
 
               {((localStorage.getItem("role") === "player" &&
                 isUserOnPremiumPlan) ||

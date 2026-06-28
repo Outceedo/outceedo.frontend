@@ -85,6 +85,17 @@ interface BookingTag {
 const FREE_MSG_LIMIT = 5;
 const FREE_MSG_LIMIT_WITH_BOOKING = 15;
 
+// Block sharing of contact details / links inside chat messages.
+const CONTACT_PATTERNS = {
+  email: /[^\s@]+@[^\s@]+\.[^\s@]{2,}/,
+  url: /(https?:\/\/|www\.)\S+|\b[a-z0-9][a-z0-9-]*\.(com|net|org|io|in|co|uk|us|info|biz|app|dev|me|gg|tv|xyz)\b/i,
+  phone: /(?:\+?\d[\s.-]?){7,}/,
+};
+const violatesContactRule = (text: string) =>
+  CONTACT_PATTERNS.email.test(text) ||
+  CONTACT_PATTERNS.url.test(text) ||
+  CONTACT_PATTERNS.phone.test(text);
+
 interface ChatProps {
   open: boolean;
   onClose: () => void;
@@ -192,6 +203,10 @@ const Chat: React.FC<ChatProps> = ({
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SearchProfile[]>([]);
   const [searching, setSearching] = useState(false);
+  // Person we're about to send a chat request to (confirmation modal).
+  const [confirmTarget, setConfirmTarget] = useState<SearchProfile | null>(null);
+  // Warning shown above the composer when a message breaks the contact rule.
+  const [msgWarning, setMsgWarning] = useState<string | null>(null);
 
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   // Bookings shared with the active chat partner + the one currently tagged.
@@ -266,6 +281,16 @@ const Chat: React.FC<ChatProps> = ({
 
   const sendMessage = async () => {
     if (!activeChat || !messageInput.trim()) return;
+    // Don't allow sharing phone numbers, emails or links — except for experts
+    // and sponsors (or when the other party is one), who are unrestricted.
+    if (!limitExempt && violatesContactRule(messageInput)) {
+      setMsgWarning(
+        "For your safety, sharing phone numbers, emails or links isn't allowed in chat."
+      );
+      setMessageInput("");
+      setTaggedBooking(null);
+      return;
+    }
     setSending(true);
     setError(null);
     try {
@@ -281,6 +306,20 @@ const Chat: React.FC<ChatProps> = ({
       setError(e.response?.data?.message || "Failed to send message");
     } finally {
       setSending(false);
+    }
+  };
+
+  const withdrawRequest = async (chatId: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await chatApi.post(`/${chatId}/withdraw`, { username: me });
+      setActiveChat(null);
+      await fetchConversations();
+    } catch (e: any) {
+      setError(e.response?.data?.message || "Failed to withdraw request");
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -403,16 +442,26 @@ const Chat: React.FC<ChatProps> = ({
   const incomingRequests = pendingChats.filter((c) => c.viewer.canRespond);
 
   /* ----------------------- Message limit (free users) -------------------- */
+  // Experts and sponsors (on either side of the chat) are never rate-limited.
+  const EXEMPT_ROLES = ["expert", "sponsor"];
+  const myRole = (localStorage.getItem("role") || "").toLowerCase();
+  const partnerRole = activeChat
+    ? (profileMap[otherParty(activeChat)]?.role || "").toLowerCase()
+    : "";
+  const limitExempt =
+    EXEMPT_ROLES.includes(myRole) || EXEMPT_ROLES.includes(partnerRole);
+
   const hasBooking = bookings.length > 0;
-  const msgLimit = isPremium
-    ? Infinity
-    : hasBooking
-    ? FREE_MSG_LIMIT_WITH_BOOKING
-    : FREE_MSG_LIMIT;
+  const msgLimit =
+    isPremium || limitExempt
+      ? Infinity
+      : hasBooking
+      ? FREE_MSG_LIMIT_WITH_BOOKING
+      : FREE_MSG_LIMIT;
   const sentByMe = activeChat
     ? activeChat.msgs.filter((m) => m.sender === me).length
     : 0;
-  const limitReached = !isPremium && sentByMe >= msgLimit;
+  const limitReached = !isPremium && !limitExempt && sentByMe >= msgLimit;
 
   /* ------------------------------- Render -------------------------------- */
   return (
@@ -459,8 +508,8 @@ const Chat: React.FC<ChatProps> = ({
                     {otherParty(activeChat)}
                   </h2>
                   {otherLastSeen(activeChat) && (
-                    <p className="truncate text-[11px] text-gray-400">
-                      last seen {fmtTime(otherLastSeen(activeChat))}
+                    <p className="truncate text-[11px] text-gray-600">
+                      last seen {fmtTime(otherLastSeen(activeChat) ?? undefined)}
                     </p>
                   )}
                 </div>
@@ -537,9 +586,13 @@ const Chat: React.FC<ChatProps> = ({
             taggedBooking={taggedBooking}
             setTaggedBooking={setTaggedBooking}
             isPremium={isPremium}
+            limitExempt={limitExempt}
             sentByMe={sentByMe}
             msgLimit={msgLimit}
             limitReached={limitReached}
+            msgWarning={msgWarning}
+            setMsgWarning={setMsgWarning}
+            onWithdraw={withdrawRequest}
           />
         ) : (
           /* ---------------------------- List view --------------------------- */
@@ -559,6 +612,12 @@ const Chat: React.FC<ChatProps> = ({
                 )}
               </div>
 
+              {/* Instruction */}
+              <p className="mt-1.5 px-1 text-[12px] leading-snug text-gray-600">
+                Search for a person and send a chat request. You can start
+                chatting once they accept it.
+              </p>
+
               {/* Search results */}
               {searchTerm.trim() && (
                 <div className="mt-2 max-h-60 overflow-y-auto rounded-lg border dark:border-gray-700">
@@ -568,11 +627,9 @@ const Chat: React.FC<ChatProps> = ({
                     </p>
                   ) : (
                     searchResults.map((p) => (
-                      <button
+                      <div
                         key={p.id}
-                        onClick={() => startChat(p.username)}
-                        disabled={busy || p.username === me}
-                        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-gray-50 disabled:opacity-50 dark:hover:bg-gray-800"
+                        className="flex w-full items-center gap-3 px-3 py-2 text-left"
                       >
                         <Avatar name={p.username} photo={p.photo} size={36} />
                         <div className="min-w-0 flex-1">
@@ -585,8 +642,15 @@ const Chat: React.FC<ChatProps> = ({
                             {p.role ? ` · ${p.role}` : ""}
                           </p>
                         </div>
-                        <MessageSquarePlus size={16} className="text-red-500" />
-                      </button>
+                        <button
+                          onClick={() => setConfirmTarget(p)}
+                          disabled={busy || p.username === me}
+                          className="flex flex-shrink-0 items-center gap-1.5 rounded-lg bg-red-500 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-50"
+                        >
+                          <MessageSquarePlus size={14} />
+                          Send request
+                        </button>
+                      </div>
                     ))
                   )}
                 </div>
@@ -650,9 +714,66 @@ const Chat: React.FC<ChatProps> = ({
                         ? "Wants to chat"
                         : "Request sent"
                     }
+                    onWithdraw={
+                      c.viewer.isRequester && !c.viewer.canRespond
+                        ? () => withdrawRequest(c.chatId)
+                        : undefined
+                    }
+                    busy={busy}
                   />
                 ))
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Confirm send-request modal */}
+        {confirmTarget && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 p-6">
+            <div className="w-full max-w-xs rounded-xl bg-white p-5 shadow-2xl dark:bg-gray-800">
+              <div className="mb-3 flex items-center gap-3">
+                <Avatar
+                  name={confirmTarget.username}
+                  photo={confirmTarget.photo}
+                  size={40}
+                />
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-bold text-gray-900 dark:text-white">
+                    {`${confirmTarget.firstName || ""} ${
+                      confirmTarget.lastName || ""
+                    }`.trim() || confirmTarget.username}
+                  </p>
+                  <p className="truncate text-xs text-gray-400">
+                    @{confirmTarget.username}
+                  </p>
+                </div>
+              </div>
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                Send a chat request to{" "}
+                <span className="font-semibold">@{confirmTarget.username}</span>?
+                They'll be able to chat with you once they accept.
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setConfirmTarget(null)}
+                  disabled={busy}
+                  className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-60 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    const username = confirmTarget.username;
+                    setConfirmTarget(null);
+                    startChat(username);
+                  }}
+                  disabled={busy}
+                  className="flex items-center gap-1.5 rounded-lg bg-red-500 px-3 py-1.5 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+                >
+                  <MessageSquarePlus size={14} />
+                  Send request
+                </button>
+              </div>
             </div>
           </div>
         )}
@@ -672,13 +793,20 @@ const ChatListItem: React.FC<{
   badge?: string;
   photo?: string | null;
   unread?: number;
-}> = ({ chat, onClick, badge, photo, unread = 0 }) => {
+  onWithdraw?: () => void;
+  busy?: boolean;
+}> = ({ chat, onClick, badge, photo, unread = 0, onWithdraw, busy }) => {
   const name = otherParty(chat);
   const last = chat.msgs[chat.msgs.length - 1];
   return (
-    <button
+    <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
-      className="flex w-full items-center gap-3 border-b px-4 py-3 text-left hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick();
+      }}
+      className="flex w-full cursor-pointer items-center gap-3 border-b px-4 py-3 text-left hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
     >
       <Avatar name={name} photo={photo} />
       <div className="min-w-0 flex-1">
@@ -719,7 +847,19 @@ const ChatListItem: React.FC<{
           )}
         </div>
       </div>
-    </button>
+      {onWithdraw && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onWithdraw();
+          }}
+          disabled={busy}
+          className="flex-shrink-0 rounded-lg border border-gray-300 px-2 py-1 text-[11px] font-semibold text-gray-600 hover:border-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-50 dark:border-gray-600 dark:text-gray-300"
+        >
+          Withdraw
+        </button>
+      )}
+    </div>
   );
 };
 
@@ -738,9 +878,13 @@ const ConversationView: React.FC<{
   taggedBooking: BookingTag | null;
   setTaggedBooking: (b: BookingTag | null) => void;
   isPremium: boolean;
+  limitExempt: boolean;
   sentByMe: number;
   msgLimit: number;
   limitReached: boolean;
+  msgWarning: string | null;
+  setMsgWarning: (v: string | null) => void;
+  onWithdraw: (chatId: string) => void;
 }> = ({
   chat,
   me,
@@ -756,9 +900,13 @@ const ConversationView: React.FC<{
   taggedBooking,
   setTaggedBooking,
   isPremium,
+  limitExempt,
   sentByMe,
   msgLimit,
   limitReached,
+  msgWarning,
+  setMsgWarning,
+  onWithdraw,
 }) => {
   const v = chat.viewer;
 
@@ -779,8 +927,8 @@ const ConversationView: React.FC<{
 
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
-      {/* Fixed message-limit banner (free users only) */}
-      {!isPremium && (
+      {/* Fixed message-limit banner (free users only; experts/sponsors exempt) */}
+      {!isPremium && !limitExempt && (
         <div
           className={`flex flex-shrink-0 items-center justify-center gap-1.5 border-b px-4 py-1.5 text-xs font-semibold ${
             limitReached
@@ -813,7 +961,7 @@ const ConversationView: React.FC<{
                 className={`flex ${mine ? "justify-end" : "justify-start"}`}
               >
                 <div
-                  className={`max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                  className={`max-w-[75%] rounded-2xl px-3 py-2 text-[14px] font-medium ${
                     mine
                       ? "rounded-br-sm bg-red-500 text-white"
                       : "rounded-bl-sm bg-white text-gray-800 shadow-sm dark:bg-gray-800 dark:text-gray-100"
@@ -842,7 +990,7 @@ const ConversationView: React.FC<{
                   <p className="whitespace-pre-line break-words">{m.msg}</p>
                   <span
                     className={`mt-1 block text-[10px] ${
-                      mine ? "text-red-100" : "text-gray-400"
+                      mine ? "text-red-100" : "text-gray-600"
                     }`}
                   >
                     {fmtTime(m.timestamp)}
@@ -880,8 +1028,17 @@ const ConversationView: React.FC<{
           </button>
         </div>
       ) : v.pending ? (
-        <div className="border-t bg-gray-50 p-4 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900">
-          Request sent. Waiting for {otherParty(chat)} to accept.
+        <div className="flex flex-col items-center gap-2 border-t bg-gray-50 p-4 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900">
+          <span>Request sent. Waiting for {otherParty(chat)} to accept.</span>
+          {v.isRequester && (
+            <button
+              disabled={busy}
+              onClick={() => onWithdraw(chat.chatId)}
+              className="rounded-lg border border-gray-300 px-3 py-1.5 text-xs font-semibold text-gray-600 hover:border-red-400 hover:bg-red-50 hover:text-red-600 disabled:opacity-60 dark:border-gray-600 dark:text-gray-300"
+            >
+              Withdraw request
+            </button>
+          )}
         </div>
       ) : v.blockedByMe ? (
         <div className="flex items-center justify-between gap-2 border-t bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
@@ -906,6 +1063,13 @@ const ConversationView: React.FC<{
       ) : (
         /* Open conversation -> composer */
         <div className="relative border-t p-3 dark:border-gray-700">
+          {/* Contact-rule warning (shown above the writing area) */}
+          {msgWarning && (
+            <div className="mb-2 flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-medium text-red-600">
+              <Ban size={14} className="mt-0.5 flex-shrink-0" />
+              <span>{msgWarning}</span>
+            </div>
+          )}
           {/* "@" booking tag drop-up */}
           {showBookingMenu && (
             <div className="absolute bottom-full left-3 right-3 mb-1 max-h-56 overflow-y-auto rounded-lg border bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
@@ -977,7 +1141,10 @@ const ConversationView: React.FC<{
             )}
             <textarea
               value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
+              onChange={(e) => {
+                setMessageInput(e.target.value);
+                if (msgWarning) setMsgWarning(null);
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !showBookingMenu) {
                   e.preventDefault();

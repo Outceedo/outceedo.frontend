@@ -58,6 +58,21 @@ function PlayerHeader({ setOpen }: PlayerHeaderProps) {
   const [chatOpen, setChatOpen] = useState(false);
   const { count: unreadCount, refresh: refreshUnread } = useUnreadChatCount();
 
+  // Auto-open the chat drawer when arrived via ?openChat=1 (from a public profile).
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("openChat") === "1") {
+      setChatOpen(true);
+      params.delete("openChat");
+      const qs = params.toString();
+      window.history.replaceState(
+        {},
+        "",
+        window.location.pathname + (qs ? `?${qs}` : "")
+      );
+    }
+  }, []);
+
   const location = useLocation();
   const currentTitle =
     menuItems.find((item) => location.pathname.startsWith(item.path))?.name ??

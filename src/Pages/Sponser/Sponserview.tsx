@@ -10,6 +10,7 @@ import {
 
 import { Card } from "@/components/ui/card";
 import ViewCvButton from "@/components/ViewCvButton";
+import ConnectButton from "@/common/ConnectButton";
 import { ArrowLeft, Currency, Loader2 } from "lucide-react";
 import "react-circular-progressbar/dist/styles.css";
 import React, { useState, useEffect } from "react";
@@ -198,6 +199,14 @@ const Sponsorview: React.FC = () => {
               }
               label="View CV"
             /> */}
+          </div>
+          <div className="mt-4">
+            <ConnectButton
+              username={
+                viewedProfile?.username ||
+                localStorage.getItem("viewsponsorusername")
+              }
+            />
           </div>
           {/* Responsive grid: sm-2, lg-4 */}
           <div className="mt-6 md:mt-10 grid grid-cols-2  lg:grid-cols-4 gap-6 lg:gap-8 text-sm text-gray-600">

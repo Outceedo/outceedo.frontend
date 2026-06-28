@@ -30,6 +30,7 @@ import Mediaview from "@/Pages/Media/MediaView";
 import TeamProfileDetails from "./TeamProfileDetails";
 import TeamPlayersView from "./teamPlayers";
 import FollowersList from "../../components/follower/followerlist";
+import ConnectButton from "@/common/ConnectButton";
 import Reviewview from "../Reviews/Reviewview";
 import Swal from "sweetalert2";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -605,6 +606,10 @@ const TeamView: React.FC = () => {
                   <strong>Type:</strong> {profileData.teamType}
                 </span>
               </div>
+            </div>
+
+            <div className="mt-2 sm:mt-4">
+              <ConnectButton username={profileData?.username} />
             </div>
 
             {/* Follow Button Section */}
