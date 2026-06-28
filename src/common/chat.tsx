@@ -205,6 +205,12 @@ const Chat: React.FC<ChatProps> = ({
   const [searching, setSearching] = useState(false);
   // Person we're about to send a chat request to (confirmation modal).
   const [confirmTarget, setConfirmTarget] = useState<SearchProfile | null>(null);
+  // Confirmation for accept / reject / withdraw of a request.
+  const [confirmAction, setConfirmAction] = useState<{
+    kind: "accept" | "reject" | "withdraw";
+    chatId: string;
+    name: string;
+  } | null>(null);
   // Warning shown above the composer when a message breaks the contact rule.
   const [msgWarning, setMsgWarning] = useState<string | null>(null);
 
@@ -337,6 +343,15 @@ const Chat: React.FC<ChatProps> = ({
     }
   };
 
+  // Run the action the user just confirmed (accept / reject / withdraw).
+  const runConfirmedAction = async () => {
+    if (!confirmAction) return;
+    const { kind, chatId } = confirmAction;
+    setConfirmAction(null);
+    if (kind === "withdraw") await withdrawRequest(chatId);
+    else await respond(chatId, kind);
+  };
+
   const toggleBlock = async (chatId: string, block: boolean) => {
     setBusy(true);
     setError(null);
@@ -439,7 +454,11 @@ const Chat: React.FC<ChatProps> = ({
     (c) => c.status === "accepted"
   );
   const pendingChats = conversations.filter((c) => c.status === "pending");
+  const rejectedChats = conversations.filter((c) => c.status === "rejected");
   const incomingRequests = pendingChats.filter((c) => c.viewer.canRespond);
+  // Requests tab shows pending (incoming + outgoing) plus rejected ones so the
+  // sender is informed their request was declined.
+  const requestChats = [...pendingChats, ...rejectedChats];
 
   /* ----------------------- Message limit (free users) -------------------- */
   // Experts and sponsors (on either side of the chat) are never rate-limited.
@@ -579,7 +598,13 @@ const Chat: React.FC<ChatProps> = ({
             onSend={sendMessage}
             sending={sending}
             busy={busy}
-            onRespond={respond}
+            onRespond={(chatId, action) =>
+              setConfirmAction({
+                kind: action,
+                chatId,
+                name: otherParty(activeChat),
+              })
+            }
             onToggleBlock={toggleBlock}
             messagesEndRef={messagesEndRef}
             bookings={bookings}
@@ -592,7 +617,13 @@ const Chat: React.FC<ChatProps> = ({
             limitReached={limitReached}
             msgWarning={msgWarning}
             setMsgWarning={setMsgWarning}
-            onWithdraw={withdrawRequest}
+            onWithdraw={(chatId) =>
+              setConfirmAction({
+                kind: "withdraw",
+                chatId,
+                name: otherParty(activeChat),
+              })
+            }
           />
         ) : (
           /* ---------------------------- List view --------------------------- */
@@ -700,23 +731,34 @@ const Chat: React.FC<ChatProps> = ({
                     />
                   ))
                 )
-              ) : pendingChats.length === 0 ? (
+              ) : requestChats.length === 0 ? (
                 <EmptyState text="No pending requests." />
               ) : (
-                pendingChats.map((c) => (
+                requestChats.map((c) => (
                   <ChatListItem
                     key={c.chatId}
                     chat={c}
                     onClick={() => openChat(c.chatId)}
                     photo={profileMap[otherParty(c)]?.photo}
                     badge={
-                      c.viewer.canRespond
-                        ? "Wants to chat"
-                        : "Request sent"
+                      c.status === "rejected"
+                        ? c.viewer.isRequester
+                          ? "Declined"
+                          : "You declined"
+                        : c.viewer.canRespond
+                          ? "Wants to chat"
+                          : "Request sent"
                     }
                     onWithdraw={
-                      c.viewer.isRequester && !c.viewer.canRespond
-                        ? () => withdrawRequest(c.chatId)
+                      c.status === "pending" &&
+                      c.viewer.isRequester &&
+                      !c.viewer.canRespond
+                        ? () =>
+                            setConfirmAction({
+                              kind: "withdraw",
+                              chatId: c.chatId,
+                              name: otherParty(c),
+                            })
                         : undefined
                     }
                     busy={busy}
@@ -772,6 +814,72 @@ const Chat: React.FC<ChatProps> = ({
                 >
                   <MessageSquarePlus size={14} />
                   Send request
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirm accept / reject / withdraw modal */}
+        {confirmAction && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/40 p-6">
+            <div className="w-full max-w-xs rounded-xl bg-white p-5 shadow-2xl dark:bg-gray-800">
+              <h3 className="mb-2 text-base font-bold text-gray-900 dark:text-white">
+                {confirmAction.kind === "accept"
+                  ? "Accept request?"
+                  : confirmAction.kind === "reject"
+                    ? "Reject request?"
+                    : "Withdraw request?"}
+              </h3>
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-300">
+                {confirmAction.kind === "accept" ? (
+                  <>
+                    Accept the chat request from{" "}
+                    <span className="font-semibold">
+                      @{confirmAction.name}
+                    </span>
+                    ? You'll be able to message each other.
+                  </>
+                ) : confirmAction.kind === "reject" ? (
+                  <>
+                    Reject the chat request from{" "}
+                    <span className="font-semibold">
+                      @{confirmAction.name}
+                    </span>
+                    ? They won't be able to message you.
+                  </>
+                ) : (
+                  <>
+                    Withdraw your chat request to{" "}
+                    <span className="font-semibold">
+                      @{confirmAction.name}
+                    </span>
+                    ?
+                  </>
+                )}
+              </p>
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setConfirmAction(null)}
+                  disabled={busy}
+                  className="rounded-lg bg-gray-100 px-3 py-1.5 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-60 dark:bg-gray-700 dark:text-gray-200"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={runConfirmedAction}
+                  disabled={busy}
+                  className={`rounded-lg px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-60 ${
+                    confirmAction.kind === "accept"
+                      ? "bg-green-600 hover:bg-green-700"
+                      : "bg-red-500 hover:bg-red-600"
+                  }`}
+                >
+                  {confirmAction.kind === "accept"
+                    ? "Accept"
+                    : confirmAction.kind === "reject"
+                      ? "Reject"
+                      : "Withdraw"}
                 </button>
               </div>
             </div>

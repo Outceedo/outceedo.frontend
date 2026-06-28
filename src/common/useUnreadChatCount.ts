@@ -50,6 +50,15 @@ const unreadInChat = (c: Chat): number => {
   ).length;
 };
 
+// A pending incoming request counts only until the viewer opens it (which sets
+// their last-seen). Declined/accepted requests never count here.
+const isUnseenRequest = (c: Chat): boolean => {
+  if (c.status !== "pending" || !c.viewer.canRespond) return false;
+  const myLastSeen =
+    c.viewer.party === "home" ? c.lastSeenByHome : c.lastSeenByAway;
+  return !myLastSeen;
+};
+
 const POLL_MS = 30000;
 
 export function useUnreadChatCount() {
@@ -61,9 +70,7 @@ export function useUnreadChatCount() {
     try {
       const res = await chatApi.get("/", { params: { username: me } });
       const chats: Chat[] = res.data?.chats || [];
-      const requests = chats.filter(
-        (c) => c.status === "pending" && c.viewer.canRespond
-      ).length;
+      const requests = chats.filter(isUnseenRequest).length;
       const unread = chats.reduce((sum, c) => sum + unreadInChat(c), 0);
       setCount(requests + unread);
     } catch {

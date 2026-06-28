@@ -398,11 +398,13 @@ export default function PublicProfile() {
     | "sent"
     | "exists"
     | "accepted"
+    | "rejected"
     | "error"
     | "login";
   const [connectStage, setConnectStage] = useState<ConnectStage | null>(null);
   const [connecting, setConnecting] = useState(false);
   const [connectError, setConnectError] = useState("");
+  const [rejectedAsRequester, setRejectedAsRequester] = useState(true);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -560,7 +562,11 @@ export default function PublicProfile() {
       );
       const status = res.data?.chat?.status;
       const created = res.data?.created;
-      if (status === "accepted") setConnectStage("accepted");
+      const isRequester = res.data?.chat?.viewer?.isRequester;
+      if (status === "rejected") {
+        setRejectedAsRequester(!!isRequester);
+        setConnectStage("rejected");
+      } else if (status === "accepted") setConnectStage("accepted");
       else if (created) setConnectStage("sent");
       else setConnectStage("exists");
     } catch (e: any) {
@@ -1333,6 +1339,34 @@ export default function PublicProfile() {
                   Something went wrong
                 </h3>
                 <p className="mb-5 text-sm text-gray-600">{connectError}</p>
+                <button
+                  onClick={() => setConnectStage(null)}
+                  className="w-full rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600"
+                >
+                  Got it
+                </button>
+              </>
+            ) : connectStage === "rejected" ? (
+              <>
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+                  <MessageSquare className="text-red-500" />
+                </div>
+                <h3 className="mb-2 text-lg font-bold text-gray-900">
+                  Request declined
+                </h3>
+                <p className="mb-5 text-sm text-gray-600">
+                  {rejectedAsRequester ? (
+                    <>
+                      Your chat request to <b>@{targetUsername}</b> was declined.
+                      You can't send another request.
+                    </>
+                  ) : (
+                    <>
+                      You previously declined a request from{" "}
+                      <b>@{targetUsername}</b>.
+                    </>
+                  )}
+                </p>
                 <button
                   onClick={() => setConnectStage(null)}
                   className="w-full rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600"

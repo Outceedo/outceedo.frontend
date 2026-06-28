@@ -16,7 +16,7 @@ chatApi.interceptors.request.use((config) => {
   return config;
 });
 
-type Result = "sent" | "exists" | "accepted" | "error";
+type Result = "sent" | "exists" | "accepted" | "rejected" | "error";
 
 interface Props {
   /** Username of the profile being viewed. */
@@ -32,8 +32,10 @@ const ConnectButton: React.FC<Props> = ({
 }) => {
   const me = localStorage.getItem("username") || "";
   const [loading, setLoading] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [result, setResult] = useState<Result | null>(null);
   const [errorMsg, setErrorMsg] = useState("");
+  const [rejectedAsRequester, setRejectedAsRequester] = useState(true);
   const [chatOpen, setChatOpen] = useState(false);
 
   // Hide on your own profile or when the username isn't known yet.
@@ -45,7 +47,11 @@ const ConnectButton: React.FC<Props> = ({
       const res = await chatApi.post("/request", { home: me, away: username });
       const status = res.data?.chat?.status;
       const created = res.data?.created;
-      if (status === "accepted") setResult("accepted");
+      const isRequester = res.data?.chat?.viewer?.isRequester;
+      if (status === "rejected") {
+        setRejectedAsRequester(!!isRequester);
+        setResult("rejected");
+      } else if (status === "accepted") setResult("accepted");
       else if (created) setResult("sent");
       else setResult("exists");
     } catch (e: any) {
@@ -53,6 +59,7 @@ const ConnectButton: React.FC<Props> = ({
       setResult("error");
     } finally {
       setLoading(false);
+      setConfirmOpen(false);
     }
   };
 
@@ -60,6 +67,7 @@ const ConnectButton: React.FC<Props> = ({
     sent: "Request sent!",
     exists: "Request already pending",
     accepted: "You're connected",
+    rejected: "Request declined",
     error: "Something went wrong",
   };
 
@@ -82,26 +90,79 @@ const ConnectButton: React.FC<Props> = ({
         start chatting.
       </>
     ),
+    rejected: rejectedAsRequester ? (
+      <>
+        Your chat request to <b>@{username}</b> was declined. You can't send
+        another request.
+      </>
+    ) : (
+      <>
+        You previously declined a request from <b>@{username}</b>.
+      </>
+    ),
     error: <>{errorMsg}</>,
   };
+
+  const isNegative = result === "error" || result === "rejected";
 
   return (
     <>
       <button
-        onClick={sendRequest}
-        disabled={loading}
+        onClick={() => setConfirmOpen(true)}
         className={
           className ??
           "inline-flex items-center justify-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
         }
       >
-        {loading ? (
-          <Loader2 size={16} className="animate-spin" />
-        ) : (
-          <UserPlus size={16} />
-        )}
+        <UserPlus size={16} />
         {label}
       </button>
+
+      {/* Confirm send-request modal */}
+      {confirmOpen && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/40 p-4"
+          onClick={() => !loading && setConfirmOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 text-center shadow-2xl dark:bg-gray-800"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <UserPlus className="text-red-500" />
+            </div>
+            <h3 className="mb-2 text-lg font-bold text-gray-900 dark:text-white">
+              Send chat request?
+            </h3>
+            <p className="mb-5 text-sm text-gray-600 dark:text-gray-300">
+              Are you sure you want to send a chat request to{" "}
+              <b>@{username}</b>? They'll be able to chat with you once they
+              accept it.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setConfirmOpen(false)}
+                disabled={loading}
+                className="flex-1 rounded-lg bg-gray-100 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-200 disabled:opacity-60 dark:bg-gray-700 dark:text-gray-200"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendRequest}
+                disabled={loading}
+                className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-red-500 py-2 text-sm font-semibold text-white hover:bg-red-600 disabled:opacity-60"
+              >
+                {loading ? (
+                  <Loader2 size={15} className="animate-spin" />
+                ) : (
+                  <MessageSquare size={15} />
+                )}
+                Send request
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {result && (
         <div
@@ -114,10 +175,10 @@ const ConnectButton: React.FC<Props> = ({
           >
             <div
               className={`mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full ${
-                result === "error" ? "bg-red-100" : "bg-green-100"
+                isNegative ? "bg-red-100" : "bg-green-100"
               }`}
             >
-              {result === "error" ? (
+              {isNegative ? (
                 <MessageSquare className="text-red-500" />
               ) : (
                 <CheckCircle2 className="text-green-600" />
@@ -129,7 +190,7 @@ const ConnectButton: React.FC<Props> = ({
             <p className="mb-1 text-sm text-gray-600 dark:text-gray-300">
               {bodies[result]}
             </p>
-            {result !== "error" && (
+            {!isNegative && (
               <p className="mb-4 text-xs text-gray-400">
                 Open the{" "}
                 <span className="font-semibold text-red-500">Messages</span>{" "}
