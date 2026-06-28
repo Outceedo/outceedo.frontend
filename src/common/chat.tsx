@@ -93,6 +93,23 @@ userApi.interceptors.request.use((config) => {
 const otherParty = (chat: Chat) =>
   chat.viewer.party === "home" ? chat.away : chat.home;
 
+// The OTHER party's last-seen timestamp (shown under their name in the header).
+const otherLastSeen = (chat: Chat) =>
+  chat.viewer.party === "home" ? chat.lastSeenByAway : chat.lastSeenByHome;
+
+// Number of messages from the other party that the viewer hasn't seen yet.
+const unreadCountFor = (chat: Chat): number => {
+  if (chat.status !== "accepted") return 0;
+  const mine =
+    chat.viewer.party === "home" ? chat.lastSeenByHome : chat.lastSeenByAway;
+  const seenMs = mine ? new Date(mine).getTime() : 0;
+  return chat.msgs.filter(
+    (m) =>
+      m.sender !== chat.viewer.username &&
+      new Date(m.timestamp).getTime() > seenMs
+  ).length;
+};
+
 const initialsOf = (name: string) =>
   (name || "?").slice(0, 2).toUpperCase();
 
@@ -137,6 +154,10 @@ const Chat: React.FC<ChatProps> = ({
   const [tab, setTab] = useState<"chats" | "requests">("chats");
   const [conversations, setConversations] = useState<Chat[]>([]);
   const [loadingList, setLoadingList] = useState(false);
+  // Resolved avatars/names for conversation partners (keyed by username).
+  const [profileMap, setProfileMap] = useState<Record<string, SearchProfile>>(
+    {}
+  );
 
   const [searchTerm, setSearchTerm] = useState("");
   const [searchResults, setSearchResults] = useState<SearchProfile[]>([]);
@@ -265,6 +286,27 @@ const Chat: React.FC<ChatProps> = ({
     if (open) fetchConversations();
   }, [open, fetchConversations]);
 
+  // Resolve avatars/names for any conversation partners we don't have yet.
+  useEffect(() => {
+    const names = Array.from(
+      new Set(conversations.map(otherParty).filter(Boolean))
+    ).filter((n) => !profileMap[n]);
+    if (!names.length) return;
+    userApi
+      .get("/profiles/by-usernames", {
+        params: { usernames: names.join(",") },
+      })
+      .then((res) => {
+        const next: Record<string, SearchProfile> = {};
+        (res.data?.users || []).forEach((u: SearchProfile) => {
+          next[u.username] = u;
+        });
+        setProfileMap((prev) => ({ ...prev, ...next }));
+      })
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversations]);
+
   // Open directly into a conversation if requested (e.g. service query).
   useEffect(() => {
     if (open && initialUsername) {
@@ -329,7 +371,7 @@ const Chat: React.FC<ChatProps> = ({
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b px-4 py-3 dark:border-gray-700">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             {activeChat && (
               <button
                 onClick={() => setActiveChat(null)}
@@ -339,14 +381,61 @@ const Chat: React.FC<ChatProps> = ({
                 <ArrowLeft size={20} />
               </button>
             )}
-            <h2
-              style={{ color: NAVY }}
-              className="text-lg font-bold dark:text-white"
-            >
-              {activeChat ? otherParty(activeChat) : "Messages"}
-            </h2>
+            {activeChat ? (
+              <>
+                <Avatar
+                  name={otherParty(activeChat)}
+                  photo={profileMap[otherParty(activeChat)]?.photo}
+                  size={38}
+                />
+                <div className="min-w-0">
+                  <h2
+                    style={{ color: NAVY }}
+                    className="truncate text-base font-bold dark:text-white"
+                  >
+                    {otherParty(activeChat)}
+                  </h2>
+                  {otherLastSeen(activeChat) && (
+                    <p className="truncate text-[11px] text-gray-400">
+                      last seen {fmtTime(otherLastSeen(activeChat))}
+                    </p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <h2
+                style={{ color: NAVY }}
+                className="text-lg font-bold dark:text-white"
+              >
+                Messages
+              </h2>
+            )}
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex flex-shrink-0 items-center gap-1">
+            {activeChat &&
+              (activeChat.viewer.blockedByMe ? (
+                <button
+                  onClick={() => toggleBlock(activeChat.chatId, false)}
+                  disabled={busy}
+                  className="rounded-full p-2 text-gray-500 hover:bg-gray-100 disabled:opacity-50 dark:hover:bg-gray-800"
+                  aria-label="Unblock user"
+                  title="Unblock user"
+                >
+                  <ShieldOff size={18} />
+                </button>
+              ) : !activeChat.viewer.pending &&
+                !activeChat.viewer.rejected &&
+                !activeChat.viewer.blockedByOther ? (
+                <button
+                  onClick={() => toggleBlock(activeChat.chatId, true)}
+                  disabled={busy}
+                  className="rounded-full p-2 text-gray-500 hover:bg-red-50 hover:text-red-500 disabled:opacity-50 dark:hover:bg-gray-800"
+                  aria-label="Block user"
+                  title="Block user"
+                >
+                  <Ban size={18} />
+                </button>
+              ) : null)}
             <button
               onClick={refreshActive}
               className="rounded-full p-2 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -472,6 +561,8 @@ const Chat: React.FC<ChatProps> = ({
                       key={c.chatId}
                       chat={c}
                       onClick={() => openChat(c.chatId)}
+                      photo={profileMap[otherParty(c)]?.photo}
+                      unread={unreadCountFor(c)}
                     />
                   ))
                 )
@@ -483,6 +574,7 @@ const Chat: React.FC<ChatProps> = ({
                     key={c.chatId}
                     chat={c}
                     onClick={() => openChat(c.chatId)}
+                    photo={profileMap[otherParty(c)]?.photo}
                     badge={
                       c.viewer.canRespond
                         ? "Wants to chat"
@@ -508,7 +600,9 @@ const ChatListItem: React.FC<{
   chat: Chat;
   onClick: () => void;
   badge?: string;
-}> = ({ chat, onClick, badge }) => {
+  photo?: string | null;
+  unread?: number;
+}> = ({ chat, onClick, badge, photo, unread = 0 }) => {
   const name = otherParty(chat);
   const last = chat.msgs[chat.msgs.length - 1];
   return (
@@ -516,10 +610,16 @@ const ChatListItem: React.FC<{
       onClick={onClick}
       className="flex w-full items-center gap-3 border-b px-4 py-3 text-left hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800"
     >
-      <Avatar name={name} />
+      <Avatar name={name} photo={photo} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <p className="truncate font-semibold text-gray-900 dark:text-white">
+          <p
+            className={`truncate ${
+              unread > 0
+                ? "font-bold text-gray-900"
+                : "font-semibold text-gray-900"
+            } dark:text-white`}
+          >
             {name}
           </p>
           {last && (
@@ -528,15 +628,26 @@ const ChatListItem: React.FC<{
             </span>
           )}
         </div>
-        <p className="truncate text-xs text-gray-500">
-          {badge ? (
-            <span className="font-medium text-red-500">{badge}</span>
-          ) : last ? (
-            `${last.sender === chat.viewer.username ? "You: " : ""}${last.msg}`
-          ) : (
-            "No messages yet"
+        <div className="flex items-center justify-between gap-2">
+          <p
+            className={`truncate text-xs ${
+              unread > 0 ? "font-semibold text-gray-700" : "text-gray-500"
+            }`}
+          >
+            {badge ? (
+              <span className="font-medium text-red-500">{badge}</span>
+            ) : last ? (
+              `${last.sender === chat.viewer.username ? "You: " : ""}${last.msg}`
+            ) : (
+              "No messages yet"
+            )}
+          </p>
+          {unread > 0 && (
+            <span className="flex h-[18px] min-w-[18px] flex-shrink-0 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold leading-none text-white">
+              {unread > 99 ? "99+" : unread}
+            </span>
           )}
-        </p>
+        </div>
       </div>
     </button>
   );
@@ -689,15 +800,6 @@ const ConversationView: React.FC<{
               ) : (
                 <Send size={18} />
               )}
-            </button>
-          </div>
-          <div className="mt-2 flex justify-end">
-            <button
-              disabled={busy}
-              onClick={() => onToggleBlock(chat.chatId, true)}
-              className="flex items-center gap-1.5 text-xs font-medium text-gray-400 hover:text-red-500 disabled:opacity-60"
-            >
-              <Ban size={13} /> Block user
             </button>
           </div>
         </div>
