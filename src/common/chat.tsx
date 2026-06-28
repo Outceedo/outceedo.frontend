@@ -1,5 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "@/store/store";
+import { fetchSubscriptionStatus } from "@/store/plans-slice";
 import {
   X,
   Search,
@@ -11,6 +14,9 @@ import {
   Loader2,
   MessageSquarePlus,
   ShieldOff,
+  Tag,
+  CalendarClock,
+  Crown,
 } from "lucide-react";
 
 /* --------------------------------- Theme --------------------------------- */
@@ -65,6 +71,20 @@ interface SearchProfile {
   country?: string;
 }
 
+// A booking shared between the two chat users, taggable via "@".
+interface BookingTag {
+  id: string;
+  serviceName: string;
+  date: string;
+  status?: string;
+  providerType?: string;
+  price?: number;
+}
+
+// Message limits for free (non-premium) users.
+const FREE_MSG_LIMIT = 5;
+const FREE_MSG_LIMIT_WITH_BOOKING = 15;
+
 interface ChatProps {
   open: boolean;
   onClose: () => void;
@@ -77,14 +97,20 @@ interface ChatProps {
 /* ------------------------------- API setup ------------------------------- */
 const CHAT_BASE = `${import.meta.env.VITE_PORT}/api/v1/other/chats`;
 const USER_BASE = `${import.meta.env.VITE_PORT}/api/v1/user`;
+const BOOKING_BASE = `${import.meta.env.VITE_PORT}/api/v1/booking`;
 
 const chatApi = axios.create({ baseURL: CHAT_BASE });
 const userApi = axios.create({ baseURL: USER_BASE });
+const bookingApi = axios.create({ baseURL: BOOKING_BASE });
 chatApi.interceptors.request.use((config) => {
   config.headers.Authorization = `Bearer ${localStorage.getItem("token")}`;
   return config;
 });
 userApi.interceptors.request.use((config) => {
+  config.headers.Authorization = `Bearer ${localStorage.getItem("token")}`;
+  return config;
+});
+bookingApi.interceptors.request.use((config) => {
   config.headers.Authorization = `Bearer ${localStorage.getItem("token")}`;
   return config;
 });
@@ -150,6 +176,10 @@ const Chat: React.FC<ChatProps> = ({
   initialService,
 }) => {
   const me = localStorage.getItem("username") || "";
+  const dispatch = useDispatch<AppDispatch>();
+  const isPremium = useSelector(
+    (state: RootState) => state.subscription.isActive
+  );
 
   const [tab, setTab] = useState<"chats" | "requests">("chats");
   const [conversations, setConversations] = useState<Chat[]>([]);
@@ -164,6 +194,9 @@ const Chat: React.FC<ChatProps> = ({
   const [searching, setSearching] = useState(false);
 
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
+  // Bookings shared with the active chat partner + the one currently tagged.
+  const [bookings, setBookings] = useState<BookingTag[]>([]);
+  const [taggedBooking, setTaggedBooking] = useState<BookingTag | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [sending, setSending] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -239,9 +272,11 @@ const Chat: React.FC<ChatProps> = ({
       const res = await chatApi.post(`/${activeChat.chatId}/messages`, {
         sender: me,
         msg: messageInput.trim(),
+        ...(taggedBooking ? { service: taggedBooking } : {}),
       });
       setActiveChat(res.data?.chat || activeChat);
       setMessageInput("");
+      setTaggedBooking(null);
     } catch (e: any) {
       setError(e.response?.data?.message || "Failed to send message");
     } finally {
@@ -281,10 +316,13 @@ const Chat: React.FC<ChatProps> = ({
   };
 
   /* ------------------------------- Effects ------------------------------- */
-  // Load conversations whenever the drawer opens.
+  // Load conversations + refresh premium status whenever the drawer opens.
   useEffect(() => {
-    if (open) fetchConversations();
-  }, [open, fetchConversations]);
+    if (open) {
+      fetchConversations();
+      dispatch(fetchSubscriptionStatus());
+    }
+  }, [open, fetchConversations, dispatch]);
 
   // Resolve avatars/names for any conversation partners we don't have yet.
   useEffect(() => {
@@ -344,12 +382,37 @@ const Chat: React.FC<ChatProps> = ({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [activeChat?.msgs?.length, activeChat?.chatId]);
 
+  // When entering a conversation, load any bookings shared with that partner
+  // (for the "@" tag picker) and reset the previously tagged booking.
+  useEffect(() => {
+    setTaggedBooking(null);
+    setBookings([]);
+    if (!activeChat || !me) return;
+    const partner = otherParty(activeChat);
+    bookingApi
+      .get("/by-usernames", { params: { userA: me, userB: partner } })
+      .then((res) => setBookings(res.data?.bookings || []))
+      .catch(() => setBookings([]));
+  }, [activeChat?.chatId, me]);
+
   /* ----------------------------- Derived lists --------------------------- */
   const acceptedChats = conversations.filter(
     (c) => c.status === "accepted"
   );
   const pendingChats = conversations.filter((c) => c.status === "pending");
   const incomingRequests = pendingChats.filter((c) => c.viewer.canRespond);
+
+  /* ----------------------- Message limit (free users) -------------------- */
+  const hasBooking = bookings.length > 0;
+  const msgLimit = isPremium
+    ? Infinity
+    : hasBooking
+    ? FREE_MSG_LIMIT_WITH_BOOKING
+    : FREE_MSG_LIMIT;
+  const sentByMe = activeChat
+    ? activeChat.msgs.filter((m) => m.sender === me).length
+    : 0;
+  const limitReached = !isPremium && sentByMe >= msgLimit;
 
   /* ------------------------------- Render -------------------------------- */
   return (
@@ -470,6 +533,13 @@ const Chat: React.FC<ChatProps> = ({
             onRespond={respond}
             onToggleBlock={toggleBlock}
             messagesEndRef={messagesEndRef}
+            bookings={bookings}
+            taggedBooking={taggedBooking}
+            setTaggedBooking={setTaggedBooking}
+            isPremium={isPremium}
+            sentByMe={sentByMe}
+            msgLimit={msgLimit}
+            limitReached={limitReached}
           />
         ) : (
           /* ---------------------------- List view --------------------------- */
@@ -664,6 +734,13 @@ const ConversationView: React.FC<{
   onRespond: (chatId: string, action: "accept" | "reject") => void;
   onToggleBlock: (chatId: string, block: boolean) => void;
   messagesEndRef: React.RefObject<HTMLDivElement | null>;
+  bookings: BookingTag[];
+  taggedBooking: BookingTag | null;
+  setTaggedBooking: (b: BookingTag | null) => void;
+  isPremium: boolean;
+  sentByMe: number;
+  msgLimit: number;
+  limitReached: boolean;
 }> = ({
   chat,
   me,
@@ -675,11 +752,49 @@ const ConversationView: React.FC<{
   onRespond,
   onToggleBlock,
   messagesEndRef,
+  bookings,
+  taggedBooking,
+  setTaggedBooking,
+  isPremium,
+  sentByMe,
+  msgLimit,
+  limitReached,
 }) => {
   const v = chat.viewer;
 
+  // Booking tag picker: opens via the tag button (shows all) or by typing "@".
+  const [menuOpen, setMenuOpen] = useState(false);
+  const atMatch = /@(\w*)$/.exec(messageInput);
+  const showBookingMenu = (!!atMatch || menuOpen) && bookings.length > 0;
+  const bookingQuery = (atMatch?.[1] || "").toLowerCase();
+  const filteredBookings = bookings.filter((b) =>
+    b.serviceName.toLowerCase().includes(bookingQuery)
+  );
+
+  const pickBooking = (b: BookingTag) => {
+    setTaggedBooking(b);
+    setMessageInput(messageInput.replace(/@(\w*)$/, ""));
+    setMenuOpen(false);
+  };
+
   return (
     <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Fixed message-limit banner (free users only) */}
+      {!isPremium && (
+        <div
+          className={`flex flex-shrink-0 items-center justify-center gap-1.5 border-b px-4 py-1.5 text-xs font-semibold ${
+            limitReached
+              ? "bg-red-50 text-red-600"
+              : "bg-amber-50 text-amber-700"
+          } dark:border-gray-700`}
+        >
+          <Crown size={13} />
+          {limitReached
+            ? `Message limit reached (${msgLimit}). Upgrade for unlimited.`
+            : `Free plan · ${sentByMe}/${msgLimit} messages used`}
+        </div>
+      )}
+
       {/* Messages */}
       <div
         style={{ backgroundColor: IVORY }}
@@ -706,11 +821,22 @@ const ConversationView: React.FC<{
                 >
                   {m.service != null && (
                     <span
-                      className={`mb-1 block text-[10px] font-bold uppercase tracking-wide ${
-                        mine ? "text-red-100" : "text-red-500"
+                      className={`mb-1 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
+                        mine
+                          ? "bg-red-400/40 text-white"
+                          : "bg-red-50 text-red-600"
                       }`}
                     >
-                      Service query
+                      <Tag size={10} />
+                      {typeof m.service === "object" && m.service !== null
+                        ? `${
+                            (m.service as BookingTag).serviceName || "Service"
+                          }${
+                            (m.service as BookingTag).date
+                              ? ` · ${fmtTime((m.service as BookingTag).date)}`
+                              : ""
+                          }`
+                        : "Service query"}
                     </span>
                   )}
                   <p className="whitespace-pre-line break-words">{m.msg}</p>
@@ -772,15 +898,88 @@ const ConversationView: React.FC<{
         <div className="border-t bg-gray-50 p-4 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900">
           You can no longer message this user.
         </div>
+      ) : limitReached ? (
+        <div className="border-t bg-red-50 p-4 text-center text-sm font-medium text-red-600 dark:border-gray-700">
+          You've reached your {msgLimit}-message limit on the free plan.
+          Upgrade to premium to keep chatting.
+        </div>
       ) : (
         /* Open conversation -> composer */
-        <div className="border-t p-3 dark:border-gray-700">
+        <div className="relative border-t p-3 dark:border-gray-700">
+          {/* "@" booking tag drop-up */}
+          {showBookingMenu && (
+            <div className="absolute bottom-full left-3 right-3 mb-1 max-h-56 overflow-y-auto rounded-lg border bg-white shadow-lg dark:border-gray-700 dark:bg-gray-800">
+              <p className="border-b px-3 py-1.5 text-[10px] font-bold uppercase tracking-wide text-gray-400 dark:border-gray-700">
+                Tag a booking
+              </p>
+              {filteredBookings.length === 0 ? (
+                <p className="px-3 py-3 text-center text-xs text-gray-400">
+                  No matching bookings
+                </p>
+              ) : (
+                filteredBookings.map((b) => (
+                  <button
+                    key={b.id}
+                    onClick={() => pickBooking(b)}
+                    className="flex w-full items-start gap-2 px-3 py-2 text-left hover:bg-red-50 dark:hover:bg-gray-700"
+                  >
+                    <Tag size={14} className="mt-0.5 flex-shrink-0 text-red-500" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-gray-800 dark:text-white">
+                        {b.serviceName}
+                      </p>
+                      <p className="flex items-center gap-1 text-[11px] text-gray-400">
+                        <CalendarClock size={11} />
+                        {fmtTime(b.date)}
+                        {b.status ? ` · ${b.status}` : ""}
+                      </p>
+                    </div>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+
+          {/* Selected booking tag chip (above the writing area) */}
+          {taggedBooking && (
+            <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 dark:border-gray-700 dark:bg-gray-800">
+              <span className="flex min-w-0 items-center gap-1.5 text-xs font-semibold text-red-600">
+                <Tag size={12} className="flex-shrink-0" />
+                <span className="truncate">
+                  {taggedBooking.serviceName} · {fmtTime(taggedBooking.date)}
+                </span>
+              </span>
+              <button
+                onClick={() => setTaggedBooking(null)}
+                className="flex-shrink-0 rounded-full p-0.5 text-red-400 hover:bg-red-100 hover:text-red-600"
+                aria-label="Remove tag"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
+
           <div className="flex items-end gap-2">
+            {bookings.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setMenuOpen((o) => !o)}
+                className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg border transition-colors dark:border-gray-700 ${
+                  showBookingMenu
+                    ? "border-red-400 bg-red-50 text-red-600"
+                    : "text-red-500 hover:bg-red-50"
+                }`}
+                aria-label="Tag a service"
+                title="Tag a service"
+              >
+                <Tag size={18} />
+              </button>
+            )}
             <textarea
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter" && !e.shiftKey) {
+                if (e.key === "Enter" && !e.shiftKey && !showBookingMenu) {
                   e.preventDefault();
                   onSend();
                 }
@@ -802,6 +1001,12 @@ const ConversationView: React.FC<{
               )}
             </button>
           </div>
+          {bookings.length > 0 && (
+            <p className="mt-1 px-1 text-[11px] text-gray-400">
+              Use <span className="font-semibold text-red-500">@</span> if
+              tagging any service
+            </p>
+          )}
         </div>
       )}
     </div>
