@@ -746,7 +746,7 @@ const Playerview: React.FC = () => {
               })()}
 
               <div className="mt-3 sm:mt-4">
-                <ConnectButton username={profileData?.username} />
+                <ConnectButton username={profileData?.username} targetRole="player" />
               </div>
 
               {((localStorage.getItem("role") === "player" &&

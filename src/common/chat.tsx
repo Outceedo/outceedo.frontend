@@ -3,6 +3,7 @@ import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "@/store/store";
 import { fetchSubscriptionStatus } from "@/store/plans-slice";
+import { canChat } from "@/common/chatPermissions";
 import {
   X,
   Search,
@@ -90,11 +91,16 @@ const CONTACT_PATTERNS = {
   email: /[^\s@]+@[^\s@]+\.[^\s@]{2,}/,
   url: /(https?:\/\/|www\.)\S+|\b[a-z0-9][a-z0-9-]*\.(com|net|org|io|in|co|uk|us|info|biz|app|dev|me|gg|tv|xyz)\b/i,
   phone: /(?:\+?\d[\s.-]?){7,}/,
+  // Even mentioning contact channels by name is blocked (e.g. "mobile number",
+  // "email id", "whatsapp", "gmail", "telegram", "insta handle", etc.).
+  keywords:
+    /\b(mobile(\s*(no\.?|number|num))?|phone(\s*(no\.?|number|num))?|contact\s*(no\.?|number|num)|e[\s-]?mail(\s*id)?|mail\s*id|gmail|yahoo\s*mail|outlook|whats[\s-]?app|wa\.?me|telegram|tele\s*gram|insta(gram)?|snapchat|facebook|fb\b|messenger|skype|discord|signal\s*app|imessage)\b/i,
 };
 const violatesContactRule = (text: string) =>
   CONTACT_PATTERNS.email.test(text) ||
   CONTACT_PATTERNS.url.test(text) ||
-  CONTACT_PATTERNS.phone.test(text);
+  CONTACT_PATTERNS.phone.test(text) ||
+  CONTACT_PATTERNS.keywords.test(text);
 
 interface ChatProps {
   open: boolean;
@@ -291,7 +297,7 @@ const Chat: React.FC<ChatProps> = ({
     // and sponsors (or when the other party is one), who are unrestricted.
     if (!limitExempt && violatesContactRule(messageInput)) {
       setMsgWarning(
-        "For your safety, sharing phone numbers, emails or links isn't allowed in chat."
+        "For your safety, sharing contact details (phone, email, social handles or links) isn't allowed in chat."
       );
       setMessageInput("");
       setTaggedBooking(null);
@@ -419,7 +425,12 @@ const Chat: React.FC<ChatProps> = ({
     const t = setTimeout(async () => {
       try {
         const res = await userApi.get("/profiles/chat-search", {
-          params: { q: term, limit: 10 },
+          params: {
+            q: term,
+            limit: 10,
+            // Viewer's role so the backend filters to messageable roles.
+            role: localStorage.getItem("role") || undefined,
+          },
         });
         setSearchResults(res.data?.users || []);
       } catch {
@@ -469,6 +480,10 @@ const Chat: React.FC<ChatProps> = ({
     : "";
   const limitExempt =
     EXEMPT_ROLES.includes(myRole) || EXEMPT_ROLES.includes(partnerRole);
+
+  // Only show people the current user is actually allowed to message (sponsors
+  // and fans have no chat; the rest follow the role matrix).
+  const visibleResults = searchResults.filter((p) => canChat(myRole, p.role));
 
   const hasBooking = bookings.length > 0;
   const msgLimit =
@@ -652,12 +667,12 @@ const Chat: React.FC<ChatProps> = ({
               {/* Search results */}
               {searchTerm.trim() && (
                 <div className="mt-2 max-h-60 overflow-y-auto rounded-lg border dark:border-gray-700">
-                  {searchResults.length === 0 && !searching ? (
+                  {visibleResults.length === 0 && !searching ? (
                     <p className="p-3 text-center text-sm text-gray-400">
                       No people found
                     </p>
                   ) : (
-                    searchResults.map((p) => (
+                    visibleResults.map((p) => (
                       <div
                         key={p.id}
                         className="flex w-full items-center gap-3 px-3 py-2 text-left"
@@ -1250,8 +1265,16 @@ const ConversationView: React.FC<{
             <textarea
               value={messageInput}
               onChange={(e) => {
-                setMessageInput(e.target.value);
-                if (msgWarning) setMsgWarning(null);
+                const val = e.target.value;
+                setMessageInput(val);
+                // Warn live as soon as contact details / channels are typed.
+                if (!limitExempt && val.trim() && violatesContactRule(val)) {
+                  setMsgWarning(
+                    "For your safety, don't share contact details (phone, email, social handles or links) in chat."
+                  );
+                } else if (msgWarning) {
+                  setMsgWarning(null);
+                }
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !showBookingMenu) {

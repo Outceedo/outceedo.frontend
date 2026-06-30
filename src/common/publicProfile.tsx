@@ -56,6 +56,7 @@ import { saveAs } from "file-saver";
 import outceedoLogo from "@/assets/images/outceedologo.png";
 import logoSmall from "@/assets/images/logosmall.png";
 import Seo from "@/components/seo/Seo";
+import { meCanChat, normaliseRole, NO_CHAT_ROLES } from "@/common/chatPermissions";
 
 const SITE_BASE = (
   import.meta.env.VITE_HOME || "https://outceedo.com"
@@ -476,6 +477,16 @@ export default function PublicProfile() {
   const isTeam = role === "team";
 
   const showExpertScout = isExpert || isScout;
+
+  // Whether to show the Connect & Chat button. Sponsors/fans can never be
+  // messaged, so the button is always hidden for them. For everyone else: a
+  // logged-in viewer only sees it when their role may message this role; a
+  // logged-out viewer still sees it (the click prompts them to log in).
+  const canConnect = (() => {
+    if (NO_CHAT_ROLES.includes(normaliseRole(role))) return false;
+    if (!localStorage.getItem("token")) return true;
+    return meCanChat(role);
+  })();
 
   const displayName = isTeam
     ? profile.teamName ||
@@ -959,7 +970,7 @@ export default function PublicProfile() {
                   ))}
                 </div>
 
-                {!isOwnProfile && !capturing && (
+                {!isOwnProfile && !capturing && canConnect && (
                   <div
                     data-html2canvas-ignore="true"
                     className="mt-5 flex justify-center sm:justify-start"

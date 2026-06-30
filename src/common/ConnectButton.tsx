@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import axios from "axios";
 import { UserPlus, Loader2, CheckCircle2, MessageSquare } from "lucide-react";
 import Chat from "@/common/chat";
+import { meCanChat } from "@/common/chatPermissions";
 
 /**
  * "Connect & Chat" button shown on profile view pages. Sends a chat request to
@@ -21,12 +22,15 @@ type Result = "sent" | "exists" | "accepted" | "rejected" | "error";
 interface Props {
   /** Username of the profile being viewed. */
   username?: string | null;
+  /** Role of the profile being viewed — used to enforce chat permissions. */
+  targetRole?: string | null;
   className?: string;
   label?: string;
 }
 
 const ConnectButton: React.FC<Props> = ({
   username,
+  targetRole,
   className,
   label = "Connect & Chat",
 }) => {
@@ -40,6 +44,9 @@ const ConnectButton: React.FC<Props> = ({
 
   // Hide on your own profile or when the username isn't known yet.
   if (!username || username === me) return null;
+  // Hide when chat between the two roles isn't permitted (sponsors/fans never
+  // chat; only the allowed role pairs may message each other).
+  if (!meCanChat(targetRole)) return null;
 
   const sendRequest = async () => {
     setLoading(true);

@@ -444,7 +444,7 @@ const ScoutView: React.FC = () => {
           </div>
 
           <div className="mb-4 sm:mb-6">
-            <ConnectButton username={scoutData.username} />
+            <ConnectButton username={scoutData.username} targetRole="scout" />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 sm:gap-8 mb-4 sm:mb-6">

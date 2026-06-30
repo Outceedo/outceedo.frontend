@@ -206,6 +206,7 @@ const Sponsorview: React.FC = () => {
                 viewedProfile?.username ||
                 localStorage.getItem("viewsponsorusername")
               }
+              targetRole="sponsor"
             />
           </div>
           {/* Responsive grid: sm-2, lg-4 */}

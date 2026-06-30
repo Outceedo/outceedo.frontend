@@ -1025,6 +1025,7 @@ const Expertview = () => {
         <div className="flex flex-row flex-wrap items-center justify-center gap-3">
           <ConnectButton
             username={expertData?.username}
+            targetRole="expert"
             className="inline-flex items-center justify-center gap-2 rounded-lg bg-red-500 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-red-600 disabled:opacity-60"
           />
 

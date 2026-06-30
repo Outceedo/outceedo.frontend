@@ -609,7 +609,7 @@ const TeamView: React.FC = () => {
             </div>
 
             <div className="mt-2 sm:mt-4">
-              <ConnectButton username={profileData?.username} />
+              <ConnectButton username={profileData?.username} targetRole="team" />
             </div>
 
             {/* Follow Button Section */}
